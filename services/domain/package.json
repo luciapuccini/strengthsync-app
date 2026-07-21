@@ -1,0 +1,11 @@
+{
+  "name": "@strengthsync/domain",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./contracts": "./src/contracts/index.ts",
+    "./model": "./src/model/index.ts",
+    "./coach": "./src/coach/index.ts"
+  }
+}

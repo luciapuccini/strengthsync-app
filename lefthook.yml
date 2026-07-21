@@ -1,0 +1,11 @@
+# Pre-commit guard required by docs/implementation_preferences.md:
+# TypeScript typecheck, lint, and unit tests must pass before a commit lands.
+pre-commit:
+  parallel: true
+  commands:
+    typecheck:
+      run: pnpm typecheck
+    lint:
+      run: pnpm lint
+    test:
+      run: pnpm test

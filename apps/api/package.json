@@ -1,0 +1,17 @@
+{
+  "name": "@strengthsync/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@strengthsync/agent": "workspace:*",
+    "@strengthsync/db": "workspace:*",
+    "@strengthsync/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260702.1"
+  }
+}

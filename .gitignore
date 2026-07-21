@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# secrets
+.dev.vars
+.env
+.env.local
+
+# cloudflare local state
+.wrangler/
+
+# os
+.DS_Store

@@ -1,0 +1,16 @@
+{
+  "name": "@strengthsync/workflows",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@strengthsync/agent": "workspace:*",
+    "@strengthsync/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1"
+  }
+}

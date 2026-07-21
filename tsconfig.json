@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./services/domain" },
+    { "path": "./services/agent" },
+    { "path": "./services/db" },
+    { "path": "./apps/ui" },
+    { "path": "./apps/api" },
+    { "path": "./apps/workflows" }
+  ]
+}
