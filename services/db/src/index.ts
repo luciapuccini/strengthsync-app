@@ -1,14 +1,21 @@
-import type { WeekStatus } from '@strengthsync/domain/model'
-
 /**
- * Placeholder row shape proving the db → domain edge.
- * The Drizzle/D1 schema, migrations, and intent-level repositories
- * (getCurrentWeek, completeWeek, createNextWeek, ...) arrive with the
- * D1 milestone. See docs/architecture/monorepo_structure.md.
+ * Public surface of @strengthsync/db: the Drizzle/D1 persistence adapter.
+ * Exposes intent-level operations to apps/api — not raw tables.
+ * See docs/architecture/monorepo_structure.md.
  */
-export type WeekRowPreview = {
-  id: string
-  status: WeekStatus
-  /** JSON column validated against the domain Week schedule schema. */
-  schedule_json: string
-}
+
+export { createDb, type Db } from './db.ts'
+export { RepoError, type RepoErrorKind } from './errors.ts'
+export * as schema from './schema.ts'
+
+export { createClient, getClient, listClients } from './repositories/clients.ts'
+export { getProfile, upsertProfile } from './repositories/profiles.ts'
+export { getActivePlan, getPlan, listPlans } from './repositories/plans.ts'
+export { getCurrentWeek, getWeek, listWeeks, updateDayLog } from './repositories/weeks.ts'
+export {
+  activateGeneratedPlan,
+  completeWeek,
+  createNextWeek,
+  getPlanGenerationContext,
+  getWeeklyContext,
+} from './repositories/internal.ts'

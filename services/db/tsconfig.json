@@ -1,7 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "types": [],
+    // "node" types are needed only by src/testing/ (better-sqlite3, fs).
+    // The public surface (schema, repositories, index) stays runtime-neutral
+    // and is what the API Worker bundles.
+    "types": ["node"],
     "rootDir": "src",
     "outDir": "dist"
   },

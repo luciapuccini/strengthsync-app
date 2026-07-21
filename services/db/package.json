@@ -4,9 +4,21 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "scripts": {
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "@strengthsync/domain": "workspace:*"
+    "@strengthsync/domain": "workspace:*",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
+    "@types/node": "22.20.1",
+    "better-sqlite3": "13.0.1",
+    "drizzle-kit": "0.31.10"
   }
 }

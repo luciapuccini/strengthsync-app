@@ -49,6 +49,12 @@ export default defineConfig([
       'max-lines-per-function': ['error', { max: 80, skipBlankLines: true, skipComments: true }],
       'max-params': ['error', 5],
       'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        // Allow the `const { dropped: _, ...kept } = row` omit idiom used by
+        // persistence mappers.
+        { ignoreRestSiblings: true, argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
   {
