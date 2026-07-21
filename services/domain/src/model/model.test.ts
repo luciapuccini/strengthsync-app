@@ -1,15 +1,144 @@
 import { describe, expect, it } from 'vitest'
 
-import type { DayType, ExerciseFeedback, WeekStatus } from './index'
+import {
+  PlanSchema,
+  WeekSchema,
+  type PlanDay,
+  type WeekDay,
+} from './index'
 
-describe('@strengthsync/domain model', () => {
-  it('exposes the core domain unions', () => {
-    const day: DayType = 'upper_body'
-    const feedback: ExerciseFeedback = 'hard'
-    const status: WeekStatus = 'in_flight'
+const planDay: PlanDay = {
+  day_index: 1,
+  type: 'upper_body',
+  notes: null,
+  exercises: [
+    {
+      exercise_key: 'press_banca',
+      name: 'Bench press',
+      series: 4,
+      reps: 8,
+      rest_time_sec: 120,
+      weight_kg: 60,
+      notes: null,
+    },
+  ],
+}
 
-    expect(day).toBe('upper_body')
-    expect(feedback).toBe('hard')
-    expect(status).toBe('in_flight')
+const weekDay: WeekDay = {
+  day_index: 1,
+  date: '2026-07-20',
+  type: 'upper_body',
+  notes: null,
+  completed: false,
+  completed_at: null,
+  exercises: [
+    {
+      exercise_key: 'press_banca',
+      name: 'Bench press',
+      skipped: false,
+      feedback: null,
+      prescribed: {
+        series: 4,
+        reps: 8,
+        rest_time_sec: 120,
+        weight_kg: 60,
+        notes: null,
+      },
+      sets: [],
+    },
+  ],
+}
+
+describe('PlanSchema', () => {
+  it('accepts a valid plan', () => {
+    const plan = {
+      id: '0f5c8b4a-2d3e-4f5a-8b9c-1d2e3f4a5b6c',
+      client_id: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+      label: 'Block 1',
+      status: 'active',
+      total_weeks: 6,
+      week_template: [planDay],
+      rationale: null,
+      activated_at: '2026-07-20T08:00:00.000Z',
+      created_at: '2026-07-19T12:00:00.000Z',
+      updated_at: '2026-07-20T08:00:00.000Z',
+    }
+
+    expect(PlanSchema.parse(plan)).toEqual(plan)
+  })
+
+  it('rejects a day_index outside 1–7', () => {
+    const result = PlanSchema.safeParse({
+      id: '0f5c8b4a-2d3e-4f5a-8b9c-1d2e3f4a5b6c',
+      client_id: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+      label: 'Block 1',
+      status: 'draft',
+      total_weeks: 6,
+      week_template: [{ ...planDay, day_index: 8 }],
+      rationale: null,
+      activated_at: null,
+      created_at: '2026-07-19T12:00:00.000Z',
+      updated_at: '2026-07-19T12:00:00.000Z',
+    })
+
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('WeekSchema', () => {
+  it('accepts a valid in-flight week', () => {
+    const week = {
+      id: '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+      client_id: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+      plan_id: '0f5c8b4a-2d3e-4f5a-8b9c-1d2e3f4a5b6c',
+      week_index: 1,
+      start_date: '2026-07-20',
+      end_date: '2026-07-26',
+      status: 'in_flight',
+      schedule: [weekDay],
+      created_at: '2026-07-20T08:00:00.000Z',
+      updated_at: '2026-07-20T08:00:00.000Z',
+    }
+
+    expect(WeekSchema.parse(week)).toEqual(week)
+  })
+
+  it('rejects an invalid exercise feedback value', () => {
+    const result = WeekSchema.safeParse({
+      id: '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+      client_id: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+      plan_id: '0f5c8b4a-2d3e-4f5a-8b9c-1d2e3f4a5b6c',
+      week_index: 1,
+      start_date: '2026-07-20',
+      end_date: '2026-07-26',
+      status: 'in_flight',
+      schedule: [
+        {
+          ...weekDay,
+          exercises: [{ ...weekDay.exercises[0], feedback: 'meh' }],
+        },
+      ],
+      created_at: '2026-07-20T08:00:00.000Z',
+      updated_at: '2026-07-20T08:00:00.000Z',
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects a malformed ISO date', () => {
+    const result = WeekSchema.safeParse({
+      id: '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+      client_id: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+      plan_id: '0f5c8b4a-2d3e-4f5a-8b9c-1d2e3f4a5b6c',
+      week_index: 1,
+      start_date: '20/07/2026',
+      end_date: '2026-07-26',
+      status: 'in_flight',
+      schedule: [weekDay],
+      created_at: '2026-07-20T08:00:00.000Z',
+      updated_at: '2026-07-20T08:00:00.000Z',
+    })
+
+    expect(result.success).toBe(false)
   })
 })

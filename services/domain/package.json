@@ -7,5 +7,8 @@
     "./contracts": "./src/contracts/index.ts",
     "./model": "./src/model/index.ts",
     "./coach": "./src/coach/index.ts"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   }
 }
