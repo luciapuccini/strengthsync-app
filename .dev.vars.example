@@ -1,0 +1,20 @@
+# Local-dev secrets for apps/workflows (loaded by the dev:api/dev:worker
+# scripts via dotenv-cli). Copy to .dev.vars (git-ignored) and fill in.
+# apps/api has its own apps/api/.dev.vars.example for the Worker.
+
+# Unset → local Temporal dev server (`temporal server start-dev`).
+# Set all three → Temporal Cloud (TLS + API key).
+# TEMPORAL_ADDRESS=localhost:7233
+# TEMPORAL_NAMESPACE=default
+# TEMPORAL_API_KEY=
+
+WORKFLOW_SERVICE_SECRET=dev-workflow-secret
+WORKFLOW_API_PORT=3001
+
+# apps/api internal surface for workflow activities (milestones 4–5).
+INTERNAL_API_BASE_URL=http://localhost:8787
+INTERNAL_API_SERVICE_SECRET=dev-internal-secret
+
+# LLM providers (used by activities in milestones 4–5).
+OPENAI_API_KEY=
+BRAINTRUST_API_KEY=
