@@ -1,0 +1,16 @@
+{
+  "name": "strengthsync-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-21",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "strengthsync",
+      // Placeholder for local dev. Before deploying, run
+      // `wrangler d1 create strengthsync` and paste the real database_id,
+      // then apply migrations + seed (see package.json scripts).
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "../../services/db/drizzle"
+    }
+  ]
+}

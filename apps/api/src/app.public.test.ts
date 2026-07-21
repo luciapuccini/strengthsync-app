@@ -1,0 +1,147 @@
+import { describe, expect, it } from 'vitest'
+
+import {
+  activatePlanViaInternalApi,
+  basicHeader,
+  createClientViaApi,
+  createTestApp,
+  upsertProfileViaApi,
+} from './testkit.ts'
+
+describe('health + auth', () => {
+  it('GET /health is unauthenticated', async () => {
+    const app = createTestApp()
+    const res = await app.request('/health')
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ok: true })
+  })
+
+  it('rejects /api/* without credentials (401)', async () => {
+    const app = createTestApp()
+    const res = await app.request('/api/clients')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects /api/* with wrong credentials (401)', async () => {
+    const app = createTestApp()
+    const res = await app.request('/api/clients', {
+      headers: { authorization: `Basic ${btoa('coach:wrong')}` },
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects /internal/* without the service secret (403)', async () => {
+    const app = createTestApp()
+    const res = await app.request('/internal/clients/some-id/plan-generation-context')
+    expect(res.status).toBe(403)
+    const body = (await res.json()) as { error: { code: string } }
+    expect(body.error.code).toBe('forbidden')
+  })
+})
+
+describe('clients + profile', () => {
+  it('creates, lists, and fetches a client', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+
+    const list = await app.request('/api/clients', { headers: { authorization: basicHeader() } })
+    expect(list.status).toBe(200)
+    expect(((await list.json()) as { clients: unknown[] }).clients).toHaveLength(1)
+
+    const one = await app.request(`/api/clients/${client.id}`, {
+      headers: { authorization: basicHeader() },
+    })
+    expect(one.status).toBe(200)
+  })
+
+  it('returns 404 for an unknown client and 400 for a malformed uuid', async () => {
+    const app = createTestApp()
+    const missing = await app.request('/api/clients/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', {
+      headers: { authorization: basicHeader() },
+    })
+    expect(missing.status).toBe(404)
+
+    const malformed = await app.request('/api/clients/not-a-uuid', {
+      headers: { authorization: basicHeader() },
+    })
+    expect(malformed.status).toBe(400)
+    expect(((await malformed.json()) as { error: { code: string } }).error.code).toBe('invalid_id')
+  })
+
+  it('rejects an invalid create body with 400', async () => {
+    const app = createTestApp()
+    const res = await app.request('/api/clients', {
+      method: 'POST',
+      headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_input')
+  })
+
+  it('upserts and reads the client profile', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+    await upsertProfileViaApi(app, client.id)
+
+    const res = await app.request(`/api/clients/${client.id}/profile`, {
+      headers: { authorization: basicHeader() },
+    })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { profile: { age: number; client_id: string } }
+    expect(body.profile.age).toBe(34)
+    expect(body.profile.client_id).toBe(client.id)
+  })
+})
+
+describe('training reads', () => {
+  it('returns 404 for current week and active plan before any plan exists', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+
+    const week = await app.request(`/api/clients/${client.id}/weeks/current`, {
+      headers: { authorization: basicHeader() },
+    })
+    expect(week.status).toBe(404)
+
+    const plan = await app.request(`/api/clients/${client.id}/plans/active`, {
+      headers: { authorization: basicHeader() },
+    })
+    expect(plan.status).toBe(404)
+  })
+
+  it('rejects an invalid week status filter with 400', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+    const res = await app.request(`/api/clients/${client.id}/weeks?status=bogus`, {
+      headers: { authorization: basicHeader() },
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects a day patch whose skipped exercise carries sets (400)', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-setup')
+
+    const res = await app.request(
+      `/api/clients/${client.id}/weeks/${first_week.id}/days/1`,
+      {
+        method: 'PATCH',
+        headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+        body: JSON.stringify({
+          completed: false,
+          exercises: [
+            {
+              exercise_key: 'press_banca',
+              skipped: true,
+              feedback: null,
+              sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
+            },
+          ],
+        }),
+      },
+    )
+    expect(res.status).toBe(400)
+  })
+})

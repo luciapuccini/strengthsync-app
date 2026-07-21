@@ -2,14 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2023"],
-    "types": ["@cloudflare/workers-types"],
+    // "node" is needed only because tests import @strengthsync/db/testing
+    // (better-sqlite3, node:fs); the Worker bundle never includes it.
+    "types": ["@cloudflare/workers-types", "node"],
     "rootDir": "src",
     "outDir": "dist"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../../services/domain" },
-    { "path": "../../services/agent" },
-    { "path": "../../services/db" }
-  ]
+  "references": [{ "path": "../../services/domain" }, { "path": "../../services/db" }]
 }

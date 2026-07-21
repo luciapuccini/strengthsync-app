@@ -6,12 +6,22 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 migrations apply strengthsync --local",
+    "db:seed:local": "wrangler d1 execute strengthsync --local --file ../../services/db/seeds/000_default_coach.sql"
+  },
   "dependencies": {
-    "@strengthsync/agent": "workspace:*",
     "@strengthsync/db": "workspace:*",
-    "@strengthsync/domain": "workspace:*"
+    "@strengthsync/domain": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.31",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20260702.1"
+    "@cloudflare/workers-types": "4.20260702.1",
+    "@types/node": "22.20.1",
+    "wrangler": "4.112.0"
   }
 }

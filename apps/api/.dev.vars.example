@@ -1,0 +1,14 @@
+# Shared coach credential for HTTP Basic auth on /api/*
+# (docs/architecture/stack.md — not per-user identity).
+BASIC_AUTH_USERNAME=coach
+BASIC_AUTH_PASSWORD=change-me
+
+# Service secret for /internal/* — called by the local workflow worker only
+# (docs/operations/local_worker.md). Must match the worker's
+# INTERNAL_API_SERVICE_SECRET.
+INTERNAL_API_SERVICE_SECRET=change-me-internal
+
+# Workflow-start API, reached through the Cloudflare Tunnel. Unset in local
+# dev to disable the workflow proxy routes (they return 503).
+# WORKFLOW_API_URL=https://your-tunnel-hostname.example.com
+# WORKFLOW_SERVICE_SECRET=change-me-workflow
