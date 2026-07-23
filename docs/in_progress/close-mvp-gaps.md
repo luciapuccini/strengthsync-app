@@ -4,7 +4,7 @@ Status: in progress
 
 ## Current conclusion
 
-The repository has a solid foundation and a usable seeded-week tracker, but it is not yet an end-to-end MVP. The two workflow entry points are stubs, Braintrust is not connected, profile/history screens are absent, and successful workflows do not reliably refresh the UI.
+The repository has a solid foundation, a usable seeded-week tracker, and both Temporal workflows implemented end to end. Remaining MVP gaps are Braintrust observability, profile/history/refresh UI, and journey hardening.
 
 ## 1. Make plan generation work end to end
 
@@ -19,10 +19,12 @@ Remaining from this item for a later UX pass: coach-notes input in the UI and ga
 
 ## 2. Implement weekly progression
 
-- Replace `apps/workflows/src/workflows/weekly-progression.ts` with complete-week, context, analysis, plan-boundary, next-week generation, and idempotent persistence activities.
-- Validate that all scheduled days are complete before freezing the week.
-- Preserve transient analysis in Temporal/trace context only; write only the completed week and generated next schedule to D1.
-- Test retries and duplicate starts so failures cannot create duplicate plans or weeks.
+Status: done (2026-07-23)
+
+- Replaced the weekly-progression stub with complete-week → context → analyze → plan-boundary → generate/create-next activities.
+- `completeWeek` now rejects weeks with incomplete scheduled days (`week_days_incomplete`).
+- Analysis stays transient (Temporal/trace only); D1 receives the frozen week and the next schedule.
+- Added orchestration and repository tests for idempotent creates, LLM-after-freeze retries, and non-retryable validation.
 
 ## 3. Add required observability
 
