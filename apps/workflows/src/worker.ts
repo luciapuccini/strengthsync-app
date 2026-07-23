@@ -3,10 +3,12 @@ import { fileURLToPath } from 'node:url'
 
 import { NativeConnection, Worker } from '@temporalio/worker'
 
-import * as activities from './activities/plan-generation.ts'
+import * as planGeneration from './activities/plan-generation.ts'
+import * as weeklyProgression from './activities/weekly-progression.ts'
 import { connectionOptions, connectionTarget, TASK_QUEUE, TEMPORAL_NAMESPACE } from './config.ts'
 
 const workflowsPath = resolve(dirname(fileURLToPath(import.meta.url)), 'workflows/index.ts')
+const activities = { ...planGeneration, ...weeklyProgression }
 
 async function run() {
   const connection = await NativeConnection.connect(connectionOptions)

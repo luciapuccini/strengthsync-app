@@ -6,4 +6,11 @@ export {
   summarizePlanHistory,
   summarizePlanProfile,
 } from './plan-generation.ts'
-export type { PlanGenerationActivities } from './types.ts'
+export {
+  analyzeWeekActivity,
+  completeWeekActivity,
+  createNextWeekActivity,
+  generateNextWeekActivity,
+  loadWeeklyContext,
+} from './weekly-progression.ts'
+export type { PlanGenerationActivities, WeeklyProgressionActivities } from './types.ts'

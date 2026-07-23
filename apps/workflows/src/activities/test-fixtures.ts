@@ -2,7 +2,7 @@ import type { PlanGenerationContext } from '@strengthsync/domain/contracts'
 
 export const CLIENT_ID = '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d'
 export const PLAN_ID = '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e'
-export const WEEK_ID = '3c4d5e6f-7a8b-4c9d-0e1f-2a3b4c5d6e7f'
+export const WEEK_ID = '3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f'
 export const PROFILE_ID = '4d5e6f7a-8b9c-4d0e-8f2a-3b4c5d6e7f8a'
 
 export function makeWeekTemplate() {
@@ -25,6 +25,39 @@ export function makeWeekTemplate() {
             },
           ],
   }))
+}
+
+export function makeWeeklyContext(weekIndex = 1, totalWeeks = 4) {
+  const base = initialContext()
+  return {
+    client: base.client,
+    profile: base.profile,
+    coaching_rules: base.coaching_rules,
+    active_plan: {
+      id: PLAN_ID,
+      client_id: CLIENT_ID,
+      label: 'Block 1',
+      status: 'active' as const,
+      total_weeks: totalWeeks,
+      week_template: makeWeekTemplate(),
+      rationale: null,
+      activated_at: '2026-07-01T00:00:00.000Z',
+      created_at: '2026-07-01T00:00:00.000Z',
+      updated_at: '2026-07-01T00:00:00.000Z',
+    },
+    week: {
+      id: WEEK_ID,
+      client_id: CLIENT_ID,
+      plan_id: PLAN_ID,
+      week_index: weekIndex,
+      start_date: '2026-07-01',
+      end_date: '2026-07-07',
+      status: 'completed' as const,
+      schedule: [],
+      created_at: '2026-07-01T00:00:00.000Z',
+      updated_at: '2026-07-07T18:00:00.000Z',
+    },
+  }
 }
 
 export function initialContext(): PlanGenerationContext {

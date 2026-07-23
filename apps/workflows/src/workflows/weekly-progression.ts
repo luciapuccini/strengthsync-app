@@ -1,14 +1,43 @@
+import { proxyActivities, workflowInfo } from '@temporalio/workflow'
+
 import type { WeeklyProgressionInput, WeeklyProgressionResult } from '@strengthsync/domain/contracts'
 
+import type { WeeklyProgressionActivities } from '../activities/types.ts'
+import { runWeeklyProgression } from './weekly-progression-logic.ts'
+
+const data = proxyActivities<
+  Pick<
+    WeeklyProgressionActivities,
+    'completeWeekActivity' | 'loadWeeklyContext' | 'createNextWeekActivity'
+  >
+>({
+  startToCloseTimeout: '30 seconds',
+  retry: { maximumAttempts: 3 },
+})
+
+const analyze = proxyActivities<Pick<WeeklyProgressionActivities, 'analyzeWeekActivity'>>({
+  startToCloseTimeout: '2 minutes',
+  retry: { maximumAttempts: 2 },
+})
+
+const generate = proxyActivities<Pick<WeeklyProgressionActivities, 'generateNextWeekActivity'>>({
+  startToCloseTimeout: '3 minutes',
+  retry: { maximumAttempts: 2 },
+})
+
 /**
- * Stub proving the runtime path (start API → Temporal → worker → result).
- * The real activities — complete week → load context → analyze → generate
- * next week → save — arrive with the weekly-progression milestone
- * (docs/architecture/workflows.md).
+ * Complete week → load context → analyze → plan boundary or generate/create next week.
+ * See docs/architecture/workflows.md.
  */
 export async function weeklyProgressionWorkflow(
   input: WeeklyProgressionInput,
 ): Promise<WeeklyProgressionResult> {
-  void input
-  return { next_week_id: null, plan_complete: false }
+  const activities: WeeklyProgressionActivities = {
+    completeWeekActivity: data.completeWeekActivity,
+    loadWeeklyContext: data.loadWeeklyContext,
+    createNextWeekActivity: data.createNextWeekActivity,
+    analyzeWeekActivity: analyze.analyzeWeekActivity,
+    generateNextWeekActivity: generate.generateNextWeekActivity,
+  }
+  return runWeeklyProgression(input, workflowInfo().workflowId, activities)
 }
