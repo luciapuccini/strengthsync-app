@@ -2,7 +2,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { Client } from '@strengthsync/domain/model'
 
-import { createClient, getClients, getProfile } from './client'
+import { makeWeek } from '@/test/weekFixture'
+
+import {
+  createClient,
+  getClients,
+  getProfile,
+  getWorkflowStatus,
+  saveDayLog,
+  startPlanGeneration,
+  startWeeklyProgression,
+} from './client'
 import { ApiClientError } from './errors'
 
 const UUID = '00000000-0000-4000-8000-000000000001'
@@ -65,5 +75,53 @@ describe('api client', () => {
     vi.stubGlobal('fetch', fetchMock)
     await expect(getClients()).rejects.toBeInstanceOf(ApiClientError)
     await expect(getClients()).rejects.toMatchObject({ kind: 'network' })
+  })
+
+  it('patches a validated day log and parses the returned week', async () => {
+    const week = makeWeek()
+    const body = { completed: true, exercises: [] }
+    const fetchMock = stubFetch({ ok: true, status: 200, body: { week } })
+    await expect(saveDayLog(UUID, UUID, 2, body)).resolves.toEqual(week)
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/clients/${UUID}/weeks/${UUID}/days/2`,
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify(body) }),
+    )
+  })
+
+  it('starts both workflow types with their browser-facing contracts', async () => {
+    const started = { workflow_id: 'workflow-1', status: 'running' }
+    const fetchMock = stubFetch({ ok: true, status: 202, body: started })
+
+    await expect(startWeeklyProgression(UUID, UUID)).resolves.toEqual(started)
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `/api/clients/${UUID}/workflows/weekly-progression`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ week_id: UUID }),
+      }),
+    )
+
+    await expect(startPlanGeneration(UUID, { notes: 'Build a new block.' })).resolves.toEqual(
+      started,
+    )
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `/api/clients/${UUID}/workflows/plan-generation`,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ notes: 'Build a new block.' }),
+      }),
+    )
+  })
+
+  it('parses workflow status responses', async () => {
+    const status = {
+      workflow_id: 'workflow/1',
+      type: 'weekly_progression',
+      status: 'running',
+      started_at: NOW,
+    }
+    const fetchMock = stubFetch({ ok: true, status: 200, body: status })
+    await expect(getWorkflowStatus('workflow/1')).resolves.toEqual(status)
+    expect(fetchMock).toHaveBeenCalledWith('/api/workflows/workflow%2F1', expect.any(Object))
   })
 })

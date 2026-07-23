@@ -1,7 +1,22 @@
 import { z } from 'zod'
 
-import { CreateClientInputSchema, UpdateClientProfileSchema } from '@strengthsync/domain/contracts'
-import type { CreateClientInput, UpdateClientProfile } from '@strengthsync/domain/contracts'
+import {
+  CreateClientInputSchema,
+  StartPlanGenerationSchema,
+  StartWeeklyProgressionSchema,
+  UpdateClientProfileSchema,
+  UpdateDayLogSchema,
+  WorkflowStartedSchema,
+  WorkflowStatusSchema,
+} from '@strengthsync/domain/contracts'
+import type {
+  CreateClientInput,
+  StartPlanGeneration,
+  UpdateClientProfile,
+  UpdateDayLog,
+  WorkflowStarted,
+  WorkflowStatus,
+} from '@strengthsync/domain/contracts'
 import { ClientProfileSchema, ClientSchema, PlanSchema, WeekSchema } from '@strengthsync/domain/model'
 import type { Client, ClientProfile, Plan, Week } from '@strengthsync/domain/model'
 
@@ -84,4 +99,47 @@ export async function getCurrentWeek(clientId: string): Promise<Week | null> {
   return orNull(async () =>
     WeekResponse.parse(await request(`/api/clients/${clientId}/weeks/current`)).week,
   )
+}
+
+export async function saveDayLog(
+  clientId: string,
+  weekId: string,
+  dayIndex: number,
+  input: UpdateDayLog,
+): Promise<Week> {
+  const body = UpdateDayLogSchema.parse(input)
+  const response = await request(
+    `/api/clients/${clientId}/weeks/${weekId}/days/${dayIndex}`,
+    { method: 'PATCH', body },
+  )
+  return WeekResponse.parse(response).week
+}
+
+export async function startWeeklyProgression(
+  clientId: string,
+  weekId: string,
+): Promise<WorkflowStarted> {
+  const body = StartWeeklyProgressionSchema.parse({ week_id: weekId })
+  const response = await request(`/api/clients/${clientId}/workflows/weekly-progression`, {
+    method: 'POST',
+    body,
+  })
+  return WorkflowStartedSchema.parse(response)
+}
+
+export async function startPlanGeneration(
+  clientId: string,
+  input: StartPlanGeneration = {},
+): Promise<WorkflowStarted> {
+  const body = StartPlanGenerationSchema.parse(input)
+  const response = await request(`/api/clients/${clientId}/workflows/plan-generation`, {
+    method: 'POST',
+    body,
+  })
+  return WorkflowStartedSchema.parse(response)
+}
+
+export async function getWorkflowStatus(workflowId: string): Promise<WorkflowStatus> {
+  const response = await request(`/api/workflows/${encodeURIComponent(workflowId)}`)
+  return WorkflowStatusSchema.parse(response)
 }
