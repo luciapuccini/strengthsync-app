@@ -43,9 +43,8 @@ export function createMigratedSqlite(): BetterSqlite3.Database {
 
 /** Apply the seed data (single shared coach for the MVP). */
 export function applySeeds(sqlite: BetterSqlite3.Database): void {
-  for (const seed of readSqlDir('seeds')) {
-    applySqlFile(sqlite, seed)
-  }
+  const baseSeed = readFileSync(new URL('seeds/000_default_coach.sql', PACKAGE_ROOT), 'utf8')
+  applySqlFile(sqlite, baseSeed)
 }
 
 /**
