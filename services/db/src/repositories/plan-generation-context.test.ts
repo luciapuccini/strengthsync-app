@@ -12,7 +12,7 @@ import {
 } from '../repositories/internal'
 import { createClient } from '../repositories/clients'
 import { upsertProfile } from '../repositories/profiles'
-import { createTestDb } from '../testing/index'
+import { createTestDb, markAllDaysCompleted } from '../testing/index'
 
 const weekTemplate: PlanDay[] = [
   {
@@ -64,6 +64,7 @@ describe('plan-generation context', () => {
       workflow_id: 'wf-activate-1',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
+    await markAllDaysCompleted(db, clientId, first_week.id)
     await completeWeek(db, clientId, first_week.id)
 
     const weekly = await getWeeklyContext(db, clientId, first_week.id)
@@ -74,6 +75,7 @@ describe('plan-generation context', () => {
       previous_week_id: first_week.id,
       schedule: first_week.schedule,
     })
+    await markAllDaysCompleted(db, clientId, week2.id)
     await completeWeek(db, clientId, week2.id)
 
     const forGeneration = await getPlanGenerationContext(db, clientId)
@@ -99,6 +101,7 @@ describe('plan-generation context', () => {
     await expect(getPlanGenerationContext(db, clientId)).rejects.toMatchObject({
       code: 'plan_not_complete',
     })
+    await markAllDaysCompleted(db, clientId, first_week.id)
     await completeWeek(db, clientId, first_week.id)
     await expect(getPlanGenerationContext(db, clientId)).rejects.toMatchObject({
       code: 'plan_not_complete',

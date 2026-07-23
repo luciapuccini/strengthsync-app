@@ -13,7 +13,7 @@ import { createClient, getClient, listClients } from '../repositories/clients'
 import { getActivePlan, listPlans } from '../repositories/plans'
 import { upsertProfile } from '../repositories/profiles'
 import { getCurrentWeek, getWeek, listWeeks, updateDayLog } from '../repositories/weeks'
-import { createTestDb } from '../testing/index'
+import { createTestDb, markAllDaysCompleted } from '../testing/index'
 
 const weekTemplate: PlanDay[] = [
   {
@@ -122,12 +122,14 @@ describe('plan + week lifecycle', () => {
 
   it('activating a new plan archives the previous one once its weeks are completed', async () => {
     const first = await activate('wf-activate-a')
+    await markAllDaysCompleted(db, clientId, first.first_week.id)
     await completeWeek(db, clientId, first.first_week.id)
     const week2 = await createNextWeek(db, clientId, {
       workflow_id: 'wf-week-2',
       previous_week_id: first.first_week.id,
       schedule: first.first_week.schedule,
     })
+    await markAllDaysCompleted(db, clientId, week2.id)
     await completeWeek(db, clientId, week2.id)
 
     const second = await activateGeneratedPlan(db, clientId, {
@@ -214,6 +216,7 @@ describe('day logs', () => {
       workflow_id: 'wf-activate-1',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
+    await markAllDaysCompleted(db, clientId, first_week.id)
     await completeWeek(db, clientId, first_week.id)
 
     await expect(
@@ -232,9 +235,20 @@ describe('internal workflow commands', () => {
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
     await upsertProfile(db, clientId, profileInput)
+    await markAllDaysCompleted(db, clientId, first_week.id)
     await completeWeek(db, clientId, first_week.id)
     return { plan, first_week }
   }
+
+  it('completeWeek rejects incomplete days', async () => {
+    const { first_week } = await activateGeneratedPlan(db, clientId, {
+      workflow_id: 'wf-activate-1',
+      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
+    })
+    await expect(completeWeek(db, clientId, first_week.id)).rejects.toMatchObject({
+      code: 'week_days_incomplete',
+    })
+  })
 
   it('completeWeek is idempotent', async () => {
     const { first_week } = await activateAndCompleteFirstWeek()
@@ -279,6 +293,7 @@ describe('internal workflow commands', () => {
       previous_week_id: first_week.id,
       schedule: first_week.schedule,
     })
+    await markAllDaysCompleted(db, clientId, week2.id)
     await completeWeek(db, clientId, week2.id)
 
     await expect(

@@ -5,6 +5,7 @@ import type { DrizzleD1Database } from 'drizzle-orm/d1'
 
 import type { Db } from '../db.ts'
 import * as schema from '../schema.ts'
+import { getWeek, updateDayLog } from '../repositories/weeks.ts'
 import { FakeD1Database } from './fake-d1.ts'
 
 // drizzle-orm/d1 is typed against its own minimal D1Database interface;
@@ -57,4 +58,26 @@ export function createTestDb(): Db {
   return drizzle(new FakeD1Database(sqlite), { schema }) as unknown as DrizzleD1Database<
     typeof schema
   > as Db
+}
+
+/** Mark every scheduled day completed so `completeWeek` can freeze the week. */
+export async function markAllDaysCompleted(
+  db: Db,
+  clientId: string,
+  weekId: string,
+): Promise<void> {
+  const week = await getWeek(db, clientId, weekId)
+  if (!week) throw new Error(`week ${weekId} not found`)
+  for (const day of week.schedule) {
+    if (day.completed) continue
+    await updateDayLog(db, clientId, weekId, day.day_index, {
+      completed: true,
+      exercises: day.exercises.map((exercise) => ({
+        exercise_key: exercise.exercise_key,
+        skipped: false,
+        feedback: null,
+        sets: [],
+      })),
+    })
+  }
 }

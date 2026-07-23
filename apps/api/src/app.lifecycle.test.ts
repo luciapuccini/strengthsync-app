@@ -10,6 +10,7 @@ import {
   createNextWeekViaInternalApi,
   createTestApp,
   internalHeaders,
+  markAllDaysCompletedViaApi,
   patchDayViaApi,
   upsertProfileViaApi,
   weekTemplate,
@@ -35,6 +36,19 @@ async function setupCompletedFirstWeek(app: ReturnType<typeof createTestApp>) {
 }
 
 describe('week tracking + weekly progression', () => {
+  it('rejects completing a week with incomplete days', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+    await upsertProfileViaApi(app, client.id)
+    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-activate-1')
+
+    const res = await completeWeekViaInternalApi(app, client.id, first_week.id, 'wf-weekly-1')
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'week_days_incomplete',
+    )
+  })
+
   it('tracks a day, completes the week immutably, and creates the next week', async () => {
     const app = createTestApp()
     const { client, first_week } = await setupCompletedFirstWeek(app)
@@ -86,6 +100,7 @@ describe('plan turnover', () => {
     // Complete the plan's final week (week 2 of 2).
     const next = await createNextWeekViaInternalApi(app, client.id, 'wf-weekly-1', first_week)
     const week2 = ((await next.json()) as { week: Week }).week
+    await markAllDaysCompletedViaApi(app, client.id, week2)
     await completeWeekViaInternalApi(app, client.id, week2.id, 'wf-weekly-2')
 
     const context = await app.request(`/internal/clients/${client.id}/plan-generation-context`, {

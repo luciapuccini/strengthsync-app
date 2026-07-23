@@ -125,10 +125,37 @@ export async function patchDayViaApi(
   clientId: string,
   weekId: string,
   exercises: unknown[],
+  dayIndex = 1,
 ): Promise<Response> {
-  return app.request(`/api/clients/${clientId}/weeks/${weekId}/days/1`, {
+  return app.request(`/api/clients/${clientId}/weeks/${weekId}/days/${dayIndex}`, {
     method: 'PATCH',
     headers: { authorization: basicHeader(), 'content-type': 'application/json' },
     body: JSON.stringify({ completed: true, exercises }),
   })
+}
+
+/** Mark every scheduled day completed so the week can be frozen. */
+export async function markAllDaysCompletedViaApi(
+  app: Hono,
+  clientId: string,
+  week: Week,
+): Promise<void> {
+  for (const day of week.schedule) {
+    if (day.completed) continue
+    const res = await patchDayViaApi(
+      app,
+      clientId,
+      week.id,
+      day.exercises.map((exercise) => ({
+        exercise_key: exercise.exercise_key,
+        skipped: false,
+        feedback: null,
+        sets: [],
+      })),
+      day.day_index,
+    )
+    if (!res.ok) {
+      throw new Error(`failed to mark day ${day.day_index} completed: ${res.status}`)
+    }
+  }
 }
