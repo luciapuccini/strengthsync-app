@@ -41,7 +41,7 @@ const boundary = (files, allowed, extraBanned = []) => {
 }
 
 export default defineConfig([
-  globalIgnores(['**/dist/**', '**/coverage/**', 'docs/**']),
+  globalIgnores(['**/dist/**', '**/coverage/**', '**/.wrangler/**', 'docs/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, tseslint.configs.recommended],
