@@ -1,17 +1,66 @@
-import type { PlanGenerationInput, PlanGenerationResult } from '@strengthsync/domain/contracts'
+import { proxyActivities, workflowInfo } from '@temporalio/workflow'
 
-/** All-zero sentinel ids make stub output unmistakable until the real activities land. */
-const STUB_PLAN_ID = '00000000-0000-4000-8000-0000000000aa'
-const STUB_WEEK_ID = '00000000-0000-4000-8000-0000000000ab'
+import type {
+  PlanGenerationInput,
+  PlanGenerationResult,
+} from '@strengthsync/domain/contracts'
+
+import type { PlanGenerationActivities } from '../activities/types.ts'
+
+const data = proxyActivities<
+  Pick<PlanGenerationActivities, 'loadPlanGenerationContext' | 'activateGeneratedPlan'>
+>({
+  startToCloseTimeout: '30 seconds',
+  retry: { maximumAttempts: 3 },
+})
+
+const llm = proxyActivities<
+  Pick<
+    PlanGenerationActivities,
+    'summarizePlanProfile' | 'summarizePlanHistory' | 'generatePlanDocument'
+  >
+>({
+  // History/profile summaries: 2 minutes, plan generation: 3 minutes (docs/architecture/workflows.md).
+  // Use the stricter plan-generation budget for all LLM activities in this workflow.
+  startToCloseTimeout: '3 minutes',
+  retry: { maximumAttempts: 2 },
+})
 
 /**
- * Stub proving the runtime path. The real activities — load context →
- * summarize history/profile → generate plan → validate → activate — arrive
- * with the plan-generation milestone (docs/architecture/workflows.md).
+ * Load context → summarize profile/history → generate plan → activate + week 1.
+ * See docs/architecture/workflows.md.
  */
 export async function planGenerationWorkflow(
   input: PlanGenerationInput,
 ): Promise<PlanGenerationResult> {
-  void input
-  return { plan_id: STUB_PLAN_ID, first_week_id: STUB_WEEK_ID }
+  const workflow_id = workflowInfo().workflowId
+  const context = await data.loadPlanGenerationContext({ client_id: input.client_id })
+
+  const [profile_summary, history_summary] = await Promise.all([
+    llm.summarizePlanProfile({
+      workflow_id,
+      client_id: input.client_id,
+      context,
+    }),
+    llm.summarizePlanHistory({
+      workflow_id,
+      client_id: input.client_id,
+      context,
+    }),
+  ])
+
+  const plan = await llm.generatePlanDocument({
+    workflow_id,
+    client_id: input.client_id,
+    context,
+    profile_summary,
+    history_summary,
+    ...(input.notes !== undefined ? { notes: input.notes } : {}),
+  })
+
+  return data.activateGeneratedPlan({
+    workflow_id,
+    client_id: input.client_id,
+    plan,
+  })
 }

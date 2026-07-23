@@ -168,10 +168,15 @@ export const WeeklyContextSchema = z.object({
 })
 export type WeeklyContext = z.infer<typeof WeeklyContextSchema>
 
+/**
+ * Context for plan generation. `active_plan` is null for a client's first
+ * plan; otherwise it is the completed block being replaced. Completed weeks
+ * are empty on first generation and scoped to the active plan on replacement.
+ */
 export const PlanGenerationContextSchema = z.object({
   client: ClientSchema,
   profile: ClientProfileSchema,
-  active_plan: PlanSchema,
+  active_plan: PlanSchema.nullable(),
   completed_weeks: z.array(WeekSchema),
   coaching_rules: z.string(),
 })

@@ -109,6 +109,38 @@ describe('plan turnover', () => {
     })
     expect(((await history.json()) as { weeks: Week[] }).weeks).toHaveLength(2)
   })
+
+  it('returns first-plan context with null active_plan', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+    await upsertProfileViaApi(app, client.id)
+
+    const context = await app.request(`/internal/clients/${client.id}/plan-generation-context`, {
+      headers: internalHeaders(),
+    })
+    expect(context.status).toBe(200)
+    const body = (await context.json()) as {
+      active_plan: Plan | null
+      completed_weeks: Week[]
+    }
+    expect(body.active_plan).toBeNull()
+    expect(body.completed_weeks).toEqual([])
+  })
+
+  it('rejects plan-generation context while an active plan is unfinished', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+    await upsertProfileViaApi(app, client.id)
+    await activatePlanViaInternalApi(app, client.id, 'wf-activate-1')
+
+    const context = await app.request(`/internal/clients/${client.id}/plan-generation-context`, {
+      headers: internalHeaders(),
+    })
+    expect(context.status).toBe(400)
+    expect(((await context.json()) as { error: { code: string } }).error.code).toBe(
+      'plan_not_complete',
+    )
+  })
 })
 
 describe('template sanity', () => {

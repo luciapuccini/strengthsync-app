@@ -17,4 +17,5 @@ INTERNAL_API_SERVICE_SECRET=dev-internal-secret
 
 # LLM providers (used by activities in milestones 4–5).
 OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4.1-mini
 BRAINTRUST_API_KEY=

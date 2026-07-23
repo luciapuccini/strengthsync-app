@@ -7,6 +7,9 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@strengthsync/domain": "workspace:*"
+    "@ai-sdk/openai": "4.0.19",
+    "@strengthsync/domain": "workspace:*",
+    "ai": "7.0.36",
+    "zod": "4.4.3"
   }
 }

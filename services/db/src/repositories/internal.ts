@@ -7,7 +7,7 @@ import type {
   PlanGenerationContext,
   WeeklyContext,
 } from '@strengthsync/domain/contracts'
-import type { Plan, PlanDay, Week, WeekDay } from '@strengthsync/domain/model'
+import type { Plan, Week } from '@strengthsync/domain/model'
 
 import { addDays, nowIso, startOfISOWeek, todayIso } from '../dates.ts'
 import type { Db } from '../db.ts'
@@ -15,6 +15,11 @@ import { RepoError } from '../errors.ts'
 import { newId } from '../ids.ts'
 import { plans, weeks } from '../schema.ts'
 import { getClient } from './clients.ts'
+import {
+  buildScheduleFromTemplate,
+  findExistingActivation,
+  findWeekByWorkflowId,
+} from './internal-helpers.ts'
 import { toPlan } from './plans.ts'
 import { getProfile } from './profiles.ts'
 import { getWeek, toWeek } from './weeks.ts'
@@ -26,19 +31,28 @@ import { getWeek, toWeek } from './weeks.ts'
  * duplicating a week or plan.
  */
 
-async function requireClientContext(db: Db, clientId: string) {
+async function requireClientAndProfile(db: Db, clientId: string) {
   const client = await getClient(db, clientId)
   if (!client) throw new RepoError('not_found', 'client_not_found', `client ${clientId} not found`)
   const profile = await getProfile(db, clientId)
   if (!profile) {
     throw new RepoError('not_found', 'profile_not_found', `client ${clientId} has no profile`)
   }
+  return { client, profile }
+}
+
+async function findActivePlanRow(db: Db, clientId: string) {
   const activePlanRows = await db
     .select()
     .from(plans)
     .where(and(eq(plans.client_id, clientId), eq(plans.status, 'active')))
     .limit(1)
-  const activePlan = activePlanRows[0]
+  return activePlanRows[0] ?? null
+}
+
+async function requireClientContext(db: Db, clientId: string) {
+  const { client, profile } = await requireClientAndProfile(db, clientId)
+  const activePlan = await findActivePlanRow(db, clientId)
   if (!activePlan) {
     throw new RepoError('not_found', 'active_plan_not_found', `client ${clientId} has no active plan`)
   }
@@ -167,11 +181,42 @@ export async function createNextWeek(db: Db, clientId: string, cmd: CreateNextWe
   return toWeek(row)
 }
 
+/**
+ * Load context for plan generation.
+ * - Initial plan: no active plan → empty history.
+ * - Replacement: active plan whose final week is completed and no in_flight week.
+ * Rejects when an active plan still has weeks remaining or an in_flight week.
+ */
 export async function getPlanGenerationContext(
   db: Db,
   clientId: string,
 ): Promise<PlanGenerationContext> {
-  const { client, profile, activePlan } = await requireClientContext(db, clientId)
+  const { client, profile } = await requireClientAndProfile(db, clientId)
+  const activePlan = await findActivePlanRow(db, clientId)
+
+  if (!activePlan) {
+    return {
+      client,
+      profile,
+      active_plan: null,
+      completed_weeks: [],
+      coaching_rules: COACHING_RULES,
+    }
+  }
+
+  const inFlight = await db
+    .select({ id: weeks.id })
+    .from(weeks)
+    .where(and(eq(weeks.client_id, clientId), eq(weeks.status, 'in_flight')))
+    .limit(1)
+  if (inFlight[0]) {
+    throw new RepoError(
+      'validation',
+      'plan_not_complete',
+      `client ${clientId} still has an in_flight week; finish the active plan before generating a replacement`,
+    )
+  }
+
   const completedWeeks = await db
     .select()
     .from(weeks)
@@ -179,6 +224,15 @@ export async function getPlanGenerationContext(
       and(eq(weeks.client_id, clientId), eq(weeks.plan_id, activePlan.id), eq(weeks.status, 'completed')),
     )
     .orderBy(asc(weeks.start_date))
+  const finalWeek = completedWeeks.find((week) => week.week_index === activePlan.total_weeks)
+  if (!finalWeek) {
+    throw new RepoError(
+      'validation',
+      'plan_not_complete',
+      `active plan ${activePlan.id} has not completed week ${activePlan.total_weeks}; replacement generation is not allowed yet`,
+    )
+  }
+
   return {
     client,
     profile,
@@ -242,67 +296,4 @@ export async function activateGeneratedPlan(
   ])
 
   return { plan: toPlan(planRow), first_week: toWeek(weekRow) }
-}
-
-/** Idempotency lookup: return the already-activated plan + week 1 for a retried workflow. */
-async function findExistingActivation(
-  db: Db,
-  clientId: string,
-  workflowId: string,
-): Promise<{ plan: Plan; first_week: Week } | null> {
-  const planRows = await db
-    .select()
-    .from(plans)
-    .where(and(eq(plans.client_id, clientId), eq(plans.workflow_id, workflowId)))
-    .limit(1)
-  const planRow = planRows[0]
-  if (!planRow) return null
-  const weekRows = await db
-    .select()
-    .from(weeks)
-    .where(and(eq(weeks.plan_id, planRow.id), eq(weeks.week_index, 1)))
-    .limit(1)
-  const weekRow = weekRows[0]
-  if (!weekRow) {
-    throw new RepoError(
-      'conflict',
-      'activation_incomplete',
-      'a plan with this workflow_id exists but its week 1 is missing',
-    )
-  }
-  return { plan: toPlan(planRow), first_week: toWeek(weekRow) }
-}
-
-/** Expand a plan's canonical week template into week 1's dated, empty-log schedule. */
-function buildScheduleFromTemplate(weekTemplate: PlanDay[], start: string): WeekDay[] {
-  return weekTemplate.map((day) => ({
-    ...day,
-    date: addDays(start, day.day_index - 1),
-    completed: false,
-    completed_at: null,
-    exercises: day.exercises.map((exercise) => ({
-      exercise_key: exercise.exercise_key,
-      name: exercise.name,
-      skipped: false,
-      feedback: null,
-      prescribed: {
-        series: exercise.series,
-        reps: exercise.reps,
-        rest_time_sec: exercise.rest_time_sec,
-        weight_kg: exercise.weight_kg,
-        notes: exercise.notes,
-      },
-      sets: [],
-    })),
-  }))
-}
-
-async function findWeekByWorkflowId(db: Db, clientId: string, workflowId: string): Promise<Week | null> {
-  const rows = await db
-    .select()
-    .from(weeks)
-    .where(and(eq(weeks.client_id, clientId), eq(weeks.workflow_id, workflowId)))
-    .limit(1)
-  const row = rows[0]
-  return row ? toWeek(row) : null
 }

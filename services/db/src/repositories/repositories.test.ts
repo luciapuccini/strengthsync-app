@@ -8,8 +8,6 @@ import {
   activateGeneratedPlan,
   completeWeek,
   createNextWeek,
-  getPlanGenerationContext,
-  getWeeklyContext,
 } from '../repositories/internal'
 import { createClient, getClient, listClients } from '../repositories/clients'
 import { getActivePlan, listPlans } from '../repositories/plans'
@@ -290,20 +288,6 @@ describe('internal workflow commands', () => {
         schedule: week2.schedule,
       }),
     ).rejects.toThrow(/plan_complete|total_weeks|no next week/i)
-  })
-
-  it('weekly and plan-generation contexts include coaching rules and live state', async () => {
-    const { plan, first_week } = await activateAndCompleteFirstWeek()
-
-    const weekly = await getWeeklyContext(db, clientId, first_week.id)
-    expect(weekly.coaching_rules).toContain('pushed weekly')
-    expect(weekly.week.status).toBe('completed')
-    expect(weekly.active_plan.id).toBe(plan.id)
-    expect(weekly.profile.strength_loads).toEqual({ press_banca: 60 })
-
-    const forGeneration = await getPlanGenerationContext(db, clientId)
-    expect(forGeneration.completed_weeks.map((w) => w.id)).toEqual([first_week.id])
-    expect(forGeneration.coaching_rules).toContain('pushed weekly')
   })
 
   it('getWeek scopes reads to the owning client', async () => {

@@ -223,7 +223,9 @@ body: {
 → { week: Week }
 
 GET /internal/clients/:clientId/plan-generation-context
-→ { client, profile, active_plan, completed_weeks, coaching_rules }
+→ { client, profile, active_plan: Plan | null, completed_weeks, coaching_rules }
+   // active_plan is null for a client's first plan; otherwise the completed block
+   // being replaced. Rejects with plan_not_complete while the active plan is unfinished.
 
 POST /internal/clients/:clientId/plans/activate-generated
 body: {

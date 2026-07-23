@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 
 import { NativeConnection, Worker } from '@temporalio/worker'
 
+import * as activities from './activities/plan-generation.ts'
 import { connectionOptions, connectionTarget, TASK_QUEUE, TEMPORAL_NAMESPACE } from './config.ts'
 
 const workflowsPath = resolve(dirname(fileURLToPath(import.meta.url)), 'workflows/index.ts')
@@ -15,8 +16,7 @@ async function run() {
       namespace: TEMPORAL_NAMESPACE,
       taskQueue: TASK_QUEUE,
       workflowsPath,
-      // No activities yet: they arrive with the weekly-progression milestone,
-      // each receiving the Braintrust-backed LlmCallRecorder.
+      activities,
     })
     console.log(
       `[temporal-worker] polling task queue "${TASK_QUEUE}" (namespace "${TEMPORAL_NAMESPACE}") on ${connectionTarget}`,

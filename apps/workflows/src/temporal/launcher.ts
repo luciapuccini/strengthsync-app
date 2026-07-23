@@ -118,7 +118,7 @@ export function createTemporalLauncher(getClient: () => Promise<Client>): Workfl
     if (status.status !== 'failed') throw new WorkflowNotFailedError(workflowId)
     // Same deterministic id: the FAILED_ONLY reuse policy permits the
     // re-start precisely because the previous execution failed.
-    // Note: plan-generation retry loses optional coach notes (documented).
+    // Plan-generation retry rebuilds input from the workflow id (notes are dropped).
     return start(workflowId, parsed.type === 'weekly_progression' ? 'weekly' : 'plan', parsed.input)
   }
 

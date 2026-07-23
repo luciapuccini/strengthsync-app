@@ -23,6 +23,10 @@ export const connectionTarget = TEMPORAL_API_KEY
   ? `Temporal Cloud (${TEMPORAL_ADDRESS})`
   : `local dev server (${TEMPORAL_ADDRESS})`
 
-/** apps/api internal data-command surface (used by activities in later milestones). */
+/** apps/api internal data-command surface used by workflow activities. */
 export const INTERNAL_API_BASE_URL = process.env.INTERNAL_API_BASE_URL ?? 'http://localhost:8787'
 export const INTERNAL_API_SERVICE_SECRET = process.env.INTERNAL_API_SERVICE_SECRET ?? ''
+
+/** OpenAI configuration for plan-generation / weekly LLM activities. */
+export const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? ''
+export const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'
