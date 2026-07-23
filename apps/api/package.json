@@ -10,7 +10,9 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:migrate:local": "wrangler d1 migrations apply strengthsync --local",
-    "db:seed:local": "wrangler d1 execute strengthsync --local --file ../../services/db/seeds/000_default_coach.sql"
+    "db:seed:local": "wrangler d1 execute strengthsync --local --file ../../services/db/seeds/000_default_coach.sql",
+    "db:migrate:remote": "wrangler d1 migrations apply strengthsync --remote",
+    "db:seed:remote": "wrangler d1 execute strengthsync --remote --file ../../services/db/seeds/000_default_coach.sql"
   },
   "dependencies": {
     "@strengthsync/db": "workspace:*",

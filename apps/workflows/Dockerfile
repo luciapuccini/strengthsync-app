@@ -2,7 +2,7 @@
 # image with different commands (docs/operations/local_worker.md).
 # Build context must be the repository root:
 #   docker build -f apps/workflows/Dockerfile -t strengthsync-workflows .
-FROM node:22.14.0-alpine AS build
+FROM node:22.14.0 AS build
 RUN corepack enable
 WORKDIR /app
 
@@ -26,7 +26,9 @@ COPY apps/workflows apps/workflows
 # --legacy: pnpm v10+ deploy requires injected workspace packages otherwise.
 RUN pnpm deploy --legacy --filter @strengthsync/workflows --prod /prod
 
-FROM node:22.14.0-alpine
+FROM node:22.14.0-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates wget \
+    && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /prod .
