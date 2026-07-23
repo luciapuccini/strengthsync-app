@@ -1,47 +1,22 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import type { AgentRuntime, LlmCallRecorder, WorkflowLlmContext } from './index'
-import { generatePlan, summarizeHistory, summarizeProfile, withLlmRecording } from './index'
-
-const CLIENT_ID = '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d'
-const PROFILE = {
-  id: CLIENT_ID,
-  client_id: CLIENT_ID,
-  snapshot_date: '2026-07-01',
-  sex: 'female',
-  age: 34,
-  height_cm: 165,
-  goals: { primary: 'strength' },
-  body_composition: { weight_kg: 62 },
-  strength_loads: { press_banca: 60 },
-  nutrition: null,
-  swimming: null,
-  schedule_preferences: { days_per_week: 4 },
-  notes: null,
-  updated_at: '2026-07-01T00:00:00.000Z',
-}
-
-function makeWeekTemplate() {
-  return [1, 2, 3, 4, 5, 6, 7].map((day_index) => ({
-    day_index,
-    type: day_index === 7 ? ('rest' as const) : ('upper_body' as const),
-    notes: null,
-    exercises:
-      day_index === 7
-        ? []
-        : [
-            {
-              exercise_key: 'press_banca',
-              name: 'Bench press',
-              series: 4,
-              reps: 8,
-              rest_time_sec: 120,
-              weight_kg: 60,
-              notes: null,
-            },
-          ],
-  }))
-}
+import {
+  analyzeWeek,
+  generateNextWeek,
+  generatePlan,
+  summarizeHistory,
+  summarizeProfile,
+  withLlmRecording,
+} from './index'
+import {
+  CLIENT_ID,
+  makePlan,
+  makeSchedule,
+  makeWeek,
+  makeWeekTemplate,
+  PROFILE,
+} from './test-fixtures'
 
 describe('@strengthsync/agent recording', () => {
   it('records successes and failures', async () => {
@@ -95,21 +70,9 @@ describe('summarize helpers', () => {
     ).resolves.toEqual({ summary: 'Client is ready for a strength block.' })
 
     context.step = 'summarize_history'
-    const plan = {
-      id: CLIENT_ID,
-      client_id: CLIENT_ID,
-      label: 'Block 1',
-      status: 'active' as const,
-      total_weeks: 2,
-      week_template: makeWeekTemplate(),
-      rationale: null,
-      activated_at: '2026-07-01T00:00:00.000Z',
-      created_at: '2026-07-01T00:00:00.000Z',
-      updated_at: '2026-07-01T00:00:00.000Z',
-    }
     await expect(
       summarizeHistory(runtime, context, {
-        active_plan: plan,
+        active_plan: makePlan(),
         completed_weeks: [],
         coaching_rules: 'push weekly',
       }),
@@ -179,5 +142,90 @@ describe('generatePlan helper', () => {
         notes: 'prefer mornings',
       }),
     ).resolves.toEqual(plan)
+  })
+})
+
+describe('weekly progression helpers', () => {
+  it('analyzes a week through the runtime', async () => {
+    const runtime: AgentRuntime = {
+      generateObject: vi.fn(async () => ({
+        analysis: 'Hit all prescribed work; push compound lifts next week.',
+      })) as AgentRuntime['generateObject'],
+    }
+    const context: WorkflowLlmContext = {
+      workflow_id: 'wf-weekly-1',
+      client_id: CLIENT_ID,
+      step: 'analyze_week',
+      recorder: { record: vi.fn(async () => undefined) },
+      model: 'test-model',
+    }
+
+    await expect(
+      analyzeWeek(runtime, context, {
+        week: makeWeek(),
+        active_plan: makePlan(),
+        profile: PROFILE,
+        coaching_rules: 'push weekly',
+      }),
+    ).resolves.toEqual({
+      analysis: 'Hit all prescribed work; push compound lifts next week.',
+    })
+  })
+
+  it('rejects an incomplete next-week schedule and still records the failure', async () => {
+    const records: Array<{ error: string | null }> = []
+    const runtime: AgentRuntime = {
+      generateObject: vi.fn(async () => ({
+        schedule: makeSchedule('2026-07-08', true).slice(0, 3),
+      })) as AgentRuntime['generateObject'],
+    }
+    const context: WorkflowLlmContext = {
+      workflow_id: 'wf-weekly-1',
+      client_id: CLIENT_ID,
+      step: 'generate_next_week',
+      recorder: {
+        async record(input) {
+          records.push({ error: input.error })
+        },
+      },
+      model: 'test-model',
+    }
+
+    await expect(
+      generateNextWeek(runtime, context, {
+        week: makeWeek(),
+        active_plan: makePlan(),
+        profile: PROFILE,
+        analysis: 'push compounds',
+        coaching_rules: 'push weekly',
+        next_week_start_date: '2026-07-08',
+      }),
+    ).rejects.toThrow()
+    expect(records).toEqual([{ error: expect.any(String) }])
+  })
+
+  it('returns a validated next-week schedule', async () => {
+    const schedule = makeSchedule('2026-07-08', false)
+    const runtime: AgentRuntime = {
+      generateObject: vi.fn(async () => ({ schedule })) as AgentRuntime['generateObject'],
+    }
+    const context: WorkflowLlmContext = {
+      workflow_id: 'wf-weekly-1',
+      client_id: CLIENT_ID,
+      step: 'generate_next_week',
+      recorder: { record: vi.fn(async () => undefined) },
+      model: 'test-model',
+    }
+
+    await expect(
+      generateNextWeek(runtime, context, {
+        week: makeWeek(),
+        active_plan: makePlan(),
+        profile: PROFILE,
+        analysis: 'push compounds',
+        coaching_rules: 'push weekly',
+        next_week_start_date: '2026-07-08',
+      }),
+    ).resolves.toEqual({ schedule })
   })
 })

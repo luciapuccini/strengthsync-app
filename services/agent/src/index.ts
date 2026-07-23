@@ -3,16 +3,24 @@ import { generateText, Output } from "ai";
 import type { z } from "zod";
 
 import {
+  buildAnalyzeWeekPrompt,
+  buildGenerateNextWeekPrompt,
   buildGeneratePlanPrompt,
   buildSummarizeHistoryPrompt,
   buildSummarizeProfilePrompt,
   HistorySummarySchema,
+  NextWeekScheduleSchema,
   ProfileSummarySchema,
+  WeekAnalysisSchema,
+  type AnalyzeWeekPromptInput,
+  type GenerateNextWeekPromptInput,
   type GeneratePlanPromptInput,
   type HistorySummary,
+  type NextWeekSchedule,
   type ProfileSummary,
   type SummarizeHistoryPromptInput,
   type SummarizeProfilePromptInput,
+  type WeekAnalysis,
   type WorkflowLlmStep,
 } from "@strengthsync/domain/coach";
 import {
@@ -172,5 +180,39 @@ export async function generatePlan(
     });
     const plan = GeneratedPlanInputSchema.parse(object);
     return plan;
+  });
+}
+
+export async function analyzeWeek(
+  runtime: AgentRuntime,
+  context: WorkflowLlmContext,
+  input: AnalyzeWeekPromptInput,
+): Promise<WeekAnalysis> {
+  const prompt = buildAnalyzeWeekPrompt(input);
+  return withLlmRecording(context, input, async () => {
+    const object = await runtime.generateObject({
+      model: context.model,
+      schema: WeekAnalysisSchema,
+      system: prompt.system,
+      prompt: prompt.prompt,
+    });
+    return WeekAnalysisSchema.parse(object);
+  });
+}
+
+export async function generateNextWeek(
+  runtime: AgentRuntime,
+  context: WorkflowLlmContext,
+  input: GenerateNextWeekPromptInput,
+): Promise<NextWeekSchedule> {
+  const prompt = buildGenerateNextWeekPrompt(input);
+  return withLlmRecording(context, input, async () => {
+    const object = await runtime.generateObject({
+      model: context.model,
+      schema: NextWeekScheduleSchema,
+      system: prompt.system,
+      prompt: prompt.prompt,
+    });
+    return NextWeekScheduleSchema.parse(object);
   });
 }

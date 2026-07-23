@@ -28,3 +28,16 @@ export {
   type SummarizeHistoryPromptInput,
   type GeneratePlanPromptInput,
 } from './plan-generation.ts'
+
+export {
+  WeekAnalysisSchema,
+  NextWeekScheduleSchema,
+  AnalyzeWeekPromptInputSchema,
+  GenerateNextWeekPromptInputSchema,
+  buildAnalyzeWeekPrompt,
+  buildGenerateNextWeekPrompt,
+  type WeekAnalysis,
+  type NextWeekSchedule,
+  type AnalyzeWeekPromptInput,
+  type GenerateNextWeekPromptInput,
+} from './weekly-progression.ts'
