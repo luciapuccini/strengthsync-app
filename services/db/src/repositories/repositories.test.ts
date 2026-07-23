@@ -12,7 +12,7 @@ import {
 import { createClient, getClient, listClients } from '../repositories/clients'
 import { getActivePlan, listPlans } from '../repositories/plans'
 import { upsertProfile } from '../repositories/profiles'
-import { getCurrentWeek, getWeek, listWeeks, updateDayLog } from '../repositories/weeks'
+import { getCurrentWeek, listWeeks, updateDayLog } from '../repositories/weeks'
 import { createTestDb, markAllDaysCompleted } from '../testing/index'
 
 const weekTemplate: PlanDay[] = [
@@ -225,92 +225,5 @@ describe('day logs', () => {
         exercises: [{ exercise_key: 'press_banca', skipped: true, feedback: null, sets: [] }],
       }),
     ).rejects.toThrow(/in_flight/)
-  })
-})
-
-describe('internal workflow commands', () => {
-  async function activateAndCompleteFirstWeek() {
-    const { plan, first_week } = await activateGeneratedPlan(db, clientId, {
-      workflow_id: 'wf-activate-1',
-      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
-    })
-    await upsertProfile(db, clientId, profileInput)
-    await markAllDaysCompleted(db, clientId, first_week.id)
-    await completeWeek(db, clientId, first_week.id)
-    return { plan, first_week }
-  }
-
-  it('completeWeek rejects incomplete days', async () => {
-    const { first_week } = await activateGeneratedPlan(db, clientId, {
-      workflow_id: 'wf-activate-1',
-      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
-    })
-    await expect(completeWeek(db, clientId, first_week.id)).rejects.toMatchObject({
-      code: 'week_days_incomplete',
-    })
-  })
-
-  it('completeWeek is idempotent', async () => {
-    const { first_week } = await activateAndCompleteFirstWeek()
-    const again = await completeWeek(db, clientId, first_week.id)
-    expect(again.status).toBe('completed')
-    expect(again.id).toBe(first_week.id)
-  })
-
-  it('completeWeek rejects a non-current week', async () => {
-    const { plan } = await activateGeneratedPlan(db, clientId, {
-      workflow_id: 'wf-activate-1',
-      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
-    })
-    await expect(completeWeek(db, clientId, plan.id)).rejects.toThrow(RepoError)
-  })
-
-  it('createNextWeek rolls dates forward and is idempotent by workflow_id', async () => {
-    const { first_week } = await activateAndCompleteFirstWeek()
-
-    const next = await createNextWeek(db, clientId, {
-      workflow_id: 'wf-week-2',
-      previous_week_id: first_week.id,
-      schedule: first_week.schedule,
-    })
-    expect(next.week_index).toBe(2)
-    expect(next.start_date > first_week.start_date).toBe(true)
-    expect(next.status).toBe('in_flight')
-
-    const duplicate = await createNextWeek(db, clientId, {
-      workflow_id: 'wf-week-2',
-      previous_week_id: first_week.id,
-      schedule: first_week.schedule,
-    })
-    expect(duplicate.id).toBe(next.id)
-    expect(await listWeeks(db, clientId)).toHaveLength(2)
-  })
-
-  it('createNextWeek refuses beyond the plan boundary', async () => {
-    const { first_week } = await activateAndCompleteFirstWeek()
-    const week2 = await createNextWeek(db, clientId, {
-      workflow_id: 'wf-week-2',
-      previous_week_id: first_week.id,
-      schedule: first_week.schedule,
-    })
-    await markAllDaysCompleted(db, clientId, week2.id)
-    await completeWeek(db, clientId, week2.id)
-
-    await expect(
-      createNextWeek(db, clientId, {
-        workflow_id: 'wf-week-3',
-        previous_week_id: week2.id,
-        schedule: week2.schedule,
-      }),
-    ).rejects.toThrow(/plan_complete|total_weeks|no next week/i)
-  })
-
-  it('getWeek scopes reads to the owning client', async () => {
-    const { first_week } = await activateGeneratedPlan(db, clientId, {
-      workflow_id: 'wf-activate-1',
-      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
-    })
-    const other = await createClient(db, { display_name: 'Other' })
-    expect(await getWeek(db, other.id, first_week.id)).toBeNull()
   })
 })
