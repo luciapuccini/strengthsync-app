@@ -1,0 +1,281 @@
+{
+  "current_week": 2,
+  "total_weeks": 6,
+  "training_days_per_week": 4,
+  "rest_days_per_week": 3,
+  "start_date": "2026-07-06",
+  "end_date": "2026-07-12",
+  "finished": true,
+  "program": [
+    {
+      "id": 1,
+      "type": "upper body",
+      "date": "2026-07-06",
+      "completed": true,
+      "routine": [
+        {
+          "name": "PRES BANCA PLANO",
+          "series": 4,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 25,
+          "performed_reps": [10, 10, 10, 10]
+        },
+        {
+          "name": "JALÓN AL PECHO",
+          "series": 4,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 30,
+          "performed_reps": [12, 12, 12, 12]
+        },
+        {
+          "name": "REMO GIRONDA",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 25,
+          "performed_reps": [12, 12, 12]
+        },
+        {
+          "name": "PRES HOMBRO BARRA BAJA",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "performed_reps": [10, 10, 10],
+          "weight_kg": 15,
+          "notes": "cuesta"
+        },
+        {
+          "name": "CURL DE BICEPS",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 5,
+          "performed_reps": [12, 12, 12]
+        },
+        {
+          "name": "EXTENSIÓN TRICEPS POLEA",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 7.5,
+          "performed_reps": [12, 12, 12]
+        },
+        {
+          "name": "FLEXIONES",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90,
+          "performed_reps": [8, 8, 8]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "leg day",
+      "date": "2026-07-07",
+      "completed": true,
+      "routine": [
+        {
+          "name": "SENTADILLA FRONTAL",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 30,
+          "performed_reps": [10, 10, 10, 10],
+          "notes": "cambio por sentadilla normal 4x10 45kg"
+        },
+        {
+          "name": "PESO MUERTO",
+          "series": 4,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 40,
+          "performed_reps": [10, 10, 10, 10],
+          "notes": "menos peso, esta semana se siente pesado"
+        },
+        {
+          "name": "ZANCADAS",
+          "series": 4,
+          "reps": 15,
+          "rest_time": 90,
+          "weight_kg": 20,
+          "performed_reps": [10, 10, 10]
+        },
+        {
+          "name": "HIPEREXTENSIÓN",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 10,
+          "performed_reps": [12, 12, 12]
+        },
+        {
+          "name": "EXTENSIÓN CUÁDRICEPS",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 20,
+          "performed_reps": [12, 14, 14],
+          "notes": "maquina distinta, menos peso esperable"
+        },
+        {
+          "name": "LEG CURL",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 30,
+          "performed_reps": [],
+          "notes": "no realizado"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "rest",
+      "date": "2026-07-08",
+      "completed": true,
+      "routine": []
+    },
+    {
+      "id": 4,
+      "type": "upper body",
+      "date": "2026-07-09",
+      "completed": true,
+      "notes": "cardio extra, 20' escaleras",
+      "routine": [
+        {
+          "name": "DOMINADAS",
+          "series": 4,
+          "reps": 6,
+          "rest_time": 90,
+          "notes": "con goma",
+          "performed_reps": [5, 5, 5, 5]
+        },
+        {
+          "name": "REMO 45",
+          "series": 4,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 25,
+          "performed_reps": [10, 10, 10, 10]
+        },
+        {
+          "name": "ELEVACIÓN LATERAL",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90,
+          "weight_kg": 5,
+          "performed_reps": [8, 8, 8]
+        },
+        {
+          "name": "DOMINADAS BARRA BAJA",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90,
+          "notes": "cuesta",
+          "performed_reps": [8, 7, 7]
+        },
+        {
+          "name": "EXTENSIÓN TRICEPS TRAS NUCA",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 7.5,
+          "performed_reps": [12, 12, 12]
+        },
+        {
+          "name": "FACE PULL",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 7.5,
+          "performed_reps": [12, 12, 12]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "swimming",
+      "date": "2026-07-10",
+      "completed": true,
+      "routine": [],
+      "notes": "rested "
+    },
+
+    {
+      "id": 6,
+      "type": "leg day",
+      "date": "2026-07-11",
+      "completed": true,
+      "notes": "cardio extra, 20' escaleras",
+      "routine": [
+        {
+          "name": "SENTADILLA",
+          "series": 4,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 45,
+          "performed_reps": [10, 10, 10, 10]
+        },
+        {
+          "name": "PESO MUERTO",
+          "series": 4,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 45,
+          "performed_reps": [10, 10, 8, 8]
+        },
+        {
+          "name": "PESO MUERTO SUMO",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90,
+          "weight_kg": 55,
+          "performed_reps": [8, 8, 8]
+        },
+        {
+          "name": "HIP THRUST",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 40,
+          "performed_reps": [12, 12, 12]
+        },
+        {
+          "name": "PATADA DE GLÚTEO",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 10,
+          "performed_reps": [10, 10, 10]
+        },
+        {
+          "name": "STEP UP",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90,
+          "performed_reps": [8, 8, 8]
+        },
+
+        {
+          "name": "EXTENSIÓN DE CUÁDRICEPS",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 27.5,
+          "performed_reps": [12, 12, 12]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "rest",
+      "date": "2026-07-12",
+      "completed": true,
+      "routine": [],
+      "notes": "walked 8k"
+    }
+  ]
+}

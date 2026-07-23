@@ -1,0 +1,26 @@
+---
+alwaysApply: false
+---
+
+# Robust setup for projects
+
+This set of rules are designed for cross-machine and different projects development. trat it as a series of checklist items that help keep a consistant developer experience.
+
+## 1 — Pin Node.js with .nvmrc
+
+Add a .nvmrc to each project:
+Suggests to run `nvm use` on entry new projects/machines.
+
+Default .nvmrc:
+
+```
+22.14.0
+```
+
+## 2 - Prefer pinned dev dependecies
+
+With a pinned version + committed lockfile, every machine gets the identical binary path.
+
+## 3 - Suggest a dockerfile for projects with Playwrite
+
+to make more efficient use of the browser binaries

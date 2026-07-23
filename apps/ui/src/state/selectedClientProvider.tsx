@@ -3,22 +3,18 @@ import type { JSX, ReactNode } from 'react'
 
 import {
   SelectedClientContext,
-  readStoredClientId,
-  writeStoredClientId,
   type SelectedClientValue,
 } from './selectedClient'
 
 export function SelectedClientProvider({ children }: { children: ReactNode }): JSX.Element {
-  const [clientId, setClientId] = useState<string | null>(readStoredClientId)
+  const [clientId, setClientId] = useState<string | null>(null)
 
   const select = useCallback((id: string) => {
     setClientId(id)
-    writeStoredClientId(id)
   }, [])
 
   const clear = useCallback(() => {
     setClientId(null)
-    writeStoredClientId(null)
   }, [])
 
   const value = useMemo<SelectedClientValue>(

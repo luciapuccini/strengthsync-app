@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer } from 'react'
+import { useCallback, useReducer } from 'react'
 import type { JSX } from 'react'
 
 import type { Week, WeekDay } from '@strengthsync/domain/model'
@@ -7,11 +7,6 @@ import { saveDayLog } from '@/api/client'
 import { Program } from '@/components/week-tracker/components/program/program'
 import { WeekHeading } from '@/components/week-tracker/components/week-heading/weekHeading'
 import { toUpdateDayLog } from '@/state/dayLog'
-import {
-  loadTrackingDraft,
-  removeTrackingDraft,
-  saveTrackingDraft,
-} from '@/state/trackingStorage'
 import { invalidateCurrentWeek } from '@/state/weekResource'
 import { weekReducer } from '@/state/weekReducer'
 
@@ -28,15 +23,7 @@ export function WeekTracker({
   initialWeek,
   totalWeeks,
 }: WeekTrackerProps): JSX.Element {
-  const [week, dispatch] = useReducer(
-    weekReducer,
-    initialWeek,
-    (serverWeek) => loadTrackingDraft(serverWeek) ?? serverWeek,
-  )
-
-  useEffect(() => {
-    saveTrackingDraft(week)
-  }, [week])
+  const [week, dispatch] = useReducer(weekReducer, initialWeek)
 
   const saveDay = useCallback(
     async (day: WeekDay): Promise<void> => {
@@ -46,7 +33,6 @@ export function WeekTracker({
         day.day_index,
         toUpdateDayLog(day),
       )
-      removeTrackingDraft(week.id)
       invalidateCurrentWeek(clientId)
       dispatch({ type: 'HYDRATE', week: savedWeek })
     },

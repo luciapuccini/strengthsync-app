@@ -1,0 +1,160 @@
+{
+  "profile_snapshot_date": "2026-05-10",
+  "client": {
+    "name": "Lucia",
+    "sex": "female",
+    "age": 30,
+    "height_cm": 165,
+    "uses_birth_control": false,
+    "menstrual_cycle": {
+      "regular": true,
+      "approximate_period_days_in_month": "10-13",
+      "last_period_estimate": "2026-04-10/13"
+    },
+    "job_activity_level": "very_sedentary_long_sitting_hours"
+  },
+
+  "body_composition": {
+    "current_may_2026": {
+      "weight_kg": 60.65,
+      "body_fat_percent": 28,
+      "bmr_kcal": null,
+      "tdee_kcal": 1835
+    },
+    "baseline_feb_2026": {
+      "weight_kg": 63.0,
+      "body_fat_percent": 33,
+      "bmr_kcal": 1387,
+      "tdee_kcal": 1907
+    },
+    "block1_changes_6_weeks": {
+      "fat_lost_kg": -3.8,
+      "muscle_gained_kg": 1.5,
+      "weight_change_kg": -2.35,
+      "body_fat_change_pp": -5
+    }
+  },
+
+  "goals_november_2026": {
+    "target_weight_kg": 58.5,
+    "target_body_fat_percent": 21,
+    "body_fat_floor_percent": 20,
+    "fat_to_lose_kg": -4.7,
+    "muscle_to_gain_kg": 2.5,
+    "midpoint_review": "2026-08"
+  },
+
+  "program_structure": {
+    "current_block": 2,
+    "current_week": 1,
+    "block2_start_date": "2026-05-04",
+    "training_days_per_week": 6,
+    "rest_day": "Sunday",
+    "weekly_schedule": {
+      "monday": "Upper body - Day 1",
+      "tuesday": "Legs - Day 2",
+      "wednesday": "Swimming - Pyramid (50/100/150/300/150/100/50)",
+      "thursday": "Upper body - Day 3",
+      "friday": "Swimming - Endurance (2000m, HR 100-130 bpm)",
+      "saturday": "Legs - Day 4",
+      "sunday": "Rest"
+    },
+    "block1_to_block2_key_change": "Main compounds shifted from 4x10 to 4x8"
+  },
+
+  "current_strength_loads_block2_w1": {
+    "upper_body": {
+      "press_banca": "27.5kg",
+      "jalon_al_pecho": "30kg",
+      "remo_gironda": "27.5kg",
+      "remo_45": "28kg",
+      "press_hombro_barra": "17kg",
+      "curl_biceps": "12kg",
+      "dominadas_con_goma": "4x6",
+      "flexiones": "4x8",
+      "dominadas_barra_baja": "3x8",
+      "extension_triceps_tras_nuca": "3x12",
+      "face_pull": "7.5kg"
+    },
+    "lower_body": {
+      "sentadilla": "42.5kg",
+      "peso_muerto": "42.5kg",
+      "peso_muerto_sumo": "50kg",
+      "hip_thrust": "40kg / 4x10",
+      "zancadas": "15kg bolso",
+      "leg_curl": "27.5kg",
+      "extension_cuadriceps": "27.5kg",
+      "hiperextension": "10kg"
+    }
+  },
+
+  "strength_targets_november_2026": {
+    "press_banca": "37.5kg",
+    "sentadilla": "62.5kg",
+    "peso_muerto": "67.5kg",
+    "jalon_al_pecho": "42.5kg",
+    "hip_thrust": "72.5kg",
+    "remo_gironda": "37.5kg",
+    "press_hombro": "25kg",
+    "curl_biceps": "17.5kg"
+  },
+
+  "swimming": {
+    "sessions_per_week": 2,
+    "session_types": {
+      "wednesday": "Pyramid",
+      "friday": "Endurance 2000m"
+    },
+    "benchmarks_achieved": {
+      "dps_above_2.20m": true,
+      "swolf_at_or_below_53": true,
+      "endurance_2000m": true,
+      "best_pace_per_100m": "2'46\" (3 May 2026)"
+    },
+    "block2_targets": {
+      "swolf": "≤53 consistent",
+      "avg_pace_per_100m": "toward 2'45\"",
+      "avg_hr_endurance_bpm": "≤125"
+    },
+    "pre_swim_protocol": {
+      "fluid_cutoff_minutes_before": "30-45",
+      "daily_hydration_liters": ">2.5",
+      "caffeine_mg": "150-200 taken 45-60 min before"
+    }
+  },
+
+  "nutrition_plan": {
+    "version_file": "plan-nutricional-semana4.md (still valid for Block 2)",
+    "daily_targets": {
+      "kcal": 1750,
+      "protein_g": 130,
+      "carbs_g": 175,
+      "fat_g": 58,
+      "fiber_g_minimum": 25
+    },
+    "approach": "clean whole foods",
+    "primary_grocery_store": "Mercadona",
+    "meal_structure": {
+      "desayuno": "09:00",
+      "almuerzo": "12:30",
+      "entrenamiento": "14:00-15:00",
+      "post_entreno": "16:30",
+      "cena": "20:00"
+    },
+    "cheat_meals_per_week": 2,
+    "cheat_meal_examples": ["burger and fries", "pizza"],
+    "known_plan_flags": [
+      "Small carb shortfall vs target",
+      "Fat overage on salmon-dinner days",
+      "Calorie deficit on chicken-dinner days"
+    ]
+  },
+
+  "supplements": {
+    "whey_protein": "post-workout",
+    "creatine_g_per_day": 5,
+    "vitamin_d": true,
+    "magnesium_bisglycinate": "added in week 4 for cramps",
+    "electrolytes_during_training": "salt + lemon in water"
+  }
+}

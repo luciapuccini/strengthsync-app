@@ -1,0 +1,317 @@
+{
+  "current_week": 4,
+  "total_weeks": 6,
+  "training_days_per_week": 4,
+  "rest_days_per_week": 3,
+  "start_date": "2026-07-20",
+  "end_date": "2026-07-26",
+  "finished": false,
+  "program": [
+    {
+      "id": 1,
+      "type": "upper body",
+      "routine": [
+        {
+          "name": "PRES BANCA PLANO",
+          "series": 4,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 28,
+          "performed_reps": [
+            12,
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "name": "JALÓN AL PECHO",
+          "series": 4,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 30,
+          "performed_reps": [
+            12,
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "name": "REMO GIRONDA",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 26,
+          "performed_reps": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "name": "PRES HOMBRO BARRA BAJA",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 20,
+          "performed_reps": [
+            8,
+            8,
+            8
+          ]
+        },
+        {
+          "name": "CURL DE BICEPS",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 6,
+          "performed_reps": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "name": "EXTENSIÓN TRICEPS POLEA",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 8.5,
+          "performed_reps": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "name": "FLEXIONES",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90,
+          "performed_reps": [
+            8,
+            8,
+            8
+          ]
+        }
+      ],
+      "date": "2026-07-20",
+      "completed": true
+    },
+    {
+      "id": 2,
+      "type": "leg day",
+      "notes": "cardio extra, 20' caminata",
+      "routine": [
+        {
+          "name": "SENTADILLA FRONTAL",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 30,
+          "performed_reps": [
+            10,
+            10,
+            10
+          ]
+        },
+        {
+          "name": "PESO MUERTO",
+          "series": 4,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 45,
+          "performed_reps": [
+            10,
+            10,
+            10,
+            10
+          ]
+        },
+        {
+          "name": "ZANCADAS",
+          "series": 4,
+          "reps": 15,
+          "rest_time": 90,
+          "weight_kg": 20,
+          "performed_reps": [
+            15,
+            15,
+            15,
+            15
+          ]
+        },
+        {
+          "name": "HIPEREXTENSIÓN",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 12,
+          "performed_reps": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "name": "EXTENSIÓN CUÁDRICEPS",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 30,
+          "performed_reps": [
+            12,
+            12,
+            12
+          ]
+        },
+        {
+          "name": "LEG CURL",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 30,
+          "performed_reps": [
+            12,
+            12,
+            12
+          ]
+        }
+      ],
+      "date": "2026-07-21",
+      "completed": true
+    },
+    {
+      "id": 3,
+      "type": "swimming",
+      "notes": "Natación técnica + pirámide. 50m/100m/150m/300m/150m/100m/50m",
+      "routine": [],
+      "date": "2026-07-22",
+      "completed": false
+    },
+    {
+      "id": 4,
+      "type": "upper body",
+      "notes": "cardio extra, 20' escaleras",
+      "routine": [
+        {
+          "name": "DOMINADAS",
+          "series": 4,
+          "reps": 6,
+          "rest_time": 90,
+          "notes": "CON GOMA"
+        },
+        {
+          "name": "REMO 45",
+          "series": 4,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 26
+        },
+        {
+          "name": "ELEVACIÓN LATERAL",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90,
+          "weight_kg": 5
+        },
+        {
+          "name": "DOMINADAS BARRA BAJA",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90
+        },
+        {
+          "name": "EXTENSIÓN TRICEPS TRAS NUCA",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 8.5
+        },
+        {
+          "name": "FACE PULL",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 8.5
+        }
+      ],
+      "date": "2026-07-23",
+      "completed": false
+    },
+    {
+      "id": 5,
+      "type": "swimming",
+      "notes": "Natación 2000 m.",
+      "routine": [],
+      "date": "2026-07-24",
+      "completed": false
+    },
+    {
+      "id": 6,
+      "type": "leg day",
+      "routine": [
+        {
+          "name": "SENTADILLA",
+          "series": 4,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 46
+        },
+        {
+          "name": "PESO MUERTO",
+          "series": 4,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 45
+        },
+        {
+          "name": "SUMO",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 51
+        },
+        {
+          "name": "HIPTHRUST",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 46
+        },
+        {
+          "name": "PATADA DE GLUTEO",
+          "series": 3,
+          "reps": 10,
+          "rest_time": 90,
+          "weight_kg": 11
+        },
+        {
+          "name": "STEP UP",
+          "series": 3,
+          "reps": 8,
+          "rest_time": 90
+        },
+        {
+          "name": "EXTENSIÓN DE CUÁDRICEPS",
+          "series": 3,
+          "reps": 12,
+          "rest_time": 90,
+          "weight_kg": 29
+        }
+      ],
+      "date": "2026-07-25",
+      "completed": false
+    },
+    {
+      "id": 7,
+      "type": "rest",
+      "notes": "Descanso activo: objetivo 10k pasos + movilidad suave. Si apetece, añade una caminata fácil, yoga o una clase suave de pilates.",
+      "routine": [],
+      "date": "2026-07-26",
+      "completed": false
+    }
+  ]
+}

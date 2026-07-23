@@ -3,7 +3,7 @@
 ## Shipped
 
 - Mobile-first current-week tracker in `apps/ui`, modeled on the POC Plan screen.
-- Reducer-managed set logging, contiguous set toggles, skip and feedback controls, day saves, local draft recovery, and copy-week Markdown.
+- Reducer-managed set logging, contiguous set toggles, skip and feedback controls, persisted day saves, and copy-week Markdown.
 - React 19 `use()` data loading with Suspense, an error boundary, and an empty-week plan-generation prompt.
 - Weekly-progression and plan-generation workflow start/status polling.
 - Worker static assets with SPA fallback while `/api/*`, `/internal/*`, and `/health` continue to run through the API Worker.
@@ -25,8 +25,8 @@ The deterministic demo client ID is `00000000-0000-4000-8000-000000000010`.
 
 - Scope remains the current week only; client management is retained as minimal boilerplate.
 - UI copy and stored demo content are English.
-- Tracker drafts are keyed by week ID and discarded when the server version changes.
-- Tests target reducers, mappers, storage, Markdown formatting, and API contract mapping rather than components.
+- The database is the sole persistence layer; browser state is intentionally ephemeral.
+- Tests target reducers, mappers, Markdown formatting, and API contract mapping rather than components.
 - No new UI packages were added; the tracker uses the existing shadcn primitives plus lean badge and spinner components.
 
 ## Dependency review
