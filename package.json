@@ -11,6 +11,8 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
+    "eval:score": "pnpm --filter @strengthsync/workflows eval:score",
+    "eval:replay": "pnpm --filter @strengthsync/workflows eval:replay",
     "prepare": "lefthook install || echo 'lefthook: skipped (not a git repository yet)'"
   },
   "devDependencies": {

@@ -49,6 +49,7 @@ TEMPORAL_NAMESPACE
 TEMPORAL_API_KEY
 OPENAI_API_KEY
 BRAINTRUST_API_KEY
+BRAINTRUST_PROJECT
 INTERNAL_API_BASE_URL
 INTERNAL_API_SERVICE_SECRET
 WORKFLOW_SERVICE_SECRET
@@ -143,8 +144,9 @@ Use `workflow_id` as the correlation value across the local API, Temporal execut
 Evals are never a background process on this machine. Run the explicit commands in [evals.md](../architecture/evals.md) only when reviewing an LLM change:
 
 ```text
-pnpm eval:score -- --trace <braintrust-trace-id>
-pnpm eval:replay -- --trace <braintrust-trace-id>
+pnpm eval:score  -- --step generate_next_week
+pnpm eval:replay -- --step generate_plan --limit 1
+pnpm eval:replay -- --step generate_next_week --limit 1
 ```
 
 These commands require the Braintrust and model-provider credentials and may incur model cost when replaying.

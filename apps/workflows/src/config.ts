@@ -30,3 +30,8 @@ export const INTERNAL_API_SERVICE_SECRET = process.env.INTERNAL_API_SERVICE_SECR
 /** OpenAI configuration for plan-generation / weekly LLM activities. */
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY ?? ''
 export const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini'
+
+/** Braintrust observability; empty key falls back to the console recorder. */
+export const BRAINTRUST_API_KEY = process.env.BRAINTRUST_API_KEY ?? ''
+export const BRAINTRUST_PROJECT =
+  process.env.BRAINTRUST_PROJECT ?? 'StrengthSync Workflows'

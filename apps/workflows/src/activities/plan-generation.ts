@@ -10,12 +10,12 @@ import { NO_PRIOR_HISTORY_SUMMARY } from '@strengthsync/domain/coach'
 import type { GeneratedPlanInput, PlanGenerationContext } from '@strengthsync/domain/contracts'
 
 import { OPENAI_API_KEY, OPENAI_MODEL } from '../config.ts'
-import { createConsoleRecorder } from '../observability/llm-call-recorder.ts'
+import { createLlmRecorder } from '../observability/llm-call-recorder.ts'
 import { createInternalApiClient, InternalApiError } from './internal-api.ts'
 
 const internalApi = createInternalApiClient()
 const runtime = createOpenAiRuntime(OPENAI_API_KEY)
-const recorder = createConsoleRecorder()
+const recorder = createLlmRecorder()
 
 export async function loadPlanGenerationContext(input: {
   client_id: string

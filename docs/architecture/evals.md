@@ -1,18 +1,18 @@
 # LLM evaluation (MVP)
 
-Braintrust is the MVP trace and evaluation provider. The goal is to learn from real workflow calls without maintaining a static golden dataset or paying for LLM evaluation in CI.
+Braintrust is the MVP trace and evaluation provider. The goal is to learn from real workflow calls and a tiny set of hand fixtures without paying for LLM evaluation in CI.
 
 ## Principles
 
 - Every workflow LLM call is traced through `LlmCallRecorder`.
-- Real traced calls, not `dataset.json`, are the source material for an evaluation.
 - Evaluations are opt-in commands run by a developer. They do **not** run in CI, on deployment, or automatically after a workflow.
-- Evaluation runs can make new model calls and cost money. Run only selected traces, inspect the output, and keep the sample small.
+- Evaluation runs can make new model calls and cost money. Keep the sample small (`--limit`).
 - Product data stays in D1; trace inputs, outputs, and scores live in Braintrust.
+- Schema / shape validity is a **runtime** concern (Zod + unit tests), not an eval scorer.
 
 ## What the recorder must capture
 
-`apps/workflows` provides a Braintrust-backed `LlmCallRecorder` to `services/agent`. For each call, it records:
+`apps/workflows` provides a Braintrust-backed `LlmCallRecorder` (falls back to console when `BRAINTRUST_API_KEY` is unset). For each call, it records:
 
 ```typescript
 type WorkflowLlmTrace = {
@@ -36,55 +36,52 @@ type WorkflowLlmTrace = {
 
 The trace records the exact validated input and output envelope needed to replay a call. It must not include secrets. Client health/training context is sensitive, so access to the Braintrust project must be restricted to the coach/developer.
 
-## First scorer: tool choice
+## Deterministic scorer: light progression
 
-Keep and adapt the existing [toolchoice scorer](../../evals/scorers/toolchoice.ts). It is deterministic and has no model-token cost.
+Located at `apps/workflows/evals/scorers/light-progression.ts`. Zero model-token cost.
 
-For a trace with an expected tool policy, it scores whether the expected tool was called and, when order matters, whether the calls appeared in the expected order.
+**Use case:** when the completed week has more than three exercises with `feedback === "light"`, the next week should push aggregate prescribed load.
 
-```typescript
-type ToolPolicy = {
-  required: string[];
-  ordered?: string[];
-};
-```
+**Rule:**
 
-The activity supplies the policy as trace metadata at call time. For example, the POC weekly analysis expects the progress, current-plan, and coaching-rules tools before producing recommendations.
+1. Count `light` feedbacks on the input week schedule.
+2. If `lightCount <= 3`, return `null` (Braintrust skips — not applicable).
+3. Otherwise compare sum of `prescribed.reps` and sum of `prescribed.weight_kg` (`null` → `0`) across all exercises in input vs output.
+4. Score `1` if either aggregate is strictly higher; else `0`.
 
-**Important:** the new MVP workflow draft loads context through the internal API and passes it directly into most LLM calls. Those calls have no tools to score. Do not add artificial tools just to make this scorer run. Tool choice applies only to genuinely tool-using calls—currently the POC-style weekly analysis and, later, chat.
+This is an experimental product signal, not a structural/schema check.
 
-## Evaluation modes
+## LLM-as-judge: AutoEvals ClosedQA
 
-### Score a recorded output
+Strategic judges only for the two highest-impact steps:
 
-Run deterministic scorers against one or more existing Braintrust traces.
+| Step | Focus |
+|------|--------|
+| `generate_plan` | Fits goals/loads/schedule; coherent progressive template; does not invent profile facts |
+| `generate_next_week` | Responds to analysis; sensible load change vs prior week; stays within plan intent |
 
-- Does not call an LLM.
-- Starts with `ToolChoice`.
-- Useful for quickly reviewing whether a deployed tool-using call followed its policy.
+Implemented with `ClosedQA` from `autoevals` in `apps/workflows/evals/scorers/quality.ts`. Criteria live on each fixture as `expectedCharacteristics`.
 
-### Replay selected traces
+## Eval entrypoint
 
-Fetch selected traces, rerun the relevant activity/agent call with its recorded input, then compare the new experiment in Braintrust.
+Evals call the same non-streaming agent helpers as production (`generatePlan` / `generateNextWeek`) via `apps/workflows/evals/run-step.ts`. They never start Temporal.
 
-- Makes LLM calls and costs money.
-- Used after changing prompts, models, tools, or schemas.
-- Begin with one trace; expand only after manual review.
+Tiny fixtures (not a growing golden dataset):
+
+- `apps/workflows/evals/fixtures/plan-generation.json`
+- `apps/workflows/evals/fixtures/week-generation.json` (includes a `>3 light` case + `sample_output` for score-only)
 
 ## Commands
 
-The final command names are implemented with the monorepo, but the MVP contract is:
-
 ```text
-pnpm eval:score -- --trace <braintrust-trace-id>
-pnpm eval:replay -- --trace <braintrust-trace-id>
+pnpm eval:score  -- --step generate_next_week
 pnpm eval:replay -- --step generate_plan --limit 3
+pnpm eval:replay -- --step generate_next_week --limit 3
 ```
 
-- `eval:score` evaluates recorded output only.
-- `eval:replay` creates a fresh Braintrust experiment from selected recorded calls.
-- A trace id, step filter, or explicit small limit is required. There is no command that silently evaluates all production traces.
-- Both commands require `BRAINTRUST_API_KEY`; replay additionally requires the model provider key.
+- `eval:score` runs LightProgression against fixture `sample_output` only (no LLM tokens).
+- `eval:replay` runs `braintrust eval` for the step (LLM call + LightProgression where applicable + ClosedQA).
+- Both require `BRAINTRUST_API_KEY` for Braintrust logging/experiments; replay additionally requires `OPENAI_API_KEY`.
 
 These commands are developer tools. They are excluded from GitHub Actions and deployment scripts.
 
@@ -93,17 +90,26 @@ These commands are developer tools. They are excluded from GitHub Actions and de
 | Included | Not included |
 | --- | --- |
 | Required Braintrust trace for every workflow LLM call | CI-triggered evals |
-| Manual trace selection and replay | Static JSON golden dataset |
-| Deterministic tool-choice scoring where tools exist | LLM-as-a-judge scoring |
+| Manual fixture replay for plan + next week | Large static golden dataset |
+| LightProgression deterministic scorer | Schema/structure eval scorers |
+| ClosedQA for `generate_plan` and `generate_next_week` | Judges for summarize_* / analyze_week |
 | Braintrust experiment comparison | Automated production promotion/rollback |
 
 Schema validation remains a runtime safety check, not an evaluation scorer: invalid structured output fails before it can write product state.
 
-## POC migration
+## Layout
 
-The current `evals/chat.eval.ts` and `evals/dataset.json` are a useful reference for Braintrust wiring, but they do not define the MVP evaluation source:
-
-- static `dataset.json` is removed from the new workflow eval path;
-- workflow eval code moves to `apps/workflows/evals/`;
-- the shared `LlmCallRecorder` is implemented in `apps/workflows/src/observability/`;
-- chat evaluation is deferred with chat itself.
+```text
+apps/workflows/
+  src/observability/
+    llm-call-recorder.ts      # createLlmRecorder / console fallback
+    braintrust-recorder.ts
+  evals/
+    run-step.ts
+    plan-generation.eval.ts
+    week-generation.eval.ts
+    scorers/light-progression.ts
+    scorers/quality.ts
+    fixtures/
+    cli.ts
+```

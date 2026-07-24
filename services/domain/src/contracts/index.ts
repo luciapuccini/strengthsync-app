@@ -155,7 +155,8 @@ export const GeneratedPlanInputSchema = z.object({
   label: z.string().min(1),
   total_weeks: z.number().int().positive(),
   week_template: z.array(PlanDaySchema),
-  rationale: z.string().nullable().optional(),
+  // Required key (nullable) so OpenAI structured-output JSON Schema accepts it.
+  rationale: z.string().nullable(),
 })
 export type GeneratedPlanInput = z.infer<typeof GeneratedPlanInputSchema>
 

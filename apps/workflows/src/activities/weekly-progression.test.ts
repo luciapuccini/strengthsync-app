@@ -11,7 +11,7 @@ vi.mock('@strengthsync/agent', () => ({
 }))
 
 vi.mock('../observability/llm-call-recorder.ts', () => ({
-  createConsoleRecorder: () => ({ record: vi.fn() }),
+  createLlmRecorder: () => ({ record: vi.fn() }),
 }))
 
 vi.mock('./internal-api.ts', async () => {

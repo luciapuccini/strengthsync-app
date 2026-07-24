@@ -1,0 +1,491 @@
+[
+  {
+    "id": "week-light-progression-01",
+    "expectedCharacteristics": [
+      "The next week increases load (reps and/or weight) in response to many light feedback signals from the completed week.",
+      "The schedule stays aligned with the active plan's training intent and does not invent skipped injuries."
+    ],
+    "input": {
+      "analysis": "Client reported light on four compound lifts. Adherence was high. Safe to push reps or weight next week.",
+      "coaching_rules": "If exercises felt light and were completed as prescribed, push 2 more reps on compounds before adding weight, or increase weight when already pushed.",
+      "next_week_start_date": "2026-07-08",
+      "profile": {
+        "id": "4d5e6f7a-8b9c-4d0e-8f2a-3b4c5d6e7f8a",
+        "client_id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+        "snapshot_date": "2026-07-01",
+        "sex": "female",
+        "age": 34,
+        "height_cm": 165,
+        "goals": { "primary": "strength" },
+        "body_composition": { "weight_kg": 62 },
+        "strength_loads": { "press_banca": 60, "sentadilla": 80, "peso_muerto": 90, "remo": 50 },
+        "nutrition": null,
+        "swimming": null,
+        "schedule_preferences": { "days_per_week": 4 },
+        "notes": null,
+        "updated_at": "2026-07-01T00:00:00.000Z"
+      },
+      "active_plan": {
+        "id": "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
+        "client_id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+        "label": "Block 1",
+        "status": "active",
+        "total_weeks": 4,
+        "week_template": [
+          {
+            "day_index": 1,
+            "type": "upper_body",
+            "notes": null,
+            "exercises": [
+              {
+                "exercise_key": "press_banca",
+                "name": "Bench press",
+                "series": 4,
+                "reps": 8,
+                "rest_time_sec": 120,
+                "weight_kg": 60,
+                "notes": null
+              },
+              {
+                "exercise_key": "remo",
+                "name": "Barbell row",
+                "series": 4,
+                "reps": 8,
+                "rest_time_sec": 120,
+                "weight_kg": 50,
+                "notes": null
+              }
+            ]
+          },
+          {
+            "day_index": 2,
+            "type": "leg_day",
+            "notes": null,
+            "exercises": [
+              {
+                "exercise_key": "sentadilla",
+                "name": "Squat",
+                "series": 4,
+                "reps": 6,
+                "rest_time_sec": 150,
+                "weight_kg": 80,
+                "notes": null
+              },
+              {
+                "exercise_key": "peso_muerto",
+                "name": "Deadlift",
+                "series": 3,
+                "reps": 5,
+                "rest_time_sec": 180,
+                "weight_kg": 90,
+                "notes": null
+              }
+            ]
+          },
+          {
+            "day_index": 3,
+            "type": "rest",
+            "notes": null,
+            "exercises": []
+          },
+          {
+            "day_index": 4,
+            "type": "upper_body",
+            "notes": null,
+            "exercises": [
+              {
+                "exercise_key": "press_banca",
+                "name": "Bench press",
+                "series": 4,
+                "reps": 8,
+                "rest_time_sec": 120,
+                "weight_kg": 60,
+                "notes": null
+              }
+            ]
+          },
+          {
+            "day_index": 5,
+            "type": "leg_day",
+            "notes": null,
+            "exercises": [
+              {
+                "exercise_key": "sentadilla",
+                "name": "Squat",
+                "series": 4,
+                "reps": 6,
+                "rest_time_sec": 150,
+                "weight_kg": 80,
+                "notes": null
+              }
+            ]
+          },
+          {
+            "day_index": 6,
+            "type": "rest",
+            "notes": null,
+            "exercises": []
+          },
+          {
+            "day_index": 7,
+            "type": "rest",
+            "notes": null,
+            "exercises": []
+          }
+        ],
+        "rationale": null,
+        "activated_at": "2026-07-01T00:00:00.000Z",
+        "created_at": "2026-07-01T00:00:00.000Z",
+        "updated_at": "2026-07-01T00:00:00.000Z"
+      },
+      "week": {
+        "id": "3c4d5e6f-7a8b-4c9d-8e1f-2a3b4c5d6e7f",
+        "client_id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+        "plan_id": "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
+        "week_index": 1,
+        "start_date": "2026-07-01",
+        "end_date": "2026-07-07",
+        "status": "completed",
+        "created_at": "2026-07-01T00:00:00.000Z",
+        "updated_at": "2026-07-07T18:00:00.000Z",
+        "schedule": [
+          {
+            "day_index": 1,
+            "date": "2026-07-01",
+            "type": "upper_body",
+            "notes": null,
+            "completed": true,
+            "completed_at": "2026-07-01T18:00:00.000Z",
+            "exercises": [
+              {
+                "exercise_key": "press_banca",
+                "name": "Bench press",
+                "skipped": false,
+                "feedback": "light",
+                "prescribed": {
+                  "series": 4,
+                  "reps": 8,
+                  "rest_time_sec": 120,
+                  "weight_kg": 60,
+                  "notes": null
+                },
+                "sets": [
+                  { "performed_reps": 8, "performed_weight_kg": 60 },
+                  { "performed_reps": 8, "performed_weight_kg": 60 },
+                  { "performed_reps": 8, "performed_weight_kg": 60 },
+                  { "performed_reps": 8, "performed_weight_kg": 60 }
+                ]
+              },
+              {
+                "exercise_key": "remo",
+                "name": "Barbell row",
+                "skipped": false,
+                "feedback": "light",
+                "prescribed": {
+                  "series": 4,
+                  "reps": 8,
+                  "rest_time_sec": 120,
+                  "weight_kg": 50,
+                  "notes": null
+                },
+                "sets": [
+                  { "performed_reps": 8, "performed_weight_kg": 50 },
+                  { "performed_reps": 8, "performed_weight_kg": 50 },
+                  { "performed_reps": 8, "performed_weight_kg": 50 },
+                  { "performed_reps": 8, "performed_weight_kg": 50 }
+                ]
+              }
+            ]
+          },
+          {
+            "day_index": 2,
+            "date": "2026-07-02",
+            "type": "leg_day",
+            "notes": null,
+            "completed": true,
+            "completed_at": "2026-07-02T18:00:00.000Z",
+            "exercises": [
+              {
+                "exercise_key": "sentadilla",
+                "name": "Squat",
+                "skipped": false,
+                "feedback": "light",
+                "prescribed": {
+                  "series": 4,
+                  "reps": 6,
+                  "rest_time_sec": 150,
+                  "weight_kg": 80,
+                  "notes": null
+                },
+                "sets": [
+                  { "performed_reps": 6, "performed_weight_kg": 80 },
+                  { "performed_reps": 6, "performed_weight_kg": 80 },
+                  { "performed_reps": 6, "performed_weight_kg": 80 },
+                  { "performed_reps": 6, "performed_weight_kg": 80 }
+                ]
+              },
+              {
+                "exercise_key": "peso_muerto",
+                "name": "Deadlift",
+                "skipped": false,
+                "feedback": "light",
+                "prescribed": {
+                  "series": 3,
+                  "reps": 5,
+                  "rest_time_sec": 180,
+                  "weight_kg": 90,
+                  "notes": null
+                },
+                "sets": [
+                  { "performed_reps": 5, "performed_weight_kg": 90 },
+                  { "performed_reps": 5, "performed_weight_kg": 90 },
+                  { "performed_reps": 5, "performed_weight_kg": 90 }
+                ]
+              }
+            ]
+          },
+          {
+            "day_index": 3,
+            "date": "2026-07-03",
+            "type": "rest",
+            "notes": null,
+            "completed": true,
+            "completed_at": "2026-07-03T12:00:00.000Z",
+            "exercises": []
+          },
+          {
+            "day_index": 4,
+            "date": "2026-07-04",
+            "type": "upper_body",
+            "notes": null,
+            "completed": true,
+            "completed_at": "2026-07-04T18:00:00.000Z",
+            "exercises": [
+              {
+                "exercise_key": "press_banca",
+                "name": "Bench press",
+                "skipped": false,
+                "feedback": "easy",
+                "prescribed": {
+                  "series": 4,
+                  "reps": 8,
+                  "rest_time_sec": 120,
+                  "weight_kg": 60,
+                  "notes": null
+                },
+                "sets": [
+                  { "performed_reps": 8, "performed_weight_kg": 60 },
+                  { "performed_reps": 8, "performed_weight_kg": 60 },
+                  { "performed_reps": 8, "performed_weight_kg": 60 },
+                  { "performed_reps": 8, "performed_weight_kg": 60 }
+                ]
+              }
+            ]
+          },
+          {
+            "day_index": 5,
+            "date": "2026-07-05",
+            "type": "leg_day",
+            "notes": null,
+            "completed": true,
+            "completed_at": "2026-07-05T18:00:00.000Z",
+            "exercises": [
+              {
+                "exercise_key": "sentadilla",
+                "name": "Squat",
+                "skipped": false,
+                "feedback": "easy",
+                "prescribed": {
+                  "series": 4,
+                  "reps": 6,
+                  "rest_time_sec": 150,
+                  "weight_kg": 80,
+                  "notes": null
+                },
+                "sets": [
+                  { "performed_reps": 6, "performed_weight_kg": 80 },
+                  { "performed_reps": 6, "performed_weight_kg": 80 },
+                  { "performed_reps": 6, "performed_weight_kg": 80 },
+                  { "performed_reps": 6, "performed_weight_kg": 80 }
+                ]
+              }
+            ]
+          },
+          {
+            "day_index": 6,
+            "date": "2026-07-06",
+            "type": "rest",
+            "notes": null,
+            "completed": true,
+            "completed_at": "2026-07-06T12:00:00.000Z",
+            "exercises": []
+          },
+          {
+            "day_index": 7,
+            "date": "2026-07-07",
+            "type": "rest",
+            "notes": null,
+            "completed": true,
+            "completed_at": "2026-07-07T12:00:00.000Z",
+            "exercises": []
+          }
+        ]
+      }
+    },
+    "sample_output": {
+      "schedule": [
+        {
+          "day_index": 1,
+          "date": "2026-07-08",
+          "type": "upper_body",
+          "notes": null,
+          "completed": false,
+          "completed_at": null,
+          "exercises": [
+            {
+              "exercise_key": "press_banca",
+              "name": "Bench press",
+              "skipped": false,
+              "feedback": null,
+              "prescribed": {
+                "series": 4,
+                "reps": 10,
+                "rest_time_sec": 120,
+                "weight_kg": 60,
+                "notes": null
+              },
+              "sets": []
+            },
+            {
+              "exercise_key": "remo",
+              "name": "Barbell row",
+              "skipped": false,
+              "feedback": null,
+              "prescribed": {
+                "series": 4,
+                "reps": 10,
+                "rest_time_sec": 120,
+                "weight_kg": 50,
+                "notes": null
+              },
+              "sets": []
+            }
+          ]
+        },
+        {
+          "day_index": 2,
+          "date": "2026-07-09",
+          "type": "leg_day",
+          "notes": null,
+          "completed": false,
+          "completed_at": null,
+          "exercises": [
+            {
+              "exercise_key": "sentadilla",
+              "name": "Squat",
+              "skipped": false,
+              "feedback": null,
+              "prescribed": {
+                "series": 4,
+                "reps": 8,
+                "rest_time_sec": 150,
+                "weight_kg": 80,
+                "notes": null
+              },
+              "sets": []
+            },
+            {
+              "exercise_key": "peso_muerto",
+              "name": "Deadlift",
+              "skipped": false,
+              "feedback": null,
+              "prescribed": {
+                "series": 3,
+                "reps": 5,
+                "rest_time_sec": 180,
+                "weight_kg": 92.5,
+                "notes": null
+              },
+              "sets": []
+            }
+          ]
+        },
+        {
+          "day_index": 3,
+          "date": "2026-07-10",
+          "type": "rest",
+          "notes": null,
+          "completed": false,
+          "completed_at": null,
+          "exercises": []
+        },
+        {
+          "day_index": 4,
+          "date": "2026-07-11",
+          "type": "upper_body",
+          "notes": null,
+          "completed": false,
+          "completed_at": null,
+          "exercises": [
+            {
+              "exercise_key": "press_banca",
+              "name": "Bench press",
+              "skipped": false,
+              "feedback": null,
+              "prescribed": {
+                "series": 4,
+                "reps": 10,
+                "rest_time_sec": 120,
+                "weight_kg": 60,
+                "notes": null
+              },
+              "sets": []
+            }
+          ]
+        },
+        {
+          "day_index": 5,
+          "date": "2026-07-12",
+          "type": "leg_day",
+          "notes": null,
+          "completed": false,
+          "completed_at": null,
+          "exercises": [
+            {
+              "exercise_key": "sentadilla",
+              "name": "Squat",
+              "skipped": false,
+              "feedback": null,
+              "prescribed": {
+                "series": 4,
+                "reps": 8,
+                "rest_time_sec": 150,
+                "weight_kg": 80,
+                "notes": null
+              },
+              "sets": []
+            }
+          ]
+        },
+        {
+          "day_index": 6,
+          "date": "2026-07-13",
+          "type": "rest",
+          "notes": null,
+          "completed": false,
+          "completed_at": null,
+          "exercises": []
+        },
+        {
+          "day_index": 7,
+          "date": "2026-07-14",
+          "type": "rest",
+          "notes": null,
+          "completed": false,
+          "completed_at": null,
+          "exercises": []
+        }
+      ]
+    }
+  }
+]

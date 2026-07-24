@@ -4,7 +4,7 @@ Status: in progress
 
 ## Current conclusion
 
-The repository has a solid foundation, a usable seeded-week tracker, and both Temporal workflows implemented end to end. Remaining MVP gaps are Braintrust observability, profile/history/refresh UI, and journey hardening.
+The repository has a solid foundation, a usable seeded-week tracker, both Temporal workflows implemented end to end, and Braintrust observability with manual plan/week evals. Remaining MVP gaps are profile/history/refresh UI and journey hardening.
 
 ## 1. Make plan generation work end to end
 
@@ -28,9 +28,11 @@ Status: done (2026-07-23)
 
 ## 3. Add required observability
 
-- Replace the console recorder in `apps/workflows/src/observability/llm-call-recorder.ts` with Braintrust tracing for every successful or failed LLM call.
-- Record validated inputs/outputs, workflow metadata, latency, and safe errors without storing trace payloads in D1.
-- Add the documented manual score/replay commands and focused recorder/activity tests.
+Status: done (2026-07-24)
+
+- Replaced the console-only recorder path with a Braintrust-backed `LlmCallRecorder` (console fallback when unset).
+- Traces record validated inputs/outputs, workflow metadata, latency, and safe errors; payloads stay out of D1.
+- Added manual `pnpm eval:score` / `pnpm eval:replay` for `generate_plan` and `generate_next_week`, with LightProgression + ClosedQA scorers and focused recorder/scorer tests.
 
 ## 4. Complete the browser product surface
 

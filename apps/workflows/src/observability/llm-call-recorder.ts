@@ -1,11 +1,11 @@
 import type { LlmCallRecorder } from '@strengthsync/agent'
 
+import { BRAINTRUST_API_KEY, BRAINTRUST_PROJECT } from '../config.ts'
+import { createBraintrustRecorder } from './braintrust-recorder.ts'
+
 /**
- * The Braintrust-backed recorder arrives with the first LLM activity
- * (weekly-progression milestone; docs/architecture/evals.md). Until then
- * this console recorder keeps the injection contract exercised: every
- * workflow LLM call receives a recorder, including failures, and no LLM
- * trace data is written to the product database.
+ * Console recorder for unit tests and local runs without BRAINTRUST_API_KEY.
+ * Logs metadata only — never validated input/output payloads.
  */
 export function createConsoleRecorder(): LlmCallRecorder {
   return {
@@ -23,4 +23,18 @@ export function createConsoleRecorder(): LlmCallRecorder {
       )
     },
   }
+}
+
+/**
+ * Production path: Braintrust when configured, otherwise console.
+ * See docs/architecture/evals.md.
+ */
+export function createLlmRecorder(): LlmCallRecorder {
+  if (BRAINTRUST_API_KEY) {
+    return createBraintrustRecorder({
+      apiKey: BRAINTRUST_API_KEY,
+      projectName: BRAINTRUST_PROJECT,
+    })
+  }
+  return createConsoleRecorder()
 }

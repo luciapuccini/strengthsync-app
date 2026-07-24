@@ -13,8 +13,10 @@ apps/
       observability/
         braintrust-recorder.ts  # implements LlmCallRecorder
     evals/
-      weekly-analysis.eval.ts
       plan-generation.eval.ts
+      week-generation.eval.ts
+      scorers/
+      fixtures/
 services/
   domain/                     # Contracts and pure business logic
   agent/                      # Runtime-agnostic LLM helpers

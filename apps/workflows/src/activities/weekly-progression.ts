@@ -5,12 +5,12 @@ import type { WeeklyContext } from '@strengthsync/domain/contracts'
 import type { Week, WeekDay } from '@strengthsync/domain/model'
 
 import { OPENAI_API_KEY, OPENAI_MODEL } from '../config.ts'
-import { createConsoleRecorder } from '../observability/llm-call-recorder.ts'
+import { createLlmRecorder } from '../observability/llm-call-recorder.ts'
 import { createInternalApiClient, InternalApiError } from './internal-api.ts'
 
 const internalApi = createInternalApiClient()
 const runtime = createOpenAiRuntime(OPENAI_API_KEY)
-const recorder = createConsoleRecorder()
+const recorder = createLlmRecorder()
 
 export async function completeWeekActivity(input: {
   workflow_id: string
