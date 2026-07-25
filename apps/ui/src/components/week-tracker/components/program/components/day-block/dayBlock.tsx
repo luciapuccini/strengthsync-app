@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import type { Dispatch, JSX } from 'react'
 import { toast } from 'sonner'
@@ -32,6 +33,7 @@ export function DayBlock({
   onSave,
 }: DayBlockProps): JSX.Element {
   const [isSaving, setIsSaving] = useState(false)
+  const [isOpen, setIsOpen] = useState(!day.completed)
 
   async function saveDay(): Promise<void> {
     setIsSaving(true)
@@ -54,7 +56,43 @@ export function DayBlock({
 
   return (
     <section className={isFirst ? 'py-4' : 'border-t border-border/50 py-4'}>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <DayHeader
+        day={day}
+        isOpen={isOpen}
+        isSaving={isSaving}
+        onSave={saveDay}
+        onToggle={() => setIsOpen((open) => !open)}
+      />
+      {isOpen && <DayContent day={day} dispatch={dispatch} />}
+    </section>
+  )
+}
+
+function DayHeader({
+  day,
+  isOpen,
+  isSaving,
+  onSave,
+  onToggle,
+}: {
+  day: WeekDay
+  isOpen: boolean
+  isSaving: boolean
+  onSave: () => void
+  onToggle: () => void
+}): JSX.Element {
+  return (
+    <div className="mb-3 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        className="flex min-h-11 flex-1 flex-wrap items-center gap-2 text-left"
+        aria-expanded={isOpen}
+        onClick={onToggle}
+      >
+        <ChevronDown
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? '' : '-rotate-90'}`}
+          aria-hidden
+        />
         <Badge
           className={
             day.type === 'upper_body'
@@ -70,17 +108,30 @@ export function DayBlock({
         {day.completed && (
           <Badge className="border-primary/20 bg-primary/15 text-primary">Done</Badge>
         )}
-        <Button
-          size="sm"
-          variant="outline"
-          className="ml-auto min-h-11"
-          disabled={isSaving}
-          onClick={saveDay}
-        >
-          {isSaving && <Spinner />}
-          {isSaving ? 'Saving…' : 'Save day'}
-        </Button>
-      </div>
+      </button>
+      <Button
+        size="sm"
+        variant="outline"
+        className="ml-auto min-h-11"
+        disabled={isSaving}
+        onClick={onSave}
+      >
+        {isSaving && <Spinner />}
+        {isSaving ? 'Saving…' : 'Save day'}
+      </Button>
+    </div>
+  )
+}
+
+function DayContent({
+  day,
+  dispatch,
+}: {
+  day: WeekDay
+  dispatch: Dispatch<WeekAction>
+}): JSX.Element {
+  return (
+    <>
       {day.notes !== null && (
         <p className="mb-3 text-sm leading-relaxed text-muted-foreground">{day.notes}</p>
       )}
@@ -95,6 +146,6 @@ export function DayBlock({
           />
         ))}
       </div>
-    </section>
+    </>
   )
 }
