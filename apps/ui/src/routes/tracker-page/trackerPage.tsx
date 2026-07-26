@@ -1,20 +1,26 @@
-import { use, useEffect } from 'react'
+import { use, useCallback, useEffect, useState } from 'react'
 import type { JSX } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { GeneratePlanButton } from '@/components/week-tracker/components/generate-plan-button/generatePlanButton'
 import { WeekTracker } from '@/components/week-tracker/weekTracker'
 import { useSelectedClient } from '@/state/selectedClient'
-import { currentWeekResource } from '@/state/weekResource'
+import { currentWeekResource, invalidateCurrentWeek } from '@/state/weekResource'
 
 export function TrackerPage(): JSX.Element {
   const clientId = useParams().clientId as string
   const { clientId: selectedClientId, select } = useSelectedClient()
+  const [, setResourceVersion] = useState(0)
   const data = use(currentWeekResource(clientId))
 
   useEffect(() => {
     if (selectedClientId !== clientId) select(clientId)
   }, [clientId, select, selectedClientId])
+
+  const refreshCurrentWeek = useCallback(() => {
+    invalidateCurrentWeek(clientId)
+    setResourceVersion((version) => version + 1)
+  }, [clientId])
 
   if (data.week === null) {
     return (
@@ -36,6 +42,7 @@ export function TrackerPage(): JSX.Element {
       clientName={data.client?.display_name ?? 'Athlete'}
       initialWeek={data.week}
       totalWeeks={data.plan?.total_weeks ?? null}
+      onCompleteWeek={refreshCurrentWeek}
     />
   )
 }

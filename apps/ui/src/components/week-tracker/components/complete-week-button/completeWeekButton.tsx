@@ -14,11 +14,13 @@ import { startWorkflowWithRetry, waitForWorkflow } from '@/state/workflowPolling
 type CompleteWeekButtonProps = {
   clientId: string
   weekId: string
+  onComplete: () => void
 }
 
 export function CompleteWeekButton({
   clientId,
   weekId,
+  onComplete,
 }: CompleteWeekButtonProps): JSX.Element {
   const [isRunning, setIsRunning] = useState(false)
   const [result, setResult] = useState<string | null>(null)
@@ -47,6 +49,7 @@ export function CompleteWeekButton({
           : 'Week complete. Your next week is ready.'
       setCooldownRemaining(startCompleteWeekCooldown(clientId))
       setResult(message)
+      onComplete()
       toast.success(message)
     } catch (error) {
       toast.error('Could not complete the week', {

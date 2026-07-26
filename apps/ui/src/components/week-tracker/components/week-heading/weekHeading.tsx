@@ -10,6 +10,7 @@ type WeekHeadingProps = {
   clientName: string
   totalWeeks: number | null
   week: Week
+  onCompleteWeek: () => void
 }
 
 export function WeekHeading({
@@ -17,6 +18,7 @@ export function WeekHeading({
   clientName,
   totalWeeks,
   week,
+  onCompleteWeek,
 }: WeekHeadingProps): JSX.Element {
   const trainingDays = week.schedule.filter(
     (day) => day.type !== 'rest' && day.type !== 'swimming',
@@ -42,7 +44,12 @@ export function WeekHeading({
         </div>
         <div className="flex flex-wrap items-start gap-2">
           <GeneratePlanButton clientId={clientId} />
-          <CompleteWeekButton key={clientId} clientId={clientId} weekId={week.id} />
+          <CompleteWeekButton
+            key={clientId}
+            clientId={clientId}
+            weekId={week.id}
+            onComplete={onCompleteWeek}
+          />
         </div>
       </div>
       <div className="flex gap-2">

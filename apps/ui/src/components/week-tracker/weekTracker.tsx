@@ -15,6 +15,7 @@ type WeekTrackerProps = {
   clientName: string
   initialWeek: Week
   totalWeeks: number | null
+  onCompleteWeek: () => void
 }
 
 export function WeekTracker({
@@ -22,6 +23,7 @@ export function WeekTracker({
   clientName,
   initialWeek,
   totalWeeks,
+  onCompleteWeek,
 }: WeekTrackerProps): JSX.Element {
   const [week, dispatch] = useReducer(weekReducer, initialWeek)
 
@@ -46,6 +48,7 @@ export function WeekTracker({
         clientName={clientName}
         totalWeeks={totalWeeks}
         week={week}
+        onCompleteWeek={onCompleteWeek}
       />
       <Program dispatch={dispatch} onSaveDay={saveDay} week={week} />
     </div>
