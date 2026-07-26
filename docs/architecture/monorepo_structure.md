@@ -277,7 +277,9 @@ Declare workspace dependencies explicitly (for example, `"@strengthsync/domain":
   in the same dependency order, and can scope a run to only affected packages.
 - Package `exports` prevent deep imports across workspaces.
 - ESLint import restrictions enforce the graph above.
-- CI runs root typecheck, lint, unit tests, and a dependency-graph check.
+- CI runs root typecheck, lint, unit tests, and a dependency-graph check,
+  scoped to affected packages; `apps/api` deploys automatically on `main`
+  (see [`ci_cd.md`](../operations/ci_cd.md)).
 - Separate runtime TypeScript configs: browser (`ui`), edge (`api`), and Node (`workflows`). Shared services must compile against every runtime they claim to support.
 - Workflow tests assert that every LLM activity receives a recorder; production configuration fails fast when the observability provider is unavailable or unconfigured.
 

@@ -109,7 +109,8 @@ The public Worker `GET /health` confirms edge availability only. It does **not**
 The local worker is intentionally not deployed by the public Worker deployment.
 
 1. Merge a reviewed change.
-2. Deploy `apps/api` and D1 migrations through the normal CI/CD path.
+2. Deploy `apps/api` and D1 migrations through the normal CI/CD path (see
+   [`ci_cd.md`](./ci_cd.md)).
 3. On the local machine, fetch the matching commit with a fast-forward-only update.
 4. Rebuild and recreate the Compose project with the locked dependency image.
 5. Confirm API health, tunnel connectivity, and Temporal polling.
