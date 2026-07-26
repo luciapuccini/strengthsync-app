@@ -10,6 +10,8 @@ import { errorResponse } from '../lib/errors.ts'
 import { requireClient } from '../lib/lookup.ts'
 import { isResponse, parseBody, parseUuidParam } from '../lib/validate.ts'
 
+const WORKFLOW_API_TIMEOUT_MS = 30_000
+
 /** Connection details for the private workflow-start API behind the tunnel. */
 export type WorkflowApiConfig = {
   baseUrl: string
@@ -88,7 +90,7 @@ async function proxy(
         'x-service-secret': config.serviceSecret,
       },
       body: init.body === undefined ? null : JSON.stringify(init.body),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(WORKFLOW_API_TIMEOUT_MS),
     })
   } catch {
     return errorResponse(c, 502, 'workflow_api_unreachable', 'the workflow-start API could not be reached')
