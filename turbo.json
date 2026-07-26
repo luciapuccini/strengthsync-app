@@ -1,0 +1,32 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "globalDependencies": ["tsconfig.base.json", "pnpm-workspace.yaml"],
+  "tasks": {
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "outputs": ["dist/**", "*.tsbuildinfo"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^typecheck"],
+      "outputs": []
+    },
+    "build": {
+      "dependsOn": ["^typecheck", "^build"],
+      "outputs": ["dist/**"]
+    },
+    "docker:build": {
+      "dependsOn": ["^typecheck", "^build"],
+      "outputs": [],
+      "cache": false
+    },
+    "deploy": {
+      "dependsOn": ["build"],
+      "outputs": [],
+      "cache": false
+    }
+  }
+}
