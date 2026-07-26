@@ -8,6 +8,10 @@
     "dev:worker": "dotenv -e ../../.dev.vars -- tsx watch src/worker.ts",
     "start:api": "tsx src/api/server.ts",
     "start:worker": "tsx src/worker.ts",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "docker:build": "docker build -f Dockerfile -t strengthsync-workflows:ci ../..",
     "eval:score": "dotenv -e ../../.dev.vars -- tsx evals/cli.ts score",
     "eval:replay": "dotenv -e ../../.dev.vars -- tsx evals/cli.ts replay"
   },

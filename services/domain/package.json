@@ -8,6 +8,11 @@
     "./model": "./src/model/index.ts",
     "./coach": "./src/coach/index.ts"
   },
+  "scripts": {
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
   "dependencies": {
     "zod": "catalog:"
   }
