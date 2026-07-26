@@ -273,6 +273,8 @@ Declare workspace dependencies explicitly (for example, `"@strengthsync/domain":
 ## Enforcement
 
 - TypeScript project references build shared services before apps.
+- Turborepo (see [`turborepo.md`](./turborepo.md)) runs `typecheck`/`lint`/`test`/`build`
+  in the same dependency order, and can scope a run to only affected packages.
 - Package `exports` prevent deep imports across workspaces.
 - ESLint import restrictions enforce the graph above.
 - CI runs root typecheck, lint, unit tests, and a dependency-graph check.
