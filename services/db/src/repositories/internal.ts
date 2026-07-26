@@ -91,14 +91,6 @@ export async function completeWeek(db: Db, clientId: string, weekId: string): Pr
       `week ${weekId} has status ${week.status}; only an in_flight week can be completed`,
     )
   }
-  const incompleteDays = week.schedule.filter((day) => !day.completed).map((day) => day.day_index)
-  if (incompleteDays.length > 0) {
-    throw new RepoError(
-      'validation',
-      'week_days_incomplete',
-      `week ${weekId} has incomplete days: ${incompleteDays.join(', ')}`,
-    )
-  }
   const currentRows = await db
     .select({ id: weeks.id })
     .from(weeks)

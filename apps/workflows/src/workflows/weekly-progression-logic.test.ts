@@ -109,7 +109,7 @@ describe('runWeeklyProgression retries', () => {
     const context = makeWeeklyContext(1, 4)
     const activities = makeActivities(context, {
       completeWeekActivity: vi.fn(async () => {
-        throw ApplicationFailure.nonRetryable('incomplete days', 'week_days_incomplete')
+        throw ApplicationFailure.nonRetryable('week is not in_flight', 'week_not_in_flight')
       }),
     })
 
@@ -117,7 +117,7 @@ describe('runWeeklyProgression retries', () => {
       runWeeklyProgression({ client_id: CLIENT_ID, week_id: WEEK_ID }, 'wf-1', activities),
     ).rejects.toMatchObject({
       nonRetryable: true,
-      type: 'week_days_incomplete',
+      type: 'week_not_in_flight',
     })
     expect(activities.analyzeWeekActivity).not.toHaveBeenCalled()
     expect(activities.createNextWeekActivity).not.toHaveBeenCalled()

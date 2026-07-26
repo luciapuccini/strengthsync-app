@@ -82,7 +82,9 @@ export function buildAnalyzeWeekPrompt(input: AnalyzeWeekPromptInput): {
       "You are a strength coach analyzing one completed training week.",
       "Produce actionable guidance for generating the next week: adherence, skipped work,",
       "easy/hard/heavy/light feedback, performed sets versus prescription, and fatigue signals.",
-      "Do not invent missing data. Do not prescribe the next schedule yet.",
+      "Days with completed:false mean the athlete did not finish those sessions and missed targets;",
+      "reflect reduced adherence in next-week guidance. Do not invent missing performance data.",
+      "Do not prescribe the next schedule yet.",
     ].join(" "),
     prompt: JSON.stringify(
       {

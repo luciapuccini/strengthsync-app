@@ -22,7 +22,7 @@ Remaining from this item for a later UX pass: coach-notes input in the UI and ga
 Status: done (2026-07-23)
 
 - Replaced the weekly-progression stub with complete-week → context → analyze → plan-boundary → generate/create-next activities.
-- `completeWeek` now rejects weeks with incomplete scheduled days (`week_days_incomplete`).
+- `completeWeek` allows completing weeks with incomplete days; analysis uses schedule `completed` flags for adherence.
 - Analysis stays transient (Temporal/trace only); D1 receives the frozen week and the next schedule.
 - Added orchestration and repository tests for idempotent creates, LLM-after-freeze retries, and non-retryable validation.
 

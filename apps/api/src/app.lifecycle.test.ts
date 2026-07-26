@@ -36,17 +36,17 @@ async function setupCompletedFirstWeek(app: ReturnType<typeof createTestApp>) {
 }
 
 describe('week tracking + weekly progression', () => {
-  it('rejects completing a week with incomplete days', async () => {
+  it('completes a week with incomplete days', async () => {
     const app = createTestApp()
     const client = await createClientViaApi(app)
     await upsertProfileViaApi(app, client.id)
     const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-activate-1')
 
     const res = await completeWeekViaInternalApi(app, client.id, first_week.id, 'wf-weekly-1')
-    expect(res.status).toBe(400)
-    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
-      'week_days_incomplete',
-    )
+    expect(res.status).toBe(200)
+    const week = ((await res.json()) as { week: Week }).week
+    expect(week.status).toBe('completed')
+    expect(week.schedule.some((day) => !day.completed)).toBe(true)
   })
 
   it('tracks a day, completes the week immutably, and creates the next week', async () => {

@@ -36,7 +36,7 @@ describe('completeWeekActivity error mapping', () => {
     const { completeWeekActivity } = await import('./weekly-progression.ts')
 
     completeWeek.mockRejectedValueOnce(
-      new InternalApiError(400, 'week_days_incomplete', 'week has incomplete days'),
+      new InternalApiError(400, 'week_not_in_flight', 'week is not in_flight'),
     )
 
     await expect(
@@ -48,7 +48,7 @@ describe('completeWeekActivity error mapping', () => {
     ).rejects.toMatchObject({
       name: 'ApplicationFailure',
       nonRetryable: true,
-      type: 'week_days_incomplete',
+      type: 'week_not_in_flight',
     })
   })
 

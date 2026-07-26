@@ -69,14 +69,14 @@ async function activateAndCompleteFirstWeek() {
 }
 
 describe('completeWeek command', () => {
-  it('rejects incomplete days', async () => {
+  it('completes a week with incomplete days', async () => {
     const { first_week } = await activateGeneratedPlan(db, clientId, {
       workflow_id: 'wf-activate-1',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
-    await expect(completeWeek(db, clientId, first_week.id)).rejects.toMatchObject({
-      code: 'week_days_incomplete',
-    })
+    const completed = await completeWeek(db, clientId, first_week.id)
+    expect(completed.status).toBe('completed')
+    expect(completed.schedule.some((day) => !day.completed)).toBe(true)
   })
 
   it('is idempotent', async () => {
