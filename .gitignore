@@ -3,6 +3,7 @@ node_modules/
 dist/
 coverage/
 *.tsbuildinfo
+.diagnostics/
 
 # secrets
 .dev.vars
