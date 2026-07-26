@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { JSX } from 'react'
 import { toast } from 'sonner'
 
 import { startWeeklyProgression } from '@/api/client'
 import { Button } from '@/shadcn/ui/button'
 import { Spinner } from '@/shadcn/ui/spinner'
+import {
+  completeWeekCooldownRemaining,
+  startCompleteWeekCooldown,
+} from '@/state/completeWeekCooldown'
 import { startWorkflowWithRetry, waitForWorkflow } from '@/state/workflowPolling'
 
 type CompleteWeekButtonProps = {
@@ -18,6 +22,15 @@ export function CompleteWeekButton({
 }: CompleteWeekButtonProps): JSX.Element {
   const [isRunning, setIsRunning] = useState(false)
   const [result, setResult] = useState<string | null>(null)
+  const [cooldownRemaining, setCooldownRemaining] = useState(() =>
+    completeWeekCooldownRemaining(clientId),
+  )
+
+  useEffect(() => {
+    if (cooldownRemaining <= 0) return
+    const timer = window.setTimeout(() => setCooldownRemaining(0), cooldownRemaining)
+    return () => window.clearTimeout(timer)
+  }, [cooldownRemaining])
 
   async function completeWeek(): Promise<void> {
     setIsRunning(true)
@@ -32,6 +45,7 @@ export function CompleteWeekButton({
         'plan_complete' in resultValue && resultValue.plan_complete
           ? 'Plan complete. Generate your next block when you are ready.'
           : 'Week complete. Your next week is ready.'
+      setCooldownRemaining(startCompleteWeekCooldown(clientId))
       setResult(message)
       toast.success(message)
     } catch (error) {
@@ -42,6 +56,8 @@ export function CompleteWeekButton({
       setIsRunning(false)
     }
   }
+
+  if (cooldownRemaining > 0) return <></>
 
   return (
     <div className="flex flex-col items-end gap-1">

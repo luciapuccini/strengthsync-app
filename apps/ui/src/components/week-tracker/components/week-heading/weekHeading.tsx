@@ -42,7 +42,7 @@ export function WeekHeading({
         </div>
         <div className="flex flex-wrap items-start gap-2">
           <GeneratePlanButton clientId={clientId} />
-          <CompleteWeekButton clientId={clientId} weekId={week.id} />
+          <CompleteWeekButton key={clientId} clientId={clientId} weekId={week.id} />
         </div>
       </div>
       <div className="flex gap-2">
