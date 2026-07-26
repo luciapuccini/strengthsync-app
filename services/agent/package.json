@@ -7,9 +7,9 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@ai-sdk/openai": "4.0.19",
+    "@ai-sdk/openai": "catalog:",
     "@strengthsync/domain": "workspace:*",
-    "ai": "7.0.36",
-    "zod": "4.4.3"
+    "ai": "catalog:",
+    "zod": "catalog:"
   }
 }

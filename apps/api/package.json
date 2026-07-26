@@ -19,13 +19,13 @@
   "dependencies": {
     "@strengthsync/db": "workspace:*",
     "@strengthsync/domain": "workspace:*",
-    "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.31",
-    "zod": "^4.4.3"
+    "drizzle-orm": "catalog:",
+    "hono": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260721.1",
-    "@types/node": "22.20.1",
+    "@types/node": "catalog:",
     "wrangler": "4.112.0"
   }
 }

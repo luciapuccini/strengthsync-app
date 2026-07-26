@@ -11,6 +11,7 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
+    "deps:check": "node scripts/check-dependency-policy.mjs",
     "eval:score": "pnpm --filter @strengthsync/workflows eval:score",
     "eval:replay": "pnpm --filter @strengthsync/workflows eval:replay",
     "prepare": "lefthook install || echo 'lefthook: skipped (not a git repository yet)'"
@@ -24,6 +25,7 @@
     "lefthook": "2.1.10",
     "typescript": "6.0.2",
     "typescript-eslint": "8.62.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "yaml": "2.9.0"
   }
 }
