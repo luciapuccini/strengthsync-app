@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { startWeeklyProgression } from '@/api/client'
 import { Button } from '@/shadcn/ui/button'
 import { Spinner } from '@/shadcn/ui/spinner'
-import { waitForWorkflow } from '@/state/workflowPolling'
+import { startWorkflowWithRetry, waitForWorkflow } from '@/state/workflowPolling'
 
 type CompleteWeekButtonProps = {
   clientId: string
@@ -23,7 +23,7 @@ export function CompleteWeekButton({
     setIsRunning(true)
     setResult(null)
     try {
-      const started = await startWeeklyProgression(clientId, weekId)
+      const started = await startWorkflowWithRetry(() => startWeeklyProgression(clientId, weekId))
       const status = await waitForWorkflow(started.workflow_id)
       if (status.status === 'running') throw new Error('The workflow is still running.')
       if (status.status === 'failed') throw new Error(status.error.message)
