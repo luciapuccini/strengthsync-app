@@ -10,12 +10,69 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # --affected needs real git history to diff against; a shallow
+          # clone makes turbo assume everything changed.
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint
-      - run: pnpm test
+      - name: Resolve turbo affected base
+        id: turbo-base
+        run: .github/workflows/resolve-turbo-base.sh
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+      - run: pnpm deps:check
+      - run: pnpm typecheck:affected
+        env:
+          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
+      - run: pnpm lint:affected
+        env:
+          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
+      - run: pnpm test:affected
+        env:
+          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
+
+  # Deploys only what `--affected` says changed since the previous commit on
+  # main. apps/api's `build`/`deploy` turbo tasks pull in apps/ui's build as
+  # a hard dependency (see turbo.json), so the Worker's static assets are
+  # never stale even on an api-only change. apps/workflows is deliberately
+  # excluded: it's deployed manually to a local machine, see
+  # docs/operations/local_worker.md.
+  deploy:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Resolve turbo affected base
+        id: turbo-base
+        run: .github/workflows/resolve-turbo-base.sh
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+      - run: pnpm build:affected
+        env:
+          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - run: pnpm deploy:affected
+        env:
+          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

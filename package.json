@@ -16,6 +16,7 @@
     "lint:affected": "turbo run lint --affected",
     "test:affected": "turbo run test --affected",
     "build:affected": "turbo run build --affected",
+    "deploy:affected": "turbo run deploy --affected",
     "deps:check": "node scripts/check-dependency-policy.mjs",
     "ts:diagnostics": "node scripts/ts-metrics.mjs diagnostics",
     "ts:list-files": "node scripts/ts-metrics.mjs list-files",
