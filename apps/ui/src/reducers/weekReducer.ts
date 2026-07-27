@@ -5,6 +5,12 @@ import type {
   WeekDay,
 } from '@strengthsync/domain/model'
 
+import {
+  isDayComplete,
+  performedCount,
+  updateDay,
+} from './utils/weekUtils'
+
 export type WeekState = Week
 
 export type WeekAction =
@@ -18,30 +24,6 @@ export type WeekAction =
     }
   | { type: 'TOGGLE_SKIP'; dayIndex: number; exerciseKey: string }
   | { type: 'MARK_DAY_COMPLETE'; dayIndex: number }
-
-export function performedCount(exercise: ExerciseLog): number {
-  return exercise.sets.length
-}
-
-export function remainingSets(exercise: ExerciseLog): number {
-  return Math.max(0, exercise.prescribed.series - performedCount(exercise))
-}
-
-export function isExerciseComplete(exercise: ExerciseLog): boolean {
-  return exercise.skipped || performedCount(exercise) >= exercise.prescribed.series
-}
-
-export function isDayComplete(day: WeekDay): boolean {
-  if (day.exercises.length === 0) return day.completed
-  return day.exercises.every(isExerciseComplete)
-}
-
-function updateDay(week: Week, dayIndex: number, update: (day: WeekDay) => WeekDay): Week {
-  return {
-    ...week,
-    schedule: week.schedule.map((day) => (day.day_index === dayIndex ? update(day) : day)),
-  }
-}
 
 function updateExercise(
   day: WeekDay,

@@ -1,17 +1,17 @@
-import type { Dispatch, JSX } from 'react'
+import type { Dispatch, JSX } from "react";
 
-import type { ExerciseFeedback, ExerciseLog } from '@strengthsync/domain/model'
+import type { ExerciseFeedback, ExerciseLog } from "@strengthsync/domain/model";
 
-import { Button } from '@/shadcn/ui/button'
-import type { WeekAction } from '@/utils/weekReducer'
+import { Button } from "@/shadcn/ui/button";
+import type { WeekAction } from "@/reducers/weekReducer";
 
-const FEEDBACK_OPTIONS: ExerciseFeedback[] = ['easy', 'hard', 'heavy', 'light']
+const FEEDBACK_OPTIONS: ExerciseFeedback[] = ["easy", "hard", "heavy", "light"];
 
 type FeedbackControlsProps = {
-  dayIndex: number
-  dispatch: Dispatch<WeekAction>
-  exercise: ExerciseLog
-}
+  dayIndex: number;
+  dispatch: Dispatch<WeekAction>;
+  exercise: ExerciseLog;
+};
 
 export function FeedbackControls({
   dayIndex,
@@ -26,11 +26,11 @@ export function FeedbackControls({
           key={feedback}
           type="button"
           size="sm"
-          variant={exercise.feedback === feedback ? 'secondary' : 'ghost'}
+          variant={exercise.feedback === feedback ? "secondary" : "ghost"}
           className="min-h-9 px-2 capitalize"
           onClick={() =>
             dispatch({
-              type: 'SET_FEEDBACK',
+              type: "SET_FEEDBACK",
               dayIndex,
               exerciseKey: exercise.exercise_key,
               feedback: exercise.feedback === feedback ? null : feedback,
@@ -41,5 +41,5 @@ export function FeedbackControls({
         </Button>
       ))}
     </div>
-  )
+  );
 }

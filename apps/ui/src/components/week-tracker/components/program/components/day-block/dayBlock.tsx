@@ -1,95 +1,65 @@
-import { ChevronDown } from 'lucide-react'
-import { useState } from 'react'
-import type { Dispatch, JSX } from 'react'
-import { toast } from 'sonner'
+import { useState } from "react";
+import type { Dispatch, JSX } from "react";
+import { toast } from "sonner";
 
-import type { WeekDay } from '@strengthsync/domain/model'
+import type { WeekDay } from "@strengthsync/domain/model";
 
-import { Badge } from '@/shadcn/ui/badge'
-import { Button } from '@/shadcn/ui/button'
-import { Spinner } from '@/shadcn/ui/spinner'
-import type { WeekAction } from '@/utils/weekReducer'
+import type { WeekAction } from "@/reducers/weekReducer";
 
-import { ExerciseRow } from './components/exercise-row/exerciseRow'
-
-const DAY_TYPE_LABELS: Record<WeekDay['type'], string> = {
-  upper_body: 'Upper body',
-  leg_day: 'Leg day',
-  swimming: 'Swimming',
-  cardio: 'Cardio',
-  rest: 'Rest',
-}
+import { DayHeader } from "./components/day-header/dayHeader";
+import { ExerciseRow } from "./components/exercise-row/exerciseRow";
 
 type DayBlockProps = {
-  day: WeekDay
-  dispatch: Dispatch<WeekAction>
-  isFirst: boolean
-  onSave: (day: WeekDay) => Promise<void>
-}
+  day: WeekDay;
+  dispatch: Dispatch<WeekAction>;
+  isFirst: boolean;
+  onSave: (day: WeekDay) => Promise<void>;
+};
 
-export function DayBlock({ day, dispatch, isFirst, onSave }: DayBlockProps): JSX.Element {
-  const [isSaving, setIsSaving] = useState(false)
-  const [isOpen, setIsOpen] = useState(!day.completed)
+export function DayBlock({
+  day,
+  dispatch,
+  isFirst,
+  onSave,
+}: DayBlockProps): JSX.Element {
+  const [isSaving, setIsSaving] = useState(false);
+  const [isOpen, setIsOpen] = useState(!day.completed);
+
   async function saveDay(): Promise<void> {
-    setIsSaving(true)
-    const dayToSave = day.exercises.length === 0 && !day.completed ? { ...day, completed: true } : day
+    setIsSaving(true);
+    const dayToSave =
+      day.exercises.length === 0 && !day.completed
+        ? { ...day, completed: true }
+        : day;
     try {
-      await onSave(dayToSave)
-      if (dayToSave !== day) dispatch({ type: 'MARK_DAY_COMPLETE', dayIndex: day.day_index })
-      toast.success(`Day ${day.day_index} saved`)
+      await onSave(dayToSave);
+      if (dayToSave !== day)
+        dispatch({ type: "MARK_DAY_COMPLETE", dayIndex: day.day_index });
+      toast.success(`Day ${day.day_index} saved`);
     } catch (error) {
       toast.error(`Could not save day ${day.day_index}`, {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      })
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
   }
 
   return (
-    <section className={isFirst ? 'py-4' : 'border-t border-border/50 py-4'}>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          className="flex min-h-11 flex-1 flex-wrap items-center gap-2 text-left"
-          aria-expanded={isOpen}
-          onClick={() => setIsOpen((open) => !open)}
-        >
-          <ChevronDown
-            className={`size-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? '' : '-rotate-90'}`}
-            aria-hidden
-          />
-          <Badge
-            className={
-              day.type === 'upper_body'
-                ? 'border-primary/20 bg-primary/15 text-primary'
-                : 'bg-foreground/10 text-foreground/70'
-            }
-          >
-            {DAY_TYPE_LABELS[day.type]}
-          </Badge>
-          <span className="text-sm font-semibold text-muted-foreground">
-            Day {day.day_index} · {day.date}
-          </span>
-          {day.completed && (
-            <Badge className="border-primary/20 bg-primary/15 text-primary">Done</Badge>
-          )}
-        </button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="ml-auto min-h-11"
-          disabled={isSaving}
-          onClick={saveDay}
-        >
-          {isSaving && <Spinner />}
-          {isSaving ? 'Saving…' : 'Save day'}
-        </Button>
-      </div>
+    <section className={isFirst ? "py-4" : "border-t border-border/50 py-4"}>
+      <DayHeader
+        day={day}
+        isOpen={isOpen}
+        isSaving={isSaving}
+        onSave={saveDay}
+        onToggle={() => setIsOpen((open) => !open)}
+      />
       {isOpen && (
         <>
           {day.notes !== null && (
-            <p className="mb-3 text-sm leading-relaxed text-muted-foreground">{day.notes}</p>
+            <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
+              {day.notes}
+            </p>
           )}
           <div className="flex flex-col gap-3">
             {day.exercises.map((exercise, index) => (
@@ -105,5 +75,5 @@ export function DayBlock({ day, dispatch, isFirst, onSave }: DayBlockProps): JSX
         </>
       )}
     </section>
-  )
+  );
 }

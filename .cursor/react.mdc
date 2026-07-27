@@ -11,9 +11,8 @@ alwaysApply: false
 1. **Function Components Only**: No class components - use hooks for state and lifecycle
 2. **TypeScript First**: Every component, prop, and hook must be properly typed
 3. **Composition Over Inheritance**: Build complex UIs from simple, composable pieces
-4. **Performance by Default**: Consider performance implications in initial implementation
-5. **Accessibility Always**: Every interactive element must be keyboard and screen reader accessible
-6. **React 19 features encouraged**: Prefer modern aproaches when possible, like use() for fetching data and <Suspence>
+4. **Accessibility Always**: Every interactive element must be keyboard and screen reader accessible
+5. **React 19 features encouraged**: Prefer modern aproaches when possible, like use() for fetching data and <Suspence>
 
 ## Component Architecture
 
@@ -93,49 +92,9 @@ Component.displayName = 'Component';
 ```
 
 ## State Management Patterns
-
-### Local State
-
-```typescript
-// Simple state for UI-only concerns
-const [isOpen, setIsOpen] = useState(false);
-
-// Complex state with reducer for business logic
-const [state, dispatch] = useReducer(reducer, initialState);
-```
-
-### Lifted State
-
-```typescript
-// Lift state to lowest common ancestor
-export function Parent() {
-  const [sharedState, setSharedState] = useState();
-
-  return (
-    <>
-      <ChildA state={sharedState} />
-      <ChildB onUpdate={setSharedState} />
-    </>
-  );
-}
-```
-
-## Performance Optimization
-
-### Code Splitting
-
-```typescript
-// Route-based splitting
-const Dashboard = lazy(() => import('@/pages/Dashboard'));
-
-// Component-based splitting for heavy components
-const HeavyChart = lazy(() => import('@/components/HeavyChart'));
-
-// With loading boundary
-<Suspense fallback={<Spinner />}>
-  <HeavyChart data={data} />
-</Suspense>
-```
+1. state lives as low as possible, but as high as necessary. Closer as really needing it as you can get away with
+2. for complex state interation multiple components impacted, I prefer a reducer with an object as state with a central hook  
+3. context is a last resourse, only for small pieces of state that do not change frequenlty, like a user login state. If used, Provider and Context with the exposing hook live all thoghether in the same file
 
 ## Form Handling
 
@@ -420,6 +379,10 @@ export function Modal({ isOpen, onClose, children }: ModalProps) {
 ```
 
 ## Anti-Patterns to Avoid
+
+### ❌ Preventive optimizations
+- do NOT reach for useMemo and useCallback by default. We need to validate the need for those performance tools always.
+
 
 ### ❌ Direct DOM Manipulation
 
