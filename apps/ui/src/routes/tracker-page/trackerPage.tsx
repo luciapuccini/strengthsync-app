@@ -1,29 +1,37 @@
-import { use, useCallback, useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import type { JSX } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { GeneratePlanButton } from '@/components/week-tracker/components/generate-plan-button/generatePlanButton'
 import { WeekTracker } from '@/components/week-tracker/weekTracker'
-import { currentWeekResource, invalidateCurrentWeek } from '@/api/weekResource'
+import { currentWeekResource } from '@/api/weekResource'
+import type { TrackerData } from '@/api/weekResource'
 import { useAppStore } from '@/store/useAppStore'
 
 export function TrackerPage(): JSX.Element {
   const clientId = useParams().clientId as string
+  const data = use(currentWeekResource(clientId))
   const selectedClientId = useAppStore((s) => s.selectedClientId)
   const selectClient = useAppStore((s) => s.selectClient)
-  const [, setResourceVersion] = useState(0)
-  const data = use(currentWeekResource(clientId))
+
+  // Hydrate the store synchronously during render (React's "adjust state
+  // during render" pattern), guarded by reference equality against the
+  // resolved resource. This keeps the store as the single source of truth
+  // for `week` (so refreshTracker() can flip this page without a Suspense
+  // re-fallback) while avoiding an effect-driven flash or a stale-store
+  // frame when switching clients.
+  const [hydratedFrom, setHydratedFrom] = useState<TrackerData | null>(null)
+  if (hydratedFrom !== data) {
+    setHydratedFrom(data)
+    useAppStore.getState().hydrateTracker(data)
+  }
+  const week = useAppStore((s) => s.week)
 
   useEffect(() => {
     if (selectedClientId !== clientId) selectClient(clientId)
   }, [clientId, selectClient, selectedClientId])
 
-  const refreshCurrentWeek = useCallback(() => {
-    invalidateCurrentWeek(clientId)
-    setResourceVersion((version) => version + 1)
-  }, [clientId])
-
-  if (data.week === null) {
+  if (week === null) {
     return (
       <div className="rounded-xl border border-border bg-card p-6">
         <h1 className="text-xl font-semibold">No current week</h1>
@@ -37,11 +45,5 @@ export function TrackerPage(): JSX.Element {
     )
   }
 
-  return (
-    <WeekTracker
-      clientId={clientId}
-      initialWeek={data.week}
-      onCompleteWeek={refreshCurrentWeek}
-    />
-  )
+  return <WeekTracker clientId={clientId} />
 }

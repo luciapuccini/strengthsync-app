@@ -1,23 +1,22 @@
-import type { Dispatch, JSX } from "react";
+import type { JSX } from "react";
 
 import type { ExerciseFeedback, ExerciseLog } from "@strengthsync/domain/model";
 
 import { Button } from "@/shadcn/ui/button";
-import type { WeekAction } from "@/reducers/weekReducer";
+import { useAppStore } from "@/store/useAppStore";
 
 const FEEDBACK_OPTIONS: ExerciseFeedback[] = ["easy", "hard", "heavy", "light"];
 
 type FeedbackControlsProps = {
   dayIndex: number;
-  dispatch: Dispatch<WeekAction>;
   exercise: ExerciseLog;
 };
 
 export function FeedbackControls({
   dayIndex,
-  dispatch,
   exercise,
 }: FeedbackControlsProps): JSX.Element {
+  const setFeedback = useAppStore((s) => s.setFeedback);
   return (
     <div className="ml-6 flex flex-wrap items-center gap-1.5">
       <span className="mr-1 text-xs text-muted-foreground">Felt:</span>
@@ -29,12 +28,11 @@ export function FeedbackControls({
           variant={exercise.feedback === feedback ? "secondary" : "ghost"}
           className="min-h-9 px-2 capitalize"
           onClick={() =>
-            dispatch({
-              type: "SET_FEEDBACK",
+            setFeedback(
               dayIndex,
-              exerciseKey: exercise.exercise_key,
-              feedback: exercise.feedback === feedback ? null : feedback,
-            })
+              exercise.exercise_key,
+              exercise.feedback === feedback ? null : feedback,
+            )
           }
         >
           {feedback}

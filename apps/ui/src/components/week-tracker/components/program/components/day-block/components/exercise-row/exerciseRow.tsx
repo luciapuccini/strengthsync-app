@@ -1,4 +1,4 @@
-import type { Dispatch, JSX } from "react";
+import type { JSX } from "react";
 
 import type { ExerciseLog, WeekDay } from "@strengthsync/domain/model";
 
@@ -6,17 +6,14 @@ import { FeedbackControls } from "./components/feedback-controls/feedbackControl
 import { SetControls } from "./components/set-controls/setControls";
 import { cn } from "@/shadcn/lib/utils";
 import { isExerciseComplete, remainingSets } from "@/reducers/utils/weekUtils";
-import type { WeekAction } from "@/reducers/weekReducer";
 
 type ExerciseRowProps = {
   day: WeekDay;
-  dispatch: Dispatch<WeekAction>;
   exercise: ExerciseLog;
 };
 
 export function ExerciseRow({
   day,
-  dispatch,
   exercise,
 }: ExerciseRowProps): JSX.Element {
   const dayIndex = day.day_index;
@@ -68,16 +65,8 @@ export function ExerciseRow({
           </div>
         </div>
       </div>
-      <SetControls
-        dayIndex={dayIndex}
-        dispatch={dispatch}
-        exercise={exercise}
-      />
-      <FeedbackControls
-        dayIndex={dayIndex}
-        dispatch={dispatch}
-        exercise={exercise}
-      />
+      <SetControls dayIndex={dayIndex} exercise={exercise} />
+      <FeedbackControls dayIndex={dayIndex} exercise={exercise} />
     </div>
   );
 }

@@ -1,40 +1,35 @@
 import { useState } from "react";
-import type { Dispatch, JSX } from "react";
+import type { JSX } from "react";
 import { toast } from "sonner";
 
 import type { WeekDay } from "@strengthsync/domain/model";
 
-import type { WeekAction } from "@/reducers/weekReducer";
+import { useAppStore } from "@/store/useAppStore";
 
 import { DayHeader } from "./components/day-header/dayHeader";
 import { ExerciseRow } from "./components/exercise-row/exerciseRow";
 
 type DayBlockProps = {
   day: WeekDay;
-  dispatch: Dispatch<WeekAction>;
   isFirst: boolean;
-  onSave: (day: WeekDay) => Promise<void>;
 };
 
-export function DayBlock({
-  day,
-  dispatch,
-  isFirst,
-  onSave,
-}: DayBlockProps): JSX.Element {
+export function DayBlock({ day, isFirst }: DayBlockProps): JSX.Element {
+  const saveDay = useAppStore((s) => s.saveDay);
   const [isSaving, setIsSaving] = useState(false);
   const [isOpen, setIsOpen] = useState(!day.completed);
 
-  async function saveDay(): Promise<void> {
+  async function handleSave(): Promise<void> {
     setIsSaving(true);
-    const dayToSave =
+    const dayToSave: WeekDay =
       day.exercises.length === 0 && !day.completed
         ? { ...day, completed: true }
         : day;
     try {
-      await onSave(dayToSave);
-      if (dayToSave !== day)
-        dispatch({ type: "MARK_DAY_COMPLETE", dayIndex: day.day_index });
+      // saveDay re-hydrates the whole week from the server response, which
+      // already reflects `completed` for dayToSave — no extra client-side
+      // "mark complete" step needed here.
+      await saveDay(dayToSave);
       toast.success(`Day ${day.day_index} saved`);
     } catch (error) {
       toast.error(`Could not save day ${day.day_index}`, {
@@ -51,7 +46,7 @@ export function DayBlock({
         day={day}
         isOpen={isOpen}
         isSaving={isSaving}
-        onSave={saveDay}
+        onSave={handleSave}
         onToggle={() => setIsOpen((open) => !open)}
       />
       {isOpen && (
@@ -66,7 +61,6 @@ export function DayBlock({
               <ExerciseRow
                 key={exercise.exercise_key}
                 day={day}
-                dispatch={dispatch}
                 exercise={exercise}
               />
             ))}

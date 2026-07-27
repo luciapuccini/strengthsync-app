@@ -1,22 +1,15 @@
-import type { Dispatch, JSX } from "react";
+import type { JSX } from "react";
 
-import type { Week, WeekDay } from "@strengthsync/domain/model";
+import type { Week } from "@strengthsync/domain/model";
 
 import { DayBlock } from "@/components/week-tracker/components/program/components/day-block/dayBlock";
 import { Card, CardContent } from "@/shadcn/ui/card";
-import type { WeekAction } from "@/reducers/weekReducer";
 
 type ProgramProps = {
-  dispatch: Dispatch<WeekAction>;
-  onSaveDay: (day: WeekDay) => Promise<void>;
   week: Week;
 };
 
-export function Program({
-  dispatch,
-  onSaveDay,
-  week,
-}: ProgramProps): JSX.Element {
+export function Program({ week }: ProgramProps): JSX.Element {
   return (
     <Card>
       <CardContent className="flex flex-col">
@@ -26,13 +19,7 @@ export function Program({
           </span>
         </div>
         {week.schedule.map((day, index) => (
-          <DayBlock
-            key={day.day_index}
-            day={day}
-            dispatch={dispatch}
-            isFirst={index === 0}
-            onSave={onSaveDay}
-          />
+          <DayBlock key={day.day_index} day={day} isFirst={index === 0} />
         ))}
       </CardContent>
     </Card>

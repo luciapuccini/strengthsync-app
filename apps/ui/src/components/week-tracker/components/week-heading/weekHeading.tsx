@@ -8,24 +8,14 @@ import { GeneratePlanButton } from '@/components/week-tracker/components/generat
 type WeekHeadingProps = {
   clientId: string
   week: Week
-  onCompleteWeek: () => void
 }
 
-export function WeekHeading({
-  clientId,
-  week,
-  onCompleteWeek,
-}: WeekHeadingProps): JSX.Element {
+export function WeekHeading({ clientId, week }: WeekHeadingProps): JSX.Element {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-wrap items-start gap-2">
         <GeneratePlanButton clientId={clientId} />
-        <CompleteWeekButton
-          key={clientId}
-          clientId={clientId}
-          weekId={week.id}
-          onComplete={onCompleteWeek}
-        />
+        <CompleteWeekButton key={clientId} clientId={clientId} weekId={week.id} />
       </div>
     </div>
   )
