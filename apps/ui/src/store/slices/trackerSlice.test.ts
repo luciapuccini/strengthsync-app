@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Client } from '@strengthsync/domain/model'
 
+import { toggleSkip as applyToggleSkip } from '@/reducers/weekReducer'
 import { makeWeek } from '@/test/weekFixture'
 
 const { saveDayLog } = vi.hoisted(() => ({ saveDayLog: vi.fn() }))
@@ -16,7 +17,9 @@ vi.mock('@/api/weekResource', () => ({ invalidateCurrentWeek, currentWeekResourc
 import { useAppStore } from '../useAppStore'
 
 const UUID = '00000000-0000-4000-8000-000000000001'
+const NEXT_WEEK_UUID = '00000000-0000-4000-8000-000000000002'
 const NOW = '2026-07-23T00:00:00.000Z'
+const DRAFT_STORAGE_KEY = `strengthsync:week-draft:${UUID}`
 
 const client: Client = {
   id: UUID,
@@ -28,10 +31,12 @@ const client: Client = {
 }
 
 beforeEach(() => {
+  window.localStorage.clear()
   useAppStore.setState({ client: null, plan: null, week: null, selectedClientId: null }, false)
 })
 
 afterEach(() => {
+  window.localStorage.clear()
   vi.clearAllMocks()
 })
 
@@ -59,7 +64,72 @@ describe('trackerSlice', () => {
     useAppStore.getState().setFeedback(1, 'bench_press', 'heavy')
     expect(useAppStore.getState().week?.schedule[0]?.exercises[0]?.feedback).toBe('heavy')
   })
+})
 
+describe('trackerSlice draft persistence', () => {
+  it('persists toggleSkip as the exact pure transition result', () => {
+    const week = makeWeek()
+    const expected = applyToggleSkip(week, 1, 'bench_press')
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+
+    useAppStore.getState().toggleSkip(1, 'bench_press')
+
+    expect(useAppStore.getState().week).toEqual(expected)
+    expect(JSON.parse(window.localStorage.getItem(DRAFT_STORAGE_KEY) ?? 'null')).toEqual(expected)
+  })
+
+  it('restores a matching stored draft when server data hydrates again', () => {
+    const week = makeWeek()
+    const expected = applyToggleSkip(week, 1, 'bench_press')
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+    useAppStore.getState().toggleSkip(1, 'bench_press')
+    useAppStore.setState({ client: null, plan: null, week: null }, false)
+
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+
+    expect(useAppStore.getState().week?.schedule).toEqual(expected.schedule)
+  })
+
+  it('keeps a matching draft after saveDay and same-week refresh', async () => {
+    const week = makeWeek()
+    const expected = applyToggleSkip(week, 1, 'bench_press')
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+    useAppStore.getState().toggleSkip(1, 'bench_press')
+    saveDayLog.mockResolvedValue(week)
+    currentWeekResource.mockResolvedValue({ client, plan: null, week })
+
+    await useAppStore.getState().saveDay(expected.schedule[0]!)
+    expect(useAppStore.getState().week?.schedule).toEqual(expected.schedule)
+
+    await useAppStore.getState().refreshTracker()
+    expect(useAppStore.getState().week?.schedule).toEqual(expected.schedule)
+    expect(window.localStorage.getItem(DRAFT_STORAGE_KEY)).not.toBeNull()
+  })
+
+  it('clears the client draft when a different week hydrates', () => {
+    const week = makeWeek()
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+    useAppStore.getState().toggleSkip(1, 'bench_press')
+    const nextWeek = { ...week, id: NEXT_WEEK_UUID }
+
+    useAppStore.getState().hydrateTracker({ client, plan: null, week: nextWeek })
+
+    expect(useAppStore.getState().week).toEqual(nextWeek)
+    expect(window.localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull()
+  })
+
+  it('clears a malformed client draft during hydration', () => {
+    const week = makeWeek()
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, 'not-json')
+
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+
+    expect(useAppStore.getState().week).toEqual(week)
+    expect(window.localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull()
+  })
+})
+
+describe('trackerSlice API orchestration', () => {
   it('is a no-op mutating sets/feedback before the tracker is hydrated', () => {
     useAppStore.getState().toggleSet(1, 'bench_press', 0)
     expect(useAppStore.getState().week).toBeNull()

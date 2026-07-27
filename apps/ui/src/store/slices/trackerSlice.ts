@@ -11,8 +11,15 @@ import {
   toggleSet as applyToggleSet,
   toggleSkip as applyToggleSkip,
 } from '@/reducers/weekReducer'
+import { reconcileWeekDraft, writeWeekDraft } from '@/store/weekDraftStorage'
 
 import type { AppStore } from '../useAppStore'
+
+function applyPersistedWeekChange(week: Week, change: (current: Week) => Week): Week {
+  const nextWeek = change(week)
+  writeWeekDraft(nextWeek)
+  return nextWeek
+}
 
 export type TrackerSlice = {
   client: Client | null
@@ -41,7 +48,15 @@ export const createTrackerSlice: StateCreator<
   week: null,
 
   hydrateTracker: (data) =>
-    set({ client: data.client, plan: data.plan, week: data.week }, false, 'hydrateTracker'),
+    set(
+      {
+        client: data.client,
+        plan: data.plan,
+        week: reconcileWeekDraft(data.week, data.client?.id ?? null),
+      },
+      false,
+      'hydrateTracker',
+    ),
 
   toggleSet: (dayIndex, exerciseKey, setIndex) =>
     set(
@@ -68,7 +83,11 @@ export const createTrackerSlice: StateCreator<
       (state) =>
         state.week === null
           ? state
-          : { week: applyToggleSkip(state.week, dayIndex, exerciseKey) },
+          : {
+              week: applyPersistedWeekChange(state.week, (week) =>
+                applyToggleSkip(week, dayIndex, exerciseKey),
+              ),
+            },
       false,
       'toggleSkip',
     ),
@@ -80,7 +99,7 @@ export const createTrackerSlice: StateCreator<
     }
     const savedWeek = await saveDayLog(client.id, week.id, day.day_index, toUpdateDayLog(day))
     invalidateCurrentWeek(client.id)
-    set({ week: savedWeek }, false, 'saveDay')
+    set({ week: reconcileWeekDraft(savedWeek, client.id) }, false, 'saveDay')
   },
 
   refreshTracker: async () => {
@@ -88,6 +107,14 @@ export const createTrackerSlice: StateCreator<
     if (client === null) return
     invalidateCurrentWeek(client.id)
     const data = await currentWeekResource(client.id)
-    set({ client: data.client, plan: data.plan, week: data.week }, false, 'refreshTracker')
+    set(
+      {
+        client: data.client,
+        plan: data.plan,
+        week: reconcileWeekDraft(data.week, client.id),
+      },
+      false,
+      'refreshTracker',
+    )
   },
 })
