@@ -4,18 +4,19 @@ import { useParams } from 'react-router-dom'
 
 import { GeneratePlanButton } from '@/components/week-tracker/components/generate-plan-button/generatePlanButton'
 import { WeekTracker } from '@/components/week-tracker/weekTracker'
-import { useSelectedClient } from '@/contexts/selectedClient'
 import { currentWeekResource, invalidateCurrentWeek } from '@/api/weekResource'
+import { useAppStore } from '@/store/useAppStore'
 
 export function TrackerPage(): JSX.Element {
   const clientId = useParams().clientId as string
-  const { clientId: selectedClientId, select } = useSelectedClient()
+  const selectedClientId = useAppStore((s) => s.selectedClientId)
+  const selectClient = useAppStore((s) => s.selectClient)
   const [, setResourceVersion] = useState(0)
   const data = use(currentWeekResource(clientId))
 
   useEffect(() => {
-    if (selectedClientId !== clientId) select(clientId)
-  }, [clientId, select, selectedClientId])
+    if (selectedClientId !== clientId) selectClient(clientId)
+  }, [clientId, selectClient, selectedClientId])
 
   const refreshCurrentWeek = useCallback(() => {
     invalidateCurrentWeek(clientId)
