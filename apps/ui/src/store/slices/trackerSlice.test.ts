@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Client } from '@strengthsync/domain/model'
 
 import {
+  setFeedback as applySetFeedback,
   toggleSet as applyToggleSet,
   toggleSkip as applyToggleSkip,
 } from '@/reducers/weekReducer'
@@ -52,21 +53,6 @@ describe('trackerSlice', () => {
     expect(useAppStore.getState().week).toEqual(week)
   })
 
-  it('delegates toggleSet/toggleSkip/setFeedback to the pure week transitions', () => {
-    const week = makeWeek()
-    useAppStore.getState().hydrateTracker({ client, plan: null, week })
-
-    useAppStore.getState().toggleSet(1, 'bench_press', 0)
-    expect(useAppStore.getState().week?.schedule[0]?.exercises[0]?.sets).toEqual([
-      { performed_reps: 8, performed_weight_kg: 30 },
-    ])
-
-    useAppStore.getState().toggleSkip(1, 'bench_press')
-    expect(useAppStore.getState().week?.schedule[0]?.exercises[0]?.skipped).toBe(true)
-
-    useAppStore.getState().setFeedback(1, 'bench_press', 'heavy')
-    expect(useAppStore.getState().week?.schedule[0]?.exercises[0]?.feedback).toBe('heavy')
-  })
 })
 
 describe('trackerSlice draft persistence', () => {
@@ -146,6 +132,27 @@ describe('trackerSlice draft persistence', () => {
 
     expect(useAppStore.getState().week).toEqual(week)
     expect(window.localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull()
+  })
+})
+
+describe('trackerSlice feedback draft persistence', () => {
+  it('persists setFeedback as the exact pure transition result', () => {
+    const week = makeWeek()
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+    const withFeedback = applySetFeedback(week, 1, 'bench_press', 'heavy')
+
+    useAppStore.getState().setFeedback(1, 'bench_press', 'heavy')
+
+    expect(useAppStore.getState().week).toEqual(withFeedback)
+    expect(JSON.parse(window.localStorage.getItem(DRAFT_STORAGE_KEY) ?? 'null')).toEqual(
+      withFeedback,
+    )
+
+    const cleared = applySetFeedback(withFeedback, 1, 'bench_press', null)
+    useAppStore.getState().setFeedback(1, 'bench_press', null)
+
+    expect(useAppStore.getState().week).toEqual(cleared)
+    expect(JSON.parse(window.localStorage.getItem(DRAFT_STORAGE_KEY) ?? 'null')).toEqual(cleared)
   })
 })
 

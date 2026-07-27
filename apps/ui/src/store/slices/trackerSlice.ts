@@ -77,7 +77,11 @@ export const createTrackerSlice: StateCreator<
       (state) =>
         state.week === null
           ? state
-          : { week: applySetFeedback(state.week, dayIndex, exerciseKey, feedback) },
+          : {
+              week: applyPersistedWeekChange(state.week, (week) =>
+                applySetFeedback(week, dayIndex, exerciseKey, feedback),
+              ),
+            },
       false,
       'setFeedback',
     ),
