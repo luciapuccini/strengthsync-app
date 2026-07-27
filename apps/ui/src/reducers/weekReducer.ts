@@ -1,29 +1,6 @@
-import type {
-  ExerciseFeedback,
-  ExerciseLog,
-  Week,
-  WeekDay,
-} from '@strengthsync/domain/model'
+import type { ExerciseFeedback, ExerciseLog, Week, WeekDay } from '@strengthsync/domain/model'
 
-import {
-  isDayComplete,
-  performedCount,
-  updateDay,
-} from './utils/weekUtils'
-
-export type WeekState = Week
-
-export type WeekAction =
-  | { type: 'HYDRATE'; week: Week }
-  | { type: 'TOGGLE_SET'; dayIndex: number; exerciseKey: string; setIndex: number }
-  | {
-      type: 'SET_FEEDBACK'
-      dayIndex: number
-      exerciseKey: string
-      feedback: ExerciseFeedback | null
-    }
-  | { type: 'TOGGLE_SKIP'; dayIndex: number; exerciseKey: string }
-  | { type: 'MARK_DAY_COMPLETE'; dayIndex: number }
+import { isDayComplete, performedCount, updateDay } from './utils/weekUtils'
 
 function updateExercise(
   day: WeekDay,
@@ -86,28 +63,4 @@ export function toggleSkip(week: Week, dayIndex: number, exerciseKey: string): W
       sets: [],
     })),
   )
-}
-
-export function markDayComplete(week: Week, dayIndex: number): Week {
-  return updateDay(week, dayIndex, (day) => ({ ...day, completed: true }))
-}
-
-export function weekReducer(state: WeekState, action: WeekAction): WeekState {
-  switch (action.type) {
-    case 'HYDRATE':
-      return action.week
-    case 'TOGGLE_SET':
-      return toggleSet(state, action.dayIndex, action.exerciseKey, action.setIndex)
-    case 'SET_FEEDBACK':
-      return setFeedback(
-        state,
-        action.dayIndex,
-        action.exerciseKey,
-        action.feedback,
-      )
-    case 'TOGGLE_SKIP':
-      return toggleSkip(state, action.dayIndex, action.exerciseKey)
-    case 'MARK_DAY_COMPLETE':
-      return markDayComplete(state, action.dayIndex)
-  }
 }
