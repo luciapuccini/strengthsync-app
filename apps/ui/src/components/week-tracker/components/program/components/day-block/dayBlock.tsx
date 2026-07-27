@@ -62,13 +62,12 @@ export function DayBlock({
             </p>
           )}
           <div className="flex flex-col gap-3">
-            {day.exercises.map((exercise, index) => (
+            {day.exercises.map((exercise) => (
               <ExerciseRow
                 key={exercise.exercise_key}
-                dayIndex={day.day_index}
+                day={day}
                 dispatch={dispatch}
                 exercise={exercise}
-                index={index}
               />
             ))}
           </div>

@@ -1,6 +1,6 @@
 import type { Dispatch, JSX } from "react";
 
-import type { ExerciseLog } from "@strengthsync/domain/model";
+import type { ExerciseLog, WeekDay } from "@strengthsync/domain/model";
 
 import { FeedbackControls } from "./components/feedback-controls/feedbackControls";
 import { SetControls } from "./components/set-controls/setControls";
@@ -9,18 +9,21 @@ import { isExerciseComplete, remainingSets } from "@/reducers/utils/weekUtils";
 import type { WeekAction } from "@/reducers/weekReducer";
 
 type ExerciseRowProps = {
-  dayIndex: number;
+  day: WeekDay;
   dispatch: Dispatch<WeekAction>;
   exercise: ExerciseLog;
-  index: number;
 };
 
 export function ExerciseRow({
-  dayIndex,
+  day,
   dispatch,
   exercise,
-  index,
 }: ExerciseRowProps): JSX.Element {
+  const dayIndex = day.day_index;
+  const ordinal =
+    day.exercises.findIndex(
+      (candidate) => candidate.exercise_key === exercise.exercise_key,
+    ) + 1;
   const remaining = remainingSets(exercise);
   const complete = isExerciseComplete(exercise);
   const weightLabel =
@@ -37,7 +40,7 @@ export function ExerciseRow({
     >
       <div className="flex items-start gap-2">
         <span className="mt-1 w-4 shrink-0 text-xs font-bold text-muted-foreground/70">
-          {index + 1}
+          {ordinal}
         </span>
         <div className="min-w-0 flex-1">
           <div
