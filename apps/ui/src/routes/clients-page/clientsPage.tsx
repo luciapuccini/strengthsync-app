@@ -9,7 +9,7 @@ import { ApiClientError } from '@/api/errors'
 import { ClientList } from '@/routes/clients-page/components/client-list/clientList'
 import { CreateClientForm } from '@/routes/clients-page/components/create-client-form/createClientForm'
 import { CredentialsNotice } from '@/routes/clients-page/components/credentials-notice/credentialsNotice'
-import { useSelectedClient } from '@/state/selectedClient'
+import { useSelectedClient } from '@/contexts/selectedClient'
 
 export function ClientsPage(): JSX.Element {
   const [clients, setClients] = useState<Client[] | null>(null)

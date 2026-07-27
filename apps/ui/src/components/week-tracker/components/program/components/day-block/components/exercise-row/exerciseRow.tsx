@@ -2,11 +2,11 @@ import type { Dispatch, JSX } from 'react'
 
 import type { ExerciseLog } from '@strengthsync/domain/model'
 
-import { FeedbackControls } from '@/components/week-tracker/components/program/components/exercise-row/components/feedback-controls/feedbackControls'
-import { SetControls } from '@/components/week-tracker/components/program/components/exercise-row/components/set-controls/setControls'
+import { FeedbackControls } from './components/feedback-controls/feedbackControls'
+import { SetControls } from './components/set-controls/setControls'
 import { cn } from '@/shadcn/lib/utils'
-import { isExerciseComplete, remainingSets } from '@/state/weekReducer'
-import type { WeekAction } from '@/state/weekReducer'
+import { isExerciseComplete, remainingSets } from '@/utils/weekReducer'
+import type { WeekAction } from '@/utils/weekReducer'
 
 type ExerciseRowProps = {
   dayIndex: number

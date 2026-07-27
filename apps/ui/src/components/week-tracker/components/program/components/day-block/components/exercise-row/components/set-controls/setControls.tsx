@@ -4,8 +4,8 @@ import type { ExerciseLog } from '@strengthsync/domain/model'
 
 import { Button } from '@/shadcn/ui/button'
 import { cn } from '@/shadcn/lib/utils'
-import { performedCount } from '@/state/weekReducer'
-import type { WeekAction } from '@/state/weekReducer'
+import { performedCount } from '@/utils/weekReducer'
+import type { WeekAction } from '@/utils/weekReducer'
 
 type SetControlsProps = {
   dayIndex: number

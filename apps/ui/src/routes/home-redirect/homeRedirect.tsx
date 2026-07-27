@@ -2,8 +2,8 @@ import { use } from 'react'
 import type { JSX } from 'react'
 import { Navigate } from 'react-router-dom'
 
-import { useSelectedClient } from '@/state/selectedClient'
-import { clientsResource } from '@/state/weekResource'
+import { useSelectedClient } from '@/contexts/selectedClient'
+import { clientsResource } from '@/api/weekResource'
 
 export function HomeRedirect(): JSX.Element {
   const { clientId } = useSelectedClient()

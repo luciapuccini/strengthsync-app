@@ -5,8 +5,8 @@ import { toast } from 'sonner'
 import { startPlanGeneration } from '@/api/client'
 import { Button } from '@/shadcn/ui/button'
 import { Spinner } from '@/shadcn/ui/spinner'
-import { invalidateCurrentWeek } from '@/state/weekResource'
-import { waitForWorkflow } from '@/state/workflowPolling'
+import { invalidateCurrentWeek } from '@/api/weekResource'
+import { waitForWorkflow } from '@/api/workflowPolling'
 
 type GeneratePlanButtonProps = {
   clientId: string

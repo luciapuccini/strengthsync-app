@@ -3,7 +3,7 @@ import type { Dispatch, JSX } from 'react'
 import type { ExerciseFeedback, ExerciseLog } from '@strengthsync/domain/model'
 
 import { Button } from '@/shadcn/ui/button'
-import type { WeekAction } from '@/state/weekReducer'
+import type { WeekAction } from '@/utils/weekReducer'
 
 const FEEDBACK_OPTIONS: ExerciseFeedback[] = ['easy', 'hard', 'heavy', 'light']
 

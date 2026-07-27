@@ -4,8 +4,8 @@ import { useParams } from 'react-router-dom'
 
 import { GeneratePlanButton } from '@/components/week-tracker/components/generate-plan-button/generatePlanButton'
 import { WeekTracker } from '@/components/week-tracker/weekTracker'
-import { useSelectedClient } from '@/state/selectedClient'
-import { currentWeekResource, invalidateCurrentWeek } from '@/state/weekResource'
+import { useSelectedClient } from '@/contexts/selectedClient'
+import { currentWeekResource, invalidateCurrentWeek } from '@/api/weekResource'
 
 export function TrackerPage(): JSX.Element {
   const clientId = useParams().clientId as string
@@ -39,9 +39,7 @@ export function TrackerPage(): JSX.Element {
   return (
     <WeekTracker
       clientId={clientId}
-      clientName={data.client?.display_name ?? 'Athlete'}
       initialWeek={data.week}
-      totalWeeks={data.plan?.total_weeks ?? null}
       onCompleteWeek={refreshCurrentWeek}
     />
   )

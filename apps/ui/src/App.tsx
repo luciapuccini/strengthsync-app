@@ -9,7 +9,7 @@ import { HomeRedirect } from '@/routes/home-redirect/homeRedirect'
 import { NotFound } from '@/routes/not-found/notFound'
 import { TrackerPage } from '@/routes/tracker-page/trackerPage'
 import { Spinner } from '@/shadcn/ui/spinner'
-import { SelectedClientProvider } from '@/state/selectedClientProvider'
+import { SelectedClientProvider } from '@/contexts/selectedClient'
 
 export default function App(): JSX.Element {
   return (

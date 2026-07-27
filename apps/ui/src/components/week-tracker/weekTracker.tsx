@@ -4,25 +4,21 @@ import type { JSX } from 'react'
 import type { Week, WeekDay } from '@strengthsync/domain/model'
 
 import { saveDayLog } from '@/api/client'
+import { toUpdateDayLog } from '@/api/dayLog'
+import { invalidateCurrentWeek } from '@/api/weekResource'
 import { Program } from '@/components/week-tracker/components/program/program'
 import { WeekHeading } from '@/components/week-tracker/components/week-heading/weekHeading'
-import { toUpdateDayLog } from '@/state/dayLog'
-import { invalidateCurrentWeek } from '@/state/weekResource'
-import { weekReducer } from '@/state/weekReducer'
+import { weekReducer } from '@/utils/weekReducer'
 
 type WeekTrackerProps = {
   clientId: string
-  clientName: string
   initialWeek: Week
-  totalWeeks: number | null
   onCompleteWeek: () => void
 }
 
 export function WeekTracker({
   clientId,
-  clientName,
   initialWeek,
-  totalWeeks,
   onCompleteWeek,
 }: WeekTrackerProps): JSX.Element {
   const [week, dispatch] = useReducer(weekReducer, initialWeek)
@@ -45,8 +41,6 @@ export function WeekTracker({
     <div className="flex flex-col gap-4 md:gap-6">
       <WeekHeading
         clientId={clientId}
-        clientName={clientName}
-        totalWeeks={totalWeeks}
         week={week}
         onCompleteWeek={onCompleteWeek}
       />

@@ -8,8 +8,8 @@ import { Spinner } from '@/shadcn/ui/spinner'
 import {
   completeWeekCooldownRemaining,
   startCompleteWeekCooldown,
-} from '@/state/completeWeekCooldown'
-import { startWorkflowWithRetry, waitForWorkflow } from '@/state/workflowPolling'
+} from '@/utils/completeWeekCooldown'
+import { startWorkflowWithRetry, waitForWorkflow } from '@/api/workflowPolling'
 
 type CompleteWeekButtonProps = {
   clientId: string
