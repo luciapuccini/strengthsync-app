@@ -63,7 +63,11 @@ export const createTrackerSlice: StateCreator<
       (state) =>
         state.week === null
           ? state
-          : { week: applyToggleSet(state.week, dayIndex, exerciseKey, setIndex) },
+          : {
+              week: applyPersistedWeekChange(state.week, (week) =>
+                applyToggleSet(week, dayIndex, exerciseKey, setIndex),
+              ),
+            },
       false,
       'toggleSet',
     ),

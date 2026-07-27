@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Client } from '@strengthsync/domain/model'
 
-import { toggleSkip as applyToggleSkip } from '@/reducers/weekReducer'
+import {
+  toggleSet as applyToggleSet,
+  toggleSkip as applyToggleSkip,
+} from '@/reducers/weekReducer'
 import { makeWeek } from '@/test/weekFixture'
 
 const { saveDayLog } = vi.hoisted(() => ({ saveDayLog: vi.fn() }))
@@ -76,6 +79,23 @@ describe('trackerSlice draft persistence', () => {
 
     expect(useAppStore.getState().week).toEqual(expected)
     expect(JSON.parse(window.localStorage.getItem(DRAFT_STORAGE_KEY) ?? 'null')).toEqual(expected)
+  })
+
+  it('persists toggleSet as the exact pure transition result', () => {
+    const week = makeWeek()
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+    const withSet = applyToggleSet(week, 1, 'bench_press', 0)
+
+    useAppStore.getState().toggleSet(1, 'bench_press', 0)
+
+    expect(useAppStore.getState().week).toEqual(withSet)
+    expect(JSON.parse(window.localStorage.getItem(DRAFT_STORAGE_KEY) ?? 'null')).toEqual(withSet)
+
+    const undone = applyToggleSet(withSet, 1, 'bench_press', 0)
+    useAppStore.getState().toggleSet(1, 'bench_press', 0)
+
+    expect(useAppStore.getState().week).toEqual(undone)
+    expect(JSON.parse(window.localStorage.getItem(DRAFT_STORAGE_KEY) ?? 'null')).toEqual(undone)
   })
 
   it('restores a matching stored draft when server data hydrates again', () => {
