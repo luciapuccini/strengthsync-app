@@ -61,6 +61,8 @@ export function createTestDb(): Db {
 }
 
 /** Mark every scheduled day completed so `completeWeek` can freeze the week. */
+export { addDays, todayIso } from '../dates.ts'
+
 export async function markAllDaysCompleted(
   db: Db,
   clientId: string,

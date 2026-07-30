@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { eq } from 'drizzle-orm'
+
+import { weeks } from '@strengthsync/db/schema'
+import { addDays, createTestDb, todayIso } from '@strengthsync/db/testing'
 
 import {
   activatePlanViaInternalApi,
@@ -108,6 +112,27 @@ describe('training reads', () => {
       headers: { authorization: basicHeader() },
     })
     expect(plan.status).toBe(404)
+  })
+
+  it('returns 404 when the in_flight week has not started yet', async () => {
+    const db = createTestDb()
+    const app = createTestApp({ db })
+    const client = await createClientViaApi(app)
+    await upsertProfileViaApi(app, client.id)
+    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-future-week')
+    const futureStart = addDays(todayIso(), 7)
+    await db
+      .update(weeks)
+      .set({ start_date: futureStart, end_date: addDays(futureStart, 6) })
+      .where(eq(weeks.id, first_week.id))
+
+    const res = await app.request(`/api/clients/${client.id}/weeks/current`, {
+      headers: { authorization: basicHeader() },
+    })
+    expect(res.status).toBe(404)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'current_week_not_found',
+    )
   })
 
   it('rejects an invalid week status filter with 400', async () => {

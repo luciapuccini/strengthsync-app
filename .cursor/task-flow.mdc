@@ -1,9 +1,0 @@
----
-alwaysApply: true
----
-# HOW TO PLAN
-
-1. Plan steps are commits, precommits guarantee verification on each
-2. you are DONE when you can sucessfully commit
-3. when a commit fails, Adress the reported issue in the precommit hook report
-4. you are NOT allowed to suppress any errors, explicitely hand over to me if needs clarification

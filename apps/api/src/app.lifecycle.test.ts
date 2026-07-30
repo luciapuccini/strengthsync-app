@@ -74,17 +74,17 @@ describe('week tracking + weekly progression', () => {
       'pushed weekly',
     )
 
-    // The next week becomes the current one; the completed week is retained.
     const next = await createNextWeekViaInternalApi(app, client.id, 'wf-weekly-1', week)
     expect(next.status).toBe(200)
     const nextWeek = ((await next.json()) as { week: Week }).week
     expect(nextWeek.week_index).toBe(2)
     expect(nextWeek.start_date > week.start_date).toBe(true)
 
+    // Week 2 starts the following Monday, so it is not current until that window begins.
     const inFlight = await app.request(`/api/clients/${client.id}/weeks/current`, {
       headers: { authorization: basicHeader() },
     })
-    expect(((await inFlight.json()) as { week: Week }).week.id).toBe(nextWeek.id)
+    expect(inFlight.status).toBe(404)
     const completed = await app.request(`/api/clients/${client.id}/weeks?status=completed`, {
       headers: { authorization: basicHeader() },
     })

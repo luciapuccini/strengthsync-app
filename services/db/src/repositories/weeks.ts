@@ -3,7 +3,7 @@ import { and, desc, eq } from 'drizzle-orm'
 import type { UpdateDayLog } from '@strengthsync/domain/contracts'
 import type { Week, WeekDay, WeekStatus } from '@strengthsync/domain/model'
 
-import { nowIso } from '../dates.ts'
+import { nowIso, todayIso } from '../dates.ts'
 import type { Db } from '../db.ts'
 import { RepoError } from '../errors.ts'
 import { weeks } from '../schema.ts'
@@ -21,7 +21,11 @@ export async function getCurrentWeek(db: Db, clientId: string): Promise<Week | n
     .where(and(eq(weeks.client_id, clientId), eq(weeks.status, 'in_flight')))
     .limit(1)
   const row = rows[0]
-  return row ? toWeek(row) : null
+  if (!row) return null
+  const week = toWeek(row)
+  const today = todayIso()
+  if (today < week.start_date || today > week.end_date) return null
+  return week
 }
 
 export async function listWeeks(

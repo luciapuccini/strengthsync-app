@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { eq } from 'drizzle-orm'
 
 import type { PlanDay } from '@strengthsync/domain/model'
 
+import { addDays, todayIso } from '../dates'
 import type { Db } from '../db'
 import { RepoError } from '../errors'
+import { weeks } from '../schema'
 import {
   activateGeneratedPlan,
   completeWeek,
@@ -155,6 +158,37 @@ describe('plan + week lifecycle', () => {
     const plans = await listPlans(db, clientId)
     expect(plans).toHaveLength(1)
     expect(plans[0]?.status).toBe('active')
+  })
+})
+
+describe('getCurrentWeek', () => {
+  async function activate() {
+    return activateGeneratedPlan(db, clientId, {
+      workflow_id: 'wf-activate-current',
+      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
+    })
+  }
+
+  it('returns null when the in_flight week has not started yet', async () => {
+    const { first_week } = await activate()
+    const futureStart = addDays(todayIso(), 7)
+    await db
+      .update(weeks)
+      .set({ start_date: futureStart, end_date: addDays(futureStart, 6) })
+      .where(eq(weeks.id, first_week.id))
+
+    expect(await getCurrentWeek(db, clientId)).toBeNull()
+  })
+
+  it('returns null when the in_flight week is in the past', async () => {
+    const { first_week } = await activate()
+    const pastEnd = addDays(todayIso(), -1)
+    await db
+      .update(weeks)
+      .set({ start_date: addDays(pastEnd, -6), end_date: pastEnd })
+      .where(eq(weeks.id, first_week.id))
+
+    expect(await getCurrentWeek(db, clientId)).toBeNull()
   })
 })
 
