@@ -99,9 +99,15 @@ describe('trackerSlice draft persistence', () => {
   it('keeps a matching draft after saveDay and same-week refresh', async () => {
     const week = makeWeek()
     const expected = applyToggleSkip(week, 1, 'bench_press')
+    const savedWeek = {
+      ...week,
+      schedule: week.schedule.map((day) =>
+        day.day_index === 1 ? expected.schedule[0]! : day,
+      ),
+    }
     useAppStore.getState().hydrateTracker({ client, plan: null, week })
     useAppStore.getState().toggleSkip(1, 'bench_press')
-    saveDayLog.mockResolvedValue(week)
+    saveDayLog.mockResolvedValue(savedWeek)
     currentWeekResource.mockResolvedValue({ client, plan: null, week })
 
     await useAppStore.getState().saveDay(expected.schedule[0]!)
@@ -162,7 +168,36 @@ describe('trackerSlice API orchestration', () => {
     expect(useAppStore.getState().week).toBeNull()
   })
 
-  it('saveDay persists the day, invalidates the cache, and re-hydrates the week', async () => {
+  it('saveDay trusts the server day over a draft with a stale completed flag', async () => {
+    const week = makeWeek()
+    const completeDay = {
+      ...week.schedule[0]!,
+      completed: true,
+      exercises: [
+        {
+          ...week.schedule[0]!.exercises[0]!,
+          sets: [
+            { performed_reps: 8, performed_weight_kg: 30 },
+            { performed_reps: 8, performed_weight_kg: 30 },
+          ],
+        },
+      ],
+    }
+    const staleDraftWeek = {
+      ...week,
+      schedule: [{ ...completeDay, completed: false }, week.schedule[1]!],
+    }
+    const savedWeek = { ...week, schedule: [completeDay, week.schedule[1]!] }
+    useAppStore.getState().hydrateTracker({ client, plan: null, week })
+    window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(staleDraftWeek))
+    saveDayLog.mockResolvedValue(savedWeek)
+
+    await useAppStore.getState().saveDay(completeDay)
+
+    expect(useAppStore.getState().week?.schedule[0]?.completed).toBe(true)
+  })
+
+  it('saveDay persists exercise logs only and applies the server completed day', async () => {
     const week = makeWeek()
     const savedWeek = { ...week, schedule: [{ ...week.schedule[0]!, completed: true }, week.schedule[1]!] }
     useAppStore.getState().hydrateTracker({ client, plan: null, week })
@@ -170,7 +205,16 @@ describe('trackerSlice API orchestration', () => {
 
     await useAppStore.getState().saveDay(week.schedule[0]!)
 
-    expect(saveDayLog).toHaveBeenCalledWith(client.id, week.id, 1, expect.any(Object))
+    expect(saveDayLog).toHaveBeenCalledWith(client.id, week.id, 1, {
+      exercises: [
+        {
+          exercise_key: 'bench_press',
+          skipped: false,
+          feedback: null,
+          sets: [],
+        },
+      ],
+    })
     expect(invalidateCurrentWeek).toHaveBeenCalledWith(client.id)
     expect(useAppStore.getState().week).toEqual(savedWeek)
   })

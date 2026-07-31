@@ -3,7 +3,7 @@ import type { StateCreator } from 'zustand'
 import type { Client, ExerciseFeedback, Plan, Week, WeekDay } from '@strengthsync/domain/model'
 
 import { saveDayLog } from '@/api/client'
-import { toUpdateDayLog } from '@/api/dayLog'
+import { toSaveDayLog } from '@/api/dayLog'
 import type { TrackerData } from '@/api/weekResource'
 import { currentWeekResource, invalidateCurrentWeek } from '@/api/weekResource'
 import {
@@ -11,7 +11,7 @@ import {
   toggleSet as applyToggleSet,
   toggleSkip as applyToggleSkip,
 } from '@/reducers/weekReducer'
-import { reconcileWeekDraft, writeWeekDraft } from '@/store/weekDraftStorage'
+import { reconcileWeekDraft, mergeSavedDayIntoDraft, writeWeekDraft } from '@/store/weekDraftStorage'
 
 import type { AppStore } from '../useAppStore'
 
@@ -19,6 +19,19 @@ function applyPersistedWeekChange(week: Week, change: (current: Week) => Week): 
   const nextWeek = change(week)
   writeWeekDraft(nextWeek)
   return nextWeek
+}
+
+function patchWeek(
+  set: Parameters<StateCreator<AppStore, [['zustand/devtools', never]], [], TrackerSlice>>[0],
+  action: string,
+  change: (week: Week) => Week,
+): void {
+  set(
+    (state) =>
+      state.week === null ? state : { week: applyPersistedWeekChange(state.week, change) },
+    false,
+    action,
+  )
 }
 
 export type TrackerSlice = {
@@ -59,55 +72,22 @@ export const createTrackerSlice: StateCreator<
     ),
 
   toggleSet: (dayIndex, exerciseKey, setIndex) =>
-    set(
-      (state) =>
-        state.week === null
-          ? state
-          : {
-              week: applyPersistedWeekChange(state.week, (week) =>
-                applyToggleSet(week, dayIndex, exerciseKey, setIndex),
-              ),
-            },
-      false,
-      'toggleSet',
-    ),
+    patchWeek(set, 'toggleSet', (week) => applyToggleSet(week, dayIndex, exerciseKey, setIndex)),
 
   setFeedback: (dayIndex, exerciseKey, feedback) =>
-    set(
-      (state) =>
-        state.week === null
-          ? state
-          : {
-              week: applyPersistedWeekChange(state.week, (week) =>
-                applySetFeedback(week, dayIndex, exerciseKey, feedback),
-              ),
-            },
-      false,
-      'setFeedback',
-    ),
+    patchWeek(set, 'setFeedback', (week) => applySetFeedback(week, dayIndex, exerciseKey, feedback)),
 
   toggleSkip: (dayIndex, exerciseKey) =>
-    set(
-      (state) =>
-        state.week === null
-          ? state
-          : {
-              week: applyPersistedWeekChange(state.week, (week) =>
-                applyToggleSkip(week, dayIndex, exerciseKey),
-              ),
-            },
-      false,
-      'toggleSkip',
-    ),
+    patchWeek(set, 'toggleSkip', (week) => applyToggleSkip(week, dayIndex, exerciseKey)),
 
   saveDay: async (day) => {
     const { client, week } = get()
     if (client === null || week === null) {
       throw new Error('Cannot save a day before the tracker is hydrated.')
     }
-    const savedWeek = await saveDayLog(client.id, week.id, day.day_index, toUpdateDayLog(day))
+    const savedWeek = await saveDayLog(client.id, week.id, day.day_index, toSaveDayLog(day))
     invalidateCurrentWeek(client.id)
-    set({ week: reconcileWeekDraft(savedWeek, client.id) }, false, 'saveDay')
+    set({ week: mergeSavedDayIntoDraft(savedWeek, client.id, day.day_index) }, false, 'saveDay')
   },
 
   refreshTracker: async () => {

@@ -170,3 +170,36 @@ describe('training reads', () => {
     expect(res.status).toBe(400)
   })
 })
+
+describe('day save', () => {
+  it('saves a day via POST and always marks it completed', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-setup')
+
+    const res = await app.request(
+      `/api/clients/${client.id}/weeks/${first_week.id}/days/1/save`,
+      {
+        method: 'POST',
+        headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+        body: JSON.stringify({
+          exercises: [
+            {
+              exercise_key: 'press_banca',
+              skipped: false,
+              feedback: 'hard',
+              sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
+            },
+          ],
+        }),
+      },
+    )
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as {
+      week: { schedule: Array<{ day_index: number; completed: boolean; completed_at: string | null }> }
+    }
+    const day = body.week.schedule.find((d) => d.day_index === 1)
+    expect(day?.completed).toBe(true)
+    expect(day?.completed_at).not.toBeNull()
+  })
+})

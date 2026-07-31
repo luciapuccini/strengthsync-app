@@ -1,6 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm'
 
-import type { UpdateDayLog } from '@strengthsync/domain/contracts'
+import type { SaveDayLog, UpdateDayLog } from '@strengthsync/domain/contracts'
 import type { Week, WeekDay, WeekStatus } from '@strengthsync/domain/model'
 
 import { nowIso, todayIso } from '../dates.ts'
@@ -120,4 +120,21 @@ export async function updateDayLog(
     throw new RepoError('not_found', 'week_not_found', `week ${weekId} not found`)
   }
   return toWeek(row)
+}
+
+/**
+ * Athlete Save day: persist exercise logs and always mark the day completed.
+ * completed is owned by the server — never taken from the client body.
+ */
+export async function saveDay(
+  db: Db,
+  clientId: string,
+  weekId: string,
+  dayIndex: number,
+  input: SaveDayLog,
+): Promise<Week> {
+  return updateDayLog(db, clientId, weekId, dayIndex, {
+    completed: true,
+    exercises: input.exercises,
+  })
 }

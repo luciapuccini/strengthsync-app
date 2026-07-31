@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   CreateNextWeekCommandSchema,
   GeneratedPlanInputSchema,
+  SaveDayLogSchema,
   UpdateDayLogSchema,
   WorkflowStatusSchema,
 } from './index'
@@ -50,6 +51,42 @@ describe('UpdateDayLogSchema', () => {
     })
 
     expect(result.success).toBe(true)
+  })
+})
+
+describe('SaveDayLogSchema', () => {
+  it('accepts exercises only and strips unknown keys', () => {
+    const exercises = [
+      {
+        exercise_key: 'press_banca',
+        skipped: false,
+        feedback: 'hard' as const,
+        sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
+      },
+    ]
+
+    expect(
+      SaveDayLogSchema.parse({
+        completed: false,
+        exercises,
+        extra: 'drop-me',
+      }),
+    ).toEqual({ exercises })
+  })
+
+  it('rejects a skipped exercise with performed sets', () => {
+    const result = SaveDayLogSchema.safeParse({
+      exercises: [
+        {
+          exercise_key: 'press_banca',
+          skipped: true,
+          feedback: null,
+          sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
+        },
+      ],
+    })
+
+    expect(result.success).toBe(false)
   })
 })
 

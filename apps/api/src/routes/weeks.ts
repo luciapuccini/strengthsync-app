@@ -1,7 +1,7 @@
 import { Hono, type Context } from 'hono'
 
-import { getCurrentWeek, getWeek, listWeeks, updateDayLog, type Db } from '@strengthsync/db'
-import { UpdateDayLogSchema } from '@strengthsync/domain/contracts'
+import { getCurrentWeek, getWeek, listWeeks, saveDay, updateDayLog, type Db } from '@strengthsync/db'
+import { SaveDayLogSchema, UpdateDayLogSchema } from '@strengthsync/domain/contracts'
 import { WeekStatusSchema, type WeekStatus } from '@strengthsync/domain/model'
 
 import { errorResponse, repoErrorResponse } from '../lib/errors.ts'
@@ -79,6 +79,25 @@ export function weekRoutes(db: Db): Hono {
     if (isResponse(input)) return input
     try {
       const week = await updateDayLog(db, clientId, weekId, dayIndex, input)
+      return c.json({ week })
+    } catch (err) {
+      return repoErrorResponse(c, err)
+    }
+  })
+
+  app.post('/clients/:clientId/weeks/:weekId/days/:dayIndex/save', async (c) => {
+    const clientId = parseUuidParam(c, c.req.param('clientId'), 'clientId')
+    if (isResponse(clientId)) return clientId
+    const weekId = parseUuidParam(c, c.req.param('weekId'), 'weekId')
+    if (isResponse(weekId)) return weekId
+    const dayIndex = Number(c.req.param('dayIndex'))
+    if (!Number.isInteger(dayIndex) || dayIndex < 1 || dayIndex > 7) {
+      return errorResponse(c, 400, 'invalid_input', 'dayIndex must be an integer between 1 and 7')
+    }
+    const input = await parseBody(c, SaveDayLogSchema)
+    if (isResponse(input)) return input
+    try {
+      const week = await saveDay(db, clientId, weekId, dayIndex, input)
       return c.json({ week })
     } catch (err) {
       return repoErrorResponse(c, err)

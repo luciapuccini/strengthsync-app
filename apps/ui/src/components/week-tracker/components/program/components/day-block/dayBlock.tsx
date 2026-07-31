@@ -21,15 +21,8 @@ export function DayBlock({ day, isFirst }: DayBlockProps): JSX.Element {
 
   async function handleSave(): Promise<void> {
     setIsSaving(true);
-    const dayToSave: WeekDay =
-      day.exercises.length === 0 && !day.completed
-        ? { ...day, completed: true }
-        : day;
     try {
-      // saveDay re-hydrates the whole week from the server response, which
-      // already reflects `completed` for dayToSave — no extra client-side
-      // "mark complete" step needed here.
-      await saveDay(dayToSave);
+      await saveDay(day);
       toast.success(`Day ${day.day_index} saved`);
     } catch (error) {
       toast.error(`Could not save day ${day.day_index}`, {

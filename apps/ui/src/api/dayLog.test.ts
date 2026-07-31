@@ -2,16 +2,15 @@ import { describe, expect, it } from 'vitest'
 
 import { makeWeek } from '@/test/weekFixture'
 
-import { toUpdateDayLog } from './dayLog'
+import { toSaveDayLog } from './dayLog'
 
-describe('toUpdateDayLog', () => {
-  it('maps editable exercise fields to the API contract', () => {
+describe('toSaveDayLog', () => {
+  it('maps editable exercise fields without a completed flag', () => {
     const day = makeWeek().schedule[0]!
     day.exercises[0]!.feedback = 'easy'
     day.exercises[0]!.sets = [{ performed_reps: 8, performed_weight_kg: 30 }]
 
-    expect(toUpdateDayLog(day)).toEqual({
-      completed: false,
+    expect(toSaveDayLog(day)).toEqual({
       exercises: [
         {
           exercise_key: 'bench_press',
@@ -27,6 +26,6 @@ describe('toUpdateDayLog', () => {
     const day = makeWeek().schedule[0]!
     day.exercises[0]!.skipped = true
     day.exercises[0]!.sets = [{ performed_reps: 8, performed_weight_kg: 30 }]
-    expect(toUpdateDayLog(day).exercises[0]!.sets).toEqual([])
+    expect(toSaveDayLog(day).exercises[0]!.sets).toEqual([])
   })
 })

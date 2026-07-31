@@ -15,7 +15,7 @@ import {
 import { createClient, getClient, listClients } from '../repositories/clients'
 import { getActivePlan, listPlans } from '../repositories/plans'
 import { upsertProfile } from '../repositories/profiles'
-import { getCurrentWeek, listWeeks, updateDayLog } from '../repositories/weeks'
+import { getCurrentWeek, listWeeks, saveDay, updateDayLog } from '../repositories/weeks'
 import { createTestDb, markAllDaysCompleted } from '../testing/index'
 
 const weekTemplate: PlanDay[] = [
@@ -259,5 +259,48 @@ describe('day logs', () => {
         exercises: [{ exercise_key: 'press_banca', skipped: true, feedback: null, sets: [] }],
       }),
     ).rejects.toThrow(/in_flight/)
+  })
+})
+
+describe('saveDay', () => {
+  it('always marks the day completed and persists exercise logs', async () => {
+    const { first_week } = await activateGeneratedPlan(db, clientId, {
+      workflow_id: 'wf-activate-1',
+      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
+    })
+
+    const updated = await saveDay(db, clientId, first_week.id, 1, {
+      exercises: [
+        {
+          exercise_key: 'press_banca',
+          skipped: false,
+          feedback: 'hard',
+          sets: [
+            { performed_reps: 8, performed_weight_kg: 60 },
+            { performed_reps: 8, performed_weight_kg: 60 },
+            { performed_reps: 7, performed_weight_kg: 60 },
+            { performed_reps: 7, performed_weight_kg: 60 },
+          ],
+        },
+      ],
+    })
+
+    const day = updated.schedule.find((d) => d.day_index === 1)
+    expect(day?.completed).toBe(true)
+    expect(day?.completed_at).not.toBeNull()
+    expect(day?.exercises[0]?.feedback).toBe('hard')
+    expect(day?.exercises[0]?.sets).toHaveLength(4)
+  })
+
+  it('marks an empty rest day completed', async () => {
+    const { first_week } = await activateGeneratedPlan(db, clientId, {
+      workflow_id: 'wf-activate-1',
+      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
+    })
+
+    const updated = await saveDay(db, clientId, first_week.id, 3, { exercises: [] })
+    const day = updated.schedule.find((d) => d.day_index === 3)
+    expect(day?.completed).toBe(true)
+    expect(day?.completed_at).not.toBeNull()
   })
 })
