@@ -9,6 +9,7 @@ import {
   getClients,
   getProfile,
   getWorkflowStatus,
+  listCompletedWeeks,
   saveDayLog,
   startPlanGeneration,
   startWeeklyProgression,
@@ -123,5 +124,23 @@ describe('api client', () => {
     const fetchMock = stubFetch({ ok: true, status: 200, body: status })
     await expect(getWorkflowStatus('workflow/1')).resolves.toEqual(status)
     expect(fetchMock).toHaveBeenCalledWith('/api/workflows/workflow%2F1', expect.any(Object))
+  })
+})
+
+describe('listCompletedWeeks', () => {
+  it('lists completed weeks for a plan and parses the response', async () => {
+    const week = { ...makeWeek(), status: 'completed' as const }
+    const planId = '00000000-0000-4000-8000-000000000002'
+    const fetchMock = stubFetch({ ok: true, status: 200, body: { weeks: [week] } })
+    await expect(listCompletedWeeks(UUID, planId)).resolves.toEqual([week])
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/clients/${UUID}/weeks?status=completed&planId=${planId}`,
+      expect.any(Object),
+    )
+  })
+
+  it('rejects a bad completed-weeks body via Zod', async () => {
+    stubFetch({ ok: true, status: 200, body: { weeks: [{ id: 'not-a-week' }] } })
+    await expect(listCompletedWeeks(UUID, UUID)).rejects.toThrow()
   })
 })
