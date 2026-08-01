@@ -12,8 +12,12 @@ export function AppShell(): JSX.Element {
             StrengthSync
           </Link>
           <nav>
-            <Link to="/clients" className="text-sm text-muted-foreground hover:text-foreground">
-              Clients
+            {/* warning: hardcoded demo client/plan until auth selects the active pair */}
+            <Link
+              to="/clients/00000000-0000-4000-8000-000000000010/plans/00000000-0000-4000-8000-000000000012/history"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              History
             </Link>
           </nav>
         </div>
