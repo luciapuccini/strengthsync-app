@@ -96,6 +96,10 @@ export async function getActivePlan(clientId: string): Promise<Plan | null> {
   )
 }
 
+export async function getPlan(clientId: string, planId: string): Promise<Plan> {
+  return PlanResponse.parse(await request(`/api/clients/${clientId}/plans/${planId}`)).plan
+}
+
 export async function getCurrentWeek(clientId: string): Promise<Week | null> {
   return orNull(async () =>
     WeekResponse.parse(await request(`/api/clients/${clientId}/weeks/current`)).week,

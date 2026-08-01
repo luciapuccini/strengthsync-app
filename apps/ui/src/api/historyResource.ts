@@ -1,22 +1,29 @@
-import type { Week } from '@strengthsync/domain/model'
+import type { Plan, Week } from '@strengthsync/domain/model'
 
-import { listCompletedWeeks } from '@/api/client'
+import { getPlan, listCompletedWeeks } from '@/api/client'
 
-const historyPromises = new Map<string, Promise<Week[]>>()
+export type HistoryData = {
+  weeks: Week[]
+  plan: Plan
+}
+
+const historyPromises = new Map<string, Promise<HistoryData>>()
 
 function cacheKey(clientId: string, planId: string): string {
   return `${clientId}:${planId}`
 }
 
-export function completedWeeksResource(clientId: string, planId: string): Promise<Week[]> {
+export function completedWeeksResource(clientId: string, planId: string): Promise<HistoryData> {
   const key = cacheKey(clientId, planId)
   const cached = historyPromises.get(key)
   if (cached !== undefined) return cached
 
-  const promise = listCompletedWeeks(clientId, planId).catch((error: unknown) => {
-    historyPromises.delete(key)
-    throw error
-  })
+  const promise = Promise.all([listCompletedWeeks(clientId, planId), getPlan(clientId, planId)])
+    .then(([weeks, plan]) => ({ weeks, plan }))
+    .catch((error: unknown) => {
+      historyPromises.delete(key)
+      throw error
+    })
   historyPromises.set(key, promise)
   return promise
 }

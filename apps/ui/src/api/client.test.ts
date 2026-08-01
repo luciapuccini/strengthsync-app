@@ -7,6 +7,7 @@ import { makeWeek } from '@/test/weekFixture'
 import {
   createClient,
   getClients,
+  getPlan,
   getProfile,
   getWorkflowStatus,
   listCompletedWeeks,
@@ -142,5 +143,29 @@ describe('listCompletedWeeks', () => {
   it('rejects a bad completed-weeks body via Zod', async () => {
     stubFetch({ ok: true, status: 200, body: { weeks: [{ id: 'not-a-week' }] } })
     await expect(listCompletedWeeks(UUID, UUID)).rejects.toThrow()
+  })
+})
+
+describe('getPlan', () => {
+  it('fetches a plan by id and parses the response', async () => {
+    const planId = '00000000-0000-4000-8000-000000000002'
+    const plan = {
+      id: planId,
+      client_id: UUID,
+      label: 'Block A',
+      status: 'active' as const,
+      total_weeks: 6,
+      week_template: [],
+      rationale: null,
+      activated_at: NOW,
+      created_at: NOW,
+      updated_at: NOW,
+    }
+    const fetchMock = stubFetch({ ok: true, status: 200, body: { plan } })
+    await expect(getPlan(UUID, planId)).resolves.toEqual(plan)
+    expect(fetchMock).toHaveBeenCalledWith(
+      `/api/clients/${UUID}/plans/${planId}`,
+      expect.any(Object),
+    )
   })
 })
