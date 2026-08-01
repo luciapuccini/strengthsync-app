@@ -3,6 +3,18 @@
   "ui": "stream",
   "globalDependencies": ["tsconfig.base.json", "pnpm-workspace.yaml"],
   "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:api": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev:worker": {
+      "cache": false,
+      "persistent": true
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": ["dist/**", "*.tsbuildinfo"]
@@ -19,15 +31,7 @@
       "outputs": ["dist/**"]
     },
     "@strengthsync/api#build": {
-      // wrangler (dry-run and real deploy alike) reads static assets from
-      // apps/ui/dist (see apps/api/wrangler.jsonc `assets.directory`). This
-      // is a filesystem coupling, not a package.json dependency, so it must
-      // be declared explicitly here to be part of the task graph — without
-      // it, `--affected` runs that only touch apps/api would deploy with a
-      // missing or stale apps/ui/dist.
       "dependsOn": ["^typecheck", "^build", "@strengthsync/ui#build"],
-      // `wrangler deploy --dry-run` bundles in memory; it does not write to
-      // apps/api/dist the way `tsc -b`/vite do for the other packages.
       "outputs": []
     },
     "docker:build": {
