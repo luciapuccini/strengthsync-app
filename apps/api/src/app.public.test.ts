@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { eq } from 'drizzle-orm'
+
+import { weeks } from '@strengthsync/db/schema'
+import { addDays, createTestDb, todayIso } from '@strengthsync/db/testing'
 
 import {
   activatePlanViaInternalApi,
@@ -110,6 +114,27 @@ describe('training reads', () => {
     expect(plan.status).toBe(404)
   })
 
+  it('returns 404 when the in_flight week has not started yet', async () => {
+    const db = createTestDb()
+    const app = createTestApp({ db })
+    const client = await createClientViaApi(app)
+    await upsertProfileViaApi(app, client.id)
+    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-future-week')
+    const futureStart = addDays(todayIso(), 7)
+    await db
+      .update(weeks)
+      .set({ start_date: futureStart, end_date: addDays(futureStart, 6) })
+      .where(eq(weeks.id, first_week.id))
+
+    const res = await app.request(`/api/clients/${client.id}/weeks/current`, {
+      headers: { authorization: basicHeader() },
+    })
+    expect(res.status).toBe(404)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'current_week_not_found',
+    )
+  })
+
   it('rejects an invalid week status filter with 400', async () => {
     const app = createTestApp()
     const client = await createClientViaApi(app)
@@ -143,5 +168,38 @@ describe('training reads', () => {
       },
     )
     expect(res.status).toBe(400)
+  })
+})
+
+describe('day save', () => {
+  it('saves a day via POST and always marks it completed', async () => {
+    const app = createTestApp()
+    const client = await createClientViaApi(app)
+    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-setup')
+
+    const res = await app.request(
+      `/api/clients/${client.id}/weeks/${first_week.id}/days/1/save`,
+      {
+        method: 'POST',
+        headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+        body: JSON.stringify({
+          exercises: [
+            {
+              exercise_key: 'press_banca',
+              skipped: false,
+              feedback: 'hard',
+              sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
+            },
+          ],
+        }),
+      },
+    )
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as {
+      week: { schedule: Array<{ day_index: number; completed: boolean; completed_at: string | null }> }
+    }
+    const day = body.week.schedule.find((d) => d.day_index === 1)
+    expect(day?.completed).toBe(true)
+    expect(day?.completed_at).not.toBeNull()
   })
 })

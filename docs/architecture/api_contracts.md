@@ -98,6 +98,30 @@ GET /api/clients/:clientId/weeks/:weekId
 
 The UI updates one day at a time. It must not replace a whole week document, preventing stale browser state from silently overwriting other days.
 
+Athlete Save always marks the day completed. The server owns `completed` / `completed_at`.
+
+```text
+POST /api/clients/:clientId/weeks/:weekId/days/:dayIndex/save
+body: SaveDayLog
+→ 200 { week: Week }
+```
+
+```typescript
+type SaveDayLog = {
+  exercises: Array<{
+    exercise_key: string;
+    skipped: boolean;
+    feedback: ExerciseFeedback | null;
+    sets: Array<{
+      performed_reps: number;
+      performed_weight_kg: number | null;
+    }>;
+  }>;
+};
+```
+
+Low-level day patch (tests / tools) still accepts an explicit `completed` flag:
+
 ```text
 PATCH /api/clients/:clientId/weeks/:weekId/days/:dayIndex
 body: UpdateDayLog
@@ -125,6 +149,7 @@ Rules:
 - Each `exercise_key` must exist in that day’s schedule.
 - When an exercise is `skipped`, its `sets` must be empty.
 - The request supplies logs for every exercise currently scheduled on that day.
+- `POST .../save` always sets `completed: true` (and `completed_at`).
 - A completed week is immutable through public routes.
 
 ## Workflow API

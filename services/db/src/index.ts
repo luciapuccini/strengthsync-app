@@ -11,7 +11,7 @@ export * as schema from './schema.ts'
 export { createClient, getClient, listClients } from './repositories/clients.ts'
 export { getProfile, upsertProfile } from './repositories/profiles.ts'
 export { getActivePlan, getPlan, listPlans } from './repositories/plans.ts'
-export { getCurrentWeek, getWeek, listWeeks, updateDayLog } from './repositories/weeks.ts'
+export { getCurrentWeek, getWeek, listWeeks, saveDay, updateDayLog } from './repositories/weeks.ts'
 export {
   activateGeneratedPlan,
   completeWeek,

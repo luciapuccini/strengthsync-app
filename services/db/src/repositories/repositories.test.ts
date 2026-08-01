@@ -1,9 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { eq } from 'drizzle-orm'
 
 import type { PlanDay } from '@strengthsync/domain/model'
 
+import { addDays, todayIso } from '../dates'
 import type { Db } from '../db'
 import { RepoError } from '../errors'
+import { weeks } from '../schema'
 import {
   activateGeneratedPlan,
   completeWeek,
@@ -12,7 +15,7 @@ import {
 import { createClient, getClient, listClients } from '../repositories/clients'
 import { getActivePlan, listPlans } from '../repositories/plans'
 import { upsertProfile } from '../repositories/profiles'
-import { getCurrentWeek, listWeeks, updateDayLog } from '../repositories/weeks'
+import { getCurrentWeek, listWeeks, saveDay, updateDayLog } from '../repositories/weeks'
 import { createTestDb, markAllDaysCompleted } from '../testing/index'
 
 const weekTemplate: PlanDay[] = [
@@ -158,6 +161,37 @@ describe('plan + week lifecycle', () => {
   })
 })
 
+describe('getCurrentWeek', () => {
+  async function activate() {
+    return activateGeneratedPlan(db, clientId, {
+      workflow_id: 'wf-activate-current',
+      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
+    })
+  }
+
+  it('returns null when the in_flight week has not started yet', async () => {
+    const { first_week } = await activate()
+    const futureStart = addDays(todayIso(), 7)
+    await db
+      .update(weeks)
+      .set({ start_date: futureStart, end_date: addDays(futureStart, 6) })
+      .where(eq(weeks.id, first_week.id))
+
+    expect(await getCurrentWeek(db, clientId)).toBeNull()
+  })
+
+  it('returns null when the in_flight week is in the past', async () => {
+    const { first_week } = await activate()
+    const pastEnd = addDays(todayIso(), -1)
+    await db
+      .update(weeks)
+      .set({ start_date: addDays(pastEnd, -6), end_date: pastEnd })
+      .where(eq(weeks.id, first_week.id))
+
+    expect(await getCurrentWeek(db, clientId)).toBeNull()
+  })
+})
+
 describe('day logs', () => {
   it('patches one day and marks it completed', async () => {
     const { first_week } = await activateGeneratedPlan(db, clientId, {
@@ -225,5 +259,48 @@ describe('day logs', () => {
         exercises: [{ exercise_key: 'press_banca', skipped: true, feedback: null, sets: [] }],
       }),
     ).rejects.toThrow(/in_flight/)
+  })
+})
+
+describe('saveDay', () => {
+  it('always marks the day completed and persists exercise logs', async () => {
+    const { first_week } = await activateGeneratedPlan(db, clientId, {
+      workflow_id: 'wf-activate-1',
+      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
+    })
+
+    const updated = await saveDay(db, clientId, first_week.id, 1, {
+      exercises: [
+        {
+          exercise_key: 'press_banca',
+          skipped: false,
+          feedback: 'hard',
+          sets: [
+            { performed_reps: 8, performed_weight_kg: 60 },
+            { performed_reps: 8, performed_weight_kg: 60 },
+            { performed_reps: 7, performed_weight_kg: 60 },
+            { performed_reps: 7, performed_weight_kg: 60 },
+          ],
+        },
+      ],
+    })
+
+    const day = updated.schedule.find((d) => d.day_index === 1)
+    expect(day?.completed).toBe(true)
+    expect(day?.completed_at).not.toBeNull()
+    expect(day?.exercises[0]?.feedback).toBe('hard')
+    expect(day?.exercises[0]?.sets).toHaveLength(4)
+  })
+
+  it('marks an empty rest day completed', async () => {
+    const { first_week } = await activateGeneratedPlan(db, clientId, {
+      workflow_id: 'wf-activate-1',
+      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
+    })
+
+    const updated = await saveDay(db, clientId, first_week.id, 3, { exercises: [] })
+    const day = updated.schedule.find((d) => d.day_index === 3)
+    expect(day?.completed).toBe(true)
+    expect(day?.completed_at).not.toBeNull()
   })
 })

@@ -8,6 +8,11 @@ function Toaster({ ...props }: ToasterProps) {
     <Sonner
       theme="dark"
       className="toaster group"
+      toastOptions={{
+        classNames: {
+          success: '!border-primary !bg-primary !text-primary-foreground',
+        },
+      }}
       style={
         {
           '--normal-bg': 'var(--popover)',

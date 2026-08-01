@@ -2,18 +2,18 @@ import { z } from 'zod'
 
 import {
   CreateClientInputSchema,
+  SaveDayLogSchema,
   StartPlanGenerationSchema,
   StartWeeklyProgressionSchema,
   UpdateClientProfileSchema,
-  UpdateDayLogSchema,
   WorkflowStartedSchema,
   WorkflowStatusSchema,
 } from '@strengthsync/domain/contracts'
 import type {
   CreateClientInput,
+  SaveDayLog,
   StartPlanGeneration,
   UpdateClientProfile,
-  UpdateDayLog,
   WorkflowStarted,
   WorkflowStatus,
 } from '@strengthsync/domain/contracts'
@@ -105,12 +105,12 @@ export async function saveDayLog(
   clientId: string,
   weekId: string,
   dayIndex: number,
-  input: UpdateDayLog,
+  input: SaveDayLog,
 ): Promise<Week> {
-  const body = UpdateDayLogSchema.parse(input)
+  const body = SaveDayLogSchema.parse(input)
   const response = await request(
-    `/api/clients/${clientId}/weeks/${weekId}/days/${dayIndex}`,
-    { method: 'PATCH', body },
+    `/api/clients/${clientId}/weeks/${weekId}/days/${dayIndex}/save`,
+    { method: 'POST', body },
   )
   return WeekResponse.parse(response).week
 }

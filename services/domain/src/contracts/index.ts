@@ -47,30 +47,43 @@ export type UpdateClientProfile = z.infer<typeof UpdateClientProfileSchema>
 // Public API — day logs
 // ---------------------------------------------------------------------------
 
+const DayExerciseLogSchema = z.object({
+  exercise_key: z.string().min(1),
+  skipped: z.boolean(),
+  feedback: ExerciseFeedbackSchema.nullable(),
+  sets: z.array(PerformedSetSchema),
+})
+
+function refineSkippedExercisesHaveEmptySets(
+  log: { exercises: Array<{ exercise_key: string; skipped: boolean; sets: unknown[] }> },
+  ctx: z.RefinementCtx,
+): void {
+  for (const exercise of log.exercises) {
+    if (exercise.skipped && exercise.sets.length > 0) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `exercise ${exercise.exercise_key}: a skipped exercise must have empty sets`,
+        path: ['exercises'],
+      })
+    }
+  }
+}
+
 export const UpdateDayLogSchema = z
   .object({
     completed: z.boolean(),
-    exercises: z.array(
-      z.object({
-        exercise_key: z.string().min(1),
-        skipped: z.boolean(),
-        feedback: ExerciseFeedbackSchema.nullable(),
-        sets: z.array(PerformedSetSchema),
-      }),
-    ),
+    exercises: z.array(DayExerciseLogSchema),
   })
-  .superRefine((log, ctx) => {
-    for (const exercise of log.exercises) {
-      if (exercise.skipped && exercise.sets.length > 0) {
-        ctx.addIssue({
-          code: 'custom',
-          message: `exercise ${exercise.exercise_key}: a skipped exercise must have empty sets`,
-          path: ['exercises'],
-        })
-      }
-    }
-  })
+  .superRefine(refineSkippedExercisesHaveEmptySets)
 export type UpdateDayLog = z.infer<typeof UpdateDayLogSchema>
+
+/** Athlete Save day body: exercise logs only; server sets completed. */
+export const SaveDayLogSchema = z
+  .object({
+    exercises: z.array(DayExerciseLogSchema),
+  })
+  .superRefine(refineSkippedExercisesHaveEmptySets)
+export type SaveDayLog = z.infer<typeof SaveDayLogSchema>
 
 // ---------------------------------------------------------------------------
 // Workflows — inputs, results, status (docs/architecture/workflows.md)

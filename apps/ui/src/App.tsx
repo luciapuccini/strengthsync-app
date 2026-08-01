@@ -9,39 +9,36 @@ import { HomeRedirect } from '@/routes/home-redirect/homeRedirect'
 import { NotFound } from '@/routes/not-found/notFound'
 import { TrackerPage } from '@/routes/tracker-page/trackerPage'
 import { Spinner } from '@/shadcn/ui/spinner'
-import { SelectedClientProvider } from '@/state/selectedClientProvider'
 
 export default function App(): JSX.Element {
   return (
-    <SelectedClientProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<AppShell />}>
-            <Route
-              path="/"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
-                    <HomeRedirect />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route path="/clients" element={<ClientsPage />} />
-            <Route
-              path="/clients/:clientId/track"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
-                    <TrackerPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </SelectedClientProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppShell />}>
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
+                  <HomeRedirect />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route path="/clients" element={<ClientsPage />} />
+          <Route
+            path="/clients/:clientId/track"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
+                  <TrackerPage />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }

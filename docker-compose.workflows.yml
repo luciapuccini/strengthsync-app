@@ -42,8 +42,11 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     command: tunnel --no-autoupdate run
-    environment:
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
+    # Same file as the other services — Compose ${TUNNEL_TOKEN} only reads root .env / shell,
+    # so without env_file the token is blank and cloudflared asks for a tunnel ID.
+    env_file:
+      - path: .env.workflows
+        required: false
     restart: "no"
     networks: [workflows]
     depends_on:

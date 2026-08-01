@@ -101,9 +101,15 @@ Operational requirements:
 
 This is appropriate for a private MVP, but it is not highly available. Moving the same processes to a managed Node host later must not change API or workflow code.
 
+### MVP decision (local machine, not always-on hosting)
+
+1. Not using an always-on service for MVP. My machine to test and validate first.
+2. Keep workflows minimal for this reason + evaluate moving from Temporal.
+3. Need a system/script to spin up my server every week to enable workflows.
+
 ## Orchestration: Temporal Cloud
 
-Use Temporal Cloud because the POC already models the weekly and plan-generation work correctly as Temporal workflows. It is the smallest migration from the current code and keeps retries, activity timeouts, and workflow visibility managed.
+Use Temporal Cloud for the MVP because the POC already models the weekly and plan-generation work as Temporal workflows. It is the smallest migration from the current code and keeps retries, activity timeouts, and workflow visibility managed. Revisit whether Temporal stays after the local-machine MVP validates the product flows (see MVP decision above).
 
 Temporal Cloud is **not permanently free**. New accounts receive $1,000 in credits for 90 days; the Essentials plan then starts at $100/month ([Temporal pricing](https://temporal.io/pricing), [pricing details](https://docs.temporal.io/cloud/pricing)).
 

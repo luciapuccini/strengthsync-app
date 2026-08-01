@@ -2,11 +2,11 @@ import { use } from 'react'
 import type { JSX } from 'react'
 import { Navigate } from 'react-router-dom'
 
-import { useSelectedClient } from '@/state/selectedClient'
-import { clientsResource } from '@/state/weekResource'
+import { clientsResource } from '@/api/weekResource'
+import { useAppStore } from '@/store/useAppStore'
 
 export function HomeRedirect(): JSX.Element {
-  const { clientId } = useSelectedClient()
+  const clientId = useAppStore((s) => s.selectedClientId)
   const clients = use(clientsResource())
   const targetClientId = clientId ?? clients[0]?.id ?? null
   return (

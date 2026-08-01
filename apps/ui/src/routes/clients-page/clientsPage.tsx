@@ -9,12 +9,12 @@ import { ApiClientError } from '@/api/errors'
 import { ClientList } from '@/routes/clients-page/components/client-list/clientList'
 import { CreateClientForm } from '@/routes/clients-page/components/create-client-form/createClientForm'
 import { CredentialsNotice } from '@/routes/clients-page/components/credentials-notice/credentialsNotice'
-import { useSelectedClient } from '@/state/selectedClient'
+import { useAppStore } from '@/store/useAppStore'
 
 export function ClientsPage(): JSX.Element {
   const [clients, setClients] = useState<Client[] | null>(null)
   const [error, setError] = useState<ApiClientError | null>(null)
-  const { select } = useSelectedClient()
+  const select = useAppStore((s) => s.selectClient)
   const navigate = useNavigate()
 
   useEffect(() => {

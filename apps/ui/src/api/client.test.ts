@@ -77,14 +77,14 @@ describe('api client', () => {
     await expect(getClients()).rejects.toMatchObject({ kind: 'network' })
   })
 
-  it('patches a validated day log and parses the returned week', async () => {
+  it('posts a save-day body and parses the returned week', async () => {
     const week = makeWeek()
-    const body = { completed: true, exercises: [] }
+    const body = { exercises: [] }
     const fetchMock = stubFetch({ ok: true, status: 200, body: { week } })
     await expect(saveDayLog(UUID, UUID, 2, body)).resolves.toEqual(week)
     expect(fetchMock).toHaveBeenCalledWith(
-      `/api/clients/${UUID}/weeks/${UUID}/days/2`,
-      expect.objectContaining({ method: 'PATCH', body: JSON.stringify(body) }),
+      `/api/clients/${UUID}/weeks/${UUID}/days/2/save`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(body) }),
     )
   })
 

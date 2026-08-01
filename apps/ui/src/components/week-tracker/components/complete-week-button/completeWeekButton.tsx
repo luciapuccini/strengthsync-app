@@ -8,20 +8,20 @@ import { Spinner } from '@/shadcn/ui/spinner'
 import {
   completeWeekCooldownRemaining,
   startCompleteWeekCooldown,
-} from '@/state/completeWeekCooldown'
-import { startWorkflowWithRetry, waitForWorkflow } from '@/state/workflowPolling'
+} from '@/utils/completeWeekCooldown'
+import { startWorkflowWithRetry, waitForWorkflow } from '@/api/workflowPolling'
+import { useAppStore } from '@/store/useAppStore'
 
 type CompleteWeekButtonProps = {
   clientId: string
   weekId: string
-  onComplete: () => void
 }
 
 export function CompleteWeekButton({
   clientId,
   weekId,
-  onComplete,
 }: CompleteWeekButtonProps): JSX.Element {
+  const refreshTracker = useAppStore((s) => s.refreshTracker)
   const [isRunning, setIsRunning] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [cooldownRemaining, setCooldownRemaining] = useState(() =>
@@ -49,7 +49,7 @@ export function CompleteWeekButton({
           : 'Week complete. Your next week is ready.'
       setCooldownRemaining(startCompleteWeekCooldown(clientId))
       setResult(message)
-      onComplete()
+      await refreshTracker()
       toast.success(message)
     } catch (error) {
       toast.error('Could not complete the week', {

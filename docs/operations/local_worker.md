@@ -152,14 +152,13 @@ pnpm eval:replay -- --step generate_next_week --limit 1
 
 These commands require the Braintrust and model-provider credentials and may incur model cost when replaying.
 
-## When to move off the local machine
+## MVP decision
 
-Move `apps/workflows` to managed Node hosting when any of these becomes true:
+1. Not using an always-on service for MVP. My machine to test and validate first.
+2. Keep workflows minimal for this reason + evaluate moving from Temporal.
+3. Need a system/script to spin up my server every week to enable workflows.
 
-- workflow availability can no longer depend on home power/network;
-- another person depends on timely workflow completion;
-- local service updates are becoming operationally risky;
-- the machine can no longer remain online and patched;
-- you need high availability or formal incident response.
+Until that weekly spin-up script exists, start Compose manually when you need workflows. Public API and D1 stay up on Cloudflare either way.
 
-The move should change only deployment configuration. The Temporal workflow code, tunnel-facing start contract, internal API contract, and D1 model remain the same.
+Move `apps/workflows` to managed Node hosting.
+The move should change only deployment configuration. The workflow start contract, internal API contract, and D1 model remain the same; Temporal itself is still under evaluation for the MVP.

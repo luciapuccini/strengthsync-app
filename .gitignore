@@ -15,5 +15,11 @@ coverage/
 # cloudflare local state
 .wrangler/
 
+# private notes
+NOTES.md
+
 # os
 .DS_Store
+
+# AI
+.cursor

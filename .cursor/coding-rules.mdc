@@ -1,8 +1,0 @@
----
-alwaysApply: false
----
-
-### How to think the code we generate
-
-1. strictly follow YAGNI. if it's not part of the current implementation, it does not need to exist yet
-2. do not create abstractions for the sake of testing

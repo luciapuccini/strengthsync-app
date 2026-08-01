@@ -5,14 +5,15 @@ import { toast } from 'sonner'
 import { startPlanGeneration } from '@/api/client'
 import { Button } from '@/shadcn/ui/button'
 import { Spinner } from '@/shadcn/ui/spinner'
-import { invalidateCurrentWeek } from '@/state/weekResource'
-import { waitForWorkflow } from '@/state/workflowPolling'
+import { waitForWorkflow } from '@/api/workflowPolling'
+import { useAppStore } from '@/store/useAppStore'
 
 type GeneratePlanButtonProps = {
   clientId: string
 }
 
 export function GeneratePlanButton({ clientId }: GeneratePlanButtonProps): JSX.Element {
+  const refreshTracker = useAppStore((s) => s.refreshTracker)
   const [isRunning, setIsRunning] = useState(false)
   const [result, setResult] = useState<string | null>(null)
 
@@ -26,7 +27,7 @@ export function GeneratePlanButton({ clientId }: GeneratePlanButtonProps): JSX.E
       if (status.status === 'failed') throw new Error(status.error.message)
       const message = 'Your new training block is active.'
       setResult(message)
-      invalidateCurrentWeek(clientId)
+      await refreshTracker()
       toast.success(message)
     } catch (error) {
       toast.error('Could not generate a plan', {
