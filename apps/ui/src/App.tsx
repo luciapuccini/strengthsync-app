@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/app-shell/appShell'
 import { ErrorBoundary } from '@/components/error-boundary/errorBoundary'
 import { ClientsPage } from '@/routes/clients-page/clientsPage'
+import { HistoryPage } from '@/routes/history/historyPage'
 import { HomeRedirect } from '@/routes/home-redirect/homeRedirect'
 import { NotFound } from '@/routes/not-found/notFound'
 import { TrackerPage } from '@/routes/tracker-page/trackerPage'
@@ -32,6 +33,16 @@ export default function App(): JSX.Element {
               <ErrorBoundary>
                 <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
                   <TrackerPage />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/clients/:clientId/plans/:planId/history"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
+                  <HistoryPage />
                 </Suspense>
               </ErrorBoundary>
             }

@@ -16,9 +16,11 @@
     "db:migrate:local": "wrangler d1 migrations apply strengthsync --local",
     "db:seed:local": "wrangler d1 execute strengthsync --local --file ../../services/db/seeds/000_default_coach.sql",
     "db:seed:demo:local": "wrangler d1 execute strengthsync --local --file ../../services/db/seeds/001_demo_seed.sql",
+    "db:seed:history:local": "wrangler d1 execute strengthsync --local --file ../../services/db/seeds/002_historical_weeks.sql",
     "db:migrate:remote": "wrangler d1 migrations apply strengthsync --remote",
     "db:seed:remote": "wrangler d1 execute strengthsync --remote --file ../../services/db/seeds/000_default_coach.sql",
-    "db:seed:demo:remote": "wrangler d1 execute strengthsync --remote --file ../../services/db/seeds/001_demo_seed.sql"
+    "db:seed:demo:remote": "wrangler d1 execute strengthsync --remote --file ../../services/db/seeds/001_demo_seed.sql",
+    "db:seed:history:remote": "wrangler d1 execute strengthsync --remote --file ../../services/db/seeds/002_historical_weeks.sql"
   },
   "dependencies": {
     "@strengthsync/db": "workspace:*",

@@ -64,6 +64,7 @@ const ClientResponse = z.object({ client: ClientSchema })
 const ProfileResponse = z.object({ profile: ClientProfileSchema })
 const PlanResponse = z.object({ plan: PlanSchema })
 const WeekResponse = z.object({ week: WeekSchema })
+const WeeksResponse = z.object({ weeks: z.array(WeekSchema) })
 
 export async function getClients(): Promise<Client[]> {
   return ClientsResponse.parse(await request('/api/clients')).clients
@@ -95,10 +96,19 @@ export async function getActivePlan(clientId: string): Promise<Plan | null> {
   )
 }
 
+export async function getPlan(clientId: string, planId: string): Promise<Plan> {
+  return PlanResponse.parse(await request(`/api/clients/${clientId}/plans/${planId}`)).plan
+}
+
 export async function getCurrentWeek(clientId: string): Promise<Week | null> {
   return orNull(async () =>
     WeekResponse.parse(await request(`/api/clients/${clientId}/weeks/current`)).week,
   )
+}
+
+export async function listCompletedWeeks(clientId: string, planId: string): Promise<Week[]> {
+  const path = `/api/clients/${clientId}/weeks?status=completed&planId=${encodeURIComponent(planId)}`
+  return WeeksResponse.parse(await request(path)).weeks
 }
 
 export async function saveDayLog(

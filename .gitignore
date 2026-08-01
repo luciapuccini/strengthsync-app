@@ -17,6 +17,7 @@ coverage/
 
 # private notes
 NOTES.md
+docs/audits/*
 
 # os
 .DS_Store
