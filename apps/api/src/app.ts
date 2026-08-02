@@ -36,11 +36,14 @@ export function createApp(config: AppConfig): Hono {
   // Unauthenticated liveness (docs/architecture/api_contracts.md).
   app.get('/health', (c) => c.json({ ok: true }))
 
-  // Public API: shared Basic credential on every /api/* route.
-  app.use(
-    '/api/*',
-    basicAuth({ username: config.basicAuth.username, password: config.basicAuth.password }),
-  )
+  // Public API: shared Basic credential on every /api/* route (production only).
+  // wrangler dev sets NODE_ENV=development; deploy/build set production.
+  if (process.env.NODE_ENV === 'production') {
+    app.use(
+      '/api/*',
+      basicAuth({ username: config.basicAuth.username, password: config.basicAuth.password }),
+    )
+  }
   // Internal commands: service secret, workflow worker only.
   app.use('/internal/*', internalServiceAuth(config.internalServiceSecret))
 

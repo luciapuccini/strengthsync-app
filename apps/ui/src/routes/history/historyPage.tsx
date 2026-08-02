@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import { completedWeeksResource } from '@/api/historyResource'
 import { toWeekHistory } from '@/routes/history/toWeekHistory'
 import { Button } from '@/shadcn/ui/button'
+import { formatIsoDate } from '@/utils/formatIsoDate'
 import {
   Table,
   TableBody,
@@ -32,7 +33,10 @@ export function HistoryPage(): JSX.Element {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">
-          Week {sn} / S{week.total_weeks}
+          Week {sn} / S{week.total_weeks}{' '}
+          <span className="text-base font-normal text-muted-foreground">
+            {formatIsoDate(week.start_date)} – {formatIsoDate(week.end_date)}
+          </span>
         </h1>
         <div className="flex gap-2">
           <Button

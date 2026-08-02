@@ -20,18 +20,42 @@ describe('health + auth', () => {
     expect(await res.json()).toEqual({ ok: true })
   })
 
-  it('rejects /api/* without credentials (401)', async () => {
-    const app = createTestApp()
-    const res = await app.request('/api/clients')
-    expect(res.status).toBe(401)
+  it('rejects /api/* without credentials (401) in production', async () => {
+    const prev = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const app = createTestApp()
+      const res = await app.request('/api/clients')
+      expect(res.status).toBe(401)
+    } finally {
+      process.env.NODE_ENV = prev
+    }
   })
 
-  it('rejects /api/* with wrong credentials (401)', async () => {
-    const app = createTestApp()
-    const res = await app.request('/api/clients', {
-      headers: { authorization: `Basic ${btoa('coach:wrong')}` },
-    })
-    expect(res.status).toBe(401)
+  it('rejects /api/* with wrong credentials (401) in production', async () => {
+    const prev = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    try {
+      const app = createTestApp()
+      const res = await app.request('/api/clients', {
+        headers: { authorization: `Basic ${btoa('coach:wrong')}` },
+      })
+      expect(res.status).toBe(401)
+    } finally {
+      process.env.NODE_ENV = prev
+    }
+  })
+
+  it('allows /api/* without credentials when not production', async () => {
+    const prev = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
+    try {
+      const app = createTestApp()
+      const res = await app.request('/api/clients')
+      expect(res.status).not.toBe(401)
+    } finally {
+      process.env.NODE_ENV = prev
+    }
   })
 
   it('rejects /internal/* without the service secret (403)', async () => {
