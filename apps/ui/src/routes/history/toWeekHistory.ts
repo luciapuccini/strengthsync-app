@@ -23,6 +23,8 @@ export type HistoryDay = z.infer<typeof HistoryDaySchema>
 export const HistoryWeekSchema = z.object({
   week_index: z.number().int().positive(),
   total_weeks: z.number().int().positive(),
+  start_date: z.string().min(1),
+  end_date: z.string().min(1),
   days: z.array(HistoryDaySchema),
 })
 export type HistoryWeek = z.infer<typeof HistoryWeekSchema>
@@ -86,6 +88,8 @@ export function toWeekHistory(weeks: Week[], totalWeeks: number): HistoryWeek[] 
     return HistoryWeekSchema.parse({
       week_index: week.week_index,
       total_weeks: totalWeeks,
+      start_date: week.start_date,
+      end_date: week.end_date,
       days,
     })
   })

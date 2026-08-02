@@ -36,6 +36,8 @@ describe('toWeekHistory', () => {
       {
         week_index: 4,
         total_weeks: 6,
+        start_date: '2026-07-20',
+        end_date: '2026-07-26',
         days: [
           {
             day_index: 1,

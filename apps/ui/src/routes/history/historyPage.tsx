@@ -3,16 +3,10 @@ import type { JSX } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { completedWeeksResource } from '@/api/historyResource'
+import { HistoryDaySection } from '@/routes/history/components/history-day-section/historyDaySection'
 import { toWeekHistory } from '@/routes/history/toWeekHistory'
 import { Button } from '@/shadcn/ui/button'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shadcn/ui/table'
+import { formatIsoDate } from '@/utils/formatIsoDate'
 
 export function HistoryPage(): JSX.Element {
   const { clientId, planId } = useParams() as { clientId: string; planId: string }
@@ -32,7 +26,10 @@ export function HistoryPage(): JSX.Element {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">
-          Week {sn} / S{week.total_weeks}
+          Week {sn} / S{week.total_weeks}{' '}
+          <span className="text-base font-normal text-muted-foreground">
+            {formatIsoDate(week.start_date)} – {formatIsoDate(week.end_date)}
+          </span>
         </h1>
         <div className="flex gap-2">
           <Button
@@ -57,28 +54,7 @@ export function HistoryPage(): JSX.Element {
       </div>
 
       {week.days.map((day) => (
-        <Table key={day.day_index}>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Day {day.day_index}</TableHead>
-              <TableHead>{sn} - series</TableHead>
-              <TableHead>{sn} - reps</TableHead>
-              <TableHead>{sn} - weight</TableHead>
-              <TableHead>diff previous week</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {day.exercises.map((exercise) => (
-              <TableRow key={exercise.exercise_key}>
-                <TableCell>{exercise.name}</TableCell>
-                <TableCell>{exercise.series ?? ''}</TableCell>
-                <TableCell>{exercise.reps ?? ''}</TableCell>
-                <TableCell>{exercise.weight == null ? '' : `${exercise.weight}kg`}</TableCell>
-                <TableCell>{exercise.diff}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <HistoryDaySection key={day.day_index} day={day} sn={sn} />
       ))}
     </div>
   )
