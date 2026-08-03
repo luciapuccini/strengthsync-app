@@ -58,11 +58,6 @@ export function workflowProxyRoutes(db: Db, config: WorkflowApiConfig | undefine
     return proxy(c, config, `/workflows/${workflowId}`, { method: 'GET' })
   })
 
-  app.post('/workflows/:workflowId/retry', async (c) => {
-    const workflowId = encodeURIComponent(c.req.param('workflowId'))
-    return proxy(c, config, `/workflows/${workflowId}/retry`, { method: 'POST' })
-  })
-
   return app
 }
 
