@@ -13,7 +13,8 @@ The browser starts a workflow asynchronously and polls its status. It never wait
 
 - Every LLM activity receives the Braintrust-backed `LlmCallRecorder`.
 - Every LLM call—including failed calls—creates a provider trace; no LLM trace data is stored in D1.
-- Every write command carries `workflow_id`, so a Temporal retry returns existing output instead of creating a duplicate plan or week.
+- Every start creates a new Temporal run with a unique `workflow_id` (timestamp suffix). The MVP UI gates duplicate clicks; Temporal does not attach to a prior run.
+- Every write command carries `workflow_id`, so a Temporal **activity** retry returns existing output instead of creating a duplicate plan or week.
 - Product data remains in D1. Temporal retains workflow execution state/result; Braintrust retains LLM traces/evals.
 - Current coaching rules are included in every generation call. Rule versioning can be added later; MVP uses the active rules document.
 - LLM structured output is validated with shared Zod schemas before any write.
