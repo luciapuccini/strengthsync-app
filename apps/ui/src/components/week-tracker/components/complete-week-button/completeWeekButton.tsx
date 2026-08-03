@@ -9,7 +9,7 @@ import {
   completeWeekCooldownRemaining,
   startCompleteWeekCooldown,
 } from '@/utils/completeWeekCooldown'
-import { startWorkflowWithRetry, waitForWorkflow } from '@/api/workflowPolling'
+import { waitForWorkflow } from '@/api/workflowPolling'
 import { useAppStore } from '@/store/useAppStore'
 
 type CompleteWeekButtonProps = {
@@ -38,7 +38,7 @@ export function CompleteWeekButton({
     setIsRunning(true)
     setResult(null)
     try {
-      const started = await startWorkflowWithRetry(() => startWeeklyProgression(clientId, weekId))
+      const started = await startWeeklyProgression(clientId, weekId)
       const status = await waitForWorkflow(started.workflow_id)
       if (status.status === 'running') throw new Error('The workflow is still running.')
       if (status.status === 'failed') throw new Error(status.error.message)
