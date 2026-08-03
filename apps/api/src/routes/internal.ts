@@ -42,6 +42,7 @@ export function internalRoutes(db: Db): Hono {
     if (isResponse(command)) return command
     try {
       const week = await completeWeek(db, c.req.param('clientId'), c.req.param('weekId'))
+      console.info('[api] completeWeek', { week_id: week.id, workflow_id: command.workflow_id })
       return c.json({ week })
     } catch (err) {
       return repoErrorResponse(c, err)
@@ -53,6 +54,11 @@ export function internalRoutes(db: Db): Hono {
     if (isResponse(command)) return command
     try {
       const week = await createNextWeek(db, c.req.param('clientId'), command)
+      console.info('[api] createNextWeek', {
+        week_id: week.id,
+        week_index: week.week_index,
+        workflow_id: command.workflow_id,
+      })
       return c.json({ week })
     } catch (err) {
       return repoErrorResponse(c, err)

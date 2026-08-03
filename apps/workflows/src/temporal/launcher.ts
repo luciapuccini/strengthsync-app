@@ -58,6 +58,7 @@ export function createTemporalLauncher(getClient: () => Promise<Client>): Workfl
       workflowId,
       args: [input],
     })
+    console.info('[temporal] started', { workflowId, workflow })
     return { workflowId }
   }
 

@@ -17,6 +17,7 @@ export async function completeWeekActivity(input: {
   client_id: string
   week_id: string
 }): Promise<Week> {
+  console.info('[temporal-activity] completeWeek', input)
   return withInternalErrors(() =>
     internalApi.completeWeek(input.client_id, input.week_id, {
       workflow_id: input.workflow_id,
@@ -89,6 +90,11 @@ export async function createNextWeekActivity(input: {
   previous_week_id: string
   schedule: WeekDay[]
 }): Promise<Week> {
+  console.info('[temporal-activity] createNextWeek', {
+    workflow_id: input.workflow_id,
+    client_id: input.client_id,
+    previous_week_id: input.previous_week_id,
+  })
   return withInternalErrors(() =>
     internalApi.createNextWeek(input.client_id, {
       workflow_id: input.workflow_id,
@@ -109,6 +115,11 @@ async function withInternalErrors<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run()
   } catch (err) {
+    console.error('[temporal-activity] internal api failed', {
+      error: err instanceof Error ? err.message : String(err),
+      code: err instanceof InternalApiError ? err.code : undefined,
+      retryable: err instanceof InternalApiError ? err.retryable : undefined,
+    })
     if (err instanceof InternalApiError && !err.retryable) {
       throw ApplicationFailure.nonRetryable(err.message, err.code)
     }

@@ -36,6 +36,7 @@ export function createWorkflowApi(deps: WorkflowApiDeps): Hono {
     const input = await parseBody(c, WeeklyProgressionInputSchema)
     if (input instanceof Response) return input
     const result = await deps.launcher.startWeeklyProgression(input)
+    console.info('[workflow-api] weekly-progression started', { workflowId: result.workflowId })
     return c.json({ workflow_id: result.workflowId, status: 'running' as const }, 202)
   })
 
@@ -43,6 +44,7 @@ export function createWorkflowApi(deps: WorkflowApiDeps): Hono {
     const input = await parseBody(c, PlanGenerationInputSchema)
     if (input instanceof Response) return input
     const result = await deps.launcher.startPlanGeneration(input)
+    console.info('[workflow-api] plan-generation started', { workflowId: result.workflowId })
     return c.json({ workflow_id: result.workflowId, status: 'running' as const }, 202)
   })
 

@@ -87,12 +87,21 @@ async function proxy(
       body: init.body === undefined ? null : JSON.stringify(init.body),
       signal: AbortSignal.timeout(WORKFLOW_API_TIMEOUT_MS),
     })
-  } catch {
+  } catch (err) {
+    console.error('[api] workflow proxy unreachable', {
+      path,
+      method: init.method,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return errorResponse(c, 502, 'workflow_api_unreachable', 'the workflow-start API could not be reached')
   }
   const body: unknown = await upstream.json().catch(() => null)
   if (body === null) {
+    console.error('[api] workflow proxy bad response', { path, method: init.method, status: upstream.status })
     return errorResponse(c, 502, 'workflow_api_bad_response', 'the workflow-start API returned an invalid response')
+  }
+  if (init.method === 'POST') {
+    console.info('[api] workflow proxy', { path, status: upstream.status, body })
   }
   return new Response(JSON.stringify(body), {
     status: upstream.status,

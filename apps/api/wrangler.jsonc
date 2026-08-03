@@ -2,6 +2,13 @@
   "name": "strengthsync-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-21",
+  // Without this, console.* from the Worker never reaches Workers Logs.
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "invocation_logs": true
+    }
+  },
   "assets": {
     "directory": "../ui/dist",
     "binding": "ASSETS",
