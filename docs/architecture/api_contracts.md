@@ -167,9 +167,6 @@ body: { notes?: string }
 
 GET /api/workflows/:workflowId
 → 200 WorkflowStatus
-
-POST /api/workflows/:workflowId/retry
-→ 202 { workflow_id: string, status: "running" }
 ```
 
 ```typescript
@@ -220,11 +217,14 @@ type WorkflowStatus =
 
 `workflow_id` is the Temporal workflow id, not a `JobRun` database row. Temporal retains workflow status/result; D1 stores only product state such as plans and weeks.
 
+Ids are unique per start (timestamp suffix): `weekly-progression:{client_id}:{week_id}:{ts}` and `plan-generation:{client_id}:{ts}`.
+
 ### Workflow transition rules
 
+- Each start creates a new independent Temporal run. The API does not attach to a prior execution.
+- MVP UI gates duplicate Complete-week clicks (button disabled while in flight; cooldown after success).
 - Weekly progression first validates that `week_id` is the client’s current `in_flight` week, then marks it completed as part of the workflow.
-- A duplicate start for the same week must return the existing running workflow or a conflict; it must not create two next weeks.
-- Retry starts a new Temporal workflow only after the previous one has failed. The workflow’s data commands are idempotent.
+- D1 enforces at most one `in_flight` week per client. Write commands are idempotent by `workflow_id` so Temporal **activity** retries do not create two next weeks.
 - Plan generation creates and activates a new plan atomically; it cannot leave two active plans.
 
 ## Internal workflow-to-data API

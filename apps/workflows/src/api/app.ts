@@ -8,7 +8,7 @@ import {
   type ApiError,
 } from '@strengthsync/domain/contracts'
 
-import { WorkflowNotFailedError, type WorkflowLauncher } from '../temporal/launcher.ts'
+import type { WorkflowLauncher } from '../temporal/launcher.ts'
 
 export type WorkflowApiDeps = {
   /** Shared only with apps/api; required on every /workflows/* request. */
@@ -36,6 +36,7 @@ export function createWorkflowApi(deps: WorkflowApiDeps): Hono {
     const input = await parseBody(c, WeeklyProgressionInputSchema)
     if (input instanceof Response) return input
     const result = await deps.launcher.startWeeklyProgression(input)
+    console.info('[workflow-api] weekly-progression started', { workflowId: result.workflowId })
     return c.json({ workflow_id: result.workflowId, status: 'running' as const }, 202)
   })
 
@@ -43,6 +44,7 @@ export function createWorkflowApi(deps: WorkflowApiDeps): Hono {
     const input = await parseBody(c, PlanGenerationInputSchema)
     if (input instanceof Response) return input
     const result = await deps.launcher.startPlanGeneration(input)
+    console.info('[workflow-api] plan-generation started', { workflowId: result.workflowId })
     return c.json({ workflow_id: result.workflowId, status: 'running' as const }, 202)
   })
 
@@ -55,25 +57,6 @@ export function createWorkflowApi(deps: WorkflowApiDeps): Hono {
       )
     }
     return c.json(status)
-  })
-
-  app.post('/workflows/:workflowId/retry', async (c) => {
-    const workflowId = decodeURIComponent(c.req.param('workflowId'))
-    try {
-      const result = await deps.launcher.retry(workflowId)
-      if (!result) {
-        return c.json<ApiError>(
-          { error: { code: 'workflow_not_found', message: 'workflow not found' } },
-          404,
-        )
-      }
-      return c.json({ workflow_id: result.workflowId, status: 'running' as const }, 202)
-    } catch (err) {
-      if (err instanceof WorkflowNotFailedError) {
-        return c.json<ApiError>({ error: { code: 'workflow_not_failed', message: err.message } }, 409)
-      }
-      throw err
-    }
   })
 
   return app

@@ -8,7 +8,7 @@ const { getWorkflowStatus } = vi.hoisted(() => ({
 
 vi.mock('@/api/client', () => ({ getWorkflowStatus }))
 
-import { startWorkflowWithRetry, waitForWorkflow } from './workflowPolling'
+import { waitForWorkflow } from './workflowPolling'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -16,20 +16,6 @@ afterEach(() => {
 })
 
 describe('workflow polling', () => {
-  it('retries a transient workflow start', async () => {
-    vi.useFakeTimers()
-    const start = vi
-      .fn()
-      .mockRejectedValueOnce(new ApiClientError('server', 502, 'workflow_api_unreachable', 'unavailable'))
-      .mockResolvedValueOnce({ workflow_id: 'workflow-1', status: 'running' })
-
-    const result = startWorkflowWithRetry(start)
-    await vi.runAllTimersAsync()
-
-    await expect(result).resolves.toEqual({ workflow_id: 'workflow-1', status: 'running' })
-    expect(start).toHaveBeenCalledTimes(2)
-  })
-
   it('continues polling after a transient status failure', async () => {
     vi.useFakeTimers()
     getWorkflowStatus
