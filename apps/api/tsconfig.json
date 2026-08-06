@@ -4,7 +4,7 @@
     "lib": ["ES2023"],
     // "node" is needed only because tests import @strengthsync/db/testing
     // (better-sqlite3, node:fs); the Worker bundle never includes it.
-    "types": ["@cloudflare/workers-types", "node"],
+    "types": ["node"],
     "rootDir": "src",
     "outDir": "dist"
   },

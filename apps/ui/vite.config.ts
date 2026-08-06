@@ -18,6 +18,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:8787',
+      '/wf': 'http://localhost:8787',
       '/health': 'http://localhost:8787',
     },
   },
