@@ -31,6 +31,10 @@ export function HistoryPage(): JSX.Element {
         onClick={async () => {
           const response = await fetch(`/wf/workflows/strengthsync`, {
             method: "POST",
+            body: JSON.stringify({
+              clientId,
+              weekId: week.week_index,
+            }),
           });
           console.log("🚀 ~ response:", await response.json());
         }}

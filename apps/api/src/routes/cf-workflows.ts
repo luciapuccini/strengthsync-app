@@ -10,16 +10,24 @@ export function cfWorkflowRoutes(db: Db): Hono<{ Bindings: Env }> {
 
   app.post("/workflows/strengthsync", async (bindingCtx) => {
     const { req, env } = bindingCtx;
-    const url = new URL(req.url);
-    const instanceId = url.searchParams.get("instanceId");
-
-    if (instanceId) {
-      const instance = await env.STRENGTHSYNC_WORKFLOW.get(instanceId);
-      return Response.json(await instance.status());
-    }
+    const { clientId, weekId } = await req.parseBody<{
+      clientId: string;
+      weekId: string;
+    }>();
 
     const instance = await env.STRENGTHSYNC_WORKFLOW.create();
-    return Response.json({ instanceId: instance.id });
+    console.log("🚀 ~ instance:", instance);
+    await instance.sendEvent({
+      type: "complete-week",
+      payload: {
+        clientId,
+        weekId,
+      },
+    });
+    return Response.json({
+      instanceId: instance.id,
+      details: await instance.status(),
+    });
   });
 
   return app;
