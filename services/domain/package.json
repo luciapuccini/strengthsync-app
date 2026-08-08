@@ -5,15 +5,20 @@
   "type": "module",
   "exports": {
     "./contracts": "./src/contracts/index.ts",
+    "./contracts/openapi": "./src/contracts/openapi.d.ts",
     "./model": "./src/model/index.ts",
     "./coach": "./src/coach/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:openapi": "openapi-typescript src/contracts/openapi.json -o src/contracts/openapi.d.ts"
   },
   "dependencies": {
     "zod": "catalog:"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0"
   }
 }

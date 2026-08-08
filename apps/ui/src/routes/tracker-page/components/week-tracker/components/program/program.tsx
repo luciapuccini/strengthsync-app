@@ -1,15 +1,11 @@
 import type { JSX } from "react";
 
-import type { Week } from "@strengthsync/domain/model";
-
-import { DayBlock } from "@/components/week-tracker/components/program/components/day-block/dayBlock";
+import { DayBlock } from "@/routes/tracker-page/components/week-tracker/components/program/components/day-block/dayBlock";
 import { Card, CardContent } from "@/shadcn/ui/card";
+import { useAppStore } from "@/store/useAppStore";
 
-type ProgramProps = {
-  week: Week;
-};
-
-export function Program({ week }: ProgramProps): JSX.Element {
+export function Program(): JSX.Element {
+  const week = useAppStore((s) => s.week)!;
   return (
     <Card>
       <CardContent className="flex flex-col">

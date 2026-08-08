@@ -1,0 +1,59 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "StrengthSync CF Workflows",
+    "version": "0.0.0",
+    "description": "Cloudflare workflow routes under /wf"
+  },
+  "paths": {
+    "/wf/complete-week": {
+      "post": {
+        "operationId": "completeWeek",
+        "summary": "Complete a week for a client",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteWeekInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Week completed workflow started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteWeekStarted"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompleteWeekInput": {
+        "type": "object",
+        "required": ["clientId"],
+        "additionalProperties": false,
+        "properties": {
+          "clientId": { "type": "string", "minLength": 1 }
+        }
+      },
+      "CompleteWeekStarted": {
+        "type": "object",
+        "required": ["instanceId", "details"],
+        "additionalProperties": false,
+        "properties": {
+          "instanceId": { "type": "string", "minLength": 1 },
+          "details": { "type": "object", "additionalProperties": true }
+        }
+      }
+    }
+  }
+}

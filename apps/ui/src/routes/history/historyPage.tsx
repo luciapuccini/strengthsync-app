@@ -27,20 +27,6 @@ export function HistoryPage(): JSX.Element {
 
   return (
     <div className="flex flex-col gap-6">
-      <Button
-        onClick={async () => {
-          const response = await fetch(`/wf/workflows/strengthsync`, {
-            method: "POST",
-            body: JSON.stringify({
-              clientId,
-              weekId: week.week_index,
-            }),
-          });
-          console.log("🚀 ~ response:", await response.json());
-        }}
-      >
-        Start Workflow
-      </Button>
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">
           Week {sn} / S{week.total_weeks}{" "}

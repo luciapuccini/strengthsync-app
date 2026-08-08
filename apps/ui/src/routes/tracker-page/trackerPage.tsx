@@ -2,12 +2,10 @@ import { use, useEffect, useState } from "react";
 import type { JSX } from "react";
 import { useParams } from "react-router-dom";
 
-import { GeneratePlanButton } from "@/components/week-tracker/components/generate-plan-button/generatePlanButton";
-import { WeekTracker } from "@/components/week-tracker/weekTracker";
+import { WeekTracker } from "@/routes/tracker-page/components/week-tracker/weekTracker";
 import { currentWeekResource } from "@/api/weekResource";
 import type { TrackerData } from "@/api/weekResource";
 import { useAppStore } from "@/store/useAppStore";
-import { CompleteWeekButton } from "@/components/week-tracker/components/complete-week-button/completeWeekButton";
 
 export function TrackerPage(): JSX.Element {
   const clientId = useParams().clientId as string;
@@ -40,15 +38,15 @@ export function TrackerPage(): JSX.Element {
           Generate a plan to create this client&apos;s first training week.
         </p>
         <div className="mt-4 flex">
-          <GeneratePlanButton clientId={clientId} />
+          {/* <GeneratePlanButton clientId={clientId} />
           <CompleteWeekButton
             clientId={clientId}
             weekId={"2f6a57b8-6619-4547-ab9a-410361886792"}
-          />
+          /> */}
         </div>
       </div>
     );
   }
 
-  return <WeekTracker clientId={clientId} />;
+  return <WeekTracker />;
 }
