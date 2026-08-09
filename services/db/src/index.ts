@@ -4,18 +4,31 @@
  * See docs/architecture/monorepo_structure.md.
  */
 
-export { createDb, type Db } from './db.ts'
-export { RepoError, type RepoErrorKind } from './errors.ts'
-export * as schema from './schema.ts'
+export { createDb, type Db } from "./db.ts";
+export { RepoError, type RepoErrorKind } from "./errors.ts";
+export * as schema from "./schema.ts";
 
-export { createClient, getClient, listClients } from './repositories/clients.ts'
-export { getProfile, upsertProfile } from './repositories/profiles.ts'
-export { getActivePlan, getPlan, listPlans } from './repositories/plans.ts'
-export { getCurrentWeek, getWeek, listWeeks, saveDay, updateDayLog } from './repositories/weeks.ts'
+export {
+  createClient,
+  getClient,
+  listClients,
+} from "./repositories/clients.ts";
+export { getProfile, upsertProfile } from "./repositories/profiles.ts";
+export { getActivePlan, getPlan, listPlans } from "./repositories/plans.ts";
+export {
+  getCurrentWeek,
+  getWeek,
+  listWeeks,
+  saveDay,
+  updateDayLog,
+} from "./repositories/weeks.ts";
 export {
   activateGeneratedPlan,
   completeWeek,
   createNextWeek,
   getPlanGenerationContext,
   getWeeklyContext,
-} from './repositories/internal.ts'
+} from "./repositories/internal.ts";
+
+// WIP: this will live close to Service, just keeping exports pattern for migraiton
+export { completeWeek as completeWeekV2 } from "./repositories/weeks.ts";

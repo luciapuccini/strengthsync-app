@@ -24,10 +24,13 @@
     "db:seed:history:remote": "wrangler d1 execute strengthsync --remote --file ../../services/db/seeds/002_historical_weeks.sql"
   },
   "dependencies": {
+    "@ai-sdk/openai": "catalog:",
     "@strengthsync/db": "workspace:*",
     "@strengthsync/domain": "workspace:*",
+    "ai": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
+    "openai": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

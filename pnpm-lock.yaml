@@ -21,6 +21,9 @@ catalogs:
     hono:
       specifier: ^4.12.31
       version: 4.12.31
+    openai:
+      specifier: ^6.48.0
+      version: 6.48.0
     turbo:
       specifier: ^2.10.6
       version: 2.10.6
@@ -71,18 +74,27 @@ importers:
 
   apps/api:
     dependencies:
+      '@ai-sdk/openai':
+        specifier: 'catalog:'
+        version: 4.0.19(zod@4.4.3)
       '@strengthsync/db':
         specifier: workspace:*
         version: link:../../services/db
       '@strengthsync/domain':
         specifier: workspace:*
         version: link:../../services/domain
+      ai:
+        specifier: 'catalog:'
+        version: 7.0.36(zod@4.4.3)
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@13.0.1)
       hono:
         specifier: 'catalog:'
         version: 4.12.31
+      openai:
+        specifier: 'catalog:'
+        version: 6.48.0(ws@8.21.0)(zod@4.4.3)
       zod:
         specifier: 'catalog:'
         version: 4.4.3

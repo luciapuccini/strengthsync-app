@@ -1,31 +1,34 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq } from "drizzle-orm";
 
-import type { SaveDayLog, UpdateDayLog } from '@strengthsync/domain/contracts'
-import type { Week, WeekDay, WeekStatus } from '@strengthsync/domain/model'
+import type { SaveDayLog, UpdateDayLog } from "@strengthsync/domain/contracts";
+import type { Week, WeekDay, WeekStatus } from "@strengthsync/domain/model";
 
-import { nowIso, todayIso } from '../dates.ts'
-import type { Db } from '../db.ts'
-import { RepoError } from '../errors.ts'
-import { weeks } from '../schema.ts'
+import { nowIso, todayIso } from "../dates.ts";
+import type { Db } from "../db.ts";
+import { RepoError } from "../errors.ts";
+import { weeks } from "../schema.ts";
 
 /** Strip persistence-only columns (workflow_id) from a week row. */
 export function toWeek(row: typeof weeks.$inferSelect): Week {
-  const { workflow_id: _workflowId, ...week } = row
-  return week
+  const { workflow_id: _workflowId, ...week } = row;
+  return week;
 }
 
-export async function getCurrentWeek(db: Db, clientId: string): Promise<Week | null> {
+export async function getCurrentWeek(
+  db: Db,
+  clientId: string,
+): Promise<Week | null> {
   const rows = await db
     .select()
     .from(weeks)
-    .where(and(eq(weeks.client_id, clientId), eq(weeks.status, 'in_flight')))
-    .limit(1)
-  const row = rows[0]
-  if (!row) return null
-  const week = toWeek(row)
-  const today = todayIso()
-  if (today < week.start_date || today > week.end_date) return null
-  return week
+    .where(and(eq(weeks.client_id, clientId), eq(weeks.status, "in_flight")))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
+  const week = toWeek(row);
+  const today = todayIso();
+  if (today < week.start_date || today > week.end_date) return null;
+  return week;
 }
 
 export async function listWeeks(
@@ -33,31 +36,56 @@ export async function listWeeks(
   clientId: string,
   filter: { status?: WeekStatus; planId?: string } = {},
 ): Promise<Week[]> {
-  const conditions = [eq(weeks.client_id, clientId)]
-  if (filter.status) conditions.push(eq(weeks.status, filter.status))
-  if (filter.planId) conditions.push(eq(weeks.plan_id, filter.planId))
+  const conditions = [eq(weeks.client_id, clientId)];
+  if (filter.status) conditions.push(eq(weeks.status, filter.status));
+  if (filter.planId) conditions.push(eq(weeks.plan_id, filter.planId));
   const rows = await db
     .select()
     .from(weeks)
     .where(and(...conditions))
-    .orderBy(desc(weeks.start_date))
-  return rows.map(toWeek)
+    .orderBy(desc(weeks.start_date));
+  return rows.map(toWeek);
 }
 
-export async function getWeek(db: Db, clientId: string, weekId: string): Promise<Week | null> {
+export async function getWeek(
+  db: Db,
+  clientId: string,
+  weekId: string,
+): Promise<Week> {
   const rows = await db
     .select()
     .from(weeks)
     .where(and(eq(weeks.id, weekId), eq(weeks.client_id, clientId)))
-    .limit(1)
-  const row = rows[0]
-  return row ? toWeek(row) : null
+    .limit(1);
+  const row = rows[0];
+  if (!row) {
+    throw new RepoError(
+      "not_found",
+      "week_not_found",
+      `week ${weekId} not found`,
+    );
+  }
+  return toWeek(row);
 }
 
+export async function completeWeek(db: Db, clientId: string): Promise<Week> {
+  // where  table.client_id = clientId and table.status = in_flight
+  const rows = await db
+    .select()
+    .from(weeks)
+    .where(and(eq(weeks.client_id, clientId), eq(weeks.status, "in_flight")))
+    .limit(1);
+  if (!rows[0]) {
+    throw new RepoError(
+      "not_found",
+      "week_not_found",
+      `week not found for client ${clientId}`,
+    );
+  }
+  return rows[0];
+}
 /**
- * Patch one day of an in_flight week. The UI updates one day at a time and
- * must supply logs for every exercise scheduled that day, so stale browser
- * state cannot silently overwrite other days or exercises.
+ * Patch one day of an in_flight week
  * See docs/architecture/api_contracts.md — UpdateDayLog rules.
  */
 export async function updateDayLog(
@@ -67,59 +95,77 @@ export async function updateDayLog(
   dayIndex: number,
   input: UpdateDayLog,
 ): Promise<Week> {
-  const week = await getWeek(db, clientId, weekId)
-  if (!week) {
-    throw new RepoError('not_found', 'week_not_found', `week ${weekId} not found`)
-  }
-  if (week.status !== 'in_flight') {
+  const week = await getWeek(db, clientId, weekId);
+
+  if (week.status !== "in_flight") {
     throw new RepoError(
-      'validation',
-      'week_not_in_flight',
-      'only an in_flight week can be changed; a completed week is immutable',
-    )
+      "validation",
+      "week_not_in_flight",
+      "only an in_flight week can be changed; a completed week is immutable",
+    );
   }
-  const day = week.schedule.find((d) => d.day_index === dayIndex)
+  const day = week.schedule.find((d) => d.day_index === dayIndex);
   if (!day) {
-    throw new RepoError('not_found', 'day_not_found', `day ${dayIndex} is not scheduled in this week`)
+    throw new RepoError(
+      "not_found",
+      "day_not_found",
+      `day ${dayIndex} is not scheduled in this week`,
+    );
   }
 
-  const scheduledKeys = day.exercises.map((e) => e.exercise_key)
-  const inputKeys = input.exercises.map((e) => e.exercise_key)
-  const missing = scheduledKeys.filter((k) => !inputKeys.includes(k))
-  const unknown = inputKeys.filter((k) => !scheduledKeys.includes(k))
+  const scheduledKeys = day.exercises.map((e) => e.exercise_key);
+  const inputKeys = input.exercises.map((e) => e.exercise_key);
+  const missing = scheduledKeys.filter((k) => !inputKeys.includes(k));
+  const unknown = inputKeys.filter((k) => !scheduledKeys.includes(k));
   if (missing.length > 0 || unknown.length > 0) {
     throw new RepoError(
-      'validation',
-      'exercise_log_mismatch',
+      "validation",
+      "exercise_log_mismatch",
       `logs must cover exactly the exercises scheduled on day ${dayIndex}` +
-        ` (missing: ${missing.join(', ') || 'none'}; unknown: ${unknown.join(', ') || 'none'})`,
-    )
+        ` (missing: ${missing.join(", ") || "none"}; unknown: ${unknown.join(", ") || "none"})`,
+    );
   }
 
-  const now = nowIso()
+  const now = nowIso();
   const updatedDay: WeekDay = {
     ...day,
     completed: input.completed,
     completed_at: input.completed ? now : null,
     exercises: day.exercises.map((scheduled) => {
-      const log = input.exercises.find((e) => e.exercise_key === scheduled.exercise_key)
+      const log = input.exercises.find(
+        (e) => e.exercise_key === scheduled.exercise_key,
+      );
       // Coverage was validated above, so this cannot be undefined.
-      if (!log) throw new Error('unreachable: exercise log missing after coverage validation')
-      return { ...scheduled, skipped: log.skipped, feedback: log.feedback, sets: log.sets }
+      if (!log)
+        throw new Error(
+          "unreachable: exercise log missing after coverage validation",
+        );
+      return {
+        ...scheduled,
+        skipped: log.skipped,
+        feedback: log.feedback,
+        sets: log.sets,
+      };
     }),
-  }
-  const schedule = week.schedule.map((d) => (d.day_index === dayIndex ? updatedDay : d))
+  };
+  const schedule = week.schedule.map((d) =>
+    d.day_index === dayIndex ? updatedDay : d,
+  );
 
   const rows = await db
     .update(weeks)
     .set({ schedule, updated_at: now })
     .where(and(eq(weeks.id, weekId), eq(weeks.client_id, clientId)))
-    .returning()
-  const row = rows[0]
+    .returning();
+  const row = rows[0];
   if (!row) {
-    throw new RepoError('not_found', 'week_not_found', `week ${weekId} not found`)
+    throw new RepoError(
+      "not_found",
+      "week_not_found",
+      `week ${weekId} not found`,
+    );
   }
-  return toWeek(row)
+  return toWeek(row);
 }
 
 /**
@@ -136,5 +182,5 @@ export async function saveDay(
   return updateDayLog(db, clientId, weekId, dayIndex, {
     completed: true,
     exercises: input.exercises,
-  })
+  });
 }
