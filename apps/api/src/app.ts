@@ -14,7 +14,7 @@ import {
   workflowProxyRoutes,
   type WorkflowApiConfig,
 } from "./routes/workflows.ts";
-import { cfWorkflowRoutes } from "./routes/cf-workflows.ts";
+import { cfWorkflowRoutes } from "./routes/cf-api.ts";
 
 export type AppConfig = {
   db: Db;
@@ -59,7 +59,7 @@ export function createApp(config: AppConfig): Hono {
   app.route("/api", weekRoutes(config.db));
   app.route("/api", workflowProxyRoutes(config.db, config.workflowApi));
   app.route("/internal", internalRoutes(config.db));
-  app.route("/wf", cfWorkflowRoutes(config.db));
+  app.route("/wf", cfWorkflowRoutes());
 
   return app;
 }

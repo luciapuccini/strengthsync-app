@@ -2,27 +2,17 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { generateText, Output } from "ai";
 import type { z } from "zod";
 
-export type AgentRuntime = {
-  generateObject<T>(args: {
-    model: string;
-    schema: z.ZodType<T>;
-    system: string;
-    prompt: string;
-  }): Promise<T>;
-};
-
-type AgentConfig = {
+type AgentConfig<TOutSchema extends z.ZodType> = {
   apiKey: string;
   model: string;
   system: string;
   prompt: string;
-  schema: z.ZodSchema;
+  outSchema: TOutSchema;
 };
 
-// apiKey probably does not exist in this context, so we need to pass it
-export async function getAgentRuntime(
-  agentConfig: AgentConfig,
-): Promise<AgentRuntime> {
+export async function getAgentRuntime<TOutSchema extends z.ZodType>(
+  agentConfig: AgentConfig<TOutSchema>,
+): Promise<z.infer<TOutSchema>> {
   if (!agentConfig.apiKey) {
     throw new Error("OPENAI_API_KEY is required for workflow LLM activities");
   }
@@ -32,12 +22,12 @@ export async function getAgentRuntime(
     model: openai(agentConfig.model),
     system: agentConfig.system,
     prompt: agentConfig.prompt,
-    output: Output.object({ schema: agentConfig.schema }),
+    output: Output.object({ schema: agentConfig.outSchema }),
   });
 
   if (result.output === undefined || result.output === null) {
     throw new Error("model returned no structured output");
   }
 
-  return agentConfig.schema.parse(result.output) as AgentRuntime;
+  return agentConfig.outSchema.parse(result.output);
 }

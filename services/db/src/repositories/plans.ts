@@ -33,12 +33,16 @@ export async function getActivePlan(
   return row ? toPlan(row) : null;
 }
 
-export async function getPlan(db: Db, clientId: string): Promise<Plan | null> {
+export async function getPlan(db: Db, clientId: string): Promise<Plan> {
   const rows = await db
     .select()
     .from(plans)
     .where(and(eq(plans.client_id, clientId), eq(plans.status, "active")))
     .limit(1);
   const row = rows[0];
-  return row ? toPlan(row) : null;
+
+  if (!row) {
+    throw new Error("No plan found for client");
+  }
+  return toPlan(row);
 }

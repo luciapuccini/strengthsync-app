@@ -137,7 +137,7 @@ The folder name promises "state" but only the reducer and context are state; the
 2. **Zero prop drilling for actions** — components declare only the data they render; actions come from the store.
 3. **Props mirror domain objects** — pass `day` / `exercise`, not pre-derived indices.
 4. **Folder tree mirrors render tree** — per react.mdc component architecture; one component per file.
-5. **`state/` dissolved** into `api/` (server interaction), `store/`, `utils/`, `contexts/` — every module has an obvious home.
+5. `**state/` dissolved** into `api/` (server interaction), `store/`, `utils/`, `contexts/` — every module has an obvious home.
 6. **Semantics and library consistency** — native disclosure for collapsibles, shadcn components for buttons, no raw interactive elements.
 7. **No behavior change** for the features kept: set logging, skip, feedback, save day, complete week (with cooldown), generate plan, workflows and toasts all work exactly as today.
 8. **Tests preserved** — the pure-logic tests (`weekReducer`, `dayLog`, `workflowPolling`, `completeWeekCooldown`) move with their modules and keep passing.
@@ -150,4 +150,5 @@ Explicitly untouched now, recorded so they aren't forgotten:
 - **CompleteWeekButton cooldown.** The timeout + localStorage dance could become a small `useCooldown` hook under a future `src/hooks/`.
 - **Workflow orchestration in components.** `CompleteWeekButton` and `GeneratePlanButton` each hand-roll start → poll → interpret-status → toast. Once the store exists, these could become store-level async actions with shared status handling.
 - **Route-level Suspense boilerplate.** The `ErrorBoundary` + `Suspense` + `Spinner` wrapper is repeated per route in `App.tsx`; a small layout/wrapper route could deduplicate it.
-- **`weekResource` invalidation model.** Manual `invalidateCurrentWeek` calls sprinkled in buttons/actions work, but if this grows, a proper query library (TanStack Query) or store-owned invalidation would scale better.
+- `**weekResource` invalidation model.** Manual `invalidateCurrentWeek` calls sprinkled in buttons/actions work, but if this grows, a proper query library (TanStack Query) or store-owned invalidation would scale better.
+

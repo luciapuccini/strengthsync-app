@@ -1,12 +1,18 @@
 import { and, desc, eq } from "drizzle-orm";
 
 import type { SaveDayLog, UpdateDayLog } from "@strengthsync/domain/contracts";
-import type { Week, WeekDay, WeekStatus } from "@strengthsync/domain/model";
+import type {
+  Plan,
+  Week,
+  WeekDay,
+  WeekStatus,
+} from "@strengthsync/domain/model";
 
-import { nowIso, todayIso } from "../dates.ts";
+import { addDays, nowIso, todayIso } from "../dates.ts";
 import type { Db } from "../db.ts";
 import { RepoError } from "../errors.ts";
 import { weeks } from "../schema.ts";
+import type { NextWeekSchedule } from "@strengthsync/domain/coach";
 
 /** Strip persistence-only columns (workflow_id) from a week row. */
 export function toWeek(row: typeof weeks.$inferSelect): Week {
@@ -69,20 +75,36 @@ export async function getWeek(
 }
 
 export async function completeWeek(db: Db, clientId: string): Promise<Week> {
-  // where  table.client_id = clientId and table.status = in_flight
-  const rows = await db
+  // find the in_flight week for the client
+  const inFlightWeek = await db
     .select()
     .from(weeks)
     .where(and(eq(weeks.client_id, clientId), eq(weeks.status, "in_flight")))
     .limit(1);
-  if (!rows[0]) {
+  // if no in_flight week is found, throw an error
+  if (!inFlightWeek[0]) {
     throw new RepoError(
       "not_found",
       "week_not_found",
       `week not found for client ${clientId}`,
     );
   }
-  return rows[0];
+  // found, update to completed
+  const completedWeek = await db
+    .update(weeks)
+    .set({ status: "completed", updated_at: new Date().toISOString() })
+    .where(and(eq(weeks.id, inFlightWeek[0].id), eq(weeks.status, "in_flight")))
+    .returning();
+  // if it doesnt return
+  if (!completedWeek[0]) {
+    throw new RepoError(
+      "not_found",
+      "week_not_found",
+      `week ${inFlightWeek[0].id} not found`,
+    );
+  }
+
+  return completedWeek[0];
 }
 /**
  * Patch one day of an in_flight week
@@ -183,4 +205,29 @@ export async function saveDay(
     completed: true,
     exercises: input.exercises,
   });
+}
+
+export async function saveNextWeek(
+  db: Db,
+  clientId: string,
+  plan: Plan,
+  previousWeek: Week,
+  nextWeekSchedule: NextWeekSchedule,
+): Promise<Week> {
+  const now = nowIso();
+  const startDate = addDays(previousWeek.end_date, 1);
+  const row: Week = {
+    id: crypto.randomUUID(),
+    client_id: clientId,
+    plan_id: plan.id,
+    week_index: previousWeek.week_index + 1,
+    start_date: startDate,
+    end_date: addDays(startDate, 6),
+    status: "in_flight" as const,
+    schedule: nextWeekSchedule.schedule,
+    created_at: now,
+    updated_at: now,
+  };
+  await db.insert(weeks).values(row);
+  return row;
 }

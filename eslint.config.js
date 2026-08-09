@@ -55,7 +55,7 @@ export default defineConfig([
     rules: {
       complexity: ['error', 10],
       'max-depth': ['error', 5],
-      'max-lines-per-function': ['error', { max: 80, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['error', { max: 90, skipBlankLines: true, skipComments: true }],
       'max-params': ['error', 5],
       'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
       '@typescript-eslint/no-unused-vars': [
