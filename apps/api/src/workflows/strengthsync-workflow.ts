@@ -3,6 +3,7 @@ import type { WorkflowEvent } from "cloudflare:workers";
 import z from "zod";
 import {
   COACHING_RULES,
+  HistorySummarySchema,
   ProfileSummarySchema,
 } from "@strengthsync/domain/coach";
 import {
@@ -168,6 +169,44 @@ async function summarizeProfile(
   );
 }
 
+async function summarizeHistory(
+  step: WorkflowStep,
+  env: Env,
+  currentPlan: Plan,
+  completedWeeks: Week[],
+  rules: string,
+) {
+  return step.do(
+    "summarize-history",
+    { retries: { limit: 2, delay: "1 second", backoff: "linear" } },
+    async () =>
+      getAgentRuntime({
+        apiKey: env.OPENAI_API_KEY,
+        model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
+        system: [
+          "You are a strength coach summarizing a completed training block.",
+          "Cover adherence, progression, skipped sessions, and easy/hard/heavy/light feedback patterns.",
+          "Do not invent missing data.",
+        ].join(" "),
+        prompt: JSON.stringify(
+          {
+            coaching_rules: rules,
+            active_plan: {
+              label: currentPlan.label,
+              total_weeks: currentPlan.total_weeks,
+              week_template: currentPlan.week_template,
+              rationale: currentPlan.rationale,
+            },
+            completed_weeks: completedWeeks,
+          },
+          null,
+          2,
+        ),
+        outSchema: HistorySummarySchema,
+      }),
+  );
+}
+
 export class StrengthsyncWorkflow extends WorkflowEntrypoint<
   Env,
   CompleteWeekParams
@@ -186,8 +225,11 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
       async () => handleLoadContext(db, clientId),
     );
     if (completedWeek.week_index >= currentPlan.total_weeks) {
-      await loadCompletedWeeks(step, db, clientId, currentPlan);
-      await summarizeProfile(step, this.env, userProfile, rules);
+      const completedWeeks = await loadCompletedWeeks(step, db, clientId, currentPlan);
+      await Promise.all([
+        summarizeProfile(step, this.env, userProfile, rules),
+        summarizeHistory(step, this.env, currentPlan, completedWeeks, rules),
+      ]);
       return { next_week_id: null, plan_complete: true };
     }
     const weekAnalysis = await step.do(

@@ -22,7 +22,14 @@ Return a stub result so this step is independently verifiable.
 - [ ] Hard-coded prompt strings live in the workflow file.
 - [ ] Output is validated by `HistorySummarySchema`.
 - [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
+- [x] `summarize-history` step runs when the plan is complete.
+- [x] Both summary steps run in parallel.
+- [x] Hard-coded prompt strings live in the workflow file.
+- [x] Output is validated by `HistorySummarySchema`.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes.
+
+"STATUS":"DONE"
 
 ## Blocked by
 
