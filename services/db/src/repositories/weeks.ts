@@ -37,6 +37,7 @@ export async function getCurrentWeek(
   return week;
 }
 
+// warning: legacy flexible filter with many optional branches; prefer listWeeksV2 for workflow reads
 export async function listWeeks(
   db: Db,
   clientId: string,
@@ -49,6 +50,25 @@ export async function listWeeks(
     .select()
     .from(weeks)
     .where(and(...conditions))
+    .orderBy(desc(weeks.start_date));
+  return rows.map(toWeek);
+}
+
+export async function listWeeksV2(
+  db: Db,
+  clientId: string,
+  planId: string,
+): Promise<Week[]> {
+  const rows = await db
+    .select()
+    .from(weeks)
+    .where(
+      and(
+        eq(weeks.client_id, clientId),
+        eq(weeks.plan_id, planId),
+        eq(weeks.status, "completed"),
+      ),
+    )
     .orderBy(desc(weeks.start_date));
   return rows.map(toWeek);
 }

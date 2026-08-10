@@ -6,6 +6,7 @@ import {
   completeWeekV2,
   getPlan,
   getProfile,
+  listWeeksV2,
   saveNextWeek,
   type Db,
 } from "@strengthsync/db";
@@ -98,6 +99,17 @@ function buildNextWeekPrompt({
   );
 }
 
+async function loadCompletedWeeks(
+  step: WorkflowStep,
+  db: Db,
+  clientId: string,
+  plan: Plan,
+) {
+  return step.do("load-completed-weeks", async () =>
+    listWeeksV2(db, clientId, plan.id),
+  );
+}
+
 export class StrengthsyncWorkflow extends WorkflowEntrypoint<
   Env,
   CompleteWeekParams
@@ -108,7 +120,6 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
   ) {
     const db = createDb(this.env.DB);
     const { clientId } = event.payload;
-
     const completedWeek = await step.do("complete-week", async () => {
       return completeWeekV2(db, clientId);
     });
@@ -116,12 +127,10 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
       "load-context",
       async () => handleLoadContext(db, clientId),
     );
-    // If the completed week is the last week of the plan
-    if (completedWeek.week_index >= currentPlan?.total_weeks) {
-      //TODO: generate a new plan
+    if (completedWeek.week_index >= currentPlan.total_weeks) {
+      await loadCompletedWeeks(step, db, clientId, currentPlan);
       return { next_week_id: null, plan_complete: true };
     }
-
     const weekAnalysis = await step.do(
       "analyze-week",
       { retries: { limit: 2, delay: "1 second", backoff: "linear" } },
@@ -198,7 +207,6 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
         nextWeekSchedule,
       );
     });
-
     return { plan_complete: false, next_week_id: savedWeek.id };
   }
 }

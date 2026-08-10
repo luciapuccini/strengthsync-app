@@ -18,11 +18,13 @@ This issue returns a stub result so the branch is reachable and verifiable.
 
 ## Acceptance criteria
 
-- [ ] `listWeeksV2` exists and returns completed weeks for one plan.
-- [ ] `listWeeks` has a warning comment marking it as legacy.
-- [ ] Workflow reaches `load-completed-weeks` when the completed week is the plan's last week.
-- [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
+- [x] `listWeeksV2` exists and returns completed weeks for one plan.
+- [x] `listWeeks` has a warning comment marking it as legacy.
+- [x] Workflow reaches `load-completed-weeks` when the completed week is the plan's last week.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes.
+
+"STATUS":"DONE"
 
 ## Blocked by
 

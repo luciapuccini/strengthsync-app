@@ -19,6 +19,7 @@ export {
   getCurrentWeek,
   getWeek,
   listWeeks,
+  listWeeksV2,
   saveDay,
   updateDayLog,
   // WIP: this will live close to Service, just keeping exports pattern for migraiton
