@@ -12,6 +12,7 @@ import {
   CLIENT_STATUSES,
   PLAN_STATUSES,
   WEEK_STATUSES,
+  type JsonValue,
   type PlanDay,
   type WeekDay,
 } from "@strengthsync/domain/model";
@@ -52,10 +53,7 @@ export const clients = sqliteTable(
 
 // Factory, not a shared builder: drizzle column builders bind their column
 // name on first use, so each column needs its own call.
-const jsonRecord = () =>
-  text({ mode: "json" }).$type<
-    Record<string, string | number | boolean | null>
-  >();
+const jsonRecord = () => text({ mode: "json" }).$type<Record<string, JsonValue>>();
 
 export const clientProfiles = sqliteTable("client_profiles", {
   id: text("id").primaryKey(),

@@ -6,7 +6,7 @@ import { WeekTracker } from "@/routes/tracker-page/components/week-tracker/weekT
 import { currentWeekResource } from "@/api/weekResource";
 import type { TrackerData } from "@/api/weekResource";
 import { useAppStore } from "@/store/useAppStore";
-import { GeneratePlanButton } from "./components/week-tracker/components/generate-plan-button/generatePlanButton";
+
 import { CompleteWeekButton } from "./components/week-tracker/components/complete-week-button/completeWeekButton";
 
 export function TrackerPage(): JSX.Element {
@@ -40,7 +40,7 @@ export function TrackerPage(): JSX.Element {
           Generate a plan to create this client&apos;s first training week.
         </p>
         <div className="mt-4 flex">
-          <GeneratePlanButton />
+          {/* <GeneratePlanButton /> */}
           <CompleteWeekButton />
         </div>
       </div>

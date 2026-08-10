@@ -5,7 +5,6 @@ import type { Plan, Week } from "@strengthsync/domain/model";
 
 import { addDays, nowIso, startOfISOWeek, todayIso } from "../dates.ts";
 import type { Db } from "../db.ts";
-import { newId } from "../ids.ts";
 import { plans, weeks } from "../schema.ts";
 import {
   buildScheduleFromTemplate,
@@ -72,7 +71,7 @@ export async function activateGeneratedPlanV2(
   const now = nowIso();
   const start = startOfISOWeek(todayIso());
   const planRow = {
-    id: newId(),
+    id: crypto.randomUUID(),
     client_id: clientId,
     label: cmd.plan.label,
     status: "active" as const,
@@ -85,7 +84,7 @@ export async function activateGeneratedPlanV2(
     updated_at: now,
   };
   const weekRow = {
-    id: newId(),
+    id: crypto.randomUUID(),
     client_id: clientId,
     plan_id: planRow.id,
     week_index: 1,

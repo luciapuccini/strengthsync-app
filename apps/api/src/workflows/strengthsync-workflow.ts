@@ -58,7 +58,10 @@ const NEXT_WEEK_SYSTEM = [
   "Prefer progressive overload on compound lifts when the analysis supports it.",
 ].join(" ");
 
-async function handleLoadContext(db: Db, clientId: string) {
+async function handleLoadContext(
+  db: Db,
+  clientId: string,
+): Promise<{ currentPlan: Plan; rules: string; userProfile: ClientProfile }> {
   const [currentPlan, userProfile] = await Promise.all([
     getPlan(db, clientId),
     getProfile(db, clientId),

@@ -5,7 +5,6 @@ import type { ClientProfile } from "@strengthsync/domain/model";
 
 import { nowIso, todayIso } from "../dates.ts";
 import type { Db } from "../db.ts";
-import { newId } from "../ids.ts";
 import { clientProfiles } from "../schema.ts";
 
 export async function getProfile(
@@ -34,7 +33,7 @@ export async function upsertProfile(
   const rows = await db
     .insert(clientProfiles)
     .values({
-      id: newId(),
+      id: crypto.randomUUID(),
       client_id: clientId,
       ...update,
       snapshot_date: snapshotDate,

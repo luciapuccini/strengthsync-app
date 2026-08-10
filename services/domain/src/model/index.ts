@@ -63,10 +63,25 @@ export const ClientSchema = z.object({
 });
 export type Client = z.infer<typeof ClientSchema>;
 
-const jsonRecord = z.record(
-  z.string(),
-  z.union([z.string(), z.number(), z.boolean(), z.null()]),
+export interface JsonObject {
+  [key: string]: JsonValue;
+}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface JsonArray extends Array<JsonValue> {}
+export type JsonValue = string | number | boolean | null | JsonArray | JsonObject;
+
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonValueSchema),
+    z.record(z.string(), jsonValueSchema),
+  ]),
 );
+
+const jsonRecord = z.record(z.string(), jsonValueSchema);
 
 export const ClientProfileSchema = z.object({
   id: UuidSchema,
