@@ -9,11 +9,8 @@ import {
   getClients,
   getPlan,
   getProfile,
-  getWorkflowStatus,
   listCompletedWeeks,
   saveDayLog,
-  startPlanGeneration,
-  startWeeklyProgression,
 } from './client'
 import { ApiClientError } from './errors'
 
@@ -90,42 +87,6 @@ describe('api client', () => {
     )
   })
 
-  it('starts both workflow types with their browser-facing contracts', async () => {
-    const started = { workflow_id: 'workflow-1', status: 'running' }
-    const fetchMock = stubFetch({ ok: true, status: 202, body: started })
-
-    await expect(startWeeklyProgression(UUID, UUID)).resolves.toEqual(started)
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      `/api/clients/${UUID}/workflows/weekly-progression`,
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ week_id: UUID }),
-      }),
-    )
-
-    await expect(startPlanGeneration(UUID, { notes: 'Build a new block.' })).resolves.toEqual(
-      started,
-    )
-    expect(fetchMock).toHaveBeenLastCalledWith(
-      `/api/clients/${UUID}/workflows/plan-generation`,
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({ notes: 'Build a new block.' }),
-      }),
-    )
-  })
-
-  it('parses workflow status responses', async () => {
-    const status = {
-      workflow_id: 'workflow/1',
-      type: 'weekly_progression',
-      status: 'running',
-      started_at: NOW,
-    }
-    const fetchMock = stubFetch({ ok: true, status: 200, body: status })
-    await expect(getWorkflowStatus('workflow/1')).resolves.toEqual(status)
-    expect(fetchMock).toHaveBeenCalledWith('/api/workflows/workflow%2F1', expect.any(Object))
-  })
 })
 
 describe('listCompletedWeeks', () => {

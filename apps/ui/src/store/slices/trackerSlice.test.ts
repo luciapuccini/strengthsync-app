@@ -10,13 +10,12 @@ import {
 import { makeWeek } from '@/test/weekFixture'
 
 const { saveDayLog } = vi.hoisted(() => ({ saveDayLog: vi.fn() }))
-const { invalidateCurrentWeek, currentWeekResource } = vi.hoisted(() => ({
+const { invalidateCurrentWeek } = vi.hoisted(() => ({
   invalidateCurrentWeek: vi.fn(),
-  currentWeekResource: vi.fn(),
 }))
 
 vi.mock('@/api/client', () => ({ saveDayLog }))
-vi.mock('@/api/weekResource', () => ({ invalidateCurrentWeek, currentWeekResource }))
+vi.mock('@/api/weekResource', () => ({ invalidateCurrentWeek }))
 
 import { useAppStore } from '../useAppStore'
 
@@ -96,7 +95,7 @@ describe('trackerSlice draft persistence', () => {
     expect(useAppStore.getState().week?.schedule).toEqual(expected.schedule)
   })
 
-  it('keeps a matching draft after saveDay and same-week refresh', async () => {
+  it('keeps a matching draft after saveDay', async () => {
     const week = makeWeek()
     const expected = applyToggleSkip(week, 1, 'bench_press')
     const savedWeek = {
@@ -108,12 +107,8 @@ describe('trackerSlice draft persistence', () => {
     useAppStore.getState().hydrateTracker({ client, plan: null, week })
     useAppStore.getState().toggleSkip(1, 'bench_press')
     saveDayLog.mockResolvedValue(savedWeek)
-    currentWeekResource.mockResolvedValue({ client, plan: null, week })
 
     await useAppStore.getState().saveDay(expected.schedule[0]!)
-    expect(useAppStore.getState().week?.schedule).toEqual(expected.schedule)
-
-    await useAppStore.getState().refreshTracker()
     expect(useAppStore.getState().week?.schedule).toEqual(expected.schedule)
     expect(window.localStorage.getItem(DRAFT_STORAGE_KEY)).not.toBeNull()
   })
@@ -223,21 +218,4 @@ describe('trackerSlice API orchestration', () => {
     await expect(useAppStore.getState().saveDay(makeWeek().schedule[0]!)).rejects.toThrow()
   })
 
-  it('refreshTracker invalidates and re-hydrates from the resource cache', async () => {
-    const week = makeWeek()
-    useAppStore.getState().hydrateTracker({ client, plan: null, week })
-    const refreshed = { client, plan: null, week: { ...week, week_index: 5 } }
-    currentWeekResource.mockResolvedValue(refreshed)
-
-    await useAppStore.getState().refreshTracker()
-
-    expect(invalidateCurrentWeek).toHaveBeenCalledWith(client.id)
-    expect(currentWeekResource).toHaveBeenCalledWith(client.id)
-    expect(useAppStore.getState().week).toEqual(refreshed.week)
-  })
-
-  it('refreshTracker is a no-op without a hydrated client', async () => {
-    await useAppStore.getState().refreshTracker()
-    expect(currentWeekResource).not.toHaveBeenCalled()
-  })
 })

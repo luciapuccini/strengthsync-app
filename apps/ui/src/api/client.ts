@@ -3,19 +3,12 @@ import { z } from 'zod'
 import {
   CreateClientInputSchema,
   SaveDayLogSchema,
-  StartPlanGenerationSchema,
-  StartWeeklyProgressionSchema,
   UpdateClientProfileSchema,
-  WorkflowStartedSchema,
-  WorkflowStatusSchema,
 } from '@strengthsync/domain/contracts'
 import type {
   CreateClientInput,
   SaveDayLog,
-  StartPlanGeneration,
   UpdateClientProfile,
-  WorkflowStarted,
-  WorkflowStatus,
 } from '@strengthsync/domain/contracts'
 import { ClientProfileSchema, ClientSchema, PlanSchema, WeekSchema } from '@strengthsync/domain/model'
 import type { Client, ClientProfile, Plan, Week } from '@strengthsync/domain/model'
@@ -125,31 +118,3 @@ export async function saveDayLog(
   return WeekResponse.parse(response).week
 }
 
-export async function startWeeklyProgression(
-  clientId: string,
-  weekId: string,
-): Promise<WorkflowStarted> {
-  const body = StartWeeklyProgressionSchema.parse({ week_id: weekId })
-  const response = await request(`/api/clients/${clientId}/workflows/weekly-progression`, {
-    method: 'POST',
-    body,
-  })
-  return WorkflowStartedSchema.parse(response)
-}
-
-export async function startPlanGeneration(
-  clientId: string,
-  input: StartPlanGeneration = {},
-): Promise<WorkflowStarted> {
-  const body = StartPlanGenerationSchema.parse(input)
-  const response = await request(`/api/clients/${clientId}/workflows/plan-generation`, {
-    method: 'POST',
-    body,
-  })
-  return WorkflowStartedSchema.parse(response)
-}
-
-export async function getWorkflowStatus(workflowId: string): Promise<WorkflowStatus> {
-  const response = await request(`/api/workflows/${encodeURIComponent(workflowId)}`)
-  return WorkflowStatusSchema.parse(response)
-}

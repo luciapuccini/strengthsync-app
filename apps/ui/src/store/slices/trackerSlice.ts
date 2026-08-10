@@ -5,7 +5,7 @@ import type { Client, ExerciseFeedback, Plan, Week, WeekDay } from '@strengthsyn
 import { saveDayLog } from '@/api/client'
 import { toSaveDayLog } from '@/api/dayLog'
 import type { TrackerData } from '@/api/weekResource'
-import { currentWeekResource, invalidateCurrentWeek } from '@/api/weekResource'
+import { invalidateCurrentWeek } from '@/api/weekResource'
 import {
   setFeedback as applySetFeedback,
   toggleSet as applyToggleSet,
@@ -47,7 +47,6 @@ export type TrackerSlice = {
   ) => void
   toggleSkip: (dayIndex: number, exerciseKey: string) => void
   saveDay: (day: WeekDay) => Promise<void>
-  refreshTracker: () => Promise<void>
 }
 
 export const createTrackerSlice: StateCreator<
@@ -89,20 +88,5 @@ export const createTrackerSlice: StateCreator<
     invalidateCurrentWeek(client.id)
     set({ week: mergeSavedDayIntoDraft(savedWeek, client.id, day.day_index) }, false, 'saveDay')
   },
-
-  refreshTracker: async () => {
-    const { client } = get()
-    if (client === null) return
-    invalidateCurrentWeek(client.id)
-    const data = await currentWeekResource(client.id)
-    set(
-      {
-        client: data.client,
-        plan: data.plan,
-        week: reconcileWeekDraft(data.week, client.id),
-      },
-      false,
-      'refreshTracker',
-    )
-  },
 })
+

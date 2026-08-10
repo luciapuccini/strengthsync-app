@@ -7,8 +7,6 @@ import { currentWeekResource } from "@/api/weekResource";
 import type { TrackerData } from "@/api/weekResource";
 import { useAppStore } from "@/store/useAppStore";
 
-import { CompleteWeekButton } from "./components/week-tracker/components/complete-week-button/completeWeekButton";
-
 export function TrackerPage(): JSX.Element {
   const clientId = useParams().clientId as string;
   const data = use(currentWeekResource(clientId));
@@ -18,8 +16,7 @@ export function TrackerPage(): JSX.Element {
   // Hydrate the store synchronously during render (React's "adjust state
   // during render" pattern), guarded by reference equality against the
   // resolved resource. This keeps the store as the single source of truth
-  // for `week` (so refreshTracker() can flip this page without a Suspense
-  // re-fallback) while avoiding an effect-driven flash or a stale-store
+  // for `week` while avoiding an effect-driven flash or a stale-store
   // frame when switching clients.
   const [hydratedFrom, setHydratedFrom] = useState<TrackerData | null>(null);
   if (hydratedFrom !== data) {
@@ -37,12 +34,8 @@ export function TrackerPage(): JSX.Element {
       <div className="rounded-xl border border-border bg-card p-6">
         <h1 className="text-xl font-semibold">No current week</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Generate a plan to create this client&apos;s first training week.
+          Plan generation is temporarily unavailable. Check back once a plan has been assigned.
         </p>
-        <div className="mt-4 flex">
-          {/* <GeneratePlanButton /> */}
-          <CompleteWeekButton />
-        </div>
       </div>
     );
   }
