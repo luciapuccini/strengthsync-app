@@ -11,9 +11,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 const ALL_WORKSPACES = [
   '@strengthsync/ui',
   '@strengthsync/api',
-  '@strengthsync/workflows',
   '@strengthsync/domain',
-  '@strengthsync/agent',
   '@strengthsync/db',
 ]
 
@@ -77,25 +75,15 @@ export default defineConfig([
     files: ['apps/ui/src/shadcn/**/*.{ts,tsx}'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
-  {
-    files: ['apps/workflows/**/*.ts'],
-    languageOptions: { globals: globals.node },
-  },
   // services/domain imports nothing from other workspaces.
   boundary(['services/domain/**/*.ts'], ['@strengthsync/domain']),
-  // services/agent and services/db import domain only, never apps.
-  boundary(['services/agent/**/*.ts'], ['@strengthsync/domain']),
+  // services/db imports domain only, never apps.
   boundary(['services/db/**/*.ts'], ['@strengthsync/domain']),
-  // apps/ui only knows HTTP contracts; never db, agent, or Temporal.
-  boundary(['apps/ui/**/*.{ts,tsx}'], ['@strengthsync/domain'], ['@temporalio/*']),
-  // apps/api may use domain, agent (chat), and db; never other apps.
+  // apps/ui only knows HTTP contracts; never db or agent.
+  boundary(['apps/ui/**/*.{ts,tsx}'], ['@strengthsync/domain']),
+  // apps/api may use domain and db; never other apps.
   boundary(
     ['apps/api/**/*.ts'],
-    ['@strengthsync/domain', '@strengthsync/agent', '@strengthsync/db'],
-  ),
-  // apps/workflows may use domain, agent, and db; never ui or api.
-  boundary(
-    ['apps/workflows/**/*.ts'],
-    ['@strengthsync/domain', '@strengthsync/agent', '@strengthsync/db'],
+    ['@strengthsync/domain', '@strengthsync/db'],
   ),
 ])

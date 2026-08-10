@@ -15,19 +15,18 @@ catalog:
   "@types/node": 22.20.1
   turbo: ^2.10.6
   zustand: ^5.0.14
-  openai: ^6.48.0
 
 # strict: `pnpm add` rejects a version outside the catalog for any
 # dependency already governed by it, instead of silently drifting.
 catalogMode: strict
 
 allowBuilds:
-  "@swc/core": true
-  autoevals: true
+  '@swc/core': set this to true or false
+  autoevals: set this to true or false
   better-sqlite3: true
-  braintrust: true
+  braintrust: set this to true or false
   esbuild: true
   lefthook: true
-  protobufjs: true
+  protobufjs: set this to true or false
   sharp: true
   workerd: true

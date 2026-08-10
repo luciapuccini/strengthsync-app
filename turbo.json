@@ -7,14 +7,6 @@
       "cache": false,
       "persistent": true
     },
-    "dev:api": {
-      "cache": false,
-      "persistent": true
-    },
-    "dev:worker": {
-      "cache": false,
-      "persistent": true
-    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": ["dist/**", "*.tsbuildinfo"]
@@ -33,11 +25,6 @@
     "@strengthsync/api#build": {
       "dependsOn": ["^typecheck", "^build", "@strengthsync/ui#build"],
       "outputs": []
-    },
-    "docker:build": {
-      "dependsOn": ["^typecheck", "^build"],
-      "outputs": [],
-      "cache": false
     },
     "deploy": {
       "dependsOn": ["build"],

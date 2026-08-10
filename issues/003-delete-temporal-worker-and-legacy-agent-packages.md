@@ -1,5 +1,7 @@
 # Delete the Temporal worker and legacy agent packages
 
+**STATUS: DONE**
+
 ## Parent PRD
 
 `issues/prd.md` — see Implementation Decisions: "Worker package deletion", "Legacy agent package deletion", and the tooling parts of "Config and docs"; Further Notes (lockfile regen).
