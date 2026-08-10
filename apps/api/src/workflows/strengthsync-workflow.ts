@@ -1,16 +1,11 @@
 import { WorkflowEntrypoint, WorkflowStep } from "cloudflare:workers";
 import type { WorkflowEvent } from "cloudflare:workers";
 import z from "zod";
-import {
-  COACHING_RULES,
-  HistorySummarySchema,
-  ProfileSummarySchema,
-} from "@strengthsync/domain/coach";
+import { COACHING_RULES } from "@strengthsync/domain/coach";
 import {
   completeWeekV2,
   getPlan,
   getProfile,
-  listWeeksV2,
   saveNextWeek,
   type Db,
 } from "@strengthsync/db";
@@ -126,86 +121,12 @@ function buildNextWeekPrompt({
   );
 }
 
-async function loadCompletedWeeks(
-  step: WorkflowStep,
-  db: Db,
-  clientId: string,
-  plan: Plan,
-) {
-  return step.do("load-completed-weeks", async () =>
-    listWeeksV2(db, clientId, plan.id),
-  );
-}
-
-async function summarizeProfile(
-  step: WorkflowStep,
-  env: Env,
-  userProfile: ClientProfile,
-  rules: string,
-) {
-  return step.do(
-    "summarize-profile",
-    { retries: { limit: 2, delay: "1 second", backoff: "linear" } },
-    async () =>
-      getAgentRuntime({
-        apiKey: env.OPENAI_API_KEY,
-        model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
-        system: [
-          "You are a strength coach summarizing a client profile for plan generation.",
-          "Return only the facts that affect training design: goals, loads, body composition,",
-          "nutrition/recovery constraints, and schedule preferences.",
-          "Do not invent missing data.",
-        ].join(" "),
-        prompt: JSON.stringify(
-          {
-            coaching_rules: rules,
-            profile: userProfile,
-          },
-          null,
-          2,
-        ),
-        outSchema: ProfileSummarySchema,
-      }),
-  );
-}
-
-async function summarizeHistory(
-  step: WorkflowStep,
-  env: Env,
-  currentPlan: Plan,
-  completedWeeks: Week[],
-  rules: string,
-) {
-  return step.do(
-    "summarize-history",
-    { retries: { limit: 2, delay: "1 second", backoff: "linear" } },
-    async () =>
-      getAgentRuntime({
-        apiKey: env.OPENAI_API_KEY,
-        model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
-        system: [
-          "You are a strength coach summarizing a completed training block.",
-          "Cover adherence, progression, skipped sessions, and easy/hard/heavy/light feedback patterns.",
-          "Do not invent missing data.",
-        ].join(" "),
-        prompt: JSON.stringify(
-          {
-            coaching_rules: rules,
-            active_plan: {
-              label: currentPlan.label,
-              total_weeks: currentPlan.total_weeks,
-              week_template: currentPlan.week_template,
-              rationale: currentPlan.rationale,
-            },
-            completed_weeks: completedWeeks,
-          },
-          null,
-          2,
-        ),
-        outSchema: HistorySummarySchema,
-      }),
-  );
-}
+import {
+  generatePlan,
+  loadCompletedWeeks,
+  summarizeHistory,
+  summarizeProfile,
+} from "./plan-turnover.ts";
 
 export class StrengthsyncWorkflow extends WorkflowEntrypoint<
   Env,
@@ -226,10 +147,11 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
     );
     if (completedWeek.week_index >= currentPlan.total_weeks) {
       const completedWeeks = await loadCompletedWeeks(step, db, clientId, currentPlan);
-      await Promise.all([
+      const [profileSummary, historySummary] = await Promise.all([
         summarizeProfile(step, this.env, userProfile, rules),
         summarizeHistory(step, this.env, currentPlan, completedWeeks, rules),
       ]);
+      await generatePlan(step, this.env, currentPlan, profileSummary, historySummary);
       return { next_week_id: null, plan_complete: true };
     }
     const weekAnalysis = await step.do(

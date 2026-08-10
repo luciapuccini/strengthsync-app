@@ -20,7 +20,13 @@ Return a stub result so this step is independently verifiable.
 - [ ] Hard-coded prompt strings live in the workflow file.
 - [ ] Output is validated by `GeneratedPlanInputSchema`.
 - [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
+- [x] `generate-plan` step runs when the plan is complete.
+- [x] Hard-coded prompt strings live in the workflow file.
+- [x] Output is validated by `GeneratedPlanInputSchema`.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes.
+
+"STATUS":"DONE"
 
 ## Blocked by
 
