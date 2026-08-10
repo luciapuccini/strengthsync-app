@@ -102,6 +102,9 @@ importers:
 
   apps/ui:
     dependencies:
+      '@strengthsync/api-contract':
+        specifier: workspace:*
+        version: link:../../packages/api-contract
       '@strengthsync/domain':
         specifier: workspace:*
         version: link:../../services/domain
@@ -170,6 +173,15 @@ importers:
         specifier: 8.1.4
         version: 8.1.4(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.11)(yaml@2.9.0)
 
+  packages/api-contract:
+    devDependencies:
+      openapi-typescript:
+        specifier: ^7.13.0
+        version: 7.13.0(typescript@6.0.2)
+      typescript:
+        specifier: 6.0.2
+        version: 6.0.2
+
   services/db:
     dependencies:
       '@strengthsync/domain':
@@ -197,10 +209,6 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.4.3
-    devDependencies:
-      openapi-typescript:
-        specifier: ^7.13.0
-        version: 7.13.0(typescript@6.0.2)
 
 packages:
 

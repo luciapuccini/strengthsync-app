@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./packages/api-contract" },
     { "path": "./services/domain" },
     { "path": "./services/db" },
     { "path": "./apps/ui" },

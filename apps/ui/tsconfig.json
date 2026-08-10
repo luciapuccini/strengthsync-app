@@ -11,5 +11,8 @@
     "outDir": "dist"
   },
   "include": ["src"],
-  "references": [{ "path": "../../services/domain" }]
+  "references": [
+    { "path": "../../packages/api-contract" },
+    { "path": "../../services/domain" }
+  ]
 }

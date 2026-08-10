@@ -1,4 +1,4 @@
-import type { components } from "@strengthsync/domain/contracts/openapi";
+import type { components } from "@strengthsync/api-contract";
 import { ApiClientError, toApiError } from "@/api/errors";
 import { wf } from "./workflows-api";
 

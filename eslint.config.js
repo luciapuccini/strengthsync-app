@@ -11,6 +11,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 const ALL_WORKSPACES = [
   '@strengthsync/ui',
   '@strengthsync/api',
+  '@strengthsync/api-contract',
   '@strengthsync/domain',
   '@strengthsync/db',
 ]
@@ -75,12 +76,14 @@ export default defineConfig([
     files: ['apps/ui/src/shadcn/**/*.{ts,tsx}'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
+  // packages/api-contract imports nothing from other workspaces.
+  boundary(['packages/api-contract/**/*.ts'], []),
   // services/domain imports nothing from other workspaces.
   boundary(['services/domain/**/*.ts'], ['@strengthsync/domain']),
   // services/db imports domain only, never apps.
   boundary(['services/db/**/*.ts'], ['@strengthsync/domain']),
   // apps/ui only knows HTTP contracts; never db or agent.
-  boundary(['apps/ui/**/*.{ts,tsx}'], ['@strengthsync/domain']),
+  boundary(['apps/ui/**/*.{ts,tsx}'], ['@strengthsync/domain', '@strengthsync/api-contract']),
   // apps/api may use domain and db; never other apps.
   boundary(
     ['apps/api/**/*.ts'],

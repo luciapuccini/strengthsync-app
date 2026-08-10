@@ -1,5 +1,6 @@
 packages:
   - apps/*
+  - packages/*
   - services/*
 
 # Single-version policy: any external dependency shared by two or more

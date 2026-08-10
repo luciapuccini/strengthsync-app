@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": [],
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": ["openapi.d.ts"]
+}

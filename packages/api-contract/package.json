@@ -1,0 +1,18 @@
+{
+  "name": "@strengthsync/api-contract",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./openapi.d.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "gen:openapi": "openapi-typescript openapi.json -o openapi.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "typescript": "6.0.2"
+  }
+}
