@@ -7,7 +7,7 @@ Turborepo infers the package dependency graph from each package's
 `package.json` (`workspace:*` dependencies) — the same graph documented in
 [`monorepo_structure.md`](./monorepo_structure.md) and mirrored by the
 TypeScript project references in each `tsconfig.json`
-(`services/domain` → `services/agent`/`services/db`/`apps/ui` →
+(`services/domain` → `services/db`/`apps/ui` →
 `apps/api`). Turbo does not need a separate graph
 definition; it reuses `workspace:*` deps and each package's own scripts.
 
@@ -38,7 +38,7 @@ previous run — content-based, not timestamp-based. Local cache lives in
 (including CI, for now) rebuilds its own local cache from scratch on a
 clean checkout, then gets incremental speedups within that run.
 
-Baseline on this workspace (6 packages, warm `node_modules`, clean
+Baseline on this workspace (4 packages, warm `node_modules`, clean
 `.tsbuildinfo`/`.turbo`):
 
 | Run | Time |
@@ -46,7 +46,7 @@ Baseline on this workspace (6 packages, warm `node_modules`, clean
 | `pnpm typecheck` (cold) | ~2.6s |
 | `pnpm typecheck` (fully cached) | ~15ms |
 | `pnpm typecheck:affected` after a leaf-package change (e.g. `apps/ui`) | only that package + its dependencies re-run |
-| `pnpm typecheck:affected` after a root-of-graph change (`services/domain`) | all 6 packages re-run, since everything depends on it |
+| `pnpm typecheck:affected` after a root-of-graph change (`services/domain`) | all 4 packages re-run, since everything depends on it |
 
 ## Why not remote caching or `turbo.json` task pipelines beyond this yet
 

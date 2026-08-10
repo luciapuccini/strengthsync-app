@@ -12,9 +12,10 @@ It runs as a Cloudflare Workflow (binding `STRENGTHSYNC_WORKFLOW`, class
 `StrengthsyncWorkflow`) exported from `apps/api/src/index.ts`. Durable execution is
 provided by the platform: each `step.do` re-records its output, steps are re-run only after
 a real failure, and the instance resumes from where it left off after a crash. Product data
-lives in D1; the workflow and agent runtime hold execution and trace data.
+lives in D1; the workflow holds execution state.
 
-The browser starts a workflow asynchronously and never waits for an LLM response.
+The browser starts a workflow asynchronously and never waits for an LLM response. LLM tracing
+is not wired in this pass.
 
 ## Trigger
 
@@ -28,9 +29,9 @@ type CompleteWeekParams = {
 };
 ```
 
-The entrypoint calls a single internal command to freeze the client's current `in_flight`
-week as `completed`, then proceeds. The route returns the new instance id and its status so
-the UI can poll.
+The entrypoint calls the `services/db` repository to freeze the client's current `in_flight`
+week as `completed`, then proceeds. The route returns the new instance id and its initial
+status.
 
 ```mermaid
 flowchart LR
@@ -57,20 +58,19 @@ flowchart LR
 
 - Every `step.do` result is durable: on crash the instance resumes from the last recorded
   step output, so a step is never double-applied.
-- Every LLM call goes through the agent runtime with Braintrust-backed tracing. Every LLM
-  call — including failed calls — creates a provider trace; no LLM trace data is stored in D1.
+- LLM calls run through the in-Worker agent runtime (`apps/api/src/agent/agent-core.ts`) with
+  no recorder attached in this pass. LLM trace data is not stored in D1.
 - LLM structured output is validated with shared Zod schemas before any write.
 - Current coaching rules are included in every generation call. Rule versioning can be added
   later; MVP uses the active rules document.
-- Product data remains in D1. The workflow retains execution state/result; the agent runtime
-  retains LLM traces/evals.
+- Product data remains in D1. The workflow retains execution state/result.
 
 ## Weekly progression path
 
 This is the default branch: the completed week is not the plan's last.
 
 1. **Complete week**  
-   Mark the client's sole `in_flight` week `completed` (`completeWeekV2`). This freezes the
+   Mark the client's sole `in_flight` week `completed` (`completeWeek`). This freezes the
    schedule/logs used for coaching.
 
 2. **Load context**  
@@ -122,21 +122,21 @@ compared to starting plan generation as a separate process.
    summary. Scoped to the active plan.
 
 2. **Summarize profile and history in parallel**  
-   Run two independent LLM calls (`buildSummarizeProfilePrompt`,
-   `buildSummarizeHistoryPrompt`):
+   Run two independent LLM calls using the coaching-rule prompts in
+   `services/domain/src/coach/plan-generation.ts`:
    - profile summary: goals, loads, body composition, nutrition/recovery constraints,
      swimming, and schedule preferences;
    - history summary: adherence, progression, skipped sessions, and
      `easy`/`hard`/`heavy`/`light` feedback patterns across the finished block.
 
 3. **Generate plan**  
-   Invoke structured output generation (`buildGeneratePlanPrompt`) with both summaries, the
-   previous plan as a structural reference, coaching rules, and optional coach notes. The
-   output is validated by `GeneratedPlanInputSchema`: new block metadata, canonical
-   `week_template`, and coach-facing rationale.
+   Invoke structured output generation with both summaries, the previous plan as a structural
+   reference, coaching rules, and optional coach notes. The output is validated by
+   `GeneratedPlanInputSchema`: new block metadata, canonical `week_template`, and coach-facing
+   rationale.
 
 4. **Activate plan and create week 1**  
-   Call one internal command (`activateGeneratedPlan`) that atomically:
+   Call the repository function `activateGeneratedPlan` that atomically:
    - archives the prior active plan;
    - creates and activates the new plan;
    - creates week 1 from the new template.
@@ -165,13 +165,12 @@ intermediates are not product records.
 | Profile/history summaries | 2 (1 s delay, linear) | Run independently, in parallel |
 | Plan generation | 2 (1 s delay, linear) | Structured-output validation failures are retryable |
 
-On final failure, the workflow instance is marked failed. The public status endpoint exposes
-a safe error message and allows a deliberate retry. It must not expose raw prompts, model
-output, or provider credentials.
+On final failure, the workflow instance is marked failed. Failure details are exposed only
+through Cloudflare Workers Logs; the UI does not poll workflow status.
 
 ## Deferred behavior
 
 - No scheduled weekly trigger: the user explicitly completes a week.
 - Streaming coach chat is not part of the MVP workflow surface.
-- No product-table `JobRun` or `LlmCall`: the workflow and agent runtime provide those
-  operational records.
+- No product-table `JobRun` or `LlmCall`: the workflow runtime provides execution records;
+  LLM tracing is deferred.

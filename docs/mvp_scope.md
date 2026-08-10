@@ -21,7 +21,7 @@ A private, self-coached user or one coach managing a small number of clients. Pr
 - At the end of a plan, generate and activate a new plan from the training history, client profile, coaching rules, and optional coach notes.
 - View previous plans and completed weeks.
 - Ask the streaming coach chat questions grounded in live client, plan, and week data.
-- Capture every workflow LLM call in Braintrust for traces and evaluation.
+- Capture every workflow LLM call in Braintrust for traces and evaluation. (The recorder contract was removed with the Temporal stack in this pass; Braintrust wiring will be redefined inside `apps/api/src/agent` in a follow-up.)
 
 The production domain shapes are defined in [architecture/domain_model.md](./architecture/domain_model.md).
 
@@ -53,7 +53,7 @@ The production domain shapes are defined in [architecture/domain_model.md](./arc
 
 1. The user triggers weekly completion (`POST /wf/complete-week`).
 2. The durable workflow freezes the in-flight week, reads the active plan, client profile, and coaching rules.
-3. The workflow sends every LLM call to the evaluation/observability provider.
+3. The workflow sends every LLM call through the in-Worker agent runtime; Braintrust tracing is deferred.
 4. If plan weeks remain, the workflow creates the next dated week with any adjustments.
 5. If the completed week is the plan's last, the same workflow generates and activates the next plan.
 

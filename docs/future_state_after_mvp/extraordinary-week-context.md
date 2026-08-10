@@ -21,5 +21,5 @@ isProject: false
 
 - Out of MVP scope. For now, unfinished days are enough: `completeWeek` freezes the week with `completed: false` days, and analysis already treats those as missed targets.
 - After MVP, let the user add optional free-text context when closing a week (illness, travel, life disruption, or other reasons they could not accomplish the plan).
-- Thread that note through weekly progression into [`analyzeWeek`](../../services/agent/src/index.ts) / [`generateNextWeek`](../../services/agent/src/index.ts) prompt builders in [`services/domain/src/coach/weekly-progression.ts`](../../services/domain/src/coach/weekly-progression.ts), alongside the frozen schedule.
+- Thread that note through weekly progression into the inline prompts in [`apps/api/src/workflows/strengthsync-workflow.ts`](../../apps/api/src/workflows/strengthsync-workflow.ts), alongside the frozen schedule.
 - Do not invent reasons when the note is empty; schedule adherence flags remain the default signal.

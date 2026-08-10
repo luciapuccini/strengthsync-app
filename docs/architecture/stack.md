@@ -10,7 +10,7 @@ Committed providers and platform choices for the MVP. This is intentionally a sm
 | Public API + chat | Hono on Cloudflare Workers | Yes | Use the existing Worker direction |
 | SQL database | Cloudflare D1 + Drizzle ORM | Yes | Use D1 as the system of record and Drizzle as its typed data layer |
 | Workflow orchestration | Cloudflare Workflows (in-Worker) | Yes | One workflow (`StrengthsyncWorkflow`) runs weekly progression and plan turnover; no local worker or tunnel |
-| LLM evals/tracing | Braintrust | Yes | Target for workflow LLM calls; wiring into the in-Worker agent runtime is pending (see [evals.md](./evals.md)) |
+| LLM evals/tracing | Braintrust | Yes | Target for workflow LLM calls; not wired in this pass and will be redefined in `apps/api/src/agent` when tracing returns (see [evals.md](./evals.md)) |
 | General platform observability | Cloudflare | Included platform telemetry | Use Cloudflare logs/analytics for Worker and D1 operations |
 | CI/CD | GitHub Actions | Yes | Build, test, and deploy from GitHub Actions |
 | LLM | OpenAI API | No guaranteed permanent free tier | Continue with the current provider; set a spending limit |
@@ -58,7 +58,7 @@ flowchart LR
 - The browser never reaches D1 directly.
 - There is one data writer boundary: the Worker itself.
 
-This removed the Temporal-era two-process bridge (Node worker → `/internal/*` API). Retiring that bridge is part of the Cloudflare Workflows migration; the `/internal/*` routes remain mounted only for legacy tests/tools.
+This removed the Temporal-era two-process bridge (Node worker → `/internal/*` API). Retiring that bridge is part of the Cloudflare Workflows migration; `/internal/*` routes were removed entirely.
 
 ### Atomic writes
 
@@ -78,27 +78,36 @@ Workflow-visible retries and failure policy live in the workflow definition (`ap
 
 The prior design ran two Temporal workflows (`apps/workflows`) on a local Node machine and paid Temporal Cloud credits. The Cloudflare Workflow consolidates those two processes into one in-Worker durable run on the Free plan; it also removes the local machine as a runtime dependency and the `$100/month` Temporal Cloud post-trial cost.
 
-## Evals and LLM observability: Braintrust
+## Evals and LLM observability: Braintrust (deferred)
 
-Use Braintrust as the observable target for workflow LLM calls.
+Braintrust remains the target for workflow LLM traces and evals, but it is **not wired in
+this pass**.
 
-The prior `apps/workflows` implementation created a Braintrust-backed `LlmCallRecorder` and passed it to `services/agent`; every LLM call—including failures—emitted its trace before the activity returned. During the Cloudflare Workflows migration that wiring is not yet re-added to the in-Worker agent runtime (`apps/api/src/agent/agent-core.ts`). Reconnecting the recorder is pending work tracked in [evals.md](./evals.md).
+The prior `apps/workflows` implementation created a Braintrust-backed `LlmCallRecorder` and
+passed it to `services/agent`; every LLM call—including failures—emitted its trace before the
+activity returned. Both `apps/workflows` and `services/agent` were deleted in the Cloudflare
+Workflows migration. The in-Worker agent runtime (`apps/api/src/agent/agent-core.ts`) currently
+uses the Vercel AI SDK directly with no recorder. The recorder contract will be defined fresh
+inside `apps/api/src/agent` when tracing returns; see [evals.md](./evals.md).
 
-- Traces, prompts, outputs, latency, and evaluation scores live in Braintrust, not D1.
+- Traces, prompts, outputs, latency, and evaluation scores will live in Braintrust, not D1.
 - D1 remains product data only; do not introduce `LlmCall` tables for the MVP.
-- `services/agent` stays provider-neutral because it depends only on the recorder interface described in [monorepo_structure.md](./monorepo_structure.md).
 
-Braintrust Starter is a permanent $0 plan with 1 GB processed data/month, 10,000 scores/month, and 14-day retention ([pricing](https://www.braintrust.dev/pricing), [billing](https://www.braintrust.dev/docs/admin/billing)). This fits an MVP but requires a retention/overage review before production volume grows.
+Braintrust Starter is a permanent $0 plan with 1 GB processed data/month, 10,000 scores/month,
+and 14-day retention ([pricing](https://www.braintrust.dev/pricing),
+[billing](https://www.braintrust.dev/docs/admin/billing)). This fits an MVP but requires a
+retention/overage review before production volume grows.
 
-Cloudflare covers platform-level Worker/D1 logs and operational metrics. Braintrust covers LLM-specific traces and evals; they are complementary.
+Cloudflare covers platform-level Worker/D1 logs and operational metrics. Braintrust will cover
+LLM-specific traces and evals once reconnected; they are complementary.
 
 ## CI/CD: GitHub Actions
 
 GitHub Actions is the MVP pipeline:
 
-1. Pull request: install, typecheck, lint, unit tests, and workflow/eval tests.
+1. Pull request: install, typecheck, lint, and unit tests.
 2. Main: build and deploy `apps/api` — including the `StrengthsyncWorkflow` entrypoint — and run schema migrations through the API/Worker deployment path.
-3. Require workflow tests to prove the workflow steps run with their expected inputs (tracing/recorder coverage is pending the Braintrust re-wiring).
+3. Workflow orchestration tests are deferred: the Cloudflare Workflow runtime is not exercised in the test suite.
 
 GitHub Free currently includes 2,000 minutes/month and 500 MB artifact storage for private repositories; public-repository Actions usage is free ([GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). Keep artifacts small and configure an Actions spending limit.
 

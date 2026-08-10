@@ -6,8 +6,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 // SPA served publicly from the API Worker in production; in dev the browser
-// talks to `wrangler dev` on :8787 through this proxy. `/internal/*` is never
-// proxied — the browser must not reach the service-secret data commands.
+// talks to `wrangler dev` on :8787 through this proxy. Only public API and
+// workflow-start routes are proxied.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {

@@ -18,7 +18,7 @@ import { ApiClientError, toApiError } from './errors'
 /**
  * Typed wrappers over the public API (`docs/architecture/api_contracts.md`).
  * Every response is re-validated with the shared domain schemas so the browser
- * and Worker agree on the contract. The browser never touches `/internal/*`.
+ * and Worker agree on the contract.
  */
 
 type RequestInitJson = {

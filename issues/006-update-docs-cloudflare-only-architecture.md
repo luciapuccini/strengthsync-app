@@ -1,5 +1,7 @@
 # Update docs to the Cloudflare-only architecture
 
+**STATUS: DONE**
+
 ## Parent PRD
 
 `issues/prd.md` — see Implementation Decisions: "Config and docs" (docs half); User story 12; the evals/mvp_scope decision in "Legacy agent package deletion".

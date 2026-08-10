@@ -32,7 +32,7 @@ Cloudflare retains workflow execution state. Durable step recording means a fail
 
 - Cloudflare: Worker/D1 request logs and operational telemetry; workflow invocation logs.
 - Workflow binding: instance status, step retries, and failures via the Workers Workflow API.
-- Model traces/evals: Braintrust — re-wiring the recorder into the in-Worker agent runtime is pending (see [evals.md](../architecture/evals.md)).
+- Model traces/evals: Braintrust — the recorder was deleted with `services/agent` and will be defined fresh inside `apps/api/src/agent` when tracing returns (see [evals.md](../architecture/evals.md)).
 
 Do not log profile payloads or secrets unnecessarily. Never send secrets to traces or logs.
 

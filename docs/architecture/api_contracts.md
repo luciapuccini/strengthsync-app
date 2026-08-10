@@ -162,7 +162,7 @@ body: { clientId: string }
 → 200 { instanceId: string, details: WorkflowStatus }
 ```
 
-`instanceId` is the Cloudflare Workflow instance id; `details` is the initial `instance.status()` of the run. Status polling for a started instance is done through the Cloudflare Workers Workflow API (the private `/internal/*` commands below are no longer part of the start path).
+`instanceId` is the Cloudflare Workflow instance id; `details` is the initial `instance.status()` of the run. The UI does not poll workflow status.
 
 ### Workflow transition rules
 
@@ -173,9 +173,11 @@ body: { clientId: string }
 
 ## Internal workflow-to-data API (retired)
 
-The Temporal-era `/internal/*` commands were the bridge between the local `apps/workflows` worker and D1 (see the git history of `apps/workflows`). In the Cloudflare Workflow implementation, the workflow runs inside `apps/api` with the D1 binding and reads/writes the database directly (`createDb(this.env.DB)`); no separate internal API or service secret is used by the workflow.
-
-The `/internal/*` routes remain mounted for legacy tests/tools and are not part of the new workflow path. The browser never reaches them.
+The Temporal-era `/internal/*` commands were the bridge between the local `apps/workflows`
+worker and D1. In the Cloudflare Workflow implementation, the workflow runs inside `apps/api`
+with the D1 binding and reads/writes the database directly (`createDb(this.env.DB)`); no
+separate internal API or service secret is used by the workflow. The `/internal/*` routes
+were removed entirely.
 
 ## Deferred contract: chat
 
@@ -191,4 +193,4 @@ This replaces the POC's blocking endpoints:
 | `POST /api/progress/day` | Narrow `PATCH` routes for day/exercise logs |
 | `POST /api/workflows/weekly-progress` | Async `POST /wf/complete-week` (Cloudflare Workflow start) |
 | `POST /api/workflows/plan-generation` | Plan turnover is an internal branch of `POST /wf/complete-week` (see [workflows.md](./workflows.md)) |
-| `GET /api/workflows/:workflowId` | Cloudflare Workers Workflow instance status |
+| `GET /api/workflows/:workflowId` | Removed; workflow status is observed through Cloudflare logs/dashboard |
