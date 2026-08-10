@@ -188,7 +188,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
       },
     );
 
-    await step.do("save-next-week", async () => {
+    const savedWeek = await step.do("save-next-week", async () => {
       // WIP: a bit too much
       return saveNextWeek(
         db,
@@ -198,5 +198,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
         nextWeekSchedule,
       );
     });
+
+    return { plan_complete: false, next_week_id: savedWeek.id };
   }
 }
