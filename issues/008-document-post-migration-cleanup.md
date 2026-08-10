@@ -19,8 +19,10 @@ Topics to capture:
 
 ## Acceptance criteria
 
-- [ ] Cleanup tracking issue is written in `issues/`.
-- [ ] No code changes.
+- [x] Cleanup tracking issue is written in `issues/`.
+- [x] No code changes.
+
+"STATUS":"DONE"
 
 ## Blocked by
 
