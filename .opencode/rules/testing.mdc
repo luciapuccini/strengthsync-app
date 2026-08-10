@@ -1,0 +1,54 @@
+---
+alwaysApply: false
+---
+
+## source of truth for playwrite patterns
+
+- https://stevekinney.com/courses/self-testing-ai-agents/playwright-web-server-without-surprises
+
+## What "done" means
+
+A task is not done until all four exit zero, in this order:
+
+1. `npm run typecheck`
+2. `npm run lint`
+3. `npm run test`
+4. `npm run test:e2e`
+
+Do not report a task complete with any of these failing. If a failure looks unrelated, say so explicitly and link the failing test name in your summary.
+
+## How tests get written
+
+- Write a failing test before the implementation. Commit the test first.
+- Unit tests live next to the file under test as `<name>.test.ts` and run with Vitest.
+- End-to-end tests live in `e2e/` and run with Playwright.
+- Seed JSON lives in `e2e/data/`. Use `e2e/fixtures/` for HARs and other artifacts. Share data from those paths instead of redefining it per spec.
+- When testing FAILS, testing result reports are in `playwright-report/` foder. This give you actionable feedback you must check before tring to fix tests.
+
+## Playwright locator rules
+
+- `getByRole` first. `getByLabel` or `getByText` second. `data-testid` only when semantics genuinely don't exist.
+- Never use raw CSS or XPath selectors in specs.
+- Never use `page.waitForTimeout` or `page.waitForLoadState('networkidle')`. Use `expect(locator).toBeVisible()`, `page.waitForResponse`, or `page.waitForRequest`.
+- When a Playwright test fails, open `playwright-report/index.html` and its trace before proposing a fix.
+
+## HAR recording
+
+- HAR files live in `e2e/fixtures/` and are replayed via
+  `page.routeFromHAR`.
+- Never commit a new HAR file without a human reviewing it. HARs can
+  contain credentials, session tokens, and private data from third-party
+  APIs. Review in the Git diff before committing.
+- Do not re-record a HAR to "fix" a failing test. If the HAR no longer
+  matches the application's requests, the application changed in a way
+  that deserves investigation, not a blind rerecording.
+- When a HAR must be regenerated (e.g., because the upstream API
+  legitimately changed), regenerate it in a standalone commit so the
+  diff is clear.
+- If a helper or script creates a manual browser context for HAR
+  recording, close that context explicitly so the updated HAR is
+  flushed to disk.
+- Approved HAR refresh (the nightly CI job or a human-initiated
+  re-recording workflow) is different from ad-hoc re-recording to
+  silence a failing test. The refresh workflow is expected to change
+  HARs; an agent fixing a red test is not.
