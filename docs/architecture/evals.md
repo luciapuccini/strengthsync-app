@@ -1,21 +1,10 @@
-# LLM evaluation (MVP)
+# LLM evaluation (future plan)
 
-Braintrust is the target trace and evaluation provider. The goal is to learn from real
+
+Braintrust is the target evaluation provider. The goal is to learn from real
 workflow calls and a tiny set of hand fixtures without paying for LLM evaluation in CI.
-
-## Current migration status
-
-The Temporal-era recorder and manual eval harness lived in `apps/workflows` and
-`services/agent`. Both packages were deleted in the Cloudflare Workflows migration. Workflow
-LLM calls now run through `apps/api/src/agent/agent-core.ts` via `getAgentRuntime`, which
-today uses the plain AI SDK `generateText` with **no Braintrust recorder attached**.
-
-When tracing returns, the recorder contract will be defined fresh inside
-`apps/api/src/agent`. Until then:
-
-- Workflow LLM calls are not traced to Braintrust.
-- There is no fixture-based eval harness in the repo.
-- `pnpm eval:score` / `pnpm eval:replay` were removed with the deleted packages.
+When tracing gets implemented the recorder contract will be defined fresh inside
+`apps/api/src/agent`. 
 
 ## Principles (target state)
 
@@ -48,8 +37,6 @@ type WorkflowLlmTrace = {
 };
 ```
 
-The recorder is a dependency of `getAgentRuntime` (or its successor) so failures are captured
-and tests can inject an in-memory recorder.
 
 ## Scorers (target state)
 
