@@ -1,5 +1,7 @@
 # Final verification gate
 
+**STATUS: DONE**
+
 ## Parent PRD
 
 `issues/prd.md` — see User story 18 and Further Notes: "Verification gate before merge".
