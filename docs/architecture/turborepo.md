@@ -8,7 +8,7 @@ Turborepo infers the package dependency graph from each package's
 [`monorepo_structure.md`](./monorepo_structure.md) and mirrored by the
 TypeScript project references in each `tsconfig.json`
 (`services/domain` → `services/agent`/`services/db`/`apps/ui` →
-`apps/api`/`apps/workflows`). Turbo does not need a separate graph
+`apps/api`). Turbo does not need a separate graph
 definition; it reuses `workspace:*` deps and each package's own scripts.
 
 ## Tasks
@@ -19,8 +19,7 @@ definition; it reuses `workspace:*` deps and each package's own scripts.
 | `lint` | — | none | Independent per package; `eslint .`. |
 | `test` | `^typecheck` | none | `vitest run`; waits on dependencies' typecheck so a broken upstream type fails fast instead of surfacing as a confusing runtime test failure. |
 | `build` | `^typecheck`, `^build` | `dist/**` | Only `apps/api` (`wrangler deploy --dry-run`) and `apps/ui` (`vite build`) define this script; Turbo skips packages without it. |
-| `docker:build` | `^typecheck`, `^build` | none, `cache: false` | Only `apps/workflows`; side-effecting (builds a local Docker image), never cached. |
-| `deploy` | `build` | none, `cache: false` | Only `apps/api`; a real deploy, never cached. |
+| `deploy` | `build` | none, `cache: false` | Only `apps/api`; a real deploy (Worker + in-Worker Cloudflare Workflow + D1 migrations), never cached. |
 
 ## Commands
 

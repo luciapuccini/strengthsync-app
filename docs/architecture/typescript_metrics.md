@@ -9,7 +9,8 @@ The repository already follows the recommended project-reference structure:
 a shared [`tsconfig.base.json`](../../tsconfig.base.json), a references-only
 root [`tsconfig.json`](../../tsconfig.json) ("solution" config), and one
 `composite: true` package `tsconfig.json` per workspace (`apps/api`,
-`apps/ui`, `apps/workflows`, `services/domain`, `services/agent`,
+`apps/ui`,
+`services/domain`, `services/agent`,
 `services/db`). This doc measures that setup; it does not change compiler
 options unless a measurement exposes a concrete problem.
 
@@ -31,7 +32,10 @@ and explain-files output are local debugging artifacts, not committed.
 ## Baseline (2026-07-26)
 
 Recorded with TypeScript 6.0.2, Node v24.12.0, pnpm 11.1.2, from
-`pnpm ts:diagnostics` on a clean `.tsbuildinfo` state:
+`pnpm ts:diagnostics` on a clean `.tsbuildinfo` state. This baseline
+predates the Cloudflare Workflows migration (it still includes the former
+`apps/workflows` package); re-run `pnpm ts:diagnostics` for current
+numbers.
 
 | Metric | Value |
 | --- | --- |
@@ -55,7 +59,7 @@ pnpm ts:diagnostics
 
 - Own source is small (8.3k lines across 6 packages); the overwhelming
   majority of "files" and "lines of definitions" come from `node_modules`
-  (Temporal SDK, Cloudflare Workers types, OpenAI/AI SDK, React, etc.), which
+  (Cloudflare Workers types, OpenAI/AI SDK, React, etc.), which
   is normal and not a signal to act on by itself.
 - Check time (0.88s) and parse time (0.47s) are both small relative to total
   build time; neither phase dominates. There is no current evidence of a
@@ -74,7 +78,7 @@ pnpm ts:diagnostics
   about.
 - `types: []` is already set on every package that doesn't need ambient
   globals (`services/domain`, `services/agent`), preventing ambient
-  `@types` pollution. `apps/api`, `apps/workflows`, and `services/db` scope
+  `@types` pollution. `apps/api` and `services/db` scope
   `types` to exactly what they need (`node`, `@cloudflare/workers-types`).
 
 **Conclusion:** no compiler-option or project-structure changes are

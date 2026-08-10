@@ -1,146 +1,147 @@
-# Workflows (MVP)
+# Workflows
 
-The MVP retains the POC's two Temporal workflows:
+The MVP runs a single Cloudflare Worker Workflow — `StrengthsyncWorkflow` — that handles
+every weekly turn of a client's plan in one durable run:
 
-1. weekly progression — completed training week → adjusted next week;
-2. plan generation — completed plan → new plan + first week.
+- completing the current week;
+- analyzing it;
+- and then either generating the next week (weeks remain) or, when the completed week is
+  the plan's last, planning the next block and activating it.
 
-They run in `apps/workflows` on the local Node machine, with durable state and retries managed by Temporal Cloud. Activities read and write product data only through the authenticated internal API described in [api_contracts.md](./api_contracts.md).
+It runs as a Cloudflare Workflow (binding `STRENGTHSYNC_WORKFLOW`, class
+`StrengthsyncWorkflow`) exported from `apps/api/src/index.ts`. Durable execution is
+provided by the platform: each `step.do` re-records its output, steps are re-run only after
+a real failure, and the instance resumes from where it left off after a crash. Product data
+lives in D1; the workflow and agent runtime hold execution and trace data.
 
-The browser starts a workflow asynchronously and polls its status. It never waits for an LLM response.
+The browser starts a workflow asynchronously and never waits for an LLM response.
 
-## Shared rules
+## Trigger
 
-- Every LLM activity receives the Braintrust-backed `LlmCallRecorder`.
-- Every LLM call—including failed calls—creates a provider trace; no LLM trace data is stored in D1.
-- Every start creates a new Temporal run with a unique `workflow_id` (timestamp suffix). The MVP UI gates duplicate clicks; Temporal does not attach to a prior run.
-- Every write command carries `workflow_id`, so a Temporal **activity** retry returns existing output instead of creating a duplicate plan or week.
-- Product data remains in D1. Temporal retains workflow execution state/result; Braintrust retains LLM traces/evals.
-- Current coaching rules are included in every generation call. Rule versioning can be added later; MVP uses the active rules document.
-- LLM structured output is validated with shared Zod schemas before any write.
-
-## Weekly progression
-
-**Trigger:** `POST /api/clients/:clientId/workflows/weekly-progression`
+**Trigger:** `POST /wf/complete-week` (`apps/api/src/routes/cf-api.ts`)
 
 **Input**
 
 ```typescript
-type WeeklyProgressionInput = {
-  client_id: string;
-  week_id: string;
+type CompleteWeekParams = {
+  clientId: string;
 };
 ```
+
+The entrypoint calls a single internal command to freeze the client's current `in_flight`
+week as `completed`, then proceeds. The route returns the new instance id and its status so
+the UI can poll.
 
 ```mermaid
 flowchart LR
   Start[Start]
   Freeze[Complete_Week]
-  Context[Load_Weekly_Context]
+  Context[Load_Context]
   Analyze[Analyze_Week]
-  Check{Plan_complete}
-  Generate[Generate_Next_Week]
-  Save[Create_Next_Week]
-  End[Finish]
+  Check{Last week_of_plan?}
+  History[Load_Completed_Weeks]
+  Summaries[Summarize_Profile + History]
+  Plan[Generate_Plan]
+  Activate[Activate_Plan_And_Create_Week_One]
+  Gen[Generate_Next_Week]
+  Save[Save_Next_Week]
+  EndWeekly[Finish next_week_id]
+  EndPlan[Finish plan_id + first_week_id]
 
   Start --> Freeze --> Context --> Analyze --> Check
-  Check -->|"no"| Generate --> Save --> End
-  Check -->|"yes"| End
+  Check -->|"no"| Gen --> Save --> EndWeekly
+  Check -->|"yes"| History --> Summaries --> Plan --> Activate --> EndPlan
 ```
 
-### Steps
+## Shared rules
+
+- Every `step.do` result is durable: on crash the instance resumes from the last recorded
+  step output, so a step is never double-applied.
+- Every LLM call goes through the agent runtime with Braintrust-backed tracing. Every LLM
+  call — including failed calls — creates a provider trace; no LLM trace data is stored in D1.
+- LLM structured output is validated with shared Zod schemas before any write.
+- Current coaching rules are included in every generation call. Rule versioning can be added
+  later; MVP uses the active rules document.
+- Product data remains in D1. The workflow retains execution state/result; the agent runtime
+  retains LLM traces/evals.
+
+## Weekly progression path
+
+This is the default branch: the completed week is not the plan's last.
 
 1. **Complete week**  
-   Call the internal `complete` command. It validates that the referenced week is the client’s only `in_flight` week, then marks it `completed`. This freezes the schedule/logs used for coaching.
+   Mark the client's sole `in_flight` week `completed` (`completeWeekV2`). This freezes the
+   schedule/logs used for coaching.
 
 2. **Load context**  
-   Read the completed week, active plan, client profile, and coaching rules through the internal weekly-context endpoint.
+   Read the active plan and client profile into workflow memory (`getPlan`, `getProfile`).
+   The coaching rules are current and are carried alongside. This context is reused by the
+   plan-turnover branch if the week happens to be the plan's last.
 
 3. **Analyze week**  
-   Invoke the LLM with completed-day status, skipped exercises, exercise feedback, performed sets versus prescription, active plan, and coaching rules.  
-   The analysis produces actionable guidance for generation only. It is held in workflow memory/history and traced in Braintrust; it is **not persisted in D1** or returned as a durable product artifact.
+   Invoke the LLM with completed-day status, skipped exercises, exercise feedback, performed
+   sets versus prescription, the active plan, and coaching rules.  
+   The analysis produces actionable guidance for generation only. It is held in workflow
+   memory and traced in the agent runtime; it is **not persisted in D1**.
 
-4. **Check plan boundary**  
-   If `week_index >= plan.total_weeks`, finish with `plan_complete: true`. The UI offers plan generation; the weekly workflow does not automatically create a new plan.
+4. **Branch on the plan boundary**  
+   If `week_index >= total_weeks`, take the plan-turnover branch below. Otherwise continue.
 
 5. **Generate next week**  
-   If weeks remain, call structured generation with the completed week, canonical plan template, analysis, and coaching rules. The output is a full `WeekDay[]` schedule for the next dated week.
+   Call structured generation with the completed week, active plan, analysis, and coaching
+   rules. The output is a full `WeekDay[]` schedule for the next dated week, validated by
+   `NextWeekScheduleSchema` (seven days, all incomplete, empty logs).
 
-6. **Create next week**  
-   Validate the schedule and call the idempotent internal create-next-week command. It creates the sole next `in_flight` week.
+6. **Save next week**  
+   Persist the validated schedule as the sole next `in_flight` week (`saveNextWeek`).
 
 **Result**
 
 ```typescript
 type WeeklyProgressionResult = {
-  next_week_id: string | null;
+  next_week_id: string | null; // "null" when this was the plan's last week
   plan_complete: boolean;
 };
 ```
 
-### LLM calls and POC mapping
+## Plan-turnover branch
 
-| MVP activity | POC activity | Output |
-| --- | --- | --- |
-| `analyzeWeek` | `analyzeWeeklyProgress` | Transient actionable analysis |
-| `generateNextWeek` | `generateNextWeekProgress` | Validated `WeekDay[]` schedule |
+When `week_index >= plan.total_weeks`, the completed week finished the plan. Instead of
+ending, the workflow continues into plan generation — reusing context it already loaded
+instead of reloading or re-prompting it:
 
-The POC's file names, filesystem tools, `finished` flag, and persisted analysis markdown are removed. The product equivalent is a completed `Week` row plus its schedule/logs.
+- `currentPlan` → serves as the previous-plan structural reference;
+- `userProfile` → the profile summary input;
+- `coaching_rules` → included in every plan-generation call.
 
-## Plan generation
+Carrying these across the branch avoids a second context read and reduces token spend
+compared to starting plan generation as a separate process.
 
-**Trigger:** `POST /api/clients/:clientId/workflows/plan-generation`
+1. **Load completed-weeks history**  
+   The only additional read: the completed weeks of the finished plan, for the history
+   summary. Scoped to the active plan.
 
-**Input**
-
-```typescript
-type PlanGenerationInput = {
-  client_id: string;
-  notes?: string;
-};
-```
-
-The workflow may start only after the active plan is complete. It reads all completed weeks associated with that plan.
-
-```mermaid
-flowchart LR
-  Start[Start]
-  Context[Load_Plan_Context]
-  History[Summarize_History]
-  Profile[Summarize_Profile]
-  Generate[Generate_Plan]
-  Validate[Validate_Output]
-  Activate[Activate_Plan_and_Create_Week_One]
-  End[Finish]
-
-  Start --> Context
-  Context --> History
-  Context --> Profile
-  History --> Generate
-  Profile --> Generate
-  Generate --> Validate --> Activate --> End
-```
-
-### Steps
-
-1. **Load context**  
-   Read client profile, active plan, all completed weeks of that plan, and coaching rules.
-
-2. **Summarize history and profile in parallel**  
-   Run two independent LLM calls:
-   - history summary: adherence, progression, skipped sessions, and `easy`/`hard`/`heavy`/`light` patterns;
-   - profile summary: goals, current loads, nutrition/recovery constraints, swimming, and schedule preferences.
+2. **Summarize profile and history in parallel**  
+   Run two independent LLM calls (`buildSummarizeProfilePrompt`,
+   `buildSummarizeHistoryPrompt`):
+   - profile summary: goals, loads, body composition, nutrition/recovery constraints,
+     swimming, and schedule preferences;
+   - history summary: adherence, progression, skipped sessions, and
+     `easy`/`hard`/`heavy`/`light` feedback patterns across the finished block.
 
 3. **Generate plan**  
-   Invoke structured output generation with both summaries, the previous plan as a structural reference, coaching rules, and optional coach notes. The output contains the new block metadata, canonical `week_template`, and coach-facing rationale.
+   Invoke structured output generation (`buildGeneratePlanPrompt`) with both summaries, the
+   previous plan as a structural reference, coaching rules, and optional coach notes. The
+   output is validated by `GeneratedPlanInputSchema`: new block metadata, canonical
+   `week_template`, and coach-facing rationale.
 
-4. **Validate and activate**  
-   Validate the generated plan with Zod, then call one idempotent internal command that:
+4. **Activate plan and create week 1**  
+   Call one internal command (`activateGeneratedPlan`) that atomically:
    - archives the prior active plan;
    - creates and activates the new plan;
    - creates week 1 from the new template.
 
-   Prior plans and completed weeks remain in D1. The POC behavior that deleted old program/progress files is not retained.
+   Prior plans and completed weeks remain in D1.
 
 **Result**
 
@@ -151,31 +152,26 @@ type PlanGenerationResult = {
 };
 ```
 
-The rationale is stored on the generated `Plan`; summary text and other transient LLM intermediates are not product records.
-
-### LLM calls and POC mapping
-
-| MVP activity | POC activity | Output |
-| --- | --- | --- |
-| `summarizeHistory` | `summarizeProgressHistory` | Transient block summary |
-| `summarizeProfile` | `summarizeClientProfile` | Transient profile summary |
-| `generatePlan` | `generateNewPlan` | Validated plan + rationale |
+The rationale is stored on the generated `Plan`; summary text and other transient LLM
+intermediates are not product records.
 
 ## Retry and failure policy
 
-| Step | Start-to-close timeout | Maximum attempts | Notes |
-| --- | --- | --- | --- |
-| Data reads/writes | 30 seconds | Temporal default | Internal commands are idempotent by `workflow_id` |
-| Weekly analysis | 2 minutes | 2 | Limits repeated token spend |
-| Next-week generation | 3 minutes | 2 | Structured-output validation failures are retryable |
-| History/profile summaries | 2 minutes | 2 | Run independently |
-| Plan generation | 3 minutes | 2 | Structured-output validation failures are retryable |
+| Step | Retries | Notes |
+| --- | --- | --- |
+| Data reads/writes | Step default | Durable; internal writes are idempotent |
+| Weekly analysis | 2 (1 s delay, linear) | Limits repeated token spend |
+| Next-week generation | 2 (1 s delay, linear) | Structured-output validation failures are retryable |
+| Profile/history summaries | 2 (1 s delay, linear) | Run independently, in parallel |
+| Plan generation | 2 (1 s delay, linear) | Structured-output validation failures are retryable |
 
-On final failure, Temporal marks the workflow failed. The public status endpoint exposes a safe error message and allows a deliberate retry. It must not expose raw prompts, model output, or provider credentials.
+On final failure, the workflow instance is marked failed. The public status endpoint exposes
+a safe error message and allows a deliberate retry. It must not expose raw prompts, model
+output, or provider credentials.
 
 ## Deferred behavior
 
 - No scheduled weekly trigger: the user explicitly completes a week.
-- No automatic plan-generation chain: plan completion prompts the user to start the second workflow.
 - Streaming coach chat is not part of the MVP workflow surface.
-- No product-table `JobRun` or `LlmCall`: Temporal and Braintrust provide those operational records.
+- No product-table `JobRun` or `LlmCall`: the workflow and agent runtime provide those
+  operational records.

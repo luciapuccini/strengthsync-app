@@ -1,6 +1,6 @@
 # API contracts (MVP)
 
-The browser speaks only to `apps/api` on the Cloudflare origin. It never calls D1, Temporal Cloud, or the local workflow process.
+The browser speaks only to `apps/api` on the Cloudflare origin. It never calls D1, the workflow runtime, or any other process.
 
 This document defines the initial HTTP boundary. DTOs belong in `services/domain/contracts` and are validated by Zod on both sides of every API boundary.
 
@@ -8,9 +8,9 @@ This document defines the initial HTTP boundary. DTOs belong in `services/domain
 
 - `GET /health` is unauthenticated.
 - All `/api/*` routes require the shared HTTP Basic credential defined in [stack.md](./stack.md).
-- All `/internal/*` routes require a separate service secret. They are reachable only by the local workflow process through the private tunnel.
+- `/wf/*` (Cloudflare Workflow start) routes are protected by the same shared Basic credential; there is no separate machine-to-machine secret because the workflow runs in-Worker.
 - JSON responses use `application/json`.
-- Invalid input returns `400`; missing records return `404`; invalid shared credentials return `401`; invalid internal service credentials return `403`.
+- Invalid input returns `400`; missing records return `404`; invalid shared credentials return `401`.
 - Public route ids are UUIDs.
 
 ```typescript
@@ -154,113 +154,28 @@ Rules:
 
 ## Workflow API
 
-Workflow requests are asynchronous. The API Worker validates the shared Basic credential, forwards the request through the tunnel to the local workflow-start API, and returns immediately. It never waits for model output.
+Workflow requests are asynchronous. The API Worker validates the shared Basic credential and starts a Cloudflare Workflow instance directly (the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`). The route returns immediately and never waits for model output.
 
 ```text
-POST /api/clients/:clientId/workflows/weekly-progression
-body: { week_id: string }
-→ 202 { workflow_id: string, status: "running" }
-
-POST /api/clients/:clientId/workflows/plan-generation
-body: { notes?: string }
-→ 202 { workflow_id: string, status: "running" }
-
-GET /api/workflows/:workflowId
-→ 200 WorkflowStatus
+POST /wf/complete-week
+body: { clientId: string }
+→ 200 { instanceId: string, details: WorkflowStatus }
 ```
 
-```typescript
-type WorkflowStatus =
-  | {
-      workflow_id: string;
-      type: "weekly_progression";
-      status: "running";
-      started_at: string;
-    }
-  | {
-      workflow_id: string;
-      type: "weekly_progression";
-      status: "succeeded";
-      started_at: string;
-      finished_at: string;
-      result: {
-        next_week_id: string | null;
-        plan_complete: boolean;
-      };
-    }
-  | {
-      workflow_id: string;
-      type: "plan_generation";
-      status: "running";
-      started_at: string;
-    }
-  | {
-      workflow_id: string;
-      type: "plan_generation";
-      status: "succeeded";
-      started_at: string;
-      finished_at: string;
-      result: {
-        plan_id: string;
-        first_week_id: string;
-      };
-    }
-  | {
-      workflow_id: string;
-      type: "weekly_progression" | "plan_generation";
-      status: "failed";
-      started_at: string;
-      finished_at: string;
-      error: { code: string; message: string };
-    };
-```
-
-`workflow_id` is the Temporal workflow id, not a `JobRun` database row. Temporal retains workflow status/result; D1 stores only product state such as plans and weeks.
-
-Ids are unique per start (timestamp suffix): `weekly-progression:{client_id}:{week_id}:{ts}` and `plan-generation:{client_id}:{ts}`.
+`instanceId` is the Cloudflare Workflow instance id; `details` is the initial `instance.status()` of the run. Status polling for a started instance is done through the Cloudflare Workers Workflow API (the private `/internal/*` commands below are no longer part of the start path).
 
 ### Workflow transition rules
 
-- Each start creates a new independent Temporal run. The API does not attach to a prior execution.
-- MVP UI gates duplicate Complete-week clicks (button disabled while in flight; cooldown after success).
-- Weekly progression first validates that `week_id` is the client’s current `in_flight` week, then marks it completed as part of the workflow.
-- D1 enforces at most one `in_flight` week per client. Write commands are idempotent by `workflow_id` so Temporal **activity** retries do not create two next weeks.
-- Plan generation creates and activates a new plan atomically; it cannot leave two active plans.
+- Each start creates a new Cloudflare Workflow instance. The API never attaches to a prior instance.
+- The workflow first finds and completes the client's sole `in_flight` week, then branches: next-week generation when weeks remain, or plan turnover when the completed week is the plan's last (see [workflows.md](./workflows.md)).
+- D1 enforces at most one `in_flight` week per client.
+- Plan turnover creates and activates a new plan atomically; it cannot leave two active plans.
 
-## Internal workflow-to-data API
+## Internal workflow-to-data API (retired)
 
-`apps/workflows` cannot access D1 directly. Activities use these narrow, service-authenticated commands instead of generic database CRUD.
+The Temporal-era `/internal/*` commands were the bridge between the local `apps/workflows` worker and D1 (see the git history of `apps/workflows`). In the Cloudflare Workflow implementation, the workflow runs inside `apps/api` with the D1 binding and reads/writes the database directly (`createDb(this.env.DB)`); no separate internal API or service secret is used by the workflow.
 
-```text
-GET /internal/clients/:clientId/weekly-context?weekId=:weekId
-→ { client, profile, active_plan, week, coaching_rules }
-
-POST /internal/clients/:clientId/weeks/:weekId/complete
-body: { workflow_id: string }
-→ { week: Week }
-
-POST /internal/clients/:clientId/weeks/next
-body: {
-  workflow_id: string;
-  previous_week_id: string;
-  schedule: WeekDay[];
-}
-→ { week: Week }
-
-GET /internal/clients/:clientId/plan-generation-context
-→ { client, profile, active_plan: Plan | null, completed_weeks, coaching_rules }
-   // active_plan is null for a client's first plan; otherwise the completed block
-   // being replaced. Rejects with plan_not_complete while the active plan is unfinished.
-
-POST /internal/clients/:clientId/plans/activate-generated
-body: {
-  workflow_id: string;
-  plan: GeneratedPlanInput;
-}
-→ { plan: Plan; first_week: Week }
-```
-
-The server must make these commands idempotent using `workflow_id`. A repeated Temporal activity invocation returns the already-created product state rather than duplicating a week or plan.
+The `/internal/*` routes remain mounted for legacy tests/tools and are not part of the new workflow path. The browser never reaches them.
 
 ## Deferred contract: chat
 
@@ -268,11 +183,12 @@ Streaming chat is explicitly deferred in [mvp_scope.md](../mvp_scope.md). When r
 
 ## Compatibility notes
 
-This replaces the POC’s blocking endpoints:
+This replaces the POC's blocking endpoints:
 
 | POC route | MVP replacement |
 | --- | --- |
 | `GET /api/progress/history` | `GET /api/clients/:clientId/weeks?status=completed` |
 | `POST /api/progress/day` | Narrow `PATCH` routes for day/exercise logs |
-| `POST /api/workflows/weekly-progress` | Async `POST /api/clients/:clientId/workflows/weekly-progression` |
-| `POST /api/workflows/plan-generation` | Async `POST /api/clients/:clientId/workflows/plan-generation` |
+| `POST /api/workflows/weekly-progress` | Async `POST /wf/complete-week` (Cloudflare Workflow start) |
+| `POST /api/workflows/plan-generation` | Plan turnover is an internal branch of `POST /wf/complete-week` (see [workflows.md](./workflows.md)) |
+| `GET /api/workflows/:workflowId` | Cloudflare Workers Workflow instance status |

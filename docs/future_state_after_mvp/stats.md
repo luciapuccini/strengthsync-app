@@ -200,5 +200,5 @@ Do not expand MVP scope in [docs/mvp_[scope.md](http://scope.md)](docs/mvp_[scop
 
 - Cross-client analytics.
 
-- Writing from week-complete workflow only (writes are on day save).
+- Writing from the week-complete workflow only (writes are on day save).
 

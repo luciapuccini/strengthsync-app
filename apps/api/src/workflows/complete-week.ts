@@ -118,6 +118,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
     );
     // If the completed week is the last week of the plan
     if (completedWeek.week_index >= currentPlan?.total_weeks) {
+      //TODO: generate a new plan
       return { next_week_id: null, plan_complete: true };
     }
 

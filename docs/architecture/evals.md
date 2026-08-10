@@ -2,9 +2,17 @@
 
 Braintrust is the MVP trace and evaluation provider. The goal is to learn from real workflow calls and a tiny set of hand fixtures without paying for LLM evaluation in CI.
 
+## Current migration status
+
+The Temporal-era recorder lived in `apps/workflows`. In the Cloudflare Workflows migration, workflow LLM calls run through `apps/api/src/agent/agent-core.ts` via `getAgentRuntime`, which today uses the plain AI SDK `generateText` with **no Braintrust recorder attached**. Re-wiring the recorder (per the `LlmCallRecorder` interface in `services/agent`) is pending work. Until then:
+
+- Workflow LLM calls are not yet traced to Braintrust.
+- The deterministic scorers and fixture-based eval commands below still apply once the recorder is reconnected.
+- `apps/workflows/evals/` is being relocated; point the paths below at their new home when the move lands.
+
 ## Principles
 
-- Every workflow LLM call is traced through `LlmCallRecorder`.
+- Every workflow LLM call is traced through `LlmCallRecorder` (target state; see migration status above).
 - Evaluations are opt-in commands run by a developer. They do **not** run in CI, on deployment, or automatically after a workflow.
 - Evaluation runs can make new model calls and cost money. Keep the sample small (`--limit`).
 - Product data stays in D1; trace inputs, outputs, and scores live in Braintrust.
@@ -12,7 +20,7 @@ Braintrust is the MVP trace and evaluation provider. The goal is to learn from r
 
 ## What the recorder must capture
 
-`apps/workflows` provides a Braintrust-backed `LlmCallRecorder` (falls back to console when `BRAINTRUST_API_KEY` is unset). For each call, it records:
+`apps/api` provides a Braintrust-backed `LlmCallRecorder` (falls back to console when `BRAINTRUST_API_KEY` is unset — pending reconnect). For each call, it records:
 
 ```typescript
 type WorkflowLlmTrace = {
@@ -64,7 +72,7 @@ Implemented with `ClosedQA` from `autoevals` in `apps/workflows/evals/scorers/qu
 
 ## Eval entrypoint
 
-Evals call the same non-streaming agent helpers as production (`generatePlan` / `generateNextWeek`) via `apps/workflows/evals/run-step.ts`. They never start Temporal.
+Evals call the same non-streaming agent helpers as production (`generatePlan` / `generateNextWeek`) via `apps/workflows/evals/run-step.ts` (being relocated as part of the migration). They never start a workflow or hit the API.
 
 Tiny fixtures (not a growing golden dataset):
 
@@ -100,6 +108,7 @@ Schema validation remains a runtime safety check, not an evaluation scorer: inva
 ## Layout
 
 ```text
+(being relocated from apps/workflows/ in the Cloudflare Workflows migration)
 apps/workflows/
   src/observability/
     llm-call-recorder.ts      # createLlmRecorder / console fallback

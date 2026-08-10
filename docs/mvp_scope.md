@@ -51,16 +51,16 @@ The production domain shapes are defined in [architecture/domain_model.md](./arc
 
 ### Complete a week
 
-1. The user triggers weekly completion.
-2. The durable workflow reads the completed week, active plan, client profile, and coaching rules.
+1. The user triggers weekly completion (`POST /wf/complete-week`).
+2. The durable workflow freezes the in-flight week, reads the active plan, client profile, and coaching rules.
 3. The workflow sends every LLM call to the evaluation/observability provider.
 4. If plan weeks remain, the workflow creates the next dated week with any adjustments.
-5. If the plan is complete, the UI offers plan generation.
+5. If the completed week is the plan's last, the same workflow generates and activates the next plan.
 
 ### Generate the next plan
 
 1. The coach optionally supplies notes/preferences.
-2. The durable workflow summarizes relevant history and profile context.
+2. The durable workflow summarizes relevant history and profile context — reusing the profile and coaching rules it already loaded for the completed week.
 3. It creates a new `Plan` and canonical week template.
 4. It archives the current plan, activates the new plan, and creates its first week.
 
@@ -70,16 +70,16 @@ The production domain shapes are defined in [architecture/domain_model.md](./arc
 - A completed week is retained and cannot be silently overwritten by later plan changes.
 - The next week is reproducible from recorded logs, client context, coaching rules, and workflow inputs.
 - A failed workflow is visible and retryable without corrupting plan or week state.
-- Every workflow LLM call has a Braintrust trace; workflow product data does not store LLM trace payloads.
-- The browser never talks directly to the local workflow process or D1.
+- Every workflow LLM call has a Braintrust trace (pending record re-wiring — see [evals.md](./architecture/evals.md)); workflow product data does not store LLM trace payloads.
+- The browser never talks directly to D1.
 
 ## Delivery sequence / Roadmap
 
-1. Establish the monorepo, D1 schema, internal API boundary, and local workflow runtime.
+1. Establish the monorepo, D1 schema, and the Cloudflare Workflow runtime.
 2. Deleiver client profile with settings and preferences around the plan.
 3. Deliver plan creation, and current-week tracking.
 4. Deliver weekly completion and next-week generation.
-5. Deliver plan-end generation.
+5. Deliver plan-end generation (branches inside the same workflow).
 6. Add history views and harden workflow/eval coverage.
 
 ### Open point for later implementation

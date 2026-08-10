@@ -22,9 +22,10 @@ flowchart LR
 - **`deploy`** runs only on push to `main`, only after `verify` passes
   (`needs: verify`). It runs `build`/`deploy` scoped with `--affected` —
   today that means `apps/api` (and, as a forced graph dependency,
-  `apps/ui`'s build for its static assets). `apps/workflows` has no
-  `deploy` task and is never touched here; it stays a manual local rollout
-  (see [`local_worker.md`](./local_worker.md)).
+  `apps/ui`'s build for its static assets). `apps/api` deploys the
+  Cloudflare Workflow entrypoint and binding alongside the public API, so
+  workflow changes ship through the normal CI/CD path (see
+  [`local_worker.md`](./local_worker.md)).
 
 ## One-time GitHub setup
 
@@ -54,8 +55,7 @@ Before the first push to `main` that's expected to deploy:
    adding this workflow — see "First push after adding this workflow"
    below.
 
-No change is needed for `apps/workflows`: it keeps deploying manually per
-[`local_worker.md`](./local_worker.md#deploy-procedure).
+There is no separate workflow deployment step: the Cloudflare Workflow inside `apps/api` ships with the Worker via [`local_worker.md`](./local_worker.md).
 
 ## `--affected` base resolution
 
@@ -96,7 +96,7 @@ and the first real push to `main` as the actual end-to-end verification.
   for the typecheck baseline).
 - `pnpm typecheck:affected` (and the `lint`/`test`/`build` equivalents)
   correctly narrows to only the changed leaf package when editing e.g.
-  `apps/ui`, and correctly expands to all six packages when editing
+  `apps/ui`, and correctly expands to the full dependency graph when editing
   `services/domain` (everything depends on it) — see
   [`turborepo.md`](../architecture/turborepo.md#caching).
 - `pnpm build:affected` with a change to only `apps/api` still builds
@@ -121,7 +121,5 @@ and the first real push to `main` as the actual end-to-end verification.
    --remote`), and the Worker's `GET /health` reflects the new deploy.
 3. Make an `apps/ui`-only change, merge, and confirm `deploy` still runs
    (`apps/api#build` depends on it) and the served assets updated.
-4. Make a `services/db`- or `apps/workflows`-only change, merge, and
-   confirm `deploy` either runs (if `apps/api` is a dependent — true for
-   `services/db`) or is correctly skipped/no-op (true for
-   `apps/workflows`, which has no `deploy` task at all).
+4. Make a `services/db`- or `apps/api`-only change, merge, and
+   confirm `deploy` runs (both are deployed via `apps/api`).

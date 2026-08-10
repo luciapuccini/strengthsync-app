@@ -12,7 +12,7 @@ MVP access is one shared HTTP Basic Auth coach credential. It is not per-user id
 | UI        | React 19 + Vite + React Router + Zustand + Tailwind (`apps/ui`)                    |
 | API       | Hono on Cloudflare Workers; serves the SPA in production (`apps/api`)              |
 | DB        | Cloudflare D1 + Drizzle ORM (`services/db`)                                        |
-| Workflows | Temporal + Node worker (`apps/workflows`); Docker Compose for prod-like local runs |
+| Workflows | Cloudflare Workflows, in-Worker with `apps/api` (`StrengthsyncWorkflow`)          |
 | LLM       | OpenAI via Vercel AI SDK; Braintrust for tracing/evals                             |
 | Auth      | HTTP Basic Auth (shared coach credential)                                          |
 | CI        | GitHub Actions; Lefthook pre-commit                                                |

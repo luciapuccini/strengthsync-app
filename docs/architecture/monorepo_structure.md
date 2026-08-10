@@ -5,18 +5,11 @@ Target repository structure for the production application. It defines ownership
 ```text
 apps/
   ui/                         # Browser application
-  api/                        # Public HTTP API and chat routing
-  workflows/                  # Node workflow worker and private start API
+  api/                        # Public HTTP API, chat routing, and Cloudflare Workflow
     src/
-      activities/
-      workflows/
-      observability/
-        braintrust-recorder.ts  # implements LlmCallRecorder
-    evals/
-      plan-generation.eval.ts
-      week-generation.eval.ts
-      scorers/
-      fixtures/
+      workflows/              # Cloudflare Workflow entrypoint + step logic
+        complete-week.ts      # StrengthsyncWorkflow: weekly progression + plan turnover
+      agent/                  # In-Worker LLM helpers used by workflow steps
 services/
   domain/                     # Contracts and pure business logic
   agent/                      # Runtime-agnostic LLM helpers
@@ -25,13 +18,14 @@ services/
 
 Each directory is a workspace package with its own `package.json`, TypeScript config, tests, and explicit dependencies. The root workspace owns shared linting, formatting, TypeScript base config, task scripts, and lockfile.
 
+The former `apps/workflows` package (Temporal-era Node worker, activities, Braintrust recorder, Docker image) is retired in the Cloudflare Workflows migration; see [stack.md](./stack.md).
+
 ## Dependency graph
 
 ```mermaid
 flowchart LR
   UI[apps_ui]
   API[apps_api]
-  Workflows[apps_workflows]
   Domain[services_domain]
   Agent[services_agent]
   DB[services_db]
@@ -40,8 +34,6 @@ flowchart LR
   API --> Domain
   API --> Agent
   API --> DB
-  Workflows --> Domain
-  Workflows --> Agent
   Agent --> Domain
   DB --> Domain
 ```
@@ -50,8 +42,8 @@ The graph is deliberately one-way:
 
 - `services/domain` imports **nothing** from the other project workspaces.
 - `services/agent` imports `services/domain`, never a runtime app or database.
-- `services/db` imports `services/domain` types/contracts where useful, never apps or the agent. With the selected D1 stack, only `apps/api` imports it.
-- Apps may import services, but **never each other**. API starts workflows through an authenticated private HTTP/RPC boundary; it does not import the workflow worker.
+- `services/db` imports `services/domain` types/contracts where useful, never apps or the agent. With D1, only the Cloudflare Workers runtime (the `apps/api` Worker, including its workflow) imports it.
+- Apps may import services, but **never each other**. The workflow is not a separate app: it is a Cloudflare Workflow entrypoint inside `apps/api` that imports `services/db` and `services/agent` directly.
 
 ## `apps/ui`
 
@@ -72,14 +64,14 @@ Browser-only React application.
 
 - `services/db`
 - `services/agent`
-- Temporal SDK or workflow code
+- Workflow entrypoint or step code
 - Server environment variables, filesystem, Node-only packages
 
-**Dependency rule:** UI only knows HTTP contracts. It never knows a database table, SQL query, workflow activity, or provider SDK.
+**Dependency rule:** UI only knows HTTP contracts. It never knows a database table, SQL query, workflow step, or provider SDK.
 
 ## `apps/api`
 
-The only browser-facing backend. Its runtime must support HTTP, streaming chat, authentication, and database access.
+The only browser-facing backend. Its runtime must support HTTP, streaming chat, authentication, database access, and durable workflow execution.
 
 **Owns**
 
@@ -87,49 +79,25 @@ The only browser-facing backend. Its runtime must support HTTP, streaming chat, 
 - Public REST/RPC endpoints for clients, profiles, plans, and weeks
 - Validation of browser inputs
 - Chat session routing and streaming response
-- Async workflow start proxy: validate caller → create/start job request → return immediately
+- The Cloudflare Workflow: `StrengthsyncWorkflow` entrypoint (`src/workflows/complete-week.ts`), its steps, retry policy, and `/wf/*` start routes
 
 **May import**
 
 - `services/domain`
-- `services/agent` for chat only
-- `services/db` for the public data API
+- `services/agent` for chat and workflow LLM calls
+- `services/db` for the public data API and in-Worker workflow data access
+- Cloudflare Workers platform bindings (`DB`, `STRENGTHSYNC_WORKFLOW`)
 - Its own runtime/platform adapter code
 
 **Must not import**
 
 - `apps/ui`
-- `apps/workflows`
-- Temporal worker/activity implementation
 
-**Dependency rule:** it may request a workflow start but must not execute, poll, or wait for the workflow itself. Browser requests must not remain open for LLM plan generation.
+**Dependency rule:** data-plane reads/writes and durable workflow steps both execute in this single Worker. API requests start a workflow and return immediately; they must not remain open for LLM work.
 
-## `apps/workflows`
+## `apps/workflows` (retired)
 
-Node-only private service: durable workflow definitions, activities, and a small authenticated endpoint to start them.
-
-**Owns**
-
-- Workflow definitions: weekly progression and new-plan generation
-- Activity implementations: load context, invoke LLM, validate output, write next state
-- Worker process configuration and workflow retry/time-out policies
-- Mandatory forwarding of every LLM call to the configured observability/evaluation provider
-- Private job-start endpoint used by `apps/api`
-
-**May import**
-
-- `services/domain`
-- `services/agent`
-- `services/db`
-- Node and workflow-orchestrator SDKs
-
-**Must not import**
-
-- `apps/ui`
-- `apps/api`
-- Browser packages or edge-only runtime bindings
-
-**Dependency rule:** with D1, workflows cannot import `services/db` because D1 is a Worker binding. They call authenticated internal data endpoints in `apps/api`; they do not read local JSON files or call UI code. Their start endpoint is private and service-authenticated, never directly called by the browser.
+The Temporal-era package `apps/workflows` — Node worker, private start API, activities, Braintrust recorder, and Docker image — is retired in the Cloudflare Workflows migration. Workflow definitions, steps, and LLM calls now live inside `apps/api` as a Cloudflare Workflow. Its evals and fixtures are being relocated per [evals.md](./evals.md). Do not re-introduce a separate workflow process or a machine-to-machine start boundary.
 
 ## `services/domain`
 
@@ -204,9 +172,7 @@ type LlmCallRecorder = {
 };
 ```
 
-`apps/workflows` supplies a recorder backed by the chosen observability/evaluation provider (Braintrust in the current direction). The agent helper must call it for every workflow LLM request, including failures.
-
-The recorder forwards traces to the provider; it does **not** persist `LlmCall` rows in the product database. Keeping the interface in `services/agent` makes that provider integration mandatory without coupling LLM generation to one provider SDK.
+The recorder interface stays in `services/agent` so provider integration is mandatory without coupling LLM generation to one provider SDK. The Temporal-era `apps/workflows` supplied the Braintrust-backed implementation; that recorder is not yet re-wired into the in-Worker agent runtime (`apps/api/src/agent/agent-core.ts`) — pending work tracked in [evals.md](./evals.md).
 
 ## `services/db`
 
@@ -229,7 +195,7 @@ Persistence adapter for the relational system of record.
 - `apps/*`
 - HTTP or workflow SDKs
 
-**Dependency rule:** expose intent-level operations (`getCurrentWeek`, `completeWeek`, `createNextWeek`) to `apps/api`, not raw SQL tables. Multi-write lifecycle invariants use Drizzle's D1 `db.batch([...])` operations; do not use standard ORM transactions with D1. Node workflows use the API's authenticated internal endpoints instead of this package.
+**Dependency rule:** expose intent-level operations (`getCurrentWeek`, `completeWeek`, `createNextWeek`) to `apps/api`, not raw SQL tables. Multi-write lifecycle invariants use Drizzle's D1 `db.batch([...])` operations; do not use standard ORM transactions with D1.
 
 ## Workspace setup
 
@@ -258,8 +224,6 @@ apps/ui/package.json
 apps/ui/tsconfig.json
 apps/api/package.json
 apps/api/tsconfig.json
-apps/workflows/package.json
-apps/workflows/tsconfig.json
 services/domain/package.json
 services/domain/tsconfig.json
 services/agent/package.json
@@ -280,8 +244,8 @@ Declare workspace dependencies explicitly (for example, `"@strengthsync/domain":
 - CI runs root typecheck, lint, unit tests, and a dependency-graph check,
   scoped to affected packages; `apps/api` deploys automatically on `main`
   (see [`ci_cd.md`](../operations/ci_cd.md)).
-- Separate runtime TypeScript configs: browser (`ui`), edge (`api`), and Node (`workflows`). Shared services must compile against every runtime they claim to support.
-- Workflow tests assert that every LLM activity receives a recorder; production configuration fails fast when the observability provider is unavailable or unconfigured.
+- Separate runtime TypeScript configs: browser (`ui`) and edge (`api`, which also hosts the in-Worker workflow). Shared services must compile against every runtime they claim to support.
+- Workflow tests assert the workflow steps run with their expected inputs; recorder/observability assertions return once the Braintrust re-wiring lands (see [evals.md](./evals.md)).
 
 ## Migration mapping
 
@@ -289,7 +253,7 @@ Declare workspace dependencies explicitly (for example, `"@strengthsync/domain":
 | -------------------------------------------------- | ---------------------------------------- |
 | `src/ui/`                                          | `apps/ui/`                               |
 | `src/worker/`                                      | `apps/api/`                              |
-| `src/temporal/`                                    | `apps/workflows/`                        |
+| `src/temporal/`                                    | Retired → `apps/api/src/workflows/` as a Cloudflare Workflow |
 | `src/agent/`                                       | `services/agent/`                        |
 | `src/temporal/schemas.ts`, prompts, coaching rules | `services/domain/`                       |
 | `src/app/dashboard/**`                             | fixtures/seed inputs; no runtime storage |
