@@ -1,7 +1,7 @@
 import { WorkflowEntrypoint, WorkflowStep } from "cloudflare:workers";
 import type { WorkflowEvent } from "cloudflare:workers";
 import z from "zod";
-import { COACHING_RULES } from "@strengthsync/domain/coach";
+import { COACHING_RULES, ProfileSummarySchema } from "@strengthsync/domain/coach";
 import {
   completeWeekV2,
   getPlan,
@@ -110,6 +110,38 @@ async function loadCompletedWeeks(
   );
 }
 
+async function summarizeProfile(
+  step: WorkflowStep,
+  env: Env,
+  userProfile: ClientProfile,
+  rules: string,
+) {
+  return step.do(
+    "summarize-profile",
+    { retries: { limit: 2, delay: "1 second", backoff: "linear" } },
+    async () =>
+      getAgentRuntime({
+        apiKey: env.OPENAI_API_KEY,
+        model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
+        system: [
+          "You are a strength coach summarizing a client profile for plan generation.",
+          "Return only the facts that affect training design: goals, loads, body composition,",
+          "nutrition/recovery constraints, and schedule preferences.",
+          "Do not invent missing data.",
+        ].join(" "),
+        prompt: JSON.stringify(
+          {
+            coaching_rules: rules,
+            profile: userProfile,
+          },
+          null,
+          2,
+        ),
+        outSchema: ProfileSummarySchema,
+      }),
+  );
+}
+
 export class StrengthsyncWorkflow extends WorkflowEntrypoint<
   Env,
   CompleteWeekParams
@@ -120,15 +152,13 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
   ) {
     const db = createDb(this.env.DB);
     const { clientId } = event.payload;
-    const completedWeek = await step.do("complete-week", async () => {
-      return completeWeekV2(db, clientId);
-    });
-    const { currentPlan, rules, userProfile } = await step.do(
-      "load-context",
-      async () => handleLoadContext(db, clientId),
+    const completedWeek = await step.do("complete-week", async () =>
+      completeWeekV2(db, clientId),
     );
+    const { currentPlan, rules, userProfile } = await step.do("load-context", async () => handleLoadContext(db, clientId));
     if (completedWeek.week_index >= currentPlan.total_weeks) {
       await loadCompletedWeeks(step, db, clientId, currentPlan);
+      await summarizeProfile(step, this.env, userProfile, rules);
       return { next_week_id: null, plan_complete: true };
     }
     const weekAnalysis = await step.do(

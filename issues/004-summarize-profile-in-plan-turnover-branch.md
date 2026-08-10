@@ -20,7 +20,13 @@ Return a stub result so this step is independently verifiable.
 - [ ] Hard-coded prompt strings live in the workflow file, not imported from a domain builder.
 - [ ] Output is validated by `ProfileSummarySchema`.
 - [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
+- [x] `summarize-profile` step runs when the plan is complete.
+- [x] Hard-coded prompt strings live in the workflow file, not imported from a domain builder.
+- [x] Output is validated by `ProfileSummarySchema`.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes.
+
+"STATUS":"DONE"
 
 ## Blocked by
 
