@@ -7,15 +7,17 @@ import { addDays, todayIso } from '../dates'
 import type { Db } from '../db'
 import { RepoError } from '../errors'
 import { weeks } from '../schema'
-import {
-  activateGeneratedPlan,
-  completeWeek,
-  createNextWeek,
-} from '../repositories/internal'
 import { createClient, getClient, listClients } from '../repositories/clients'
-import { getActivePlan, listPlans } from '../repositories/plans'
+import { activateGeneratedPlanV2, getActivePlan, listPlans } from '../repositories/plans'
 import { upsertProfile } from '../repositories/profiles'
-import { getCurrentWeek, listWeeks, saveDay, updateDayLog } from '../repositories/weeks'
+import {
+  completeWeek,
+  getCurrentWeek,
+  listWeeks,
+  saveDay,
+  saveNextWeek,
+  updateDayLog,
+} from '../repositories/weeks'
 import { createTestDb, markAllDaysCompleted } from '../testing/index'
 
 const weekTemplate: PlanDay[] = [
@@ -86,7 +88,7 @@ describe('profiles', () => {
 
 describe('plan + week lifecycle', () => {
   async function activate(workflowId = 'wf-activate-1') {
-    return activateGeneratedPlan(db, clientId, {
+    return activateGeneratedPlanV2(db, clientId, {
       workflow_id: workflowId,
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
@@ -126,16 +128,15 @@ describe('plan + week lifecycle', () => {
   it('activating a new plan archives the previous one once its weeks are completed', async () => {
     const first = await activate('wf-activate-a')
     await markAllDaysCompleted(db, clientId, first.first_week.id)
-    await completeWeek(db, clientId, first.first_week.id)
-    const week2 = await createNextWeek(db, clientId, {
-      workflow_id: 'wf-week-2',
-      previous_week_id: first.first_week.id,
+    await completeWeek(db, clientId)
+    const activePlan = (await getActivePlan(db, clientId))!
+    const week2 = await saveNextWeek(db, clientId, activePlan, first.first_week, {
       schedule: first.first_week.schedule,
     })
     await markAllDaysCompleted(db, clientId, week2.id)
-    await completeWeek(db, clientId, week2.id)
+    await completeWeek(db, clientId)
 
-    const second = await activateGeneratedPlan(db, clientId, {
+    const second = await activateGeneratedPlanV2(db, clientId, {
       workflow_id: 'wf-activate-b',
       plan: { label: 'Block 2', total_weeks: 4, week_template: weekTemplate, rationale: 'more volume' },
     })
@@ -163,7 +164,7 @@ describe('plan + week lifecycle', () => {
 
 describe('getCurrentWeek', () => {
   async function activate() {
-    return activateGeneratedPlan(db, clientId, {
+    return activateGeneratedPlanV2(db, clientId, {
       workflow_id: 'wf-activate-current',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
@@ -194,7 +195,7 @@ describe('getCurrentWeek', () => {
 
 describe('day logs', () => {
   it('patches one day and marks it completed', async () => {
-    const { first_week } = await activateGeneratedPlan(db, clientId, {
+    const { first_week } = await activateGeneratedPlanV2(db, clientId, {
       workflow_id: 'wf-activate-1',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
@@ -226,7 +227,7 @@ describe('day logs', () => {
   })
 
   it('rejects logs that do not cover exactly the scheduled exercises', async () => {
-    const { first_week } = await activateGeneratedPlan(db, clientId, {
+    const { first_week } = await activateGeneratedPlanV2(db, clientId, {
       workflow_id: 'wf-activate-1',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
@@ -246,12 +247,12 @@ describe('day logs', () => {
   })
 
   it('rejects changes to a completed week', async () => {
-    const { first_week } = await activateGeneratedPlan(db, clientId, {
+    const { first_week } = await activateGeneratedPlanV2(db, clientId, {
       workflow_id: 'wf-activate-1',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
     await markAllDaysCompleted(db, clientId, first_week.id)
-    await completeWeek(db, clientId, first_week.id)
+    await completeWeek(db, clientId)
 
     await expect(
       updateDayLog(db, clientId, first_week.id, 1, {
@@ -264,7 +265,7 @@ describe('day logs', () => {
 
 describe('saveDay', () => {
   it('always marks the day completed and persists exercise logs', async () => {
-    const { first_week } = await activateGeneratedPlan(db, clientId, {
+    const { first_week } = await activateGeneratedPlanV2(db, clientId, {
       workflow_id: 'wf-activate-1',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })
@@ -293,7 +294,7 @@ describe('saveDay', () => {
   })
 
   it('marks an empty rest day completed', async () => {
-    const { first_week } = await activateGeneratedPlan(db, clientId, {
+    const { first_week } = await activateGeneratedPlanV2(db, clientId, {
       workflow_id: 'wf-activate-1',
       plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
     })

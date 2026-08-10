@@ -27,14 +27,6 @@ export {
   listWeeksV2,
   saveDay,
   updateDayLog,
-  // WIP: this will live close to Service, just keeping exports pattern for migraiton
-  completeWeek as completeWeekV2,
+  completeWeek,
   saveNextWeek,
 } from "./repositories/weeks.ts";
-export {
-  activateGeneratedPlan,
-  completeWeek,
-  createNextWeek,
-  getPlanGenerationContext,
-  getWeeklyContext,
-} from "./repositories/internal.ts";

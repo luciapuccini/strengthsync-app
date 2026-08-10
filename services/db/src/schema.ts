@@ -23,8 +23,7 @@ import {
  *
  * `week_template` and `schedule` are JSON columns validated by the domain
  * Zod schemas at the API/persistence boundary. `workflow_id` columns are
- * idempotency keys for workflow-created rows (see
- * docs/architecture/api_contracts.md — internal commands); they are not
+ * idempotency keys for Cloudflare workflow-created rows; they are not
  * part of the public domain model.
  */
 
@@ -90,7 +89,7 @@ export const plans = sqliteTable(
       .$type<PlanDay[]>(),
     rationale: text("rationale"),
     activated_at: text("activated_at"),
-    /** Idempotency key: the Temporal workflow that created this plan. */
+    /** Idempotency key: the workflow that created this plan. */
     workflow_id: text("workflow_id"),
     created_at: text("created_at").notNull(),
     updated_at: text("updated_at").notNull(),
@@ -120,7 +119,7 @@ export const weeks = sqliteTable(
     status: text("status", { enum: WEEK_STATUSES }).notNull(),
     /** Snapshot of the planned work for this week, including AI adjustments. */
     schedule: text("schedule", { mode: "json" }).notNull().$type<WeekDay[]>(),
-    /** Idempotency key: the Temporal workflow that created this week. */
+    /** Idempotency key: the workflow that created this week. */
     workflow_id: text("workflow_id"),
     created_at: text("created_at").notNull(),
     updated_at: text("updated_at").notNull(),

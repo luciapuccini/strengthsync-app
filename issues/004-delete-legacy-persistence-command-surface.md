@@ -1,5 +1,7 @@
 # Delete the legacy persistence command surface
 
+**STATUS: DONE**
+
 ## Parent PRD
 
 `issues/prd.md` — see Implementation Decisions: "Persistence deletion"; Testing Decisions: "Deletions, not rewrites", "Prior art for the one adaptation".

@@ -62,16 +62,3 @@ export function buildScheduleFromTemplate(weekTemplate: PlanDay[], start: string
   }))
 }
 
-export async function findWeekByWorkflowId(
-  db: Db,
-  clientId: string,
-  workflowId: string,
-): Promise<Week | null> {
-  const rows = await db
-    .select()
-    .from(weeks)
-    .where(and(eq(weeks.client_id, clientId), eq(weeks.workflow_id, workflowId)))
-    .limit(1)
-  const row = rows[0]
-  return row ? toWeek(row) : null
-}

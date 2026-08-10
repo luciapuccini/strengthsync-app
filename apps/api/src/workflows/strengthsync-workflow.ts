@@ -3,7 +3,7 @@ import type { WorkflowEvent } from "cloudflare:workers";
 import z from "zod";
 import { COACHING_RULES } from "@strengthsync/domain/coach";
 import {
-  completeWeekV2,
+  completeWeek,
   getPlan,
   getProfile,
   saveNextWeek,
@@ -143,7 +143,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
     const db = createDb(this.env.DB);
     const { clientId } = event.payload;
     const completedWeek = await step.do("complete-week", async () =>
-      completeWeekV2(db, clientId),
+      completeWeek(db, clientId),
     );
     const { currentPlan, rules, userProfile } = await step.do(
       "load-context",
