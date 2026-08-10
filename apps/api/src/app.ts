@@ -5,25 +5,15 @@ import { HTTPException } from "hono/http-exception";
 import { RepoError, type Db } from "@strengthsync/db";
 
 import { errorResponse, repoErrorResponse } from "./lib/errors.ts";
-import { internalServiceAuth } from "./middleware/auth.ts";
 import { clientRoutes } from "./routes/clients.ts";
-import { internalRoutes } from "./routes/internal.ts";
 import { planRoutes } from "./routes/plans.ts";
 import { weekRoutes } from "./routes/weeks.ts";
-import {
-  workflowProxyRoutes,
-  type WorkflowApiConfig,
-} from "./routes/workflows.ts";
 import { cfWorkflowRoutes } from "./routes/cf-api.ts";
 
 export type AppConfig = {
   db: Db;
   /** Shared coach credential (docs/architecture/stack.md). */
   basicAuth: { username: string; password: string };
-  /** Service secret for /internal/* (workflow worker only). */
-  internalServiceSecret: string;
-  /** Workflow-start API behind the tunnel; proxy returns 503 when unset. */
-  workflowApi?: WorkflowApiConfig | undefined;
 };
 
 export function createApp(config: AppConfig): Hono {
@@ -51,14 +41,9 @@ export function createApp(config: AppConfig): Hono {
       }),
     );
   }
-  // Internal commands: service secret, workflow worker only.
-  app.use("/internal/*", internalServiceAuth(config.internalServiceSecret));
-
   app.route("/api", clientRoutes(config.db));
   app.route("/api", planRoutes(config.db));
   app.route("/api", weekRoutes(config.db));
-  app.route("/api", workflowProxyRoutes(config.db, config.workflowApi));
-  app.route("/internal", internalRoutes(config.db));
   app.route("/wf", cfWorkflowRoutes());
 
   return app;

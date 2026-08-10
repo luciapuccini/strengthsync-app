@@ -21,9 +21,6 @@ catalogs:
     hono:
       specifier: ^4.12.31
       version: 4.12.31
-    openai:
-      specifier: ^6.48.0
-      version: 6.48.0
     turbo:
       specifier: ^2.10.6
       version: 2.10.6
@@ -92,9 +89,6 @@ importers:
       hono:
         specifier: 'catalog:'
         version: 4.12.31
-      openai:
-        specifier: 'catalog:'
-        version: 6.48.0(ws@8.21.0)(zod@4.4.3)
       zod:
         specifier: 'catalog:'
         version: 4.4.3

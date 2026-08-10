@@ -1,5 +1,7 @@
 # Remove the "Generate plan" UI feature and orphaned UI state
 
+**STATUS: DONE**
+
 ## Parent PRD
 
 `issues/prd.md` — see Implementation Decisions: "UI feature removal"; Testing Decisions: "Deletions, not rewrites".

@@ -1,12 +1,12 @@
 import type { Hono } from 'hono'
 
+import { activateGeneratedPlanV2, type Db } from '@strengthsync/db'
 import { createTestDb } from '@strengthsync/db/testing'
 import type { PlanDay, Week } from '@strengthsync/domain/model'
 
 import { createApp, type AppConfig } from './app.ts'
 
 export const BASIC = { username: 'coach', password: 'test-secret' }
-export const INTERNAL_SECRET = 'test-internal-secret'
 
 export function basicHeader(): string {
   return `Basic ${btoa(`${BASIC.username}:${BASIC.password}`)}`
@@ -16,7 +16,6 @@ export function createTestApp(overrides: Partial<AppConfig> = {}): Hono {
   return createApp({
     db: createTestDb(),
     basicAuth: BASIC,
-    internalServiceSecret: INTERNAL_SECRET,
     ...overrides,
   })
 }
@@ -70,92 +69,14 @@ export const weekTemplate: PlanDay[] = [
   },
 ]
 
-export async function activatePlanViaInternalApi(
-  app: Hono,
+export async function activateGeneratedPlanViaRepository(
+  db: Db,
   clientId: string,
   workflowId: string,
 ): Promise<{ plan: { id: string }; first_week: Week }> {
-  const res = await app.request(`/internal/clients/${clientId}/plans/activate-generated`, {
-    method: 'POST',
-    headers: internalHeaders(),
-    body: JSON.stringify({
-      workflow_id: workflowId,
-      plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
-    }),
+  const result = await activateGeneratedPlanV2(db, clientId, {
+    workflow_id: workflowId,
+    plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
   })
-  return (await res.json()) as { plan: { id: string }; first_week: Week }
-}
-
-export function internalHeaders(): Record<string, string> {
-  return { 'content-type': 'application/json', 'x-service-secret': INTERNAL_SECRET }
-}
-
-export async function completeWeekViaInternalApi(
-  app: Hono,
-  clientId: string,
-  weekId: string,
-  workflowId: string,
-): Promise<Response> {
-  return app.request(`/internal/clients/${clientId}/weeks/${weekId}/complete`, {
-    method: 'POST',
-    headers: internalHeaders(),
-    body: JSON.stringify({ workflow_id: workflowId }),
-  })
-}
-
-export async function createNextWeekViaInternalApi(
-  app: Hono,
-  clientId: string,
-  workflowId: string,
-  previousWeek: Week,
-): Promise<Response> {
-  return app.request(`/internal/clients/${clientId}/weeks/next`, {
-    method: 'POST',
-    headers: internalHeaders(),
-    body: JSON.stringify({
-      workflow_id: workflowId,
-      previous_week_id: previousWeek.id,
-      schedule: previousWeek.schedule,
-    }),
-  })
-}
-
-export async function patchDayViaApi(
-  app: Hono,
-  clientId: string,
-  weekId: string,
-  exercises: unknown[],
-  dayIndex = 1,
-): Promise<Response> {
-  return app.request(`/api/clients/${clientId}/weeks/${weekId}/days/${dayIndex}`, {
-    method: 'PATCH',
-    headers: { authorization: basicHeader(), 'content-type': 'application/json' },
-    body: JSON.stringify({ completed: true, exercises }),
-  })
-}
-
-/** Mark every scheduled day completed so the week can be frozen. */
-export async function markAllDaysCompletedViaApi(
-  app: Hono,
-  clientId: string,
-  week: Week,
-): Promise<void> {
-  for (const day of week.schedule) {
-    if (day.completed) continue
-    const res = await patchDayViaApi(
-      app,
-      clientId,
-      week.id,
-      day.exercises.map((exercise) => ({
-        exercise_key: exercise.exercise_key,
-        skipped: false,
-        feedback: null,
-        sets: [],
-      })),
-      day.day_index,
-    )
-    if (!res.ok) {
-      throw new Error(`failed to mark day ${day.day_index} completed: ${res.status}`)
-    }
-  }
+  return { plan: { id: result.plan.id }, first_week: result.first_week }
 }

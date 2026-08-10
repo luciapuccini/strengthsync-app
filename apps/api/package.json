@@ -30,7 +30,6 @@
     "ai": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
-    "openai": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

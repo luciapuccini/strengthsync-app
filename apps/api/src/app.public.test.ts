@@ -5,7 +5,7 @@ import { weeks } from '@strengthsync/db/schema'
 import { addDays, createTestDb, todayIso } from '@strengthsync/db/testing'
 
 import {
-  activatePlanViaInternalApi,
+  activateGeneratedPlanViaRepository,
   basicHeader,
   createClientViaApi,
   createTestApp,
@@ -58,13 +58,6 @@ describe('health + auth', () => {
     }
   })
 
-  it('rejects /internal/* without the service secret (403)', async () => {
-    const app = createTestApp()
-    const res = await app.request('/internal/clients/some-id/plan-generation-context')
-    expect(res.status).toBe(403)
-    const body = (await res.json()) as { error: { code: string } }
-    expect(body.error.code).toBe('forbidden')
-  })
 })
 
 describe('clients + profile', () => {
@@ -143,7 +136,7 @@ describe('training reads', () => {
     const app = createTestApp({ db })
     const client = await createClientViaApi(app)
     await upsertProfileViaApi(app, client.id)
-    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-future-week')
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-future-week')
     const futureStart = addDays(todayIso(), 7)
     await db
       .update(weeks)
@@ -169,9 +162,10 @@ describe('training reads', () => {
   })
 
   it('rejects a day patch whose skipped exercise carries sets (400)', async () => {
-    const app = createTestApp()
+    const db = createTestDb()
+    const app = createTestApp({ db })
     const client = await createClientViaApi(app)
-    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-setup')
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-setup')
 
     const res = await app.request(
       `/api/clients/${client.id}/weeks/${first_week.id}/days/1`,
@@ -197,9 +191,10 @@ describe('training reads', () => {
 
 describe('day save', () => {
   it('saves a day via POST and always marks it completed', async () => {
-    const app = createTestApp()
+    const db = createTestDb()
+    const app = createTestApp({ db })
     const client = await createClientViaApi(app)
-    const { first_week } = await activatePlanViaInternalApi(app, client.id, 'wf-setup')
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-setup')
 
     const res = await app.request(
       `/api/clients/${client.id}/weeks/${first_week.id}/days/1/save`,

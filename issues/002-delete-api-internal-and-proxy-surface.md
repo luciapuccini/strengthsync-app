@@ -1,5 +1,7 @@
 # Delete the API's internal command surface and workflow proxy
 
+**STATUS: DONE**
+
 ## Parent PRD
 
 `issues/prd.md` — see Implementation Decisions: "API deletion", "Test adaptation without new tests", and the API parts of "Config and docs"; Testing Decisions.
