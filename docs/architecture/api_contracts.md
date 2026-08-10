@@ -2,7 +2,7 @@
 
 The browser speaks only to `apps/api` on the Cloudflare origin. It never calls D1, the workflow runtime, or any other process.
 
-This document defines the initial HTTP boundary. DTOs belong in `services/domain/contracts` and are validated by Zod on both sides of every API boundary.
+This document defines the initial HTTP boundary. The machine-readable source of truth is `packages/api-contract/openapi.json`; generated TypeScript types live in `packages/api-contract/openapi.d.ts`. Server-side Zod DTOs are in `services/domain/contracts` in this document's original layout and are validated at the API boundary.
 
 ## Authentication and conventions
 

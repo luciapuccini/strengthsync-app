@@ -27,6 +27,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BEFORE_SHA: ${{ github.event.before }}
       - run: pnpm deps:check
+      - run: pnpm --filter @strengthsync/api-contract check:openapi
       - run: pnpm typecheck:affected
         env:
           TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}

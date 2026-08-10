@@ -4,6 +4,212 @@
  */
 
 export interface paths {
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liveness probe */
+        get: operations["healthCheck"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all clients for the coach */
+        get: operations["listClients"];
+        put?: never;
+        /** Create a new client */
+        post: operations["createClient"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a single client */
+        get: operations["getClient"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a client's profile */
+        get: operations["getClientProfile"];
+        /** Update a client's profile */
+        put: operations["updateClientProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List plans for a client */
+        get: operations["listPlans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/plans/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the client's active plan */
+        get: operations["getActivePlan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/plans/{planId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a plan by id */
+        get: operations["getPlan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/weeks/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the client's current in-flight week */
+        get: operations["getCurrentWeek"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/weeks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List weeks for a client */
+        get: operations["listWeeks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/weeks/{weekId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a week by id */
+        get: operations["getWeek"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}/save": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save a day's exercise logs and mark the day completed */
+        post: operations["saveDayLog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Low-level day log patch (tests/tools) */
+        patch: operations["updateDayLog"];
+        trace?: never;
+    };
     "/wf/complete-week": {
         parameters: {
             query?: never;
@@ -13,7 +219,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Complete a week for a client */
+        /** Complete a week for a client (starts the Cloudflare Workflow) */
         post: operations["completeWeek"];
         delete?: never;
         options?: never;
@@ -25,6 +231,174 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        HealthResponse: {
+            ok: boolean;
+        };
+        ApiError: {
+            error: {
+                code: string;
+                message: string;
+            };
+        };
+        /** Format: uuid */
+        Uuid: string;
+        /** Format: date */
+        ISODate: string;
+        /** Format: date-time */
+        ISODateTime: string;
+        /** @enum {string} */
+        DayType: "upper_body" | "leg_day" | "rest" | "swimming" | "cardio";
+        /** @enum {string} */
+        ClientStatus: "active" | "archived";
+        /** @enum {string} */
+        PlanStatus: "draft" | "active" | "archived";
+        /** @enum {string} */
+        WeekStatus: "in_flight" | "completed" | "abandoned";
+        /** @enum {string} */
+        ExerciseFeedback: "easy" | "hard" | "heavy" | "light";
+        JsonValue: string | number | boolean | null | components["schemas"]["JsonValue"][] | {
+            [key: string]: components["schemas"]["JsonValue"];
+        };
+        Coach: {
+            id: components["schemas"]["Uuid"];
+            display_name: string;
+            auth_subject_id: string | null;
+            created_at: components["schemas"]["ISODateTime"];
+            updated_at: components["schemas"]["ISODateTime"];
+        };
+        Client: {
+            id: components["schemas"]["Uuid"];
+            coach_id: components["schemas"]["Uuid"];
+            display_name: string;
+            status: components["schemas"]["ClientStatus"];
+            created_at: components["schemas"]["ISODateTime"];
+            updated_at: components["schemas"]["ISODateTime"];
+        };
+        ClientProfile: {
+            id: components["schemas"]["Uuid"];
+            client_id: components["schemas"]["Uuid"];
+            snapshot_date: components["schemas"]["ISODate"];
+            sex: string | null;
+            age: number | null;
+            height_cm: number | null;
+            goals: components["schemas"]["JsonValue"];
+            body_composition: components["schemas"]["JsonValue"];
+            strength_loads: components["schemas"]["JsonValue"];
+            nutrition: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
+            swimming: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
+            schedule_preferences: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
+            notes: string | null;
+            updated_at: components["schemas"]["ISODateTime"];
+        };
+        PlannedExercise: {
+            exercise_key: string;
+            name: string;
+            series: number;
+            reps: number;
+            rest_time_sec: number;
+            weight_kg: number | null;
+            notes: string | null;
+        };
+        PlanDay: {
+            day_index: number;
+            type: components["schemas"]["DayType"];
+            notes: string | null;
+            exercises: components["schemas"]["PlannedExercise"][];
+        };
+        Plan: {
+            id: components["schemas"]["Uuid"];
+            client_id: components["schemas"]["Uuid"];
+            label: string;
+            status: components["schemas"]["PlanStatus"];
+            total_weeks: number;
+            week_template: components["schemas"]["PlanDay"][];
+            rationale: string | null;
+            /** Format: date-time */
+            activated_at: string | null;
+            created_at: components["schemas"]["ISODateTime"];
+            updated_at: components["schemas"]["ISODateTime"];
+        };
+        PerformedSet: {
+            performed_reps: number;
+            performed_weight_kg: number | null;
+        };
+        ExerciseLog: {
+            exercise_key: string;
+            name: string;
+            skipped: boolean;
+            feedback: components["schemas"]["ExerciseFeedback"];
+            prescribed: {
+                series: number;
+                reps: number;
+                rest_time_sec: number;
+                weight_kg: number | null;
+                notes: string | null;
+            };
+            sets: components["schemas"]["PerformedSet"][];
+        };
+        WeekDay: {
+            day_index: number;
+            date: components["schemas"]["ISODate"];
+            type: components["schemas"]["DayType"];
+            notes: string | null;
+            completed: boolean;
+            /** Format: date-time */
+            completed_at: string | null;
+            exercises: components["schemas"]["ExerciseLog"][];
+        };
+        Week: {
+            id: components["schemas"]["Uuid"];
+            client_id: components["schemas"]["Uuid"];
+            plan_id: components["schemas"]["Uuid"];
+            week_index: number;
+            start_date: components["schemas"]["ISODate"];
+            end_date: components["schemas"]["ISODate"];
+            status: components["schemas"]["WeekStatus"];
+            schedule: components["schemas"]["WeekDay"][];
+            created_at: components["schemas"]["ISODateTime"];
+            updated_at: components["schemas"]["ISODateTime"];
+        };
+        CreateClientInput: {
+            display_name: string;
+        };
+        UpdateClientProfile: {
+            snapshot_date: components["schemas"]["ISODate"];
+            sex: string | null;
+            age: number | null;
+            height_cm: number | null;
+            goals: components["schemas"]["JsonValue"];
+            body_composition: components["schemas"]["JsonValue"];
+            strength_loads: components["schemas"]["JsonValue"];
+            nutrition: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
+            swimming: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
+            schedule_preferences: {
+                [key: string]: components["schemas"]["JsonValue"];
+            } | null;
+            notes: string | null;
+        };
+        SaveDayLog: {
+            exercises: components["schemas"]["DayExerciseLog"][];
+        };
+        UpdateDayLog: {
+            completed: boolean;
+            exercises: components["schemas"]["DayExerciseLog"][];
+        };
+        DayExerciseLog: {
+            exercise_key: string;
+            skipped: boolean;
+            feedback: components["schemas"]["ExerciseFeedback"];
+            sets: components["schemas"]["PerformedSet"][];
+        };
         CompleteWeekInput: {
             clientId: string;
         };
@@ -34,15 +408,424 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        ClientListResponse: {
+            clients: components["schemas"]["Client"][];
+        };
+        ClientResponse: {
+            client: components["schemas"]["Client"];
+        };
+        ClientProfileResponse: {
+            profile: components["schemas"]["ClientProfile"];
+        };
+        PlanListResponse: {
+            plans: components["schemas"]["Plan"][];
+        };
+        PlanResponse: {
+            plan: components["schemas"]["Plan"];
+        };
+        WeekListResponse: {
+            weeks: components["schemas"]["Week"][];
+        };
+        WeekResponse: {
+            week: components["schemas"]["Week"];
+        };
     };
-    responses: never;
-    parameters: never;
+    responses: {
+        /** @description Invalid input */
+        BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiError"];
+            };
+        };
+        /** @description Missing or invalid shared credentials */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiError"];
+            };
+        };
+        /** @description Record not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiError"];
+            };
+        };
+    };
+    parameters: {
+        ClientId: string;
+        PlanId: string;
+        WeekId: string;
+        DayIndex: number;
+    };
     requestBodies: never;
     headers: never;
     pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    healthCheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service is alive */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    listClients: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of clients */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientListResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    createClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClientInput"];
+            };
+        };
+        responses: {
+            /** @description Client created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Client found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getClientProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Profile found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientProfileResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateClientProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClientProfile"];
+            };
+        };
+        responses: {
+            /** @description Profile updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientProfileResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listPlans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Plans found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanListResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getActivePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active plan found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+                planId: components["parameters"]["PlanId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Plan found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getCurrentWeek: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current week found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listWeeks: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["WeekStatus"];
+                planId?: string;
+            };
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Weeks found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekListResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getWeek: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+                weekId: components["parameters"]["WeekId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Week found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    saveDayLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+                weekId: components["parameters"]["WeekId"];
+                dayIndex: components["parameters"]["DayIndex"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDayLog"];
+            };
+        };
+        responses: {
+            /** @description Day saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateDayLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: components["parameters"]["ClientId"];
+                weekId: components["parameters"]["WeekId"];
+                dayIndex: components["parameters"]["DayIndex"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDayLog"];
+            };
+        };
+        responses: {
+            /** @description Day updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeekResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
     completeWeek: {
         parameters: {
             query?: never;
@@ -65,6 +848,8 @@ export interface operations {
                     "application/json": components["schemas"]["CompleteWeekStarted"];
                 };
             };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
         };
     };
 }

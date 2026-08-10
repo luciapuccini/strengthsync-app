@@ -77,6 +77,11 @@ export default defineConfig([
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   // packages/api-contract imports nothing from other workspaces.
+  // The generated declaration file is auto-generated and can be large.
+  {
+    files: ['packages/api-contract/openapi.d.ts'],
+    rules: { 'max-lines': 'off', 'max-lines-per-function': 'off' },
+  },
   boundary(['packages/api-contract/**/*.ts'], []),
   // services/domain imports nothing from other workspaces.
   boundary(['services/domain/**/*.ts'], ['@strengthsync/domain']),

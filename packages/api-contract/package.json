@@ -9,7 +9,8 @@
   "scripts": {
     "typecheck": "tsc -b",
     "lint": "eslint .",
-    "gen:openapi": "openapi-typescript openapi.json -o openapi.d.ts"
+    "gen:openapi": "openapi-typescript openapi.json -o openapi.d.ts",
+    "check:openapi": "openapi-typescript openapi.json -o /tmp/openapi.d.ts && diff -u openapi.d.ts /tmp/openapi.d.ts"
   },
   "devDependencies": {
     "openapi-typescript": "^7.13.0",
