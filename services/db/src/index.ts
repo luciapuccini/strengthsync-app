@@ -14,7 +14,12 @@ export {
   listClients,
 } from "./repositories/clients.ts";
 export { getProfile, upsertProfile } from "./repositories/profiles.ts";
-export { getActivePlan, getPlan, listPlans } from "./repositories/plans.ts";
+export {
+  activateGeneratedPlanV2,
+  getActivePlan,
+  getPlan,
+  listPlans,
+} from "./repositories/plans.ts";
 export {
   getCurrentWeek,
   getWeek,

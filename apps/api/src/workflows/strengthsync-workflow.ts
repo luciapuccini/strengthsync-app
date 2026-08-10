@@ -122,6 +122,7 @@ function buildNextWeekPrompt({
 }
 
 import {
+  activateGeneratedPlan,
   generatePlan,
   loadCompletedWeeks,
   summarizeHistory,
@@ -145,15 +146,19 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<
       "load-context",
       async () => handleLoadContext(db, clientId),
     );
+
     if (completedWeek.week_index >= currentPlan.total_weeks) {
+      // new plan branch
       const completedWeeks = await loadCompletedWeeks(step, db, clientId, currentPlan);
       const [profileSummary, historySummary] = await Promise.all([
         summarizeProfile(step, this.env, userProfile, rules),
         summarizeHistory(step, this.env, currentPlan, completedWeeks, rules),
       ]);
-      await generatePlan(step, this.env, currentPlan, profileSummary, historySummary);
-      return { next_week_id: null, plan_complete: true };
+      const generatedPlan = await generatePlan(step, this.env, currentPlan, profileSummary, historySummary);
+      const { plan, first_week } = await activateGeneratedPlan(step, db, clientId, event.instanceId, generatedPlan);
+      return { plan_complete: true, plan_id: plan.id, first_week_id: first_week.id };
     }
+
     const weekAnalysis = await step.do(
       "analyze-week",
       { retries: { limit: 2, delay: "1 second", backoff: "linear" } },

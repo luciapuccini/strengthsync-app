@@ -248,6 +248,7 @@ export async function getPlanGenerationContext(
  * (D1 does not support standard transactions; see docs/architecture/stack.md).
  * Week 1 starts on the Monday of the activation week (Mon–Sun convention).
  * Idempotent by `workflow_id`.
+ * warning: legacy version; prefer activateGeneratedPlanV2 in repositories/plans.ts.
  */
 export async function activateGeneratedPlan(
   db: Db,

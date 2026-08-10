@@ -4,8 +4,11 @@ import {
   HistorySummarySchema,
   ProfileSummarySchema,
 } from "@strengthsync/domain/coach";
-import { GeneratedPlanInputSchema } from "@strengthsync/domain/contracts";
-import { listWeeksV2, type Db } from "@strengthsync/db";
+import {
+  GeneratedPlanInputSchema,
+  type GeneratedPlanInput,
+} from "@strengthsync/domain/contracts";
+import { activateGeneratedPlanV2, listWeeksV2, type Db } from "@strengthsync/db";
 
 import type { Env } from "../env";
 import { getAgentRuntime } from "../agent/agent-core";
@@ -130,5 +133,17 @@ export async function generatePlan(
         ),
         outSchema: GeneratedPlanInputSchema,
       }),
+  );
+}
+
+export async function activateGeneratedPlan(
+  step: WorkflowStep,
+  db: Db,
+  clientId: string,
+  workflowId: string,
+  plan: GeneratedPlanInput,
+) {
+  return step.do("activate-plan", async () =>
+    activateGeneratedPlanV2(db, clientId, { workflow_id: workflowId, plan }),
   );
 }

@@ -24,7 +24,13 @@ In `apps/api/src/workflows/strengthsync-workflow.ts`:
 - [ ] Old `activateGeneratedPlan` has a warning comment.
 - [ ] Completing the last week archives the old plan, creates a new active plan, and creates week 1.
 - [ ] `pnpm typecheck` passes.
-- [ ] `pnpm lint` passes.
+- [x] `activateGeneratedPlanV2` lives in `services/db/src/repositories/plans.ts`.
+- [x] Old `activateGeneratedPlan` has a warning comment.
+- [x] Completing the last week archives the old plan, creates a new active plan, and creates week 1.
+- [x] `pnpm typecheck` passes.
+- [x] `pnpm lint` passes.
+
+"STATUS":"DONE"
 
 ## Blocked by
 
