@@ -8,7 +8,7 @@ apps/
   api/                        # Public HTTP API, chat routing, and Cloudflare Workflow
     src/
       workflows/              # Cloudflare Workflow entrypoint + step logic
-        complete-week.ts      # StrengthsyncWorkflow: weekly progression + plan turnover
+        strengthsync-workflow.ts      # StrengthsyncWorkflow: weekly progression + plan turnover
       agent/                  # In-Worker LLM helpers used by workflow steps
 services/
   domain/                     # Contracts and pure business logic
@@ -79,7 +79,7 @@ The only browser-facing backend. Its runtime must support HTTP, streaming chat, 
 - Public REST/RPC endpoints for clients, profiles, plans, and weeks
 - Validation of browser inputs
 - Chat session routing and streaming response
-- The Cloudflare Workflow: `StrengthsyncWorkflow` entrypoint (`src/workflows/complete-week.ts`), its steps, retry policy, and `/wf/*` start routes
+- The Cloudflare Workflow: `StrengthsyncWorkflow` entrypoint (`src/workflows/strengthsync-workflow.ts`), its steps, retry policy, and `/wf/*` start routes
 
 **May import**
 

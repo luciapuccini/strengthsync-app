@@ -3,7 +3,7 @@ import { createDb } from "@strengthsync/db";
 import { createApp } from "./app.ts";
 import type { Env } from "./env.ts";
 
-export { StrengthsyncWorkflow } from "./workflows/complete-week.ts";
+export { StrengthsyncWorkflow } from "./workflows/strengthsync-workflow.ts";
 
 /**
  * Worker entry: the only browser-facing backend (public REST + workflow

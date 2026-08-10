@@ -72,7 +72,7 @@ The MVP runs the weekly-turn workflow as a Cloudflare Worker Workflow inside `ap
 
 There is no local worker, Docker Compose project, Cloudflare Tunnel, or Temporal deployment to operate. `wrangler deploy` ships the workflow alongside the public API, so the workflow is available whenever the Worker is deployed.
 
-Workflow-visible retries and failure policy live in the workflow definition (`apps/api/src/workflows/complete-week.ts`) and in [workflows.md](./workflows.md) — not in a separate orchestration service.
+Workflow-visible retries and failure policy live in the workflow definition (`apps/api/src/workflows/strengthsync-workflow.ts`) and in [workflows.md](./workflows.md) — not in a separate orchestration service.
 
 ### Why not Temporal
 

@@ -1,6 +1,6 @@
 # Workflow operations
 
-Operations for the MVP's durable workflow. The workflow is a Cloudflare Worker Workflow inside `apps/api` (bound as `STRENGTHSYNC_WORKFLOW`, entrypoint `StrengthsyncWorkflow` in `apps/api/src/workflows/complete-week.ts`). There is no local worker process, Docker Compose project, Cloudflare Tunnel, or Temporal deployment to operate.
+Operations for the MVP's durable workflow. The workflow is a Cloudflare Worker Workflow inside `apps/api` (bound as `STRENGTHSYNC_WORKFLOW`, entrypoint `StrengthsyncWorkflow` in `apps/api/src/workflows/strengthsync-workflow.ts`). There is no local worker process, Docker Compose project, Cloudflare Tunnel, or Temporal deployment to operate.
 
 ## Deployment
 
