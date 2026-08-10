@@ -1,6 +1,5 @@
 /**
- * The active coaching-rules document. Included in every generation call;
- * the internal context endpoints return it as `coaching_rules`.
+ * The active coaching-rules document. Included in every generation call.
  * Ported from the POC's src/app/coach/training_rules.md.
  * Rule versioning can be added later; the MVP uses this single document.
  */

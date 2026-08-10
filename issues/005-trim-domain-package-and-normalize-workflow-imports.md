@@ -1,5 +1,7 @@
 # Trim the domain package and normalize workflow imports
 
+**STATUS: DONE**
+
 ## Parent PRD
 
 `issues/prd.md` — see Implementation Decisions: "Domain trimming"; User story 21.

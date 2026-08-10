@@ -7,6 +7,7 @@
 export { createDb, type Db } from "./db.ts";
 export { RepoError, type RepoErrorKind } from "./errors.ts";
 export * as schema from "./schema.ts";
+export { addDays, todayIso } from "./dates.ts";
 
 export {
   createClient,

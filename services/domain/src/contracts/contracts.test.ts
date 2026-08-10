@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  CreateNextWeekCommandSchema,
   GeneratedPlanInputSchema,
   SaveDayLogSchema,
   UpdateDayLogSchema,
-  WorkflowStatusSchema,
 } from './index'
 
 describe('UpdateDayLogSchema', () => {
@@ -103,39 +101,4 @@ describe('GeneratedPlanInputSchema', () => {
   })
 })
 
-describe('CreateNextWeekCommandSchema', () => {
-  it('rejects a non-uuid previous_week_id', () => {
-    const result = CreateNextWeekCommandSchema.safeParse({
-      workflow_id: 'weekly-progression:client:week',
-      previous_week_id: 'not-a-uuid',
-      schedule: [],
-    })
 
-    expect(result.success).toBe(false)
-  })
-})
-
-describe('WorkflowStatusSchema', () => {
-  it('accepts a running status without result fields', () => {
-    const result = WorkflowStatusSchema.safeParse({
-      workflow_id: 'weekly-progression:client:week',
-      type: 'weekly_progression',
-      status: 'running',
-      started_at: '2026-07-21T08:00:00.000Z',
-    })
-
-    expect(result.success).toBe(true)
-  })
-
-  it('rejects a failed status without an error', () => {
-    const result = WorkflowStatusSchema.safeParse({
-      workflow_id: 'weekly-progression:client:week',
-      type: 'weekly_progression',
-      status: 'failed',
-      started_at: '2026-07-21T08:00:00.000Z',
-      finished_at: '2026-07-21T08:01:00.000Z',
-    })
-
-    expect(result.success).toBe(false)
-  })
-})

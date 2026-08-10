@@ -21,13 +21,12 @@ import {
   type Week,
 } from "@strengthsync/domain/model";
 
-// I dont like these imports it should be a package [TBD]
 import {
   NextWeekScheduleSchema,
   WeekAnalysisSchema,
   type WeekAnalysis,
-} from "../../../../services/domain/src/coach/weekly-progression";
-import { addDays } from "../../../../services/db/src/dates";
+} from "@strengthsync/domain/coach";
+import { addDays } from "@strengthsync/db";
 
 type CompleteWeekParams = {
   clientId: string;

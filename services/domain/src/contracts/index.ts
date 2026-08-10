@@ -2,21 +2,14 @@ import { z } from "zod";
 
 import {
   ClientProfileSchema,
-  ClientSchema,
   ExerciseFeedbackSchema,
-  ISODateTimeSchema,
   PerformedSetSchema,
   PlanDaySchema,
-  PlanSchema,
-  UuidSchema,
-  WeekDaySchema,
-  WeekSchema,
 } from "../model/index.ts";
 
 /**
  * API request/response DTOs, validated by Zod on both sides of every API
- * boundary. Source of truth: docs/architecture/api_contracts.md (public +
- * internal) and docs/architecture/workflows.md (workflow inputs/outputs).
+ * boundary. Source of truth: docs/architecture/api_contracts.md.
  */
 
 export type ApiError = {
@@ -92,94 +85,7 @@ export const SaveDayLogSchema = z
 export type SaveDayLog = z.infer<typeof SaveDayLogSchema>;
 
 // ---------------------------------------------------------------------------
-// Workflows — inputs, results, status (docs/architecture/workflows.md)
-// ---------------------------------------------------------------------------
-
-export const WeeklyProgressionInputSchema = z.object({
-  client_id: UuidSchema,
-  week_id: UuidSchema,
-});
-export type WeeklyProgressionInput = z.infer<
-  typeof WeeklyProgressionInputSchema
->;
-
-export const WeeklyProgressionResultSchema = z.object({
-  next_week_id: UuidSchema.nullable(),
-  plan_complete: z.boolean(),
-});
-export type WeeklyProgressionResult = z.infer<
-  typeof WeeklyProgressionResultSchema
->;
-
-export const PlanGenerationInputSchema = z.object({
-  client_id: UuidSchema,
-  notes: z.string().optional(),
-});
-export type PlanGenerationInput = z.infer<typeof PlanGenerationInputSchema>;
-
-export const PlanGenerationResultSchema = z.object({
-  plan_id: UuidSchema,
-  first_week_id: UuidSchema,
-});
-export type PlanGenerationResult = z.infer<typeof PlanGenerationResultSchema>;
-
-/** Browser-facing start body for weekly progression (client id comes from the URL). */
-export const StartWeeklyProgressionSchema = z.object({
-  week_id: UuidSchema,
-});
-export type StartWeeklyProgression = z.infer<
-  typeof StartWeeklyProgressionSchema
->;
-
-/** Browser-facing start body for plan generation. */
-export const StartPlanGenerationSchema = z.object({
-  notes: z.string().optional(),
-});
-export type StartPlanGeneration = z.infer<typeof StartPlanGenerationSchema>;
-
-export const WorkflowTypeSchema = z.enum([
-  "weekly_progression",
-  "plan_generation",
-]);
-export type WorkflowType = z.infer<typeof WorkflowTypeSchema>;
-
-export const WorkflowStatusSchema = z.discriminatedUnion("status", [
-  z.object({
-    workflow_id: z.string().min(1),
-    type: WorkflowTypeSchema,
-    status: z.literal("running"),
-    started_at: ISODateTimeSchema,
-  }),
-  z.object({
-    workflow_id: z.string().min(1),
-    type: WorkflowTypeSchema,
-    status: z.literal("succeeded"),
-    started_at: ISODateTimeSchema,
-    finished_at: ISODateTimeSchema,
-    result: z.union([
-      WeeklyProgressionResultSchema,
-      PlanGenerationResultSchema,
-    ]),
-  }),
-  z.object({
-    workflow_id: z.string().min(1),
-    type: WorkflowTypeSchema,
-    status: z.literal("failed"),
-    started_at: ISODateTimeSchema,
-    finished_at: ISODateTimeSchema,
-    error: z.object({ code: z.string(), message: z.string() }),
-  }),
-]);
-export type WorkflowStatus = z.infer<typeof WorkflowStatusSchema>;
-
-export const WorkflowStartedSchema = z.object({
-  workflow_id: z.string().min(1),
-  status: z.literal("running"),
-});
-export type WorkflowStarted = z.infer<typeof WorkflowStartedSchema>;
-
-// ---------------------------------------------------------------------------
-// Internal workflow-to-data API (docs/architecture/api_contracts.md)
+// Cloudflare Workflow — plan turnover input
 // ---------------------------------------------------------------------------
 
 export const GeneratedPlanInputSchema = z.object({
@@ -190,41 +96,6 @@ export const GeneratedPlanInputSchema = z.object({
   rationale: z.string().nullable(),
 });
 export type GeneratedPlanInput = z.infer<typeof GeneratedPlanInputSchema>;
-
-export const WeeklyContextSchema = z.object({
-  client: ClientSchema,
-  profile: ClientProfileSchema,
-  active_plan: PlanSchema,
-  week: WeekSchema,
-  coaching_rules: z.string(),
-});
-export type WeeklyContext = z.infer<typeof WeeklyContextSchema>;
-
-/**
- * Context for plan generation. `active_plan` is null for a client's first
- * plan; otherwise it is the completed block being replaced. Completed weeks
- * are empty on first generation and scoped to the active plan on replacement.
- */
-export const PlanGenerationContextSchema = z.object({
-  client: ClientSchema,
-  profile: ClientProfileSchema,
-  active_plan: PlanSchema.nullable(),
-  completed_weeks: z.array(WeekSchema),
-  coaching_rules: z.string(),
-});
-export type PlanGenerationContext = z.infer<typeof PlanGenerationContextSchema>;
-
-export const CompleteWeekCommandSchema = z.object({
-  workflow_id: z.string().min(1),
-});
-export type CompleteWeekCommand = z.infer<typeof CompleteWeekCommandSchema>;
-
-export const CreateNextWeekCommandSchema = z.object({
-  workflow_id: z.string().min(1),
-  previous_week_id: UuidSchema,
-  schedule: z.array(WeekDaySchema),
-});
-export type CreateNextWeekCommand = z.infer<typeof CreateNextWeekCommandSchema>;
 
 export const ActivateGeneratedPlanCommandSchema = z.object({
   workflow_id: z.string().min(1),
