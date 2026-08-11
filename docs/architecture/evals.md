@@ -4,11 +4,11 @@
 Braintrust is the target evaluation provider. The goal is to learn from real
 workflow calls and a tiny set of hand fixtures without paying for LLM evaluation in CI.
 When tracing gets implemented the recorder contract will be defined fresh inside
-`apps/api/src/agent`. 
+`server/src/agent`. 
 
 ## Principles (target state)
 
-- Every workflow LLM call is traced through a recorder defined in `apps/api/src/agent`.
+- Every workflow LLM call is traced through a recorder defined in `server/src/agent`.
 - Evaluations are opt-in commands run by a developer. They do **not** run in CI, on
   deployment, or automatically after a workflow.
 - Evaluation runs can make new model calls and cost money. Keep the sample small (`--limit`).
@@ -46,4 +46,4 @@ type WorkflowLlmTrace = {
   and does it respect the coaching rules? (Shape checks stay in Zod/unit tests; this scorer
   looks at coaching-rule adherence.)
 
-These will live in `apps/api` once the recorder is reconnected.
+These will live in `server` once the recorder is reconnected.

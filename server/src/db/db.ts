@@ -7,7 +7,7 @@ export type Db = DrizzleD1Database<typeof schema>
 
 /**
  * Create a `Db` from a D1 binding. The parameter is structurally typed so
- * this package never needs the Workers runtime types; `apps/api` passes its
+ * this package never needs the Workers runtime types; `server` passes its
  * `env.DB` binding and tests pass the fake D1 from `./testing`.
  */
 export function createDb(client: Parameters<typeof drizzle>[0]): Db {

@@ -4,7 +4,7 @@ import { WeekDaySchema } from "../model/index.ts";
 
 /**
  * LLM output schemas for weekly progression. Prompts are built inline by the
- * Cloudflare Workflow in apps/api/src/workflows.
+ * Cloudflare Workflow in server/src/workflows.
  */
 
 export const WeekAnalysisSchema = z.object({

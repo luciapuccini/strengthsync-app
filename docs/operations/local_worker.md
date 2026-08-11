@@ -1,12 +1,12 @@
 # Workflow operations
 
-Operations for the MVP's durable workflow. The workflow is a Cloudflare Worker Workflow inside `apps/api` (bound as `STRENGTHSYNC_WORKFLOW`, entrypoint `StrengthsyncWorkflow` in `apps/api/src/workflows/strengthsync-workflow.ts`). There is no local worker process, Docker Compose project, Cloudflare Tunnel, or Temporal deployment to operate.
+Operations for the MVP's durable workflow. The workflow is a Cloudflare Worker Workflow inside `server` (bound as `STRENGTHSYNC_WORKFLOW`, entrypoint `StrengthsyncWorkflow` in `server/src/workflows/strengthsync-workflow.ts`). There is no local worker process, Docker Compose project, Cloudflare Tunnel, or Temporal deployment to operate.
 
 ## Deployment
 
-The workflow ships with `apps/api`:
+The workflow ships with `server`:
 
-1. Deploy `apps/api` and D1 migrations through CI/CD (see [`ci_cd.md`](./ci_cd.md)).
+1. Deploy `server` and D1 migrations through CI/CD (see [`ci_cd.md`](./ci_cd.md)).
 2. `wrangler deploy` uploads the Worker including the workflow entrypoint and binding; no separate rollout step exists.
 
 Deploy order matters: apply D1 schema migrations before deploying a workflow version that depends on them.
@@ -32,7 +32,7 @@ Cloudflare retains workflow execution state. Durable step recording means a fail
 
 - Cloudflare: Worker/D1 request logs and operational telemetry; workflow invocation logs.
 - Workflow binding: instance status, step retries, and failures via the Workers Workflow API.
-- Model traces/evals: Braintrust — the recorder was deleted with `services/agent` and will be defined fresh inside `apps/api/src/agent` when tracing returns (see [evals.md](../architecture/evals.md)).
+- Model traces/evals: Braintrust — the recorder was deleted with `services/agent` and will be defined fresh inside `server/src/agent` when tracing returns (see [evals.md](../architecture/evals.md)).
 
 Do not log profile payloads or secrets unnecessarily. Never send secrets to traces or logs.
 

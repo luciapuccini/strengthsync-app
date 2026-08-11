@@ -7,10 +7,10 @@ StrengthSync helps a self-coached athlete â€” or a coach with a small caseload â
 | Layer     | Choice                                                                             |
 | --------- | ---------------------------------------------------------------------------------- |
 | Monorepo  | pnpm workspaces + Turborepo; TypeScript; Node 22.14                                |
-| UI        | React 19 + Vite + React Router + Zustand + Tailwind (`apps/ui`)                    |
-| API       | Hono on Cloudflare Workers; serves the SPA in production (`apps/api`)              |
-| DB        | Cloudflare D1 + Drizzle ORM (`apps/api/db`)                                        |
-| Workflows | Cloudflare Workflows, in-Worker with `apps/api` (`StrengthsyncWorkflow`)           |
+| UI        | React 19 + Vite + React Router + Zustand + Tailwind (`client`)                    |
+| API       | Hono on Cloudflare Workers; serves the SPA in production (`server`)              |
+| DB        | Cloudflare D1 + Drizzle ORM (`server/db`)                                        |
+| Workflows | Cloudflare Workflows, in-Worker with `server` (`StrengthsyncWorkflow`)           |
 | LLM       | OpenAI via Vercel AI SDK                                                           |
 | Auth      | HTTP Basic Auth (shared coach credential)                                          |
 | CI        | GitHub Actions; Lefthook pre-commit                                                |
@@ -58,16 +58,16 @@ Copy the example file and fill in values:
 
 | Copy from                                                | Copy to              | Used by                         |
 | -------------------------------------------------------- | -------------------- | ------------------------------- |
-| [apps/api/.dev.vars.example](apps/api/.dev.vars.example) | `apps/api/.dev.vars` | API Worker: `BASIC_AUTH_*`, `OPENAI_*` |
+| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars` | API Worker: `BASIC_AUTH_*`, `OPENAI_*` |
 
 ### Getting started
 
 ```bash
 pnpm install
 
-pnpm --filter @strengthsync/api db:migrate:local
-pnpm --filter @strengthsync/api db:seed:local
-pnpm --filter @strengthsync/api db:seed:demo:local
+pnpm --filter @strengthsync/server db:migrate:local
+pnpm --filter @strengthsync/server db:seed:local
+pnpm --filter @strengthsync/server db:seed:demo:local
 ```
 
 

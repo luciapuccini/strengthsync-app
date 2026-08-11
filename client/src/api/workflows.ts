@@ -1,4 +1,4 @@
-import type { paths } from "@strengthsync/api-contract";
+import type { paths } from "@strengthsync/shared";
 
 import { ApiClientError, toApiError } from "./errors";
 import { api } from "./client";

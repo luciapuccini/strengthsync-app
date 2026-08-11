@@ -22,8 +22,8 @@
       "dependsOn": ["^typecheck", "^build"],
       "outputs": ["dist/**"]
     },
-    "@strengthsync/api#build": {
-      "dependsOn": ["^typecheck", "^build", "@strengthsync/ui#build"],
+    "@strengthsync/server#build": {
+      "dependsOn": ["^typecheck", "^build", "@strengthsync/client#build"],
       "outputs": []
     },
     "deploy": {

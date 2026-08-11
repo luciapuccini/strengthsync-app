@@ -69,45 +69,11 @@ importers:
         specifier: 2.9.0
         version: 2.9.0
 
-  apps/api:
+  client:
     dependencies:
-      '@ai-sdk/openai':
-        specifier: 'catalog:'
-        version: 4.0.19(zod@4.4.3)
-      ai:
-        specifier: 'catalog:'
-        version: 7.0.36(zod@4.4.3)
-      drizzle-orm:
-        specifier: 'catalog:'
-        version: 0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@13.0.1)
-      hono:
-        specifier: 'catalog:'
-        version: 4.13.1
-      zod:
-        specifier: 'catalog:'
-        version: 4.4.3
-    devDependencies:
-      '@types/better-sqlite3':
-        specifier: 7.6.13
-        version: 7.6.13
-      '@types/node':
-        specifier: 'catalog:'
-        version: 22.20.1
-      better-sqlite3:
-        specifier: 13.0.1
-        version: 13.0.1
-      drizzle-kit:
-        specifier: 0.31.10
-        version: 0.31.10
-      wrangler:
-        specifier: 4.112.0
-        version: 4.112.0
-
-  apps/ui:
-    dependencies:
-      '@strengthsync/api-contract':
+      '@strengthsync/shared':
         specifier: workspace:*
-        version: link:../../packages/api-contract
+        version: link:../shared
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -173,7 +139,41 @@ importers:
         specifier: 8.1.4
         version: 8.1.4(@types/node@22.20.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.11)(yaml@2.9.0)
 
-  packages/api-contract:
+  server:
+    dependencies:
+      '@ai-sdk/openai':
+        specifier: 'catalog:'
+        version: 4.0.19(zod@4.4.3)
+      ai:
+        specifier: 'catalog:'
+        version: 7.0.36(zod@4.4.3)
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@13.0.1)
+      hono:
+        specifier: 'catalog:'
+        version: 4.13.1
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@types/better-sqlite3':
+        specifier: 7.6.13
+        version: 7.6.13
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.1
+      better-sqlite3:
+        specifier: 13.0.1
+        version: 13.0.1
+      drizzle-kit:
+        specifier: 0.31.10
+        version: 0.31.10
+      wrangler:
+        specifier: 4.112.0
+        version: 4.112.0
+
+  shared:
     devDependencies:
       openapi-typescript:
         specifier: ^7.13.0

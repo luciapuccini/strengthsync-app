@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * LLM output schemas for plan generation. Prompts are built inline by the
- * Cloudflare Workflow in apps/api/src/workflows.
+ * Cloudflare Workflow in server/src/workflows.
  */
 
 export const ProfileSummarySchema = z.object({

@@ -1,8 +1,8 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/api-contract" },
-    { "path": "./apps/ui" },
-    { "path": "./apps/api" }
+    { "path": "./shared" },
+    { "path": "./client" },
+    { "path": "./server" }
   ]
 }

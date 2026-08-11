@@ -26,8 +26,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BEFORE_SHA: ${{ github.event.before }}
-      - run: pnpm deps:check
-      - run: pnpm --filter @strengthsync/api-contract check:openapi
+      - run: pnpm --filter @strengthsync/shared check:openapi
       - run: pnpm typecheck:affected
         env:
           TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
@@ -39,7 +38,7 @@ jobs:
           TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
 
   # Deploys only what `--affected` says changed since the previous commit on
-  # main. apps/api's `build`/`deploy` turbo tasks pull in apps/ui's build as
+  # main. server's `build`/`deploy` turbo tasks pull in client's build as
   # a hard dependency (see turbo.json), so the Worker's static assets are
   # never stale even on an api-only change.
   deploy:

@@ -1,8 +1,8 @@
 # API contracts (MVP)
 
-The browser speaks only to `apps/api` on the Cloudflare origin. 
+The browser speaks only to `server` on the Cloudflare origin. 
 
-This document defines the initial HTTP boundary. The machine-readable source of truth is `packages/api-contract/openapi.json`; generated TypeScript types live in `packages/api-contract/openapi.d.ts`. Server-side Zod DTOs are in `services/domain/contracts` in this document's original layout and are validated at the API boundary.
+This document defines the initial HTTP boundary. The machine-readable source of truth is `shared/openapi.json`; generated TypeScript types live in `shared/openapi.d.ts`. Server-side Zod DTOs are in `services/domain/contracts` in this document's original layout and are validated at the API boundary.
 
 ## Authentication and conventions
 
@@ -23,7 +23,7 @@ type ApiError = {
 ```
 
 ## Public API
-Refer to `packages/api-contract/openapi.json` as souce of truth, and as such we need to keep it updated
+Refer to `shared/openapi.json` as souce of truth, and as such we need to keep it updated
 
 Workflow requests are asynchronous. The API Worker validates the shared Basic credential and starts a Cloudflare Workflow instance directly (the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`). 
 The route returns immediately and never waits for model output.[TODO]: The UI does not poll workflow status.
@@ -31,7 +31,7 @@ The route returns immediately and never waits for model output.[TODO]: The UI do
 
 ## Endpoints current state
 
-Audited 2026-08-11 against UI callers (`apps/ui/src/api/client.ts`, `workflows.ts`) and HTTP-level tests (`apps/api/src/app.public.test.ts`). Not all 15 routes in `openapi.json` currently have a product consumer:
+Audited 2026-08-11 against UI callers (`client/src/api/client.ts`, `workflows.ts`) and HTTP-level tests (`server/src/app.public.test.ts`). Not all 15 routes in `openapi.json` currently have a product consumer:
 
 | Route | UI caller | HTTP test | Verdict |
 | --- | --- | --- | --- |

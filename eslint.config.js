@@ -5,17 +5,16 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-// Import-boundary enforcement for the dependency graph defined in
-// docs/architecture/monorepo_structure.md. A package may only import the
-// @strengthsync/* workspaces listed as `allowed` for its directory.
+// Import-boundary enforcement for the dependency graph 
+//  A package may only import the @strengthsync/* workspaces listed as `allowed` for its directory.
 const ALL_WORKSPACES = [
-  '@strengthsync/ui',
-  '@strengthsync/api',
-  '@strengthsync/api-contract',
+  '@strengthsync/client',
+  '@strengthsync/server',
+  '@strengthsync/shared',
 ]
 
 const BOUNDARY_MESSAGE =
-  'Import-boundary violation: see the dependency graph in docs/architecture/monorepo_structure.md.'
+  'Import-boundary violation'
 
 const boundary = (files, allowed, extraBanned = []) => {
   const banned = ALL_WORKSPACES.filter((name) => !allowed.includes(name)).flatMap(
@@ -64,42 +63,42 @@ export default defineConfig([
     },
   },
   {
-    files: ['apps/ui/**/*.{ts,tsx}'],
+    files: ['client/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
     languageOptions: { globals: globals.browser },
   },
   {
     // Ported shadcn/ui primitives are a component library, not fast-refresh
     // route modules: they legitimately co-export variant helpers.
-    files: ['apps/ui/src/shadcn/**/*.{ts,tsx}'],
+    files: ['client/src/shadcn/**/*.{ts,tsx}'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
-  // packages/api-contract imports nothing from other workspaces.
+  // shared imports nothing from other workspaces.
   // The generated declaration file is auto-generated and can be large.
   {
-    files: ['packages/api-contract/openapi.d.ts'],
+    files: ['shared/openapi.d.ts'],
     rules: { 'max-lines': 'off', 'max-lines-per-function': 'off' },
   },
-  boundary(['packages/api-contract/**/*.ts'], []),
-  // apps/ui only knows HTTP contracts; never db or agent.
-  boundary(['apps/ui/**/*.{ts,tsx}'], ['@strengthsync/api-contract']),
-  // apps/api owns domain + db as internal folders now, not workspace
-  // packages; nothing outside apps/api can reach them (no other workspace
-  // depends on @strengthsync/api).
-  boundary(['apps/api/**/*.ts'], []),
-  // apps/api/src/domain stays pure (zod only): no workspace packages, and no
-  // reaching into sibling server folders. Declared after the apps/api
+  boundary(['shared/**/*.ts'], []),
+  // client only knows HTTP contracts; never db or agent.
+  boundary(['client/**/*.{ts,tsx}'], ['@strengthsync/shared']),
+  // server owns domain + db as internal folders now, not workspace
+  // packages; nothing outside server can reach them (no other workspace
+  // depends on @strengthsync/server).
+  boundary(['server/**/*.ts'], []),
+  // server/src/domain stays pure (zod only): no workspace packages, and no
+  // reaching into sibling server folders. Declared after the server
   // boundary above so it wins for files under this narrower glob.
   boundary(
-    ['apps/api/src/domain/**/*.ts'],
+    ['server/src/domain/**/*.ts'],
     [],
     ['**/db/**', '**/routes/**', '**/workflows/**', '**/agent/**'],
   ),
-  // apps/api/src/db may use domain, but never reaches into HTTP/workflow/
-  // agent code. Declared after the apps/api boundary above so it wins for
+  // server/src/db may use domain, but never reaches into HTTP/workflow/
+  // agent code. Declared after the server boundary above so it wins for
   // files under this narrower glob.
   boundary(
-    ['apps/api/src/db/**/*.ts'],
+    ['server/src/db/**/*.ts'],
     [],
     ['**/routes/**', '**/workflows/**', '**/agent/**'],
   ),

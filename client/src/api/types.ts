@@ -1,4 +1,4 @@
-import type { components } from "@strengthsync/api-contract";
+import type { components } from "@strengthsync/shared";
 
 export type ApiError = components["schemas"]["ApiError"];
 export type Client = components["schemas"]["Client"];

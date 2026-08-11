@@ -9,7 +9,7 @@ every weekly turn of a client's plan in one durable run:
   the plan's last, planning the next block and activating it.
 
 It runs as a Cloudflare Workflow (binding `STRENGTHSYNC_WORKFLOW`, class
-`StrengthsyncWorkflow`) exported from `apps/api/src/index.ts`. Durable execution is
+`StrengthsyncWorkflow`) exported from `server/src/index.ts`. Durable execution is
 provided by the platform: each `step.do` re-records its output, steps are re-run only after
 a real failure, and the instance resumes from where it left off after a crash. Product data
 lives in D1; the workflow holds execution state.
@@ -19,7 +19,7 @@ is not wired in this pass.
 
 ## Trigger
 
-**Trigger:** `POST /wf/complete-week` (`apps/api/src/routes/cf-api.ts`)
+**Trigger:** `POST /wf/complete-week` (`server/src/routes/cf-api.ts`)
 
 **Input**
 
@@ -58,7 +58,7 @@ flowchart LR
 
 - Every `step.do` result is durable: on crash the instance resumes from the last recorded
   step output, so a step is never double-applied.
-- LLM calls run through the in-Worker agent runtime (`apps/api/src/agent/agent-core.ts`) with
+- LLM calls run through the in-Worker agent runtime (`server/src/agent/agent-core.ts`) with
   no recorder attached in this pass. LLM trace data is not stored in D1.
 - LLM structured output is validated with shared Zod schemas before any write.
 - Current coaching rules are included in every generation call. Rule versioning can be added

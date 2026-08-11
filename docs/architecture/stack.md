@@ -10,7 +10,7 @@ Committed providers and platform choices for the MVP. This is intentionally a sm
 | Public API + chat | Hono on Cloudflare Workers | Yes | Use the existing Worker direction |
 | SQL database | Cloudflare D1 + Drizzle ORM | Yes | Use D1 as the system of record and Drizzle as its typed data layer |
 | Workflow orchestration | Cloudflare Workflows (in-Worker) | Yes | One workflow (`StrengthsyncWorkflow`) runs weekly progression and plan turnover; no local worker or tunnel |
-| LLM evals/tracing | Braintrust | Yes | Target for workflow LLM calls; not wired in this pass and will be redefined in `apps/api/src/agent` when tracing returns (see [evals.md](./evals.md)) |
+| LLM evals/tracing | Braintrust | Yes | Target for workflow LLM calls; not wired in this pass and will be redefined in `server/src/agent` when tracing returns (see [evals.md](./evals.md)) |
 | General platform observability | Cloudflare | Included platform telemetry | Use Cloudflare logs/analytics for Worker and D1 operations |
 | CI/CD | GitHub Actions | Yes | Build, test, and deploy from GitHub Actions |
 | LLM | OpenAI API | No guaranteed permanent free tier | Continue with the current provider; set a spending limit |
@@ -39,7 +39,7 @@ D1 is the relational system of record for `Coach`, `Client`, `ClientProfile`, `P
 
 ### Workflow data access
 
-Cloudflare Workflow running **inside** `apps/api`. It receives the `DB` binding the same way the public API does and uses `createDb(this.env.DB)` to read and write D1 directly. 
+Cloudflare Workflow running **inside** `server`. It receives the `DB` binding the same way the public API does and uses `createDb(this.env.DB)` to read and write D1 directly. 
 
 ```mermaid
 flowchart LR
@@ -52,7 +52,7 @@ flowchart LR
   WF --> D1
 ```
 
-- `apps/api` owns all D1 reads/writes, whether from a request handler or a workflow step.
+- `server` owns all D1 reads/writes, whether from a request handler or a workflow step.
 - `STRENGTHSYNC_WORKFLOW` binds the `StrengthsyncWorkflow` entrypoint to the Worker (see [workflows.md](./workflows.md)).
 - The browser never reaches D1 directly.
 - There is one data writer boundary: the Worker itself.
@@ -63,11 +63,11 @@ Use Drizzle's D1 `db.batch([...])` API for lifecycle commands that must be atomi
 
 ## Workflow orchestration: Cloudflare Workflows
 
-The MVP runs the weekly-turn workflow as a Cloudflare Worker Workflow inside `apps/api`, bound as `STRENGTHSYNC_WORKFLOW`. Durable execution is provided by the platform: each `step.do` records its output, steps re-run only after a real failure, and the instance resumes after a crash. See [workflows.md](./workflows.md) for the step model, the plan-turnover branch, and the retry policy.
+The MVP runs the weekly-turn workflow as a Cloudflare Worker Workflow inside `server`, bound as `STRENGTHSYNC_WORKFLOW`. Durable execution is provided by the platform: each `step.do` records its output, steps re-run only after a real failure, and the instance resumes after a crash. See [workflows.md](./workflows.md) for the step model, the plan-turnover branch, and the retry policy.
 
 `wrangler deploy` ships the workflow alongside the public API, so the workflow is available whenever the Worker is deployed.
 
-Workflow-visible retries and failure policy live in the workflow definition (`apps/api/src/workflows/strengthsync-workflow.ts`) and in [workflows.md](./workflows.md)
+Workflow-visible retries and failure policy live in the workflow definition (`server/src/workflows/strengthsync-workflow.ts`) and in [workflows.md](./workflows.md)
 
 ## Evals and LLM observability: Braintrust (NEXT STEPS)
 
@@ -84,7 +84,7 @@ LLM-specific traces and evals once reconnected; they are complementary.
 GitHub Actions is the MVP pipeline:
 
 1. Pull request: install, typecheck, lint, and unit tests.
-2. Main: build and deploy `apps/api` — including the `StrengthsyncWorkflow` entrypoint — and run schema migrations through the API/Worker deployment path.
+2. Main: build and deploy `server` — including the `StrengthsyncWorkflow` entrypoint — and run schema migrations through the API/Worker deployment path.
 3. Workflow orchestration tests are deferred: the Cloudflare Workflow runtime is not exercised in the test suite.
 
 ## LLM: OpenAI API

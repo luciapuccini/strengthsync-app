@@ -122,7 +122,7 @@ No backfill of historical weeks in this pass (table starts empty until the next 
 
 ## API
 
-New route module (e.g. [apps/api/src/routes/exerciseProgress.ts](apps/api/src/routes/exerciseProgress.ts)), mount under `/api` in [apps/api/src/app.ts](apps/api/src/app.ts):
+New route module (e.g. [server/src/routes/exerciseProgress.ts](server/src/routes/exerciseProgress.ts)), mount under `/api` in [server/src/app.ts](server/src/app.ts):
 
 ```text
 
@@ -140,19 +140,19 @@ GET /api/clients/:clientId/exercise-progress
 
 - Document in [docs/architecture/api_[contracts.md](http://contracts.md)](docs/architecture/api_[contracts.md](http://contracts.md)).
 
-UI client: add `listExerciseProgress` + response Zod wrapper in [apps/ui/src/api/client.ts](apps/ui/src/api/client.ts), plus a small `statsResource.ts` like history.
+UI client: add `listExerciseProgress` + response Zod wrapper in [client/src/api/client.ts](client/src/api/client.ts), plus a small `statsResource.ts` like history.
 
 ## UI `/clients/:clientId/stats`
 
 Mirror history page patterns:
 
-1. Route in [apps/ui/src/App.tsx](apps/ui/src/App.tsx).
+1. Route in [client/src/App.tsx](client/src/App.tsx).
 
-2. Page under `apps/ui/src/routes/stats/`.
+2. Page under `client/src/routes/stats/`.
 
-3. Nav link in [apps/ui/src/components/app-shell/appShell.tsx](apps/ui/src/components/app-shell/appShell.tsx) (use selected/current `clientId`, same as other links).
+3. Nav link in [client/src/components/app-shell/appShell.tsx](client/src/components/app-shell/appShell.tsx) (use selected/current `clientId`, same as other links).
 
-**Zod transform** (same style as [apps/ui/src/routes/history/toWeekHistory.ts](apps/ui/src/routes/history/toWeekHistory.ts)):
+**Zod transform** (same style as [client/src/routes/history/toWeekHistory.ts](client/src/routes/history/toWeekHistory.ts)):
 
 - `toExerciseStatsCharts(records)` → parse into something like:
 
@@ -166,7 +166,7 @@ Mirror history page patterns:
 
 - Group by `exercise_key`; one chart (or chart section) per exercise.
 
-**Chart:** add **recharts** to `@strengthsync/ui` (none installed today). Simple line chart: X = date, Y = volume. Keep layout consistent with existing app shell / history — no marketing-style redesign.
+**Chart:** add **recharts** to `@strengthsync/client` (none installed today). Simple line chart: X = date, Y = volume. Keep layout consistent with existing app shell / history — no marketing-style redesign.
 
 Empty state when there are no records yet (expected until new day saves land).
 

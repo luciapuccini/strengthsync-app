@@ -1,11 +1,11 @@
 packages:
-  - apps/*
-  - packages/*
+  - client
+  - server
+  - shared
 
 # Single-version policy: any external dependency shared by two or more
 # workspace packages must be declared here and referenced as `catalog:` in
 # each package.json, instead of being copy-pasted as a version literal.
-# `scripts/check-dependency-policy.mjs` (`pnpm deps:check`) enforces this.
 catalog:
   zod: ^4.4.3
   hono: ^4.12.31

@@ -12,8 +12,8 @@ import { FakeD1Database } from './fake-d1.ts'
 // the fake implements it structurally.
 import { drizzle } from 'drizzle-orm/d1'
 
-// drizzle/ and seeds/ live in apps/api/db/, not next to the TypeScript
-// source (apps/api/src/db/) — see apps/api/db/drizzle.config.ts.
+// drizzle/ and seeds/ live in server/db/, not next to the TypeScript
+// source (server/src/db/) — see server/db/drizzle.config.ts.
 const DB_ARTIFACTS_ROOT = new URL('../../../db/', import.meta.url)
 
 function readSqlDir(relativeDir: string): string[] {
