@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "catalog:",
+    "@hono/zod-openapi": "catalog:",
     "ai": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",

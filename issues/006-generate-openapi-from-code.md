@@ -7,6 +7,34 @@
 `issues/prd-zod-first-api-contract.md` — see Solution and Implementation Decisions: "Two-stage
 codegen", "The document is a build artifact, not an endpoint", "The cutover is atomic".
 
+## ⚠️ Known blocker, found and diagnosed in slice 003
+
+**Generation currently throws `RangeError: Maximum call stack size exceeded`.** Verified by building
+the document from the real app after the clients area was converted. This is not a theoretical
+friction — the generator dies outright, so it must be fixed before this slice can produce anything.
+
+Cause: `jsonValueSchema` in `server/src/domain/model/index.ts:73` is a recursive `z.lazy` union. The
+generator (`@asteasolutions/zod-to-openapi`) breaks recursion by emitting a `$ref` to a *named*
+component. With no name registered it tries to inline the schema and recurses forever, dying inside
+`isNullableSchema`.
+
+Fix, already proven in isolation: give the recursive schema an `.openapi('JsonValue')` registration.
+Naming it both stops the recursion and emits a `JsonValue` component — which is exactly the component
+name the hand-written `server/openapi.json` already declares, so the generated document matches.
+
+The constraint that makes this awkward: `.openapi()` comes from a `ZodType.prototype` patch applied
+when `@hono/zod-openapi` loads, and **Zod 4 copies prototype methods onto each instance at
+construction**, so a schema built before that module loads never gains the method. `domain/model` is
+reached through `db/schema.ts` before the route layer in several entry points, so the recursive
+schema has to be *constructed* in the route layer to be nameable. `.shape` rebuilding (the technique
+`routes/clients/schemas.ts` uses for object schemas) does not apply to a `z.lazy`.
+
+Decide deliberately where the named recursive schema lives — a shared route-layer module is the
+obvious spot, since `ClientProfile` is the only current consumer but the pattern is not
+clients-specific. Rebuilding `ClientProfile` around it means restating its six JSON columns
+(`goals`, `body_composition`, `strength_loads`, `nutrition`, `swimming`, `schedule_preferences`),
+which is a duplication worth guarding with a test that the rebuilt shape still accepts a real profile.
+
 ## What to build
 
 The point of the whole PRD: `server/openapi.json` stops being hand-written and becomes generated

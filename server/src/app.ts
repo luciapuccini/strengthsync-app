@@ -1,3 +1,4 @@
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { Hono } from "hono";
 import { basicAuth } from "hono/basic-auth";
 import { HTTPException } from "hono/http-exception";
@@ -5,7 +6,8 @@ import { HTTPException } from "hono/http-exception";
 import { RepoError, type Db } from "./db/index.ts";
 
 import { errorResponse, repoErrorResponse } from "./lib/errors.ts";
-import { clientRoutes } from "./routes/clients.ts";
+import { defaultHook } from "./lib/validation-error.ts";
+import { clientRoutes } from "./routes/clients/endpoints.ts";
 import { planRoutes } from "./routes/plans.ts";
 import { weekRoutes } from "./routes/weeks.ts";
 import { cfWorkflowRoutes } from "./routes/cf-api.ts";
@@ -17,11 +19,19 @@ export type AppConfig = {
 };
 
 export function createApp(config: AppConfig): Hono {
-  const app = new Hono();
+  const app = new OpenAPIHono({ defaultHook });
 
   app.onError((err, c) => {
-    // hono's own HTTP errors (e.g. the 401 from basicAuth).
-    if (err instanceof HTTPException) return err.getResponse();
+    if (err instanceof HTTPException) {
+      // Hono rejects a syntactically malformed JSON body before any validator
+      // runs, with a plain-text body. Keep every 400 in the API's envelope so
+      // the UI's error handling (client/src/api/errors.ts) can read it.
+      if (err.status === 400) {
+        return errorResponse(c, 400, "invalid_input", err.message);
+      }
+      // Anything else hono raised itself (e.g. the 401 from basicAuth).
+      return err.getResponse();
+    }
     if (err instanceof RepoError) return repoErrorResponse(c, err);
     console.error("[api] unhandled error", err);
     return errorResponse(c, 500, "internal_error", "internal error");

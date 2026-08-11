@@ -17,11 +17,14 @@ likelihood:
 
 **Recursive JSON fields.** `ClientProfile`'s free-form columns — `goals`, `body_composition`,
 `strength_loads`, `nutrition`, `swimming`, `schedule_preferences` — are `z.record(z.string(), …)`
-over a recursive `z.lazy` union (`server/src/domain/model/index.ts:74-84`). Zod emits this as
-internal `$defs` with `$ref`s rather than as the single flat `JsonValue` component the hand-written
-spec declared. `openapi-typescript` renders that differently, and the generated `.d.ts` already
-exports a `$defs` key, so the machinery exists — but the resulting type may be structurally
-different from what `client/src/api/types.ts` and the profile call sites expect.
+over a recursive `z.lazy` union (`server/src/domain/model/index.ts:73-84`).
+
+Slice 003 established that this schema **must** carry an `.openapi('JsonValue')` registration or the
+generator overflows the stack (see the blocker note in slice 006). Assuming 006 resolved it that way,
+the document emits a real `JsonValue` component and `$ref`s to it — which is the same shape the
+hand-written spec declared, so this may turn out to be a non-event rather than the churn originally
+budgeted for here. Verify rather than assume: compare the generated `ClientProfile` against the
+committed one before touching any client code.
 
 **Vanished refinements.** The `superRefine` cross-field rules on `SaveDayLog` and `UpdateDayLog`
 have no JSON Schema representation and simply do not appear in the document. This is correct and

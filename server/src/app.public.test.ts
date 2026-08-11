@@ -100,6 +100,19 @@ describe('clients + profile', () => {
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_input')
   })
 
+  it('keeps a malformed JSON body inside the error envelope', async () => {
+    // Hono rejects unparseable JSON before any validator runs; app.ts maps that
+    // 400 back into { error: { code, message } } so the UI can read it.
+    const app = createTestApp()
+    const res = await app.request('/api/clients', {
+      method: 'POST',
+      headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+      body: '{ not json',
+    })
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_input')
+  })
+
   it('upserts and reads the client profile', async () => {
     const app = createTestApp()
     const client = await createClientViaApi(app)
