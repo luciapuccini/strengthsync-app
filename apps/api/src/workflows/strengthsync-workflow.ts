@@ -1,7 +1,7 @@
 import { WorkflowEntrypoint, WorkflowStep } from "cloudflare:workers";
 import type { WorkflowEvent } from "cloudflare:workers";
 import z from "zod";
-import { COACHING_RULES } from "@strengthsync/domain/coach";
+import { COACHING_RULES } from "../domain/coach/index.ts";
 import {
   completeWeek,
   getPlan,
@@ -19,13 +19,13 @@ import {
   type ClientProfile,
   type Plan,
   type Week,
-} from "@strengthsync/domain/model";
+} from "../domain/model/index.ts";
 
 import {
   NextWeekScheduleSchema,
   WeekAnalysisSchema,
   type WeekAnalysis,
-} from "@strengthsync/domain/coach";
+} from "../domain/coach/index.ts";
 import { addDays } from "@strengthsync/db";
 
 type CompleteWeekParams = {

@@ -1,7 +1,7 @@
 import type { Context } from 'hono'
 
 import { RepoError, type RepoErrorKind } from '@strengthsync/db'
-import type { ApiError } from '@strengthsync/domain/contracts'
+import type { ApiError } from '../domain/contracts/index.ts'
 
 const STATUS_BY_KIND: Record<RepoErrorKind, 400 | 404 | 409> = {
   validation: 400,

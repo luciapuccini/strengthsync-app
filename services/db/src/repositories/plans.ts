@@ -1,7 +1,9 @@
 import { and, desc, eq } from "drizzle-orm";
 
-import type { ActivateGeneratedPlanCommand } from "@strengthsync/domain/contracts";
-import type { Plan, Week } from "@strengthsync/domain/model";
+// TEMPORARY: domain now lives in apps/api/src/domain; this cross-app relative
+// import goes away once services/db moves there too (issues/012-move-db-into-api-app.md).
+import type { ActivateGeneratedPlanCommand } from "../../../../apps/api/src/domain/contracts/index.ts";
+import type { Plan, Week } from "../../../../apps/api/src/domain/model/index.ts";
 
 import { addDays, nowIso, startOfISOWeek, todayIso } from "../dates.ts";
 import type { Db } from "../db.ts";

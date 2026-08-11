@@ -5,9 +5,8 @@
     // The public surface (schema, repositories, index) stays runtime-neutral
     // and is what the API Worker bundles.
     "types": ["node"],
-    "rootDir": "src",
+    "rootDir": "../..",
     "outDir": "dist"
   },
-  "include": ["src"],
-  "references": [{ "path": "../domain" }]
+  "include": ["src", "../../apps/api/src/domain"]
 }

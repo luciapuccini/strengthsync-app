@@ -1,8 +1,8 @@
 import { Hono, type Context } from 'hono'
 
 import { getCurrentWeek, getWeek, listWeeks, saveDay, updateDayLog, type Db } from '@strengthsync/db'
-import { SaveDayLogSchema, UpdateDayLogSchema } from '@strengthsync/domain/contracts'
-import { WeekStatusSchema, type WeekStatus } from '@strengthsync/domain/model'
+import { SaveDayLogSchema, UpdateDayLogSchema } from '../domain/contracts/index.ts'
+import { WeekStatusSchema, type WeekStatus } from '../domain/model/index.ts'
 
 import { errorResponse, repoErrorResponse } from '../lib/errors.ts'
 import { requireClient } from '../lib/lookup.ts'

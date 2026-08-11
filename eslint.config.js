@@ -12,7 +12,6 @@ const ALL_WORKSPACES = [
   '@strengthsync/ui',
   '@strengthsync/api',
   '@strengthsync/api-contract',
-  '@strengthsync/domain',
   '@strengthsync/db',
 ]
 
@@ -83,15 +82,20 @@ export default defineConfig([
     rules: { 'max-lines': 'off', 'max-lines-per-function': 'off' },
   },
   boundary(['packages/api-contract/**/*.ts'], []),
-  // services/domain imports nothing from other workspaces.
-  boundary(['services/domain/**/*.ts'], ['@strengthsync/domain']),
-  // services/db imports domain only, never apps.
-  boundary(['services/db/**/*.ts'], ['@strengthsync/domain']),
+  // services/db imports no workspace package. It reaches domain types via a
+  // TEMPORARY relative import into apps/api/src/domain, removed once
+  // services/db moves into apps/api too (issues/012-move-db-into-api-app.md).
+  boundary(['services/db/**/*.ts'], []),
   // apps/ui only knows HTTP contracts; never db or agent.
   boundary(['apps/ui/**/*.{ts,tsx}'], ['@strengthsync/api-contract']),
-  // apps/api may use domain and db; never other apps.
+  // apps/api may use db; never other apps.
+  boundary(['apps/api/**/*.ts'], ['@strengthsync/db']),
+  // apps/api/src/domain stays pure (zod only): no workspace packages, and no
+  // reaching into sibling server folders. Declared after the apps/api
+  // boundary above so it wins for files under this narrower glob.
   boundary(
-    ['apps/api/**/*.ts'],
-    ['@strengthsync/domain', '@strengthsync/db'],
+    ['apps/api/src/domain/**/*.ts'],
+    [],
+    ['**/routes/**', '**/workflows/**', '**/agent/**'],
   ),
 ])

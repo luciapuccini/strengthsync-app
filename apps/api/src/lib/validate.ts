@@ -1,7 +1,7 @@
 import type { Context } from 'hono'
 import type { z } from 'zod'
 
-import { UuidSchema } from '@strengthsync/domain/model'
+import { UuidSchema } from '../domain/model/index.ts'
 
 import { errorResponse } from './errors.ts'
 

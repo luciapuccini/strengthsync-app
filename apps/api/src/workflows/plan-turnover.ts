@@ -3,16 +3,16 @@ import {
   COACHING_RULES,
   HistorySummarySchema,
   ProfileSummarySchema,
-} from "@strengthsync/domain/coach";
+} from "../domain/coach/index.ts";
 import {
   GeneratedPlanInputSchema,
   type GeneratedPlanInput,
-} from "@strengthsync/domain/contracts";
+} from "../domain/contracts/index.ts";
 import { activateGeneratedPlanV2, listWeeksV2, type Db } from "@strengthsync/db";
 
 import type { Env } from "../env";
 import { getAgentRuntime } from "../agent/agent-core";
-import type { ClientProfile, Plan, Week } from "@strengthsync/domain/model";
+import type { ClientProfile, Plan, Week } from "../domain/model/index.ts";
 
 export async function loadCompletedWeeks(
   step: WorkflowStep,

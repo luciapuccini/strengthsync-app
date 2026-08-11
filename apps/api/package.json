@@ -26,7 +26,6 @@
   "dependencies": {
     "@ai-sdk/openai": "catalog:",
     "@strengthsync/db": "workspace:*",
-    "@strengthsync/domain": "workspace:*",
     "ai": "catalog:",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",

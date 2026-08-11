@@ -9,5 +9,5 @@
     "outDir": "dist"
   },
   "include": ["src"],
-  "references": [{ "path": "../../services/domain" }, { "path": "../../services/db" }]
+  "references": [{ "path": "../../services/db" }]
 }

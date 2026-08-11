@@ -4,7 +4,7 @@ import { createClient, getProfile, listClients, upsertProfile, type Db } from '@
 import {
   CreateClientInputSchema,
   UpdateClientProfileSchema,
-} from '@strengthsync/domain/contracts'
+} from '../domain/contracts/index.ts'
 
 import { errorResponse, repoErrorResponse } from '../lib/errors.ts'
 import { requireClient } from '../lib/lookup.ts'

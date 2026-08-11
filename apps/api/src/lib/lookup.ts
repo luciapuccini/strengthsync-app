@@ -1,7 +1,7 @@
 import type { Context } from 'hono'
 
 import { getClient, type Db } from '@strengthsync/db'
-import type { Client } from '@strengthsync/domain/model'
+import type { Client } from '../domain/model/index.ts'
 
 import { errorResponse } from './errors.ts'
 

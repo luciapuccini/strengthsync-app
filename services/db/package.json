@@ -15,7 +15,6 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "@strengthsync/domain": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {
