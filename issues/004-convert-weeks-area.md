@@ -1,6 +1,6 @@
 # Convert the weeks area to declarative routes
 
-**STATUS: TODO**
+**STATUS: DONE**
 
 ## Parent PRD
 
@@ -48,17 +48,37 @@ generating the document, moving `domain/contracts`.
 
 ## Acceptance criteria
 
-- [ ] `server/src/routes/weeks/{endpoints.ts,schemas.ts}` exist; `server/src/routes/weeks.ts` is gone
-- [ ] `parseWeekFilter` is gone; the status filter is declared as a query schema
-- [ ] `dayIndex` is coerced and range-checked declaratively; `0`, `8`, and `abc` all still return 400
-- [ ] The `dayIndex` error-code decision is made deliberately and recorded in the commit message
-- [ ] `'rejects an invalid week status filter with 400'` passes unmodified
-- [ ] `'rejects a day patch whose skipped exercise carries sets (400)'` passes unmodified
-- [ ] `'saves a day via POST and always marks it completed'` passes unmodified
-- [ ] `GET /api/clients/{clientId}/weeks?planId=…` still filters as before
-- [ ] The weeks-area schemas carry `.openapi(...)` names matching the components in `server/openapi.json`
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` pass from the root
-- [ ] `pnpm --filter @strengthsync/server build` still succeeds
+- [x] `server/src/routes/weeks/{endpoints.ts,schemas.ts}` exist; `server/src/routes/weeks.ts` is gone
+- [x] `parseWeekFilter` is gone; the status filter is declared as a query schema
+- [x] `dayIndex` is coerced and range-checked declaratively; `0`, `8`, and `abc` all still return 400 — now pinned by a test
+- [x] The `dayIndex` error-code decision is made deliberately and recorded in the commit message
+- [x] `'rejects an invalid week status filter with 400'` passes unmodified
+- [x] `'rejects a day patch whose skipped exercise carries sets (400)'` passes unmodified
+- [x] `'saves a day via POST and always marks it completed'` passes unmodified
+- [x] `GET /api/clients/{clientId}/weeks?planId=…` still filters as before — now pinned by a test
+- [x] The weeks-area schemas carry `.openapi(...)` names matching `server/openapi.json` — except the two day-log DTOs, see below
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test` pass from the root (51 server + 37 client)
+- [x] `pnpm --filter @strengthsync/server build` still succeeds
+
+### Notes from implementation
+
+**The `dayIndex` question was already answered by slice 003.** The mapper is UUID-aware, not
+target-based, so a bad `dayIndex` arrives through the `param` target but is not a malformed UUID and
+keeps `invalid_input`. No behaviour changed. A test now pins `0`, `8`, and `abc` → 400
+`invalid_input`, which nothing did before.
+
+**`SaveDayLogSchema` and `UpdateDayLogSchema` are used as-is and left unnamed.** This is the trap
+flagged in slice 003, and it is worse than expected: in Zod 4 `.superRefine()` returns a ZodObject
+that still exposes `.shape`, so `z.object(Schema.shape)` compiles, runs, and **silently drops the
+cross-field rule**. Verified directly. Rebuilding these two the way the other schemas are rebuilt
+would have removed the skipped-exercise-carries-no-sets check while leaving everything typechecking.
+They therefore keep their `domain/contracts` definitions here and gain component names in slice 005,
+where they are defined natively in `routes/weeks/schemas.ts` instead of imported. Slice 006 must not
+run before that, or the document will inline them instead of emitting `SaveDayLog` / `UpdateDayLog`
+components.
+
+**`app.public.test.ts` grew past the 90-line-per-function lint cap**, so `describe('training reads')`
+was split into `training reads`, `week route parameters`, and `day log writes`. No assertion changed.
 
 ## Blocked by
 

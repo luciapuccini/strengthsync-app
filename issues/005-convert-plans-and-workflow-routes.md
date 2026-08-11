@@ -43,6 +43,13 @@ gate. Decouple first, then move.
 | --- | --- | --- |
 | `CreateClientInputSchema`, `UpdateClientProfileSchema` | `domain/contracts` | `routes/clients/schemas.ts` |
 | `SaveDayLogSchema`, `UpdateDayLogSchema`, `DayExerciseLogSchema` | `domain/contracts` | `routes/weeks/schemas.ts` |
+
+> **These three must be *defined* in `routes/weeks/schemas.ts`, not rebuilt from the existing ones.**
+> Slice 004 established that in Zod 4 `.superRefine()` returns a ZodObject that still exposes
+> `.shape`, so the `z.object(Existing.shape)` technique used elsewhere compiles and runs while
+> silently dropping the cross-field rule. Define them with the `z` from `@hono/zod-openapi` and give
+> them their `.openapi('SaveDayLog')` / `.openapi('UpdateDayLog')` / `.openapi('DayExerciseLog')`
+> names — slice 004 deliberately left them unnamed, so slice 006 depends on this being done here.
 | `ApiError` | `domain/contracts` | `routes/` shared spot — see note below |
 | `GeneratedPlanInputSchema`, `ActivateGeneratedPlanCommandSchema` | `domain/contracts` | new `workflows/contracts.ts` |
 

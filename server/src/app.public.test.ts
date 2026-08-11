@@ -194,6 +194,51 @@ describe('training reads', () => {
     expect(res.status).toBe(400)
   })
 
+})
+
+describe('week route parameters', () => {
+  it('rejects an out-of-range or non-numeric dayIndex with 400 invalid_input', async () => {
+    // dayIndex is a coerced path param, but a bad one is a bad value rather than
+    // an unusable route id, so it keeps invalid_input (see #003's mapping).
+    const db = createTestDb()
+    const app = createTestApp({ db })
+    const client = await createClientViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-day-index')
+
+    for (const dayIndex of ['0', '8', 'abc']) {
+      const res = await app.request(
+        `/api/clients/${client.id}/weeks/${first_week.id}/days/${dayIndex}/save`,
+        {
+          method: 'POST',
+          headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+          body: JSON.stringify({ exercises: [] }),
+        },
+      )
+      expect(res.status, `dayIndex=${dayIndex}`).toBe(400)
+      expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_input')
+    }
+  })
+
+  it('filters the week list by planId', async () => {
+    const db = createTestDb()
+    const app = createTestApp({ db })
+    const client = await createClientViaApi(app)
+    const { plan } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-filter')
+
+    const matching = await app.request(`/api/clients/${client.id}/weeks?planId=${plan.id}`, {
+      headers: { authorization: basicHeader() },
+    })
+    expect(((await matching.json()) as { weeks: unknown[] }).weeks.length).toBeGreaterThan(0)
+
+    const other = await app.request(
+      `/api/clients/${client.id}/weeks?planId=1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d`,
+      { headers: { authorization: basicHeader() } },
+    )
+    expect(((await other.json()) as { weeks: unknown[] }).weeks).toHaveLength(0)
+  })
+})
+
+describe('day log writes', () => {
   it('rejects a day patch whose skipped exercise carries sets (400)', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })

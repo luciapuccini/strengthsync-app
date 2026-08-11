@@ -9,7 +9,7 @@ import { errorResponse, repoErrorResponse } from "./lib/errors.ts";
 import { defaultHook } from "./lib/validation-error.ts";
 import { clientRoutes } from "./routes/clients/endpoints.ts";
 import { planRoutes } from "./routes/plans.ts";
-import { weekRoutes } from "./routes/weeks.ts";
+import { weekRoutes } from "./routes/weeks/endpoints.ts";
 import { cfWorkflowRoutes } from "./routes/cf-api.ts";
 
 export type AppConfig = {
