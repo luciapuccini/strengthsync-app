@@ -1,14 +1,40 @@
 import { z } from '@hono/zod-openapi'
 
-import { DayExerciseLogSchema, WEEK_STATUSES, WeekSchema } from '../../domain/model/index.ts'
+import {
+  DAY_TYPES,
+  DayExerciseLogSchema,
+  EXERCISE_FEEDBACKS,
+  ExerciseLogSchema,
+  PerformedSetSchema,
+  WEEK_STATUSES,
+  WeekDaySchema,
+  WeekSchema,
+} from '../../domain/model/index.ts'
 import { uuidParam } from '../shared.ts'
 
 /**
  * HTTP shapes for the weeks area. See `routes/clients/schemas.ts` for why
  * schemas are rebuilt here rather than named where they are defined.
+ *
+ * The leaf schemas below are registered as components even though only `Week`
+ * references them directly: `client/src/api/types.ts` aliases each by name, so
+ * the document has to emit them rather than inline them.
  */
 
-const Week = z.object(WeekSchema.shape).openapi('Week')
+export const DayTypeSchema = z.enum(DAY_TYPES).openapi('DayType')
+export const WeekStatusSchema = z.enum(WEEK_STATUSES).openapi('WeekStatus')
+export const ExerciseFeedbackSchema = z.enum(EXERCISE_FEEDBACKS).openapi('ExerciseFeedback')
+const PerformedSet = z.object(PerformedSetSchema.shape).openapi('PerformedSet')
+const ExerciseLog = z
+  .object({ ...ExerciseLogSchema.shape, sets: z.array(PerformedSet) })
+  .openapi('ExerciseLog')
+const WeekDay = z
+  .object({ ...WeekDaySchema.shape, type: DayTypeSchema, exercises: z.array(ExerciseLog) })
+  .openapi('WeekDay')
+
+const Week = z
+  .object({ ...WeekSchema.shape, status: WeekStatusSchema, schedule: z.array(WeekDay) })
+  .openapi('Week')
 
 export const WeekResponseSchema = z.object({ week: Week }).openapi('WeekResponse')
 export const WeekListResponseSchema = z
@@ -29,13 +55,19 @@ export const DayParamsSchema = z.object({
 })
 
 export const WeekListQuerySchema = z.object({
-  status: z.enum(WEEK_STATUSES).optional().openapi({ param: { name: 'status', in: 'query' } }),
+  status: WeekStatusSchema.optional().openapi({ param: { name: 'status', in: 'query' } }),
   // Left as a plain string to match today's behaviour: an unknown planId
   // filters to an empty list rather than 400ing.
   planId: z.string().optional().openapi({ param: { name: 'planId', in: 'query' } }),
 })
 
-const DayExerciseLog = z.object(DayExerciseLogSchema.shape).openapi('DayExerciseLog')
+const DayExerciseLog = z
+  .object({
+    ...DayExerciseLogSchema.shape,
+    feedback: ExerciseFeedbackSchema.nullable(),
+    sets: z.array(PerformedSet),
+  })
+  .openapi('DayExerciseLog')
 
 /**
  * A skipped exercise was not performed, so it cannot carry performed sets.

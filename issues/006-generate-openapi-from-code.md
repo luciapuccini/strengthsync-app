@@ -1,6 +1,6 @@
 # Generate openapi.json from the server's Zod schemas
 
-**STATUS: TODO**
+**STATUS: DONE**
 
 ## Parent PRD
 
@@ -88,17 +88,46 @@ expected and gets absorbed next.
 
 ## Acceptance criteria
 
-- [ ] `server/scripts/gen-openapi.ts` exists and writes `server/openapi.json`
-- [ ] Running the generator twice in a row produces no diff (deterministic output)
-- [ ] The generated document contains all 12 operations, the `basicAuth` scheme, and the server entry
-- [ ] The generated component names cover every name aliased in `client/src/api/types.ts`
-- [ ] `pnpm check:openapi` regenerates document **and** client types and passes
-- [ ] `git diff --exit-code server/openapi.json` is clean after `pnpm gen:openapi`
-- [ ] Deliberately breaking a route schema makes `pnpm check:openapi` fail (verify once by hand, then revert)
-- [ ] No document route is served — `GET /openapi.json` against the running Worker returns the SPA fallback, not the spec
-- [ ] The diff between the old hand-written document and the generated one is reviewed and summarized in the commit message
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` pass from the root
-- [ ] `pnpm --filter @strengthsync/server build` still succeeds
+- [x] `server/scripts/gen-openapi.ts` exists and writes `server/openapi.json`
+- [x] Running the generator twice in a row produces no diff (deterministic output) — verified byte-for-byte
+- [x] The generated document contains all 12 operations, the `basicAuth` scheme, and the server entry
+- [x] The generated component names cover every name aliased in `client/src/api/types.ts`
+- [x] `pnpm check:openapi` regenerates document **and** client types and passes
+- [x] `git diff --exit-code server/openapi.json` is clean after `pnpm gen:openapi`
+- [x] Deliberately breaking a route schema makes `pnpm check:openapi` fail — verified by adding a field to `CreateClientInput`, then reverted
+- [x] No document route is served — `/openapi.json`, `/doc` and `/openapi` all 404; `app.doc31()` is called nowhere
+- [x] The diff between the old hand-written document and the generated one is reviewed and summarized in the commit message
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test` pass from the root (53 server + 37 client)
+- [x] `pnpm --filter @strengthsync/server build` still succeeds
+
+### Notes from implementation
+
+**Both gaps found during slice 005's verification were closed.** `/health` became an `app.openapi()`
+route in the new `routes/health.ts` — declared with `security: []` so it does not inherit the global
+`basicAuth` requirement — which keeps the operation count at 12. The eight leaf components the client
+aliases (`DayType`, `WeekStatus`, `ExerciseFeedback`, `PerformedSet`, `ExerciseLog`, `WeekDay`,
+`PlannedExercise`, `PlanDay`) are now registered in the area schema files that own them, and are
+wired into their parents by field override so the parents `$ref` them rather than inlining.
+
+**The document diff is smaller than expected: same 12 operations, 27 of the old 33 components.**
+Nothing was added; six were dropped, all deliberately:
+
+| Dropped | Why |
+| --- | --- |
+| `Uuid`, `ISODate`, `ISODateTime` | Format aliases. Now inlined as `{type: string, format: uuid \| date \| date-time}` — same constraint, one less indirection |
+| `ClientStatus`, `PlanStatus` | Enums with no client alias; inlined at their single use site |
+| `JsonValue` | Removed with the recursive schema, by decision |
+
+`components.responses` also disappeared: the shared `Unauthorized`/`NotFound`/`BadRequest` response
+objects are now declared inline per route. Same bodies, no `$ref`.
+
+**`additionalProperties: false` is gone from every object, and that is a correction, not a
+regression.** The hand-written spec claimed the API rejects unknown keys. It does not — Zod strips
+them. The generated document now describes what the server actually does.
+
+**The client needed no changes at all.** All twenty aliases in `client/src/api/types.ts` still
+resolve and the client typechecks against the regenerated types, so slice 007's budgeted friction did
+not materialise.
 
 ## Blocked by
 

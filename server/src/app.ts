@@ -7,6 +7,7 @@ import { RepoError, type Db } from "./db/index.ts";
 import { errorResponse, repoErrorResponse } from "./lib/errors.ts";
 import { defaultHook } from "./lib/validation-error.ts";
 import { clientRoutes } from "./routes/clients/endpoints.ts";
+import { healthRoutes } from "./routes/health.ts";
 import { planRoutes } from "./routes/plans/endpoints.ts";
 import { weekRoutes } from "./routes/weeks/endpoints.ts";
 import { cfWorkflowRoutes } from "./routes/wf/endpoints.ts";
@@ -38,7 +39,7 @@ export function createApp(config: AppConfig): OpenAPIHono {
   });
 
   // Unauthenticated liveness (docs/architecture/api_contracts.md).
-  app.get("/health", (c) => c.json({ ok: true }));
+  app.route("/", healthRoutes());
 
   // Public API: shared Basic credential on every /api/* route (production only).
   // wrangler dev sets NODE_ENV=development; deploy/build set production.

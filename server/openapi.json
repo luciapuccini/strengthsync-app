@@ -3,7 +3,7 @@
   "info": {
     "title": "StrengthSync Public API",
     "version": "0.0.0",
-    "description": "Public HTTP boundary for the StrengthSync client/server monolith. Source of truth: docs/architecture/api_contracts.md."
+    "description": "Public HTTP boundary for the StrengthSync client/server monolith. Generated from the server route definitions by `pnpm gen:openapi` — do not edit by hand."
   },
   "servers": [
     {
@@ -16,10 +16,827 @@
       "basicAuth": []
     }
   ],
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "ClientListResponse": {
+        "type": "object",
+        "properties": {
+          "clients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Client"
+            }
+          }
+        },
+        "required": [
+          "clients"
+        ]
+      },
+      "Client": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "coach_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "coach_id",
+          "display_name",
+          "status",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "ClientResponse": {
+        "type": "object",
+        "properties": {
+          "client": {
+            "$ref": "#/components/schemas/Client"
+          }
+        },
+        "required": [
+          "client"
+        ]
+      },
+      "CreateClientInput": {
+        "type": "object",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "display_name"
+        ]
+      },
+      "ClientProfileResponse": {
+        "type": "object",
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/ClientProfile"
+          }
+        },
+        "required": [
+          "profile"
+        ]
+      },
+      "ClientProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "snapshot_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "sex": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "age": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "height_cm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "goals": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "body_composition": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "strength_loads": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "nutrition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "swimming": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "schedule_preferences": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "client_id",
+          "snapshot_date",
+          "sex",
+          "age",
+          "height_cm",
+          "goals",
+          "body_composition",
+          "strength_loads",
+          "nutrition",
+          "swimming",
+          "schedule_preferences",
+          "notes",
+          "updated_at"
+        ]
+      },
+      "UpdateClientProfile": {
+        "type": "object",
+        "properties": {
+          "snapshot_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "sex": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "age": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "height_cm": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "exclusiveMinimum": 0
+          },
+          "goals": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "body_composition": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "strength_loads": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "nutrition": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "swimming": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "schedule_preferences": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "snapshot_date",
+          "sex",
+          "age",
+          "height_cm",
+          "goals",
+          "body_composition",
+          "strength_loads",
+          "nutrition",
+          "swimming",
+          "schedule_preferences",
+          "notes"
+        ]
+      },
+      "PlanResponse": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          }
+        },
+        "required": [
+          "plan"
+        ]
+      },
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "archived"
+            ]
+          },
+          "total_weeks": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "week_template": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanDay"
+            }
+          },
+          "rationale": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activated_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "client_id",
+          "label",
+          "status",
+          "total_weeks",
+          "week_template",
+          "rationale",
+          "activated_at",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "PlanDay": {
+        "type": "object",
+        "properties": {
+          "day_index": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "type": {
+            "$ref": "#/components/schemas/DayType"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlannedExercise"
+            }
+          }
+        },
+        "required": [
+          "day_index",
+          "type",
+          "notes",
+          "exercises"
+        ]
+      },
+      "DayType": {
+        "type": "string",
+        "enum": [
+          "upper_body",
+          "leg_day",
+          "rest",
+          "swimming",
+          "cardio"
+        ]
+      },
+      "PlannedExercise": {
+        "type": "object",
+        "properties": {
+          "exercise_key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "series": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "reps": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "rest_time_sec": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "weight_kg": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "exercise_key",
+          "name",
+          "series",
+          "reps",
+          "rest_time_sec",
+          "weight_kg",
+          "notes"
+        ]
+      },
+      "WeekResponse": {
+        "type": "object",
+        "properties": {
+          "week": {
+            "$ref": "#/components/schemas/Week"
+          }
+        },
+        "required": [
+          "week"
+        ]
+      },
+      "Week": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "client_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "plan_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "week_index": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "$ref": "#/components/schemas/WeekStatus"
+          },
+          "schedule": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WeekDay"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "client_id",
+          "plan_id",
+          "week_index",
+          "start_date",
+          "end_date",
+          "status",
+          "schedule",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "WeekStatus": {
+        "type": "string",
+        "enum": [
+          "in_flight",
+          "completed",
+          "abandoned"
+        ]
+      },
+      "WeekDay": {
+        "type": "object",
+        "properties": {
+          "day_index": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "type": {
+            "$ref": "#/components/schemas/DayType"
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExerciseLog"
+            }
+          }
+        },
+        "required": [
+          "day_index",
+          "date",
+          "type",
+          "notes",
+          "completed",
+          "completed_at",
+          "exercises"
+        ]
+      },
+      "ExerciseLog": {
+        "type": "object",
+        "properties": {
+          "exercise_key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "skipped": {
+            "type": "boolean"
+          },
+          "feedback": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "easy",
+              "hard",
+              "heavy",
+              "light",
+              null
+            ]
+          },
+          "prescribed": {
+            "type": "object",
+            "properties": {
+              "series": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "reps": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              "rest_time_sec": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "weight_kg": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "notes": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "series",
+              "reps",
+              "rest_time_sec",
+              "weight_kg",
+              "notes"
+            ]
+          },
+          "sets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerformedSet"
+            }
+          }
+        },
+        "required": [
+          "exercise_key",
+          "name",
+          "skipped",
+          "feedback",
+          "prescribed",
+          "sets"
+        ]
+      },
+      "PerformedSet": {
+        "type": "object",
+        "properties": {
+          "performed_reps": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "performed_weight_kg": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "performed_reps",
+          "performed_weight_kg"
+        ]
+      },
+      "WeekListResponse": {
+        "type": "object",
+        "properties": {
+          "weeks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Week"
+            }
+          }
+        },
+        "required": [
+          "weeks"
+        ]
+      },
+      "SaveDayLog": {
+        "type": "object",
+        "properties": {
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayExerciseLog"
+            }
+          }
+        },
+        "required": [
+          "exercises"
+        ]
+      },
+      "DayExerciseLog": {
+        "type": "object",
+        "properties": {
+          "exercise_key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "skipped": {
+            "type": "boolean"
+          },
+          "feedback": {
+            "$ref": "#/components/schemas/ExerciseFeedback"
+          },
+          "sets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerformedSet"
+            }
+          }
+        },
+        "required": [
+          "exercise_key",
+          "skipped",
+          "feedback",
+          "sets"
+        ]
+      },
+      "ExerciseFeedback": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "easy",
+          "hard",
+          "heavy",
+          "light",
+          null
+        ]
+      },
+      "UpdateDayLog": {
+        "type": "object",
+        "properties": {
+          "completed": {
+            "type": "boolean"
+          },
+          "exercises": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayExerciseLog"
+            }
+          }
+        },
+        "required": [
+          "completed",
+          "exercises"
+        ]
+      },
+      "CompleteWeekStarted": {
+        "type": "object",
+        "properties": {
+          "instanceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "details": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "instanceId",
+          "details"
+        ]
+      },
+      "CompleteWeekInput": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "clientId"
+        ]
+      }
+    },
+    "parameters": {},
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    }
+  },
   "paths": {
     "/health": {
       "get": {
-        "operationId": "healthCheck",
         "summary": "Liveness probe",
         "security": [],
         "responses": {
@@ -38,11 +855,10 @@
     },
     "/api/clients": {
       "get": {
-        "operationId": "listClients",
-        "summary": "List all clients for the coach",
+        "summary": "List clients",
         "responses": {
           "200": {
-            "description": "List of clients",
+            "description": "Clients found",
             "content": {
               "application/json": {
                 "schema": {
@@ -52,15 +868,20 @@
             }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       },
       "post": {
-        "operationId": "createClient",
-        "summary": "Create a new client",
+        "summary": "Create a client",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -81,21 +902,40 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/clients/{clientId}/profile": {
       "get": {
-        "operationId": "getClientProfile",
         "summary": "Get a client's profile",
         "parameters": [
           {
-            "$ref": "#/components/parameters/ClientId"
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
           }
         ],
         "responses": {
@@ -109,24 +949,52 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       },
       "put": {
-        "operationId": "updateClientProfile",
-        "summary": "Update a client's profile",
+        "summary": "Create or replace a client's profile",
         "parameters": [
           {
-            "$ref": "#/components/parameters/ClientId"
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
           }
         ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -137,7 +1005,7 @@
         },
         "responses": {
           "200": {
-            "description": "Profile updated",
+            "description": "Profile saved",
             "content": {
               "application/json": {
                 "schema": {
@@ -147,56 +1015,50 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/clients/{clientId}/plans/active": {
       "get": {
-        "operationId": "getActivePlan",
         "summary": "Get the client's active plan",
         "parameters": [
           {
-            "$ref": "#/components/parameters/ClientId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Active plan found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlanResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
-    "/api/clients/{clientId}/plans/{planId}": {
-      "get": {
-        "operationId": "getPlan",
-        "summary": "Get a plan by id",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ClientId"
-          },
-          {
-            "$ref": "#/components/parameters/PlanId"
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
           }
         ],
         "responses": {
@@ -210,27 +1072,123 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clients/{clientId}/plans/{planId}": {
+      "get": {
+        "summary": "Get a plan by id",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "planId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/clients/{clientId}/weeks/current": {
       "get": {
-        "operationId": "getCurrentWeek",
         "summary": "Get the client's current in-flight week",
         "parameters": [
           {
-            "$ref": "#/components/parameters/ClientId"
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
           }
         ],
         "responses": {
           "200": {
-            "description": "Current week found",
+            "description": "Week found",
             "content": {
               "application/json": {
                 "schema": {
@@ -239,39 +1197,67 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/clients/{clientId}/weeks": {
       "get": {
-        "operationId": "listWeeks",
         "summary": "List weeks for a client",
         "parameters": [
           {
-            "$ref": "#/components/parameters/ClientId"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/WeekStatus"
-            }
-          },
-          {
-            "name": "planId",
-            "in": "query",
-            "required": false,
             "schema": {
               "type": "string",
               "format": "uuid"
-            }
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/WeekStatus"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "planId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -285,32 +1271,73 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}/save": {
       "post": {
-        "operationId": "saveDayLog",
         "summary": "Save a day's exercise logs and mark the day completed",
         "parameters": [
           {
-            "$ref": "#/components/parameters/ClientId"
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
           },
           {
-            "$ref": "#/components/parameters/WeekId"
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "weekId",
+            "in": "path"
           },
           {
-            "$ref": "#/components/parameters/DayIndex"
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            },
+            "required": true,
+            "name": "dayIndex",
+            "in": "path"
           }
         ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -331,34 +1358,72 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}": {
       "patch": {
-        "operationId": "updateDayLog",
         "summary": "Low-level day log patch (tests/tools)",
         "parameters": [
           {
-            "$ref": "#/components/parameters/ClientId"
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "clientId",
+            "in": "path"
           },
           {
-            "$ref": "#/components/parameters/WeekId"
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "weekId",
+            "in": "path"
           },
           {
-            "$ref": "#/components/parameters/DayIndex"
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            },
+            "required": true,
+            "name": "dayIndex",
+            "in": "path"
           }
         ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -369,7 +1434,7 @@
         },
         "responses": {
           "200": {
-            "description": "Day updated",
+            "description": "Day patched",
             "content": {
               "application/json": {
                 "schema": {
@@ -379,23 +1444,42 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
     },
     "/wf/complete-week": {
       "post": {
-        "operationId": "completeWeek",
         "summary": "Complete a week for a client (starts the Cloudflare Workflow)",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -416,446 +1500,28 @@
             }
           },
           "400": {
-            "$ref": "#/components/responses/BadRequest"
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           },
           "401": {
-            "$ref": "#/components/responses/Unauthorized"
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
           }
         }
       }
     }
   },
-  "components": {
-    "securitySchemes": {
-      "basicAuth": {
-        "type": "http",
-        "scheme": "basic"
-      }
-    },
-    "parameters": {
-      "ClientId": {
-        "name": "clientId",
-        "in": "path",
-        "required": true,
-        "schema": {
-          "type": "string",
-          "format": "uuid"
-        }
-      },
-      "PlanId": {
-        "name": "planId",
-        "in": "path",
-        "required": true,
-        "schema": {
-          "type": "string",
-          "format": "uuid"
-        }
-      },
-      "WeekId": {
-        "name": "weekId",
-        "in": "path",
-        "required": true,
-        "schema": {
-          "type": "string",
-          "format": "uuid"
-        }
-      },
-      "DayIndex": {
-        "name": "dayIndex",
-        "in": "path",
-        "required": true,
-        "schema": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 7
-        }
-      }
-    },
-    "schemas": {
-      "HealthResponse": {
-        "type": "object",
-        "required": ["ok"],
-        "additionalProperties": false,
-        "properties": {
-          "ok": { "type": "boolean" }
-        }
-      },
-      "ApiError": {
-        "type": "object",
-        "required": ["error"],
-        "additionalProperties": false,
-        "properties": {
-          "error": {
-            "type": "object",
-            "required": ["code", "message"],
-            "additionalProperties": false,
-            "properties": {
-              "code": { "type": "string" },
-              "message": { "type": "string" }
-            }
-          }
-        }
-      },
-      "Uuid": {
-        "type": "string",
-        "format": "uuid"
-      },
-      "ISODate": {
-        "type": "string",
-        "format": "date"
-      },
-      "ISODateTime": {
-        "type": "string",
-        "format": "date-time"
-      },
-      "DayType": {
-        "type": "string",
-        "enum": ["upper_body", "leg_day", "rest", "swimming", "cardio"]
-      },
-      "ClientStatus": {
-        "type": "string",
-        "enum": ["active", "archived"]
-      },
-      "PlanStatus": {
-        "type": "string",
-        "enum": ["draft", "active", "archived"]
-      },
-      "WeekStatus": {
-        "type": "string",
-        "enum": ["in_flight", "completed", "abandoned"]
-      },
-      "ExerciseFeedback": {
-        "type": "string",
-        "enum": ["easy", "hard", "heavy", "light"]
-      },
-      "JsonValue": {
-        "oneOf": [
-          { "type": "string" },
-          { "type": "number" },
-          { "type": "boolean" },
-          { "type": "null" },
-          { "type": "array", "items": { "$ref": "#/components/schemas/JsonValue" } },
-          { "type": "object", "additionalProperties": { "$ref": "#/components/schemas/JsonValue" } }
-        ]
-      },
-      "Client": {
-        "type": "object",
-        "required": ["id", "coach_id", "display_name", "status", "created_at", "updated_at"],
-        "additionalProperties": false,
-        "properties": {
-          "id": { "$ref": "#/components/schemas/Uuid" },
-          "coach_id": { "$ref": "#/components/schemas/Uuid" },
-          "display_name": { "type": "string", "minLength": 1 },
-          "status": { "$ref": "#/components/schemas/ClientStatus" },
-          "created_at": { "$ref": "#/components/schemas/ISODateTime" },
-          "updated_at": { "$ref": "#/components/schemas/ISODateTime" }
-        }
-      },
-      "ClientProfile": {
-        "type": "object",
-        "required": [
-          "id",
-          "client_id",
-          "snapshot_date",
-          "sex",
-          "age",
-          "height_cm",
-          "goals",
-          "body_composition",
-          "strength_loads",
-          "nutrition",
-          "swimming",
-          "schedule_preferences",
-          "notes",
-          "updated_at"
-        ],
-        "additionalProperties": false,
-        "properties": {
-          "id": { "$ref": "#/components/schemas/Uuid" },
-          "client_id": { "$ref": "#/components/schemas/Uuid" },
-          "snapshot_date": { "$ref": "#/components/schemas/ISODate" },
-          "sex": { "type": ["string", "null"] },
-          "age": { "type": ["integer", "null"], "minimum": 1 },
-          "height_cm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
-          "goals": { "$ref": "#/components/schemas/JsonValue" },
-          "body_composition": { "$ref": "#/components/schemas/JsonValue" },
-          "strength_loads": { "$ref": "#/components/schemas/JsonValue" },
-          "nutrition": { "type": ["object", "null"], "additionalProperties": { "$ref": "#/components/schemas/JsonValue" } },
-          "swimming": { "type": ["object", "null"], "additionalProperties": { "$ref": "#/components/schemas/JsonValue" } },
-          "schedule_preferences": { "type": ["object", "null"], "additionalProperties": { "$ref": "#/components/schemas/JsonValue" } },
-          "notes": { "type": ["string", "null"] },
-          "updated_at": { "$ref": "#/components/schemas/ISODateTime" }
-        }
-      },
-      "PlannedExercise": {
-        "type": "object",
-        "required": ["exercise_key", "name", "series", "reps", "rest_time_sec", "weight_kg", "notes"],
-        "additionalProperties": false,
-        "properties": {
-          "exercise_key": { "type": "string", "minLength": 1 },
-          "name": { "type": "string", "minLength": 1 },
-          "series": { "type": "integer", "minimum": 1 },
-          "reps": { "type": "integer", "minimum": 1 },
-          "rest_time_sec": { "type": "integer", "minimum": 0 },
-          "weight_kg": { "type": ["number", "null"], "minimum": 0 },
-          "notes": { "type": ["string", "null"] }
-        }
-      },
-      "PlanDay": {
-        "type": "object",
-        "required": ["day_index", "type", "notes", "exercises"],
-        "additionalProperties": false,
-        "properties": {
-          "day_index": { "type": "integer", "minimum": 1, "maximum": 7 },
-          "type": { "$ref": "#/components/schemas/DayType" },
-          "notes": { "type": ["string", "null"] },
-          "exercises": { "type": "array", "items": { "$ref": "#/components/schemas/PlannedExercise" } }
-        }
-      },
-      "Plan": {
-        "type": "object",
-        "required": ["id", "client_id", "label", "status", "total_weeks", "week_template", "rationale", "activated_at", "created_at", "updated_at"],
-        "additionalProperties": false,
-        "properties": {
-          "id": { "$ref": "#/components/schemas/Uuid" },
-          "client_id": { "$ref": "#/components/schemas/Uuid" },
-          "label": { "type": "string", "minLength": 1 },
-          "status": { "$ref": "#/components/schemas/PlanStatus" },
-          "total_weeks": { "type": "integer", "minimum": 1 },
-          "week_template": { "type": "array", "items": { "$ref": "#/components/schemas/PlanDay" } },
-          "rationale": { "type": ["string", "null"] },
-          "activated_at": { "type": ["string", "null"], "format": "date-time" },
-          "created_at": { "$ref": "#/components/schemas/ISODateTime" },
-          "updated_at": { "$ref": "#/components/schemas/ISODateTime" }
-        }
-      },
-      "PerformedSet": {
-        "type": "object",
-        "required": ["performed_reps", "performed_weight_kg"],
-        "additionalProperties": false,
-        "properties": {
-          "performed_reps": { "type": "integer", "minimum": 0 },
-          "performed_weight_kg": { "type": ["number", "null"], "minimum": 0 }
-        }
-      },
-      "ExerciseLog": {
-        "type": "object",
-        "required": ["exercise_key", "name", "skipped", "feedback", "prescribed", "sets"],
-        "additionalProperties": false,
-        "properties": {
-          "exercise_key": { "type": "string", "minLength": 1 },
-          "name": { "type": "string", "minLength": 1 },
-          "skipped": { "type": "boolean" },
-          "feedback": { "oneOf": [{ "$ref": "#/components/schemas/ExerciseFeedback" }, { "type": "null" }] },
-          "prescribed": {
-            "type": "object",
-            "required": ["series", "reps", "rest_time_sec", "weight_kg", "notes"],
-            "additionalProperties": false,
-            "properties": {
-              "series": { "type": "integer", "minimum": 1 },
-              "reps": { "type": "integer", "minimum": 1 },
-              "rest_time_sec": { "type": "integer", "minimum": 0 },
-              "weight_kg": { "type": ["number", "null"], "minimum": 0 },
-              "notes": { "type": ["string", "null"] }
-            }
-          },
-          "sets": { "type": "array", "items": { "$ref": "#/components/schemas/PerformedSet" } }
-        }
-      },
-      "WeekDay": {
-        "type": "object",
-        "required": ["day_index", "date", "type", "notes", "completed", "completed_at", "exercises"],
-        "additionalProperties": false,
-        "properties": {
-          "day_index": { "type": "integer", "minimum": 1, "maximum": 7 },
-          "date": { "$ref": "#/components/schemas/ISODate" },
-          "type": { "$ref": "#/components/schemas/DayType" },
-          "notes": { "type": ["string", "null"] },
-          "completed": { "type": "boolean" },
-          "completed_at": { "type": ["string", "null"], "format": "date-time" },
-          "exercises": { "type": "array", "items": { "$ref": "#/components/schemas/ExerciseLog" } }
-        }
-      },
-      "Week": {
-        "type": "object",
-        "required": ["id", "client_id", "plan_id", "week_index", "start_date", "end_date", "status", "schedule", "created_at", "updated_at"],
-        "additionalProperties": false,
-        "properties": {
-          "id": { "$ref": "#/components/schemas/Uuid" },
-          "client_id": { "$ref": "#/components/schemas/Uuid" },
-          "plan_id": { "$ref": "#/components/schemas/Uuid" },
-          "week_index": { "type": "integer", "minimum": 1 },
-          "start_date": { "$ref": "#/components/schemas/ISODate" },
-          "end_date": { "$ref": "#/components/schemas/ISODate" },
-          "status": { "$ref": "#/components/schemas/WeekStatus" },
-          "schedule": { "type": "array", "items": { "$ref": "#/components/schemas/WeekDay" } },
-          "created_at": { "$ref": "#/components/schemas/ISODateTime" },
-          "updated_at": { "$ref": "#/components/schemas/ISODateTime" }
-        }
-      },
-      "CreateClientInput": {
-        "type": "object",
-        "required": ["display_name"],
-        "additionalProperties": false,
-        "properties": {
-          "display_name": { "type": "string", "minLength": 1 }
-        }
-      },
-      "UpdateClientProfile": {
-        "type": "object",
-        "required": [
-          "snapshot_date",
-          "sex",
-          "age",
-          "height_cm",
-          "goals",
-          "body_composition",
-          "strength_loads",
-          "nutrition",
-          "swimming",
-          "schedule_preferences",
-          "notes"
-        ],
-        "additionalProperties": false,
-        "properties": {
-          "snapshot_date": { "$ref": "#/components/schemas/ISODate" },
-          "sex": { "type": ["string", "null"] },
-          "age": { "type": ["integer", "null"], "minimum": 1 },
-          "height_cm": { "type": ["number", "null"], "exclusiveMinimum": 0 },
-          "goals": { "$ref": "#/components/schemas/JsonValue" },
-          "body_composition": { "$ref": "#/components/schemas/JsonValue" },
-          "strength_loads": { "$ref": "#/components/schemas/JsonValue" },
-          "nutrition": { "type": ["object", "null"], "additionalProperties": { "$ref": "#/components/schemas/JsonValue" } },
-          "swimming": { "type": ["object", "null"], "additionalProperties": { "$ref": "#/components/schemas/JsonValue" } },
-          "schedule_preferences": { "type": ["object", "null"], "additionalProperties": { "$ref": "#/components/schemas/JsonValue" } },
-          "notes": { "type": ["string", "null"] }
-        }
-      },
-      "SaveDayLog": {
-        "type": "object",
-        "required": ["exercises"],
-        "additionalProperties": false,
-        "properties": {
-          "exercises": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/DayExerciseLog" }
-          }
-        }
-      },
-      "UpdateDayLog": {
-        "type": "object",
-        "required": ["completed", "exercises"],
-        "additionalProperties": false,
-        "properties": {
-          "completed": { "type": "boolean" },
-          "exercises": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/DayExerciseLog" }
-          }
-        }
-      },
-      "DayExerciseLog": {
-        "type": "object",
-        "required": ["exercise_key", "skipped", "feedback", "sets"],
-        "additionalProperties": false,
-        "properties": {
-          "exercise_key": { "type": "string", "minLength": 1 },
-          "skipped": { "type": "boolean" },
-          "feedback": { "oneOf": [{ "$ref": "#/components/schemas/ExerciseFeedback" }, { "type": "null" }] },
-          "sets": { "type": "array", "items": { "$ref": "#/components/schemas/PerformedSet" } }
-        }
-      },
-      "CompleteWeekInput": {
-        "type": "object",
-        "required": ["clientId"],
-        "additionalProperties": false,
-        "properties": {
-          "clientId": { "type": "string", "minLength": 1 }
-        }
-      },
-      "CompleteWeekStarted": {
-        "type": "object",
-        "required": ["instanceId", "details"],
-        "additionalProperties": false,
-        "properties": {
-          "instanceId": { "type": "string", "minLength": 1 },
-          "details": { "type": "object", "additionalProperties": true }
-        }
-      },
-      "ClientListResponse": {
-        "type": "object",
-        "required": ["clients"],
-        "additionalProperties": false,
-        "properties": {
-          "clients": { "type": "array", "items": { "$ref": "#/components/schemas/Client" } }
-        }
-      },
-      "ClientResponse": {
-        "type": "object",
-        "required": ["client"],
-        "additionalProperties": false,
-        "properties": {
-          "client": { "$ref": "#/components/schemas/Client" }
-        }
-      },
-      "ClientProfileResponse": {
-        "type": "object",
-        "required": ["profile"],
-        "additionalProperties": false,
-        "properties": {
-          "profile": { "$ref": "#/components/schemas/ClientProfile" }
-        }
-      },
-      "PlanResponse": {
-        "type": "object",
-        "required": ["plan"],
-        "additionalProperties": false,
-        "properties": {
-          "plan": { "$ref": "#/components/schemas/Plan" }
-        }
-      },
-      "WeekListResponse": {
-        "type": "object",
-        "required": ["weeks"],
-        "additionalProperties": false,
-        "properties": {
-          "weeks": { "type": "array", "items": { "$ref": "#/components/schemas/Week" } }
-        }
-      },
-      "WeekResponse": {
-        "type": "object",
-        "required": ["week"],
-        "additionalProperties": false,
-        "properties": {
-          "week": { "$ref": "#/components/schemas/Week" }
-        }
-      }
-    },
-    "responses": {
-      "BadRequest": {
-        "description": "Invalid input",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/ApiError" }
-          }
-        }
-      },
-      "Unauthorized": {
-        "description": "Missing or invalid shared credentials",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/ApiError" }
-          }
-        }
-      },
-      "NotFound": {
-        "description": "Record not found",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/ApiError" }
-          }
-        }
-      }
-    }
-  }
+  "webhooks": {}
 }

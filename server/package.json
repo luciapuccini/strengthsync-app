@@ -12,6 +12,7 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
+    "gen:openapi": "node --experimental-strip-types scripts/gen-openapi.ts",
     "build": "wrangler deploy --dry-run",
     "deploy": "pnpm run db:migrate:remote && wrangler deploy",
     "db:generate": "drizzle-kit generate --config db/drizzle.config.ts",
