@@ -7,33 +7,36 @@
 `issues/prd-zod-first-api-contract.md` — see Solution and Implementation Decisions: "Two-stage
 codegen", "The document is a build artifact, not an endpoint", "The cutover is atomic".
 
-## ⚠️ Known blocker, found and diagnosed in slice 003
+## ✅ Blocker resolved before this slice
 
-**Generation currently throws `RangeError: Maximum call stack size exceeded`.** Verified by building
-the document from the real app after the clients area was converted. This is not a theoretical
-friction — the generator dies outright, so it must be fixed before this slice can produce anything.
+The recursive-`z.lazy` stack overflow is gone. The free-form JSON columns are now
+`z.record(z.string(), z.unknown())` rather than a recursive union — a deliberate trade of validation
+precision for a schema that renders, taken because nothing reads those columns structurally. The
+static type stays `Record<string, JsonValue>` via a documented cast, because Cloudflare's
+`Serializable<T>` constraint on `step.do()` rejects `unknown`. See `domain/model/index.ts`.
 
-Cause: `jsonValueSchema` in `server/src/domain/model/index.ts:73` is a recursive `z.lazy` union. The
-generator (`@asteasolutions/zod-to-openapi`) breaks recursion by emitting a `$ref` to a *named*
-component. With no name registered it tries to inline the schema and recurses forever, dying inside
-`isNullableSchema`.
+Generation was verified end to end against the real app: **9 path items, 18 components, no error.**
+The `JsonValue` component no longer exists — the columns render as
+`{"type":"object","additionalProperties":{}}` inline, which is the honest description of what they
+now accept.
 
-Fix, already proven in isolation: give the recursive schema an `.openapi('JsonValue')` registration.
-Naming it both stops the recursion and emits a `JsonValue` component — which is exactly the component
-name the hand-written `server/openapi.json` already declares, so the generated document matches.
+### Two gaps that verification exposed
 
-The constraint that makes this awkward: `.openapi()` comes from a `ZodType.prototype` patch applied
-when `@hono/zod-openapi` loads, and **Zod 4 copies prototype methods onto each instance at
-construction**, so a schema built before that module loads never gains the method. `domain/model` is
-reached through `db/schema.ts` before the route layer in several entry points, so the recursive
-schema has to be *constructed* in the route layer to be nameable. `.shape` rebuilding (the technique
-`routes/clients/schemas.ts` uses for object schemas) does not apply to a `z.lazy`.
+**`/health` is missing from the generated document.** It is a plain `app.get()` in `app.ts`, not an
+`app.openapi()` route, so it contributes nothing. The hand-written spec declares it (with a
+`HealthResponse` component). Either declare it as a route in this slice or accept the operation count
+dropping from 12 to 11 — decide, do not let it vanish silently.
 
-Decide deliberately where the named recursive schema lives — a shared route-layer module is the
-obvious spot, since `ClientProfile` is the only current consumer but the pattern is not
-clients-specific. Rebuilding `ClientProfile` around it means restating its six JSON columns
-(`goals`, `body_composition`, `strength_loads`, `nutrition`, `swimming`, `schedule_preferences`),
-which is a duplication worth guarding with a test that the rebuilt shape still accepts a real profile.
+**Several component names the client depends on are not registered yet.** The generated document
+inlines them instead of emitting components. `client/src/api/types.ts` aliases all of these by name,
+so every one of them must be registered before slice 007 can compile:
+
+`DayType`, `ExerciseFeedback`, `ExerciseLog`, `PerformedSet`, `PlanDay`, `PlannedExercise`,
+`WeekDay`, `WeekStatus`
+
+They are all leaf schemas in `domain/model`, so the `z.object(X.shape).openapi('Name')` /
+`z.enum(CONST).openapi('Name')` treatment used elsewhere applies. Register them in the area schema
+file that owns them.
 
 ## What to build
 

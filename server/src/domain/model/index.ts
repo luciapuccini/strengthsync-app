@@ -70,18 +70,25 @@ export interface JsonObject {
 export interface JsonArray extends Array<JsonValue> {}
 export type JsonValue = string | number | boolean | null | JsonArray | JsonObject;
 
-const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
-  z.union([
-    z.string(),
-    z.number(),
-    z.boolean(),
-    z.null(),
-    z.array(jsonValueSchema),
-    z.record(z.string(), jsonValueSchema),
-  ]),
-);
-
-const jsonRecord = z.record(z.string(), jsonValueSchema);
+/**
+ * Free-form JSON columns: an object with string keys, values unvalidated.
+ *
+ * The runtime schema is deliberately NOT a recursive `z.lazy` union. That
+ * version described the value shape precisely, but a recursive schema cannot be
+ * rendered into OpenAPI without registering a named component to break the
+ * cycle — the generator otherwise overflows the stack — which would force this
+ * schema to be built in the route layer. The precision bought nothing: these
+ * columns hold coach notes and measurements that no code reads structurally.
+ *
+ * The static type stays `JsonValue` because a recursive *type* costs nothing
+ * and Cloudflare's `Serializable<T>` constraint on `step.do()` rejects
+ * `unknown`. The cast is the seam between the two: values are trusted to be
+ * JSON because the only writers are JSON request bodies and the JSON columns
+ * themselves. Tighten this if something starts depending on their contents.
+ */
+const jsonRecord = z.record(z.string(), z.unknown()) as unknown as z.ZodType<
+  Record<string, JsonValue>
+>;
 
 export const ClientProfileSchema = z.object({
   id: UuidSchema,
