@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
 
-import { RepoError, type RepoErrorKind } from '@strengthsync/db'
+import { RepoError, type RepoErrorKind } from '../db/index.ts'
 import type { ApiError } from '../domain/contracts/index.ts'
 
 const STATUS_BY_KIND: Record<RepoErrorKind, 400 | 404 | 409> = {

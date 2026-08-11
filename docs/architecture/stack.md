@@ -34,13 +34,12 @@ The Workers Free plan currently includes 100,000 requests per day and 10 ms CPU 
 
 ## Cloudflare D1
 
-D1 is the relational system of record for `Coach`, `Client`, `ClientProfile`, `Plan`, and `Week` described in [domain_model.md](./domain_model.md). `services/db` uses Drizzle ORM's D1 driver for its schema, migrations, typed queries, and repository layer.
+D1 is the relational system of record for `Coach`, `Client`, `ClientProfile`, `Plan`, and `Week` described in [domain_model.md](./domain_model.md). Drizzle ORM's D1 driver for its schema, migrations, typed queries, and repository layer. Is the best fit Workers-specific with D1.
 
-The D1 Free plan currently includes 5 million rows read/day, 100,000 rows written/day, and 5 GB total storage; per-database size is 500 MB and free-plan query access stops until the daily reset if an allowance is exceeded ([pricing](https://developers.cloudflare.com/d1/platform/pricing/), [limits](https://developers.cloudflare.com/d1/platform/limits/)).
 
 ### Workflow data access
 
-The MVP's workflow is a Cloudflare Workflow running **inside** `apps/api`. It receives the `DB` binding the same way the public API does and uses `createDb(this.env.DB)` to read and write D1 directly. There is no separate worker process, private tunnel, or machine-to-machine internal API.
+Cloudflare Workflow running **inside** `apps/api`. It receives the `DB` binding the same way the public API does and uses `createDb(this.env.DB)` to read and write D1 directly. 
 
 ```mermaid
 flowchart LR
@@ -58,11 +57,7 @@ flowchart LR
 - The browser never reaches D1 directly.
 - There is one data writer boundary: the Worker itself.
 
-This removed the Temporal-era two-process bridge (Node worker → `/internal/*` API). Retiring that bridge is part of the Cloudflare Workflows migration; `/internal/*` routes were removed entirely.
-
 ### Atomic writes
-
-D1 does not support standard `BEGIN`/`COMMIT` transactions. It does provide atomic `batch()` execution: if a statement in the batch fails, D1 rolls back the sequence ([D1 batch documentation](https://developers.cloudflare.com/d1/worker-api/d1-database/)).
 
 Use Drizzle's D1 `db.batch([...])` API for lifecycle commands that must be atomic, including archiving the old plan, activating a new plan, and creating week 1. Never use `db.transaction()` with D1.
 
@@ -70,33 +65,16 @@ Use Drizzle's D1 `db.batch([...])` API for lifecycle commands that must be atomi
 
 The MVP runs the weekly-turn workflow as a Cloudflare Worker Workflow inside `apps/api`, bound as `STRENGTHSYNC_WORKFLOW`. Durable execution is provided by the platform: each `step.do` records its output, steps re-run only after a real failure, and the instance resumes after a crash. See [workflows.md](./workflows.md) for the step model, the plan-turnover branch, and the retry policy.
 
-There is no local worker, Docker Compose project, Cloudflare Tunnel, or Temporal deployment to operate. `wrangler deploy` ships the workflow alongside the public API, so the workflow is available whenever the Worker is deployed.
+`wrangler deploy` ships the workflow alongside the public API, so the workflow is available whenever the Worker is deployed.
 
-Workflow-visible retries and failure policy live in the workflow definition (`apps/api/src/workflows/strengthsync-workflow.ts`) and in [workflows.md](./workflows.md) — not in a separate orchestration service.
+Workflow-visible retries and failure policy live in the workflow definition (`apps/api/src/workflows/strengthsync-workflow.ts`) and in [workflows.md](./workflows.md)
 
-### Why not Temporal
+## Evals and LLM observability: Braintrust (NEXT STEPS)
 
-The prior design ran two Temporal workflows (`apps/workflows`) on a local Node machine and paid Temporal Cloud credits. The Cloudflare Workflow consolidates those two processes into one in-Worker durable run on the Free plan; it also removes the local machine as a runtime dependency and the `$100/month` Temporal Cloud post-trial cost.
+Braintrust remains the target for workflow LLM evalualtion, but it is **not wired**.
 
-## Evals and LLM observability: Braintrust (deferred)
-
-Braintrust remains the target for workflow LLM traces and evals, but it is **not wired in
-this pass**.
-
-The prior `apps/workflows` implementation created a Braintrust-backed `LlmCallRecorder` and
-passed it to `services/agent`; every LLM call—including failures—emitted its trace before the
-activity returned. Both `apps/workflows` and `services/agent` were deleted in the Cloudflare
-Workflows migration. The in-Worker agent runtime (`apps/api/src/agent/agent-core.ts`) currently
-uses the Vercel AI SDK directly with no recorder. The recorder contract will be defined fresh
-inside `apps/api/src/agent` when tracing returns; see [evals.md](./evals.md).
-
-- Traces, prompts, outputs, latency, and evaluation scores will live in Braintrust, not D1.
-- D1 remains product data only; do not introduce `LlmCall` tables for the MVP.
-
-Braintrust Starter is a permanent $0 plan with 1 GB processed data/month, 10,000 scores/month,
-and 14-day retention ([pricing](https://www.braintrust.dev/pricing),
-[billing](https://www.braintrust.dev/docs/admin/billing)). This fits an MVP but requires a
-retention/overage review before production volume grows.
+- Traces, prompts, outputs, latency, and evaluation scores will live in Braintrust.
+- D1 remains product data only;
 
 Cloudflare covers platform-level Worker/D1 logs and operational metrics. Braintrust will cover
 LLM-specific traces and evals once reconnected; they are complementary.
@@ -109,18 +87,10 @@ GitHub Actions is the MVP pipeline:
 2. Main: build and deploy `apps/api` — including the `StrengthsyncWorkflow` entrypoint — and run schema migrations through the API/Worker deployment path.
 3. Workflow orchestration tests are deferred: the Cloudflare Workflow runtime is not exercised in the test suite.
 
-GitHub Free currently includes 2,000 minutes/month and 500 MB artifact storage for private repositories; public-repository Actions usage is free ([GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)). Keep artifacts small and configure an Actions spending limit.
-
 ## LLM: OpenAI API
 
-Keep OpenAI for the MVP because the current agent core already uses it. This is a paid dependency; do not model it as a reliable free tier. Set a project budget, model allowlist, and per-workflow token limit from day one.
+Keep OpenAI for the MVP because the current agent core already uses it. This is a paid dependency; do not model it as a reliable free tier.
+
+[TBD] Set a project budget, model allowlist, and per-workflow token limit.
 
 Do not opt into data-sharing token programs for client health/training context without an explicit privacy decision.
-
-## Cost reality
-
-The free-tier requirement is satisfied by Workers, Cloudflare Workflows, D1, Braintrust Starter, and GitHub Actions. It is **not** satisfied permanently by:
-
-- OpenAI API use.
-
-This stack is low-cost at MVP scale. The former Temporal Cloud `$100/month` minimum is gone; the remaining paid dependency is OpenAI API use, which should be budget-capped from day one.

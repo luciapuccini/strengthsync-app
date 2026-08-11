@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 
-import { createClient, getProfile, listClients, upsertProfile, type Db } from '@strengthsync/db'
+import { createClient, getProfile, listClients, upsertProfile, type Db } from '../db/index.ts'
 import {
   CreateClientInputSchema,
   UpdateClientProfileSchema,

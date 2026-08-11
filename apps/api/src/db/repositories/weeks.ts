@@ -1,20 +1,18 @@
 import { and, desc, eq } from "drizzle-orm";
 
-// TEMPORARY: domain now lives in apps/api/src/domain; these cross-app relative
-// imports go away once services/db moves there too (issues/012-move-db-into-api-app.md).
-import type { SaveDayLog, UpdateDayLog } from "../../../../apps/api/src/domain/contracts/index.ts";
+import type { SaveDayLog, UpdateDayLog } from "../../domain/contracts/index.ts";
 import type {
   Plan,
   Week,
   WeekDay,
   WeekStatus,
-} from "../../../../apps/api/src/domain/model/index.ts";
+} from "../../domain/model/index.ts";
 
 import { addDays, nowIso, todayIso } from "../dates.ts";
 import type { Db } from "../db.ts";
 import { RepoError } from "../errors.ts";
 import { weeks } from "../schema.ts";
-import type { NextWeekSchedule } from "../../../../apps/api/src/domain/coach/index.ts";
+import type { NextWeekSchedule } from "../../domain/coach/index.ts";
 
 /** Strip persistence-only columns (workflow_id) from a week row. */
 export function toWeek(row: typeof weeks.$inferSelect): Week {

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { getActivePlan, getPlan, listPlans, type Db } from "@strengthsync/db";
+import { getActivePlan, getPlan, listPlans, type Db } from "../db/index.ts";
 
 import { errorResponse } from "../lib/errors.ts";
 import { requireClient } from "../lib/lookup.ts";

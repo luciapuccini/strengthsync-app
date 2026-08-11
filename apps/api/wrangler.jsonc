@@ -23,7 +23,7 @@
       // `wrangler d1 create strengthsync` and paste the real database_id,
       // then apply migrations + seed (see package.json scripts).
       "database_id": "3d9980fa-e3f2-4a19-9dac-1c63db6132a6",
-      "migrations_dir": "../../services/db/drizzle"
+      "migrations_dir": "./db/drizzle"
     }
   ],
   "workflows": [

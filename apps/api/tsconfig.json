@@ -2,12 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2023"],
-    // "node" is needed only because tests import @strengthsync/db/testing
+    // "node" is needed only because tests import ./db/testing
     // (better-sqlite3, node:fs); the Worker bundle never includes it.
     "types": ["node"],
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src"],
-  "references": [{ "path": "../../services/db" }]
+  "include": ["src"]
 }

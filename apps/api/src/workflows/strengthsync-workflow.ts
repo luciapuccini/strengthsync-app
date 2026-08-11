@@ -8,11 +8,11 @@ import {
   getProfile,
   saveNextWeek,
   type Db,
-} from "@strengthsync/db";
+} from "../db/index.ts";
 
 import type { Env } from "../env";
 import { getAgentRuntime } from "../agent/agent-core";
-import { createDb } from "@strengthsync/db";
+import { createDb } from "../db/index.ts";
 import {
   ClientProfileSchema,
   PlanSchema,
@@ -26,7 +26,7 @@ import {
   WeekAnalysisSchema,
   type WeekAnalysis,
 } from "../domain/coach/index.ts";
-import { addDays } from "@strengthsync/db";
+import { addDays } from "../db/index.ts";
 
 type CompleteWeekParams = {
   clientId: string;

@@ -1,7 +1,6 @@
 /**
- * Public surface of @strengthsync/db: the Drizzle/D1 persistence adapter.
- * Exposes intent-level operations to apps/api — not raw tables.
- * See docs/architecture/monorepo_structure.md.
+ * The Drizzle/D1 persistence adapter: intent-level operations, not raw
+ * tables. See docs/architecture/monorepo_structure.md.
  */
 
 export { createDb, type Db } from "./db.ts";

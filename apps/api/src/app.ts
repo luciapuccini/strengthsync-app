@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { basicAuth } from "hono/basic-auth";
 import { HTTPException } from "hono/http-exception";
 
-import { RepoError, type Db } from "@strengthsync/db";
+import { RepoError, type Db } from "./db/index.ts";
 
 import { errorResponse, repoErrorResponse } from "./lib/errors.ts";
 import { clientRoutes } from "./routes/clients.ts";

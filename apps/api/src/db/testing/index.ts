@@ -12,10 +12,12 @@ import { FakeD1Database } from './fake-d1.ts'
 // the fake implements it structurally.
 import { drizzle } from 'drizzle-orm/d1'
 
-const PACKAGE_ROOT = new URL('../../', import.meta.url)
+// drizzle/ and seeds/ live in apps/api/db/, not next to the TypeScript
+// source (apps/api/src/db/) — see apps/api/db/drizzle.config.ts.
+const DB_ARTIFACTS_ROOT = new URL('../../../db/', import.meta.url)
 
 function readSqlDir(relativeDir: string): string[] {
-  const dirUrl = new URL(`${relativeDir}/`, PACKAGE_ROOT)
+  const dirUrl = new URL(`${relativeDir}/`, DB_ARTIFACTS_ROOT)
   return readdirSync(dirUrl)
     .filter((name) => name.endsWith('.sql'))
     .sort()
@@ -44,18 +46,15 @@ export function createMigratedSqlite(): BetterSqlite3.Database {
 
 /** Apply the seed data (single shared coach for the MVP). */
 export function applySeeds(sqlite: BetterSqlite3.Database): void {
-  const baseSeed = readFileSync(new URL('seeds/000_default_coach.sql', PACKAGE_ROOT), 'utf8')
+  const baseSeed = readFileSync(new URL('seeds/000_default_coach.sql', DB_ARTIFACTS_ROOT), 'utf8')
   applySqlFile(sqlite, baseSeed)
 }
 
-/**
- * A fully migrated + seeded in-memory `Db` backed by the fake D1.
- * Used by services/db and apps/api tests.
- */
+/** A fully migrated + seeded in-memory `Db` backed by the fake D1, for tests. */
 export function createTestDb(): Db {
   const sqlite = createMigratedSqlite()
   applySeeds(sqlite)
-  return drizzle(new FakeD1Database(sqlite), { schema }) as unknown as DrizzleD1Database<
+  return drizzle(new FakeD1Database(sqlite) as unknown as D1Database, { schema }) as unknown as DrizzleD1Database<
     typeof schema
   > as Db
 }

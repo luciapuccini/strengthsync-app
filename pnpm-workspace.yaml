@@ -1,7 +1,6 @@
 packages:
   - apps/*
   - packages/*
-  - services/*
 
 # Single-version policy: any external dependency shared by two or more
 # workspace packages must be declared here and referenced as `catalog:` in

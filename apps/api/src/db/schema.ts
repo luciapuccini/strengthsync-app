@@ -8,8 +8,6 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-// TEMPORARY: domain now lives in apps/api/src/domain; this cross-app relative
-// import goes away once services/db moves there too (issues/012-move-db-into-api-app.md).
 import {
   CLIENT_STATUSES,
   PLAN_STATUSES,
@@ -17,7 +15,7 @@ import {
   type JsonValue,
   type PlanDay,
   type WeekDay,
-} from "../../../apps/api/src/domain/model/index.ts";
+} from "../domain/model/index.ts";
 
 /**
  * Drizzle/D1 schema for the five core records: Coach → Client →

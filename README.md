@@ -1,8 +1,6 @@
 # StrengthSync
 
-StrengthSync helps a self-coached athlete — or a coach with a small caseload — turn weekly training results into an adapted next week, and at the end of a block into a new plan.
-
-MVP access is one shared HTTP Basic Auth coach credential. It is not per-user identity.
+StrengthSync helps a self-coached athlete — or a coach with a small caseload — turn weekly training results into an adapted next week, and at the end of a block into a new plan. Have your tracking app automatized your training progression.
 
 ## Tech stack
 
@@ -11,7 +9,7 @@ MVP access is one shared HTTP Basic Auth coach credential. It is not per-user id
 | Monorepo  | pnpm workspaces + Turborepo; TypeScript; Node 22.14                                |
 | UI        | React 19 + Vite + React Router + Zustand + Tailwind (`apps/ui`)                    |
 | API       | Hono on Cloudflare Workers; serves the SPA in production (`apps/api`)              |
-| DB        | Cloudflare D1 + Drizzle ORM (`services/db`)                                        |
+| DB        | Cloudflare D1 + Drizzle ORM (`apps/api/db`)                                        |
 | Workflows | Cloudflare Workflows, in-Worker with `apps/api` (`StrengthsyncWorkflow`)           |
 | LLM       | OpenAI via Vercel AI SDK                                                           |
 | Auth      | HTTP Basic Auth (shared coach credential)                                          |
@@ -46,8 +44,6 @@ Progression uses these constrained signals instead of free-form notes.
 When the week is done, tap **Complete week**.
 A Cloudflare Workflow freezes the log, analyzes it against the plan and profile, then creates the next adjusted week — or, at the end of the block, generates and activates a new plan.
 
-> On-demand plan generation from an empty state is temporarily unavailable; it will return later, rebuilt natively on Cloudflare Workflows.
-
 ## How to run
 
 ### Preconditions
@@ -71,18 +67,13 @@ pnpm install
 
 pnpm --filter @strengthsync/api db:migrate:local
 pnpm --filter @strengthsync/api db:seed:local
-# optional demo data:
-# pnpm --filter @strengthsync/api db:seed:demo:local
+pnpm --filter @strengthsync/api db:seed:demo:local
 ```
 
-There is no unified root `dev`. Run these side by side:
 
 ```bash
-pnpm --filter @strengthsync/api dev   # Worker on :8787
-pnpm --filter @strengthsync/ui dev    # Vite; proxies /api,/health → :8787
+pn turbo dev
 ```
-
-Deeper runbooks: [docs/operations/local_worker.md](docs/operations/local_worker.md), [docs/architecture/stack.md](docs/architecture/stack.md).
 
 ## Troubleshoot
 
@@ -96,5 +87,5 @@ Deeper runbooks: [docs/operations/local_worker.md](docs/operations/local_worker.
 
 ### Working with this repo
 
-_Local Cloudflare dashboard_
+**Local Cloudflare dashboard**
 http:/localhost:8787/cdn-cgi/explorer

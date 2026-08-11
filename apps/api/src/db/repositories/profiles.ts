@@ -1,9 +1,7 @@
 import { eq } from "drizzle-orm";
 
-// TEMPORARY: domain now lives in apps/api/src/domain; this cross-app relative
-// import goes away once services/db moves there too (issues/012-move-db-into-api-app.md).
-import type { UpdateClientProfile } from "../../../../apps/api/src/domain/contracts/index.ts";
-import type { ClientProfile } from "../../../../apps/api/src/domain/model/index.ts";
+import type { UpdateClientProfile } from "../../domain/contracts/index.ts";
+import type { ClientProfile } from "../../domain/model/index.ts";
 
 import { nowIso, todayIso } from "../dates.ts";
 import type { Db } from "../db.ts";

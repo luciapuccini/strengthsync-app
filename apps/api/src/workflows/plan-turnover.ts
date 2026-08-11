@@ -8,7 +8,7 @@ import {
   GeneratedPlanInputSchema,
   type GeneratedPlanInput,
 } from "../domain/contracts/index.ts";
-import { activateGeneratedPlanV2, listWeeksV2, type Db } from "@strengthsync/db";
+import { activateGeneratedPlanV2, listWeeksV2, type Db } from "../db/index.ts";
 
 import type { Env } from "../env";
 import { getAgentRuntime } from "../agent/agent-core";

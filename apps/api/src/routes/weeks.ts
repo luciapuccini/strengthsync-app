@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono'
 
-import { getCurrentWeek, getWeek, listWeeks, saveDay, updateDayLog, type Db } from '@strengthsync/db'
+import { getCurrentWeek, getWeek, listWeeks, saveDay, updateDayLog, type Db } from '../db/index.ts'
 import { SaveDayLogSchema, UpdateDayLogSchema } from '../domain/contracts/index.ts'
 import { WeekStatusSchema, type WeekStatus } from '../domain/model/index.ts'
 

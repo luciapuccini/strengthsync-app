@@ -1,7 +1,7 @@
 import type { Hono } from 'hono'
 
-import { activateGeneratedPlanV2, type Db } from '@strengthsync/db'
-import { createTestDb } from '@strengthsync/db/testing'
+import { activateGeneratedPlanV2, type Db } from './db/index.ts'
+import { createTestDb } from './db/testing/index.ts'
 import type { PlanDay, Week } from './domain/model/index.ts'
 
 import { createApp, type AppConfig } from './app.ts'

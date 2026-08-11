@@ -1,4 +1,4 @@
-import { createDb } from "@strengthsync/db";
+import { createDb } from "./db/index.ts";
 
 import { createApp } from "./app.ts";
 import type { Env } from "./env.ts";

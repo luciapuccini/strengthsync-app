@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 
-import { weeks } from '@strengthsync/db/schema'
-import { addDays, createTestDb, todayIso } from '@strengthsync/db/testing'
+import { weeks } from './db/schema.ts'
+import { addDays, createTestDb, todayIso } from './db/testing/index.ts'
 
 import {
   activateGeneratedPlanViaRepository,
