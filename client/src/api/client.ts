@@ -1,5 +1,5 @@
 import createOpenApiClient from "openapi-fetch";
-import type { paths } from "@strengthsync/shared";
+import type { paths } from "./openapi";
 
 import { ApiClientError, toApiError } from "./errors";
 import type {

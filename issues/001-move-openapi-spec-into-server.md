@@ -1,6 +1,6 @@
 # Move the OpenAPI spec into the server and delete the shared workspace
 
-**STATUS: TODO**
+**STATUS: DONE**
 
 ## Parent PRD
 
@@ -64,17 +64,27 @@ Rejected deliberately. `turbo.json:26` declares `@strengthsync/server#build` dep
 
 ## Acceptance criteria
 
-- [ ] `shared/` no longer exists and `pnpm-workspace.yaml` lists exactly `client` and `server`
-- [ ] `server/openapi.json` is byte-identical in content to the file that was in `shared/`
-- [ ] `pnpm gen:openapi` regenerates `client/src/api/openapi.d.ts` with a clean `git diff` (generation is reproducible)
-- [ ] `pnpm check:openapi` passes
-- [ ] `grep -rn "@strengthsync/shared" .` returns nothing outside `.claude/` and `pnpm-lock.yaml`
-- [ ] `pnpm install` produces a lockfile with no `@strengthsync/shared` entry
-- [ ] eslint's client boundary allows no workspace package, and linting the client still passes
-- [ ] CI's contract step invokes the root `check:openapi`
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` all pass from the root
-- [ ] `pnpm --filter @strengthsync/server build` (wrangler dry-run) still succeeds
-- [ ] `docs/architecture/api_contracts.md` names `server/openapi.json`, with no reference to `shared/` or `services/domain`
+- [x] `shared/` no longer exists and `pnpm-workspace.yaml` lists exactly `client` and `server`
+- [x] `server/openapi.json` is byte-identical in content to the file that was in `shared/` — git recorded it as a pure rename
+- [x] `pnpm gen:openapi` regenerates `client/src/api/openapi.d.ts` with a clean `git diff` (generation is reproducible)
+- [x] `pnpm check:openapi` passes
+- [x] `grep -rn "@strengthsync/shared" .` returns nothing outside `.claude/` and `pnpm-lock.yaml`
+- [x] `pnpm install` produces a lockfile with no `@strengthsync/shared` entry
+- [x] eslint's client boundary allows no workspace package, and linting the client still passes — verified via `eslint --print-config`
+- [x] CI's contract step invokes the root `check:openapi`
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test` all pass from the root (80 tests)
+- [x] `pnpm --filter @strengthsync/server build` (wrangler dry-run) still succeeds
+- [x] `docs/architecture/api_contracts.md` names `server/openapi.json`, with no reference to `shared/` or `services/domain`
+
+### Notes from implementation
+
+- The regenerated `client/src/api/openapi.d.ts` is byte-identical to the deleted `shared/openapi.d.ts`,
+  which confirms the move changed nothing about the contract itself.
+- `check:openapi` regenerates to `/tmp/strengthsync-openapi.d.ts` (was `/tmp/openapi.d.ts`) so the
+  scratch file cannot collide with an unrelated project's.
+- `pnpm build` runs clean, confirming no turbo cycle was introduced.
+- `docs/architecture/monorepo_structure.md`, which slice 008 expects to update, **does not exist**.
+  Adjust 008's checklist when it comes up.
 
 ## Blocked by
 

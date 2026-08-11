@@ -7,11 +7,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 // Import-boundary enforcement for the dependency graph 
 //  A package may only import the @strengthsync/* workspaces listed as `allowed` for its directory.
-const ALL_WORKSPACES = [
-  '@strengthsync/client',
-  '@strengthsync/server',
-  '@strengthsync/shared',
-]
+const ALL_WORKSPACES = ['@strengthsync/client', '@strengthsync/server']
 
 const BOUNDARY_MESSAGE =
   'Import-boundary violation'
@@ -73,15 +69,14 @@ export default defineConfig([
     files: ['client/src/shadcn/**/*.{ts,tsx}'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
-  // shared imports nothing from other workspaces.
-  // The generated declaration file is auto-generated and can be large.
+  // Generated from server/openapi.json by `pnpm gen:openapi`; large by nature.
   {
-    files: ['shared/openapi.d.ts'],
+    files: ['client/src/api/openapi.d.ts'],
     rules: { 'max-lines': 'off', 'max-lines-per-function': 'off' },
   },
-  boundary(['shared/**/*.ts'], []),
-  // client only knows HTTP contracts; never db or agent.
-  boundary(['client/**/*.{ts,tsx}'], ['@strengthsync/shared']),
+  // client owns its generated contract types locally, so it depends on no
+  // workspace package at all.
+  boundary(['client/**/*.{ts,tsx}'], []),
   // server owns domain + db as internal folders now, not workspace
   // packages; nothing outside server can reach them (no other workspace
   // depends on @strengthsync/server).

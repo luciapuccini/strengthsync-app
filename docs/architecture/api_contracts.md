@@ -2,7 +2,7 @@
 
 The browser speaks only to `server` on the Cloudflare origin. 
 
-This document defines the initial HTTP boundary. The machine-readable source of truth is `shared/openapi.json`; generated TypeScript types live in `shared/openapi.d.ts`. Server-side Zod DTOs are in `services/domain/contracts` in this document's original layout and are validated at the API boundary.
+This document defines the initial HTTP boundary. The machine-readable source of truth is `server/openapi.json`, which lives beside the Worker that implements it; TypeScript types are generated from it into `client/src/api/openapi.d.ts` by `pnpm gen:openapi` and committed. Server-side Zod DTOs live under `server/src/domain/` and are validated at the API boundary.
 
 ## Authentication and conventions
 
@@ -23,7 +23,7 @@ type ApiError = {
 ```
 
 ## Public API
-Refer to `shared/openapi.json` as souce of truth, and as such we need to keep it updated
+Refer to `server/openapi.json` as source of truth, and as such we need to keep it updated. `pnpm check:openapi` in CI only proves the committed client types match that document — it does not yet prove the document matches the server's routes.
 
 Workflow requests are asynchronous. The API Worker validates the shared Basic credential and starts a Cloudflare Workflow instance directly (the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`). 
 The route returns immediately and never waits for model output.[TODO]: The UI does not poll workflow status.

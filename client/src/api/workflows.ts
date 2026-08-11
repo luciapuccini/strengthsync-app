@@ -1,4 +1,4 @@
-import type { paths } from "@strengthsync/shared";
+import type { paths } from "./openapi";
 
 import { ApiClientError, toApiError } from "./errors";
 import { api } from "./client";

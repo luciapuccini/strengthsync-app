@@ -5,7 +5,7 @@ import { z } from "zod";
  *
  * This is deliberately NOT the wire contract. Its job is to reject corrupt or
  * garbage drafts and accept drafts the UI itself writes. The wire shape is
- * enforced by the server and typed on the client via @strengthsync/shared.
+ * enforced by the server and typed on the client via `api/openapi.d.ts`.
  */
 
 const UuidSchema = z.string().uuid();

@@ -53,6 +53,9 @@ importers:
       lefthook:
         specifier: 2.1.10
         version: 2.1.10
+      openapi-typescript:
+        specifier: ^7.13.0
+        version: 7.13.0(typescript@6.0.2)
       turbo:
         specifier: 'catalog:'
         version: 2.10.9
@@ -71,9 +74,6 @@ importers:
 
   client:
     dependencies:
-      '@strengthsync/shared':
-        specifier: workspace:*
-        version: link:../shared
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -172,15 +172,6 @@ importers:
       wrangler:
         specifier: 4.112.0
         version: 4.112.0
-
-  shared:
-    devDependencies:
-      openapi-typescript:
-        specifier: ^7.13.0
-        version: 7.13.0(typescript@6.0.2)
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
 
 packages:
 
