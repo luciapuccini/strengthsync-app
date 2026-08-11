@@ -66,7 +66,7 @@ for specifics, naming the Zod schemas as the origin.
 Also check for staleness introduced or exposed along the way:
 
 - [ ] `docs/architecture/api_contracts.md` — rewritten as above; the "Endpoints current state" audit table reflects the 12 surviving routes
-- [ ] **`api_contracts.md:11` claims `/wf/*` is protected by the shared Basic credential; `app.ts` applies `basicAuth` to `/api/*` only.** Pre-existing, found in slice 005. Decide which is wrong and fix that one — do not just delete the sentence
+- [x] ~~`api_contracts.md` claimed `/wf/*` is protected by the shared Basic credential; `app.ts` applies `basicAuth` to `/api/*` only.~~ Resolved out-of-band: the doc was corrected to state the actual behaviour (`/wf/*` unauthenticated, `/api/*` guarded only under `NODE_ENV=production`). Leaving the code as-is is a deliberate MVP call, not an oversight
 - [ ] `docs/architecture/monorepo_structure.md` — two packages, not three; referenced by a comment in `db/index.ts`
 - [ ] `README.md` — layout and commands still accurate
 - [ ] Any doc mentioning `services/domain`, `apps/api`, or `apps/ui` (pre-rename names)
