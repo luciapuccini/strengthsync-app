@@ -1,7 +1,18 @@
 import type { Context } from 'hono'
 
 import { RepoError, type RepoErrorKind } from '../db/index.ts'
-import type { ApiError } from '../domain/contracts/index.ts'
+
+/**
+ * The API's error body. Defined here, in the module that produces it, rather
+ * than imported: `lib/` sits below the routes and must not depend on them.
+ * `routes/shared.ts` carries the Zod schema that documents this same shape.
+ */
+export type ApiError = {
+  error: {
+    code: string
+    message: string
+  }
+}
 
 const STATUS_BY_KIND: Record<RepoErrorKind, 400 | 404 | 409> = {
   validation: 400,

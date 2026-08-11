@@ -1,0 +1,33 @@
+import { z } from '@hono/zod-openapi'
+
+/**
+ * Pieces every route area needs: the error envelope, the response-object
+ * boilerplate, and uuid path params.
+ *
+ * The runtime counterpart of `ApiErrorSchema` is the `ApiError` type in
+ * `lib/errors.ts`, which is what actually builds these bodies. The two are
+ * deliberately separate: `lib/` sits below the routes and must not import from
+ * them, and this schema exists to document the shape, not to produce it.
+ */
+
+export const ApiErrorSchema = z
+  .object({
+    error: z.object({
+      code: z.string(),
+      message: z.string(),
+    }),
+  })
+  .openapi('ApiError')
+
+export const json = <S>(description: string, schema: S) => ({
+  description,
+  content: { 'application/json': { schema } },
+})
+
+export const unauthorized = json('Missing or invalid credentials', ApiErrorSchema)
+export const invalidInput = json('Invalid input', ApiErrorSchema)
+export const notFound = json('Not found', ApiErrorSchema)
+
+export const uuidParam = (name: string) => z.uuid().openapi({ param: { name, in: 'path' } })
+
+export const ClientIdParamSchema = z.object({ clientId: uuidParam('clientId') })

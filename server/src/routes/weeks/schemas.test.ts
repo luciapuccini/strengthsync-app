@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  GeneratedPlanInputSchema,
-  SaveDayLogSchema,
-  UpdateDayLogSchema,
-} from './index'
+import { SaveDayLogSchema, UpdateDayLogSchema } from './schemas.ts'
+
+/**
+ * Relocated from the deleted domain contracts test. The
+ * cross-field rule has no JSON Schema representation, so nothing in the
+ * generated document proves it survives — only this does.
+ */
+
+const skippedWithSets = {
+  exercise_key: 'press_banca',
+  skipped: true,
+  feedback: null,
+  sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
+}
 
 describe('UpdateDayLogSchema', () => {
   it('accepts a day log with performed sets', () => {
@@ -29,14 +38,7 @@ describe('UpdateDayLogSchema', () => {
   it('rejects a skipped exercise with performed sets', () => {
     const result = UpdateDayLogSchema.safeParse({
       completed: false,
-      exercises: [
-        {
-          exercise_key: 'press_banca',
-          skipped: true,
-          feedback: null,
-          sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
-        },
-      ],
+      exercises: [skippedWithSets],
     })
 
     expect(result.success).toBe(false)
@@ -73,32 +75,8 @@ describe('SaveDayLogSchema', () => {
   })
 
   it('rejects a skipped exercise with performed sets', () => {
-    const result = SaveDayLogSchema.safeParse({
-      exercises: [
-        {
-          exercise_key: 'press_banca',
-          skipped: true,
-          feedback: null,
-          sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
-        },
-      ],
-    })
+    const result = SaveDayLogSchema.safeParse({ exercises: [skippedWithSets] })
 
     expect(result.success).toBe(false)
   })
 })
-
-describe('GeneratedPlanInputSchema', () => {
-  it('accepts a generated plan with null rationale', () => {
-    const result = GeneratedPlanInputSchema.safeParse({
-      label: 'Block 2',
-      total_weeks: 4,
-      week_template: [],
-      rationale: null,
-    })
-
-    expect(result.success).toBe(true)
-  })
-})
-
-

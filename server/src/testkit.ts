@@ -1,4 +1,4 @@
-import type { Hono } from 'hono'
+import type { OpenAPIHono } from '@hono/zod-openapi'
 
 import { activateGeneratedPlanV2, type Db } from './db/index.ts'
 import { createTestDb } from './db/testing/index.ts'
@@ -12,7 +12,7 @@ export function basicHeader(): string {
   return `Basic ${btoa(`${BASIC.username}:${BASIC.password}`)}`
 }
 
-export function createTestApp(overrides: Partial<AppConfig> = {}): Hono {
+export function createTestApp(overrides: Partial<AppConfig> = {}): OpenAPIHono {
   return createApp({
     db: createTestDb(),
     basicAuth: BASIC,
@@ -20,7 +20,7 @@ export function createTestApp(overrides: Partial<AppConfig> = {}): Hono {
   })
 }
 
-export async function createClientViaApi(app: Hono, displayName = 'Ana'): Promise<{ id: string }> {
+export async function createClientViaApi(app: OpenAPIHono, displayName = 'Ana'): Promise<{ id: string }> {
   const res = await app.request('/api/clients', {
     method: 'POST',
     headers: { authorization: basicHeader(), 'content-type': 'application/json' },
@@ -30,7 +30,7 @@ export async function createClientViaApi(app: Hono, displayName = 'Ana'): Promis
   return body.client
 }
 
-export async function upsertProfileViaApi(app: Hono, clientId: string): Promise<void> {
+export async function upsertProfileViaApi(app: OpenAPIHono, clientId: string): Promise<void> {
   await app.request(`/api/clients/${clientId}/profile`, {
     method: 'PUT',
     headers: { authorization: basicHeader(), 'content-type': 'application/json' },

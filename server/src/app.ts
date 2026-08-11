@@ -1,5 +1,4 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { Hono } from "hono";
 import { basicAuth } from "hono/basic-auth";
 import { HTTPException } from "hono/http-exception";
 
@@ -8,9 +7,9 @@ import { RepoError, type Db } from "./db/index.ts";
 import { errorResponse, repoErrorResponse } from "./lib/errors.ts";
 import { defaultHook } from "./lib/validation-error.ts";
 import { clientRoutes } from "./routes/clients/endpoints.ts";
-import { planRoutes } from "./routes/plans.ts";
+import { planRoutes } from "./routes/plans/endpoints.ts";
 import { weekRoutes } from "./routes/weeks/endpoints.ts";
-import { cfWorkflowRoutes } from "./routes/cf-api.ts";
+import { cfWorkflowRoutes } from "./routes/wf/endpoints.ts";
 
 export type AppConfig = {
   db: Db;
@@ -18,7 +17,8 @@ export type AppConfig = {
   basicAuth: { username: string; password: string };
 };
 
-export function createApp(config: AppConfig): Hono {
+/** The document builder in `scripts/gen-openapi.ts` needs the OpenAPIHono type. */
+export function createApp(config: AppConfig): OpenAPIHono {
   const app = new OpenAPIHono({ defaultHook });
 
   app.onError((err, c) => {

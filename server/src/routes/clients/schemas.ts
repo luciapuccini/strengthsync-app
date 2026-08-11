@@ -1,16 +1,16 @@
 import { z } from '@hono/zod-openapi'
 
 import {
-  CreateClientInputSchema,
-  UpdateClientProfileSchema,
-} from '../../domain/contracts/index.ts'
-import { ClientProfileSchema, ClientSchema } from '../../domain/model/index.ts'
+  ClientProfileSchema,
+  ClientProfileWriteSchema,
+  ClientSchema,
+} from '../../domain/model/index.ts'
 
 /**
  * HTTP shapes for the clients area, registered as OpenAPI components.
  *
  * The `.openapi('Name')` names are the contract: `client/src/api/types.ts`
- * aliases components by name, so these must match the components already in
+ * aliases components by name, so these must match the components in
  * `server/openapi.json` for slice 006's cutover to be a no-op.
  *
  * Why the schemas are rebuilt from `.shape` rather than named in place:
@@ -19,29 +19,18 @@ import { ClientProfileSchema, ClientSchema } from '../../domain/model/index.ts'
  * built before this module loads therefore never gains the method, and
  * `domain/model` is reached first through `db/schema.ts` in several entry
  * points. Rebuilding with the `z` exported here constructs after the patch.
- * Keep this in mind if an entity schema ever grows an object-level refinement —
- * `.shape` would drop it. DTOs stop needing this in slice 005, when they are
- * defined in this file rather than imported.
+ *
+ * `.shape` rebuilding is only safe for schemas with no object-level
+ * refinement — it silently drops one. None of these have any; the day-log
+ * schemas in `routes/weeks/schemas.ts` do, and are built differently.
  */
 
-export const ApiErrorSchema = z
-  .object({
-    error: z.object({
-      code: z.string(),
-      message: z.string(),
-    }),
-  })
-  .openapi('ApiError')
-
-export const ClientIdParamSchema = z.object({
-  clientId: z.uuid().openapi({ param: { name: 'clientId', in: 'path' } }),
-})
-
-export const CreateClientInput = z
-  .object(CreateClientInputSchema.shape)
+export const CreateClientInputSchema = z
+  .object({ display_name: z.string().min(1) })
   .openapi('CreateClientInput')
-export const UpdateClientProfile = z
-  .object(UpdateClientProfileSchema.shape)
+
+export const UpdateClientProfileSchema = z
+  .object(ClientProfileWriteSchema.shape)
   .openapi('UpdateClientProfile')
 
 const Client = z.object(ClientSchema.shape).openapi('Client')

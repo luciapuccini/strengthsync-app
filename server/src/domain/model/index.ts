@@ -101,6 +101,14 @@ export const ClientProfileSchema = z.object({
 });
 export type ClientProfile = z.infer<typeof ClientProfileSchema>;
 
+/** Editable subset of a profile: everything the caller owns. */
+export const ClientProfileWriteSchema = ClientProfileSchema.omit({
+  id: true,
+  client_id: true,
+  updated_at: true,
+});
+export type ClientProfileWrite = z.infer<typeof ClientProfileWriteSchema>;
+
 export const PlannedExerciseSchema = z.object({
   /** Stable history key, e.g. `press_banca`. */
   exercise_key: z.string().min(1),
@@ -170,6 +178,31 @@ export const WeekDaySchema = z.object({
   exercises: z.array(ExerciseLogSchema),
 });
 export type WeekDay = z.infer<typeof WeekDaySchema>;
+
+/**
+ * One exercise as written by the athlete. Narrower than `ExerciseLog`: the
+ * name and prescription come from the stored week, not from the writer.
+ */
+export const DayExerciseLogSchema = z.object({
+  exercise_key: z.string().min(1),
+  skipped: z.boolean(),
+  feedback: ExerciseFeedbackSchema.nullable(),
+  sets: z.array(PerformedSetSchema),
+});
+export type DayExerciseLog = z.infer<typeof DayExerciseLogSchema>;
+
+/**
+ * Write shape for one day of a week's schedule. The cross-field rule that a
+ * skipped exercise carries no sets is enforced at the API boundary, in
+ * `routes/weeks/schemas.ts`.
+ */
+export const DayLogPatchSchema = z.object({
+  completed: z.boolean(),
+  exercises: z.array(DayExerciseLogSchema),
+});
+export type DayLogPatch = z.infer<typeof DayLogPatchSchema>;
+/** Athlete save: the server decides `completed`. */
+export type DayLogSave = Pick<DayLogPatch, "exercises">;
 
 export const WeekSchema = z.object({
   id: UuidSchema,

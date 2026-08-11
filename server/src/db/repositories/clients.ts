@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 
-import type { CreateClientInput } from "../../domain/contracts/index.ts";
 import type { Client } from "../../domain/model/index.ts";
 
 import { nowIso } from "../dates.ts";
@@ -30,7 +29,7 @@ export async function getClient(
  */
 export async function createClient(
   db: Db,
-  input: CreateClientInput,
+  input: Pick<Client, "display_name">,
 ): Promise<Client> {
   const coach = (await db.select().from(coaches).limit(1))[0];
   if (!coach) {

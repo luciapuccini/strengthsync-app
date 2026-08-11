@@ -1,6 +1,6 @@
 # Convert plans + workflow routes, delete the manual validators and domain/contracts
 
-**STATUS: TODO**
+**STATUS: DONE**
 
 ## Parent PRD
 
@@ -80,17 +80,50 @@ Explicitly NOT in this slice: generating the document (slice 006) or regeneratin
 
 ## Acceptance criteria
 
-- [ ] `server/src/routes/` contains only the four area folders — no loose route files remain
-- [ ] `server/src/lib/validate.ts` is deleted and nothing imports `parseBody`, `parseUuidParam`, or `isResponse`
-- [ ] `server/src/domain/contracts/` is deleted entirely
-- [ ] `grep -rn "domain/contracts" server/` returns nothing
-- [ ] No file under `server/src/db/` imports from `server/src/routes/` — the eslint boundary passes unchanged
-- [ ] `POST /wf/complete-week` with a missing or non-uuid `clientId` returns 400; with a valid body it still starts a workflow instance and returns the instance id
-- [ ] The skipped-exercise-with-sets assertion still exists, relocated to the weeks area
-- [ ] The `ApiError` placement decision is recorded in the commit message
-- [ ] `app.public.test.ts` passes with no relaxed assertions
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` pass from the root
-- [ ] `pnpm --filter @strengthsync/server build` still succeeds
+- [x] `server/src/routes/` contains only the four area folders — plus `shared.ts`, see below
+- [x] `server/src/lib/validate.ts` is deleted and nothing imports `parseBody`, `parseUuidParam`, or `isResponse`
+- [x] `server/src/domain/contracts/` is deleted entirely
+- [x] `grep -rn "domain/contracts" server/src/` returns nothing
+- [x] No file under `server/src/db/` imports from `server/src/routes/` — the eslint boundary passes unchanged
+- [x] `POST /wf/complete-week` with a missing or non-uuid `clientId` returns 400; with a valid body it still starts a workflow instance and returns the instance id — both pinned by tests against a stub binding
+- [x] The skipped-exercise-with-sets assertion still exists, relocated to `routes/weeks/schemas.test.ts`
+- [x] The `ApiError` placement decision is recorded in the commit message
+- [x] `app.public.test.ts` passes with no relaxed assertions
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test` pass from the root (53 server + 37 client)
+- [x] `pnpm --filter @strengthsync/server build` still succeeds
+
+### Notes from implementation
+
+**Deviation — workflow contracts went to `domain/workflow.ts`, not `workflows/contracts.ts`.** The
+issue's plan would not have linted: `eslint.config.js:100-104` forbids `db/**` from importing
+`**/workflows/**`, and `db/repositories/plans.ts` consumes `ActivateGeneratedPlanCommand`. Placing
+them under `domain/` satisfies the boundary and still achieves user story 13 — they are no longer
+mixed with HTTP DTOs. The module says why, so nobody "fixes" the location later.
+
+**`ApiError` decision: the type is defined in `lib/errors.ts`,** the module that actually builds the
+bodies, and `routes/shared.ts` carries the Zod `ApiErrorSchema` that documents the same shape. No
+`lib/` → `routes/` import was created and no third module was invented. The two are different
+artifacts — one emits, one documents — so the small overlap is deliberate.
+
+**New `routes/shared.ts`.** Slice 004 had the weeks area importing `ApiErrorSchema` from
+`routes/clients/schemas.ts`, a cross-area dependency that would only get worse with four areas.
+`shared.ts` now holds `ApiErrorSchema`, the `json()` response helper, the three standard error
+responses, and `uuidParam()` / `ClientIdParamSchema`.
+
+**`lib/lookup.ts` was deleted, not kept.** The issue expected `requireClient` to survive, but the
+typed-response constraint from slice 003 means handlers cannot return a pre-built `Response`, so
+every area now builds its `client_not_found` 404 inline. Nothing imported the module any more.
+Behaviour is unchanged and still pinned by slice 002's `client_not_found` test.
+
+**Repository decoupling used domain write shapes.** `domain/model` gained `ClientProfileWriteSchema`,
+`DayExerciseLogSchema`, and `DayLogPatchSchema`/`DayLogSave` — the vocabulary of a write, as opposed
+to the HTTP body that carries it. The route schemas declare their own field lists and are kept
+honest by assignment: passing a parsed body to a repository is what typechecks the two into
+agreement.
+
+**Pre-existing, not fixed:** `docs/architecture/api_contracts.md:11` says `/wf/*` is protected by the
+shared Basic credential, but `app.ts` applies `basicAuth` to `/api/*` only. Unchanged by this slice —
+flagged for the documentation pass in slice 008, which should either correct the doc or the code.
 
 ## Blocked by
 

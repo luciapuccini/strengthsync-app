@@ -8,28 +8,25 @@ import {
   updateDayLog,
   type Db,
 } from '../../db/index.ts'
-import { SaveDayLogSchema, UpdateDayLogSchema } from '../../domain/contracts/index.ts'
 import type { WeekStatus } from '../../domain/model/index.ts'
 
 import { defaultHook } from '../../lib/validation-error.ts'
-import { ApiErrorSchema } from '../clients/schemas.ts'
-
 import {
   ClientIdParamSchema,
+  invalidInput,
+  json,
+  notFound,
+  unauthorized,
+} from '../shared.ts'
+
+import {
   DayParamsSchema,
+  SaveDayLogSchema,
+  UpdateDayLogSchema,
   WeekListQuerySchema,
   WeekListResponseSchema,
   WeekResponseSchema,
 } from './schemas.ts'
-
-const json = <S>(description: string, schema: S) => ({
-  description,
-  content: { 'application/json': { schema } },
-})
-
-const unauthorized = json('Missing or invalid credentials', ApiErrorSchema)
-const invalidInput = json('Invalid input', ApiErrorSchema)
-const notFound = json('Not found', ApiErrorSchema)
 
 const getCurrentWeekRoute = createRoute({
   method: 'get',

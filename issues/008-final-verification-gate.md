@@ -38,9 +38,10 @@ server/
   src/
     domain/model/              entity vocabulary — db + workflows + coach + routes
     domain/coach/
+    domain/workflow.ts         plan-generation shapes (NOT workflows/contracts.ts — see 005)
+    routes/shared.ts           ApiError schema + response helpers
     routes/{clients,plans,weeks,wf}/{endpoints,schemas}.ts
-    workflows/contracts.ts
-    lib/                       no validate.ts
+    lib/                       errors.ts + validation-error.ts only
 client/
   src/api/openapi.d.ts         generated from server/openapi.json, committed
 ```
@@ -51,6 +52,7 @@ Greps that must come back empty across the repo:
 - [ ] `domain/contracts`
 - [ ] `parseBody`, `parseUuidParam`, `isResponse`
 - [ ] `parseWeekFilter`
+- [ ] `requireClient`, `lib/lookup`
 - [ ] `shared/openapi`
 
 ### Documentation
@@ -64,6 +66,7 @@ for specifics, naming the Zod schemas as the origin.
 Also check for staleness introduced or exposed along the way:
 
 - [ ] `docs/architecture/api_contracts.md` — rewritten as above; the "Endpoints current state" audit table reflects the 12 surviving routes
+- [ ] **`api_contracts.md:11` claims `/wf/*` is protected by the shared Basic credential; `app.ts` applies `basicAuth` to `/api/*` only.** Pre-existing, found in slice 005. Decide which is wrong and fix that one — do not just delete the sentence
 - [ ] `docs/architecture/monorepo_structure.md` — two packages, not three; referenced by a comment in `db/index.ts`
 - [ ] `README.md` — layout and commands still accurate
 - [ ] Any doc mentioning `services/domain`, `apps/api`, or `apps/ui` (pre-rename names)

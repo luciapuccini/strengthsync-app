@@ -10,25 +10,21 @@ import {
 } from '../../db/index.ts'
 
 import { defaultHook } from '../../lib/validation-error.ts'
+import {
+  ClientIdParamSchema,
+  invalidInput,
+  json,
+  notFound,
+  unauthorized,
+} from '../shared.ts'
 
 import {
-  ApiErrorSchema,
-  ClientIdParamSchema,
   ClientListResponseSchema,
   ClientProfileResponseSchema,
   ClientResponseSchema,
-  CreateClientInput,
-  UpdateClientProfile,
+  CreateClientInputSchema,
+  UpdateClientProfileSchema,
 } from './schemas.ts'
-
-const json = <S>(description: string, schema: S) => ({
-  description,
-  content: { 'application/json': { schema } },
-})
-
-const unauthorized = json('Missing or invalid credentials', ApiErrorSchema)
-const invalidInput = json('Invalid input', ApiErrorSchema)
-const notFound = json('Not found', ApiErrorSchema)
 
 const listClientsRoute = createRoute({
   method: 'get',
@@ -41,7 +37,7 @@ const createClientRoute = createRoute({
   method: 'post',
   path: '/clients',
   summary: 'Create a client',
-  request: { body: { content: { 'application/json': { schema: CreateClientInput } } } },
+  request: { body: { content: { 'application/json': { schema: CreateClientInputSchema } } } },
   responses: {
     201: json('Client created', ClientResponseSchema),
     400: invalidInput,
@@ -68,7 +64,7 @@ const putClientProfileRoute = createRoute({
   summary: "Create or replace a client's profile",
   request: {
     params: ClientIdParamSchema,
-    body: { content: { 'application/json': { schema: UpdateClientProfile } } },
+    body: { content: { 'application/json': { schema: UpdateClientProfileSchema } } },
   },
   responses: {
     200: json('Profile saved', ClientProfileResponseSchema),

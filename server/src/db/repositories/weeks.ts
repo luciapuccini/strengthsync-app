@@ -1,7 +1,8 @@
 import { and, desc, eq } from "drizzle-orm";
 
-import type { SaveDayLog, UpdateDayLog } from "../../domain/contracts/index.ts";
 import type {
+  DayLogPatch,
+  DayLogSave,
   Plan,
   Week,
   WeekDay,
@@ -135,7 +136,7 @@ export async function updateDayLog(
   clientId: string,
   weekId: string,
   dayIndex: number,
-  input: UpdateDayLog,
+  input: DayLogPatch,
 ): Promise<Week> {
   const week = await getWeek(db, clientId, weekId);
 
@@ -219,7 +220,7 @@ export async function saveDay(
   clientId: string,
   weekId: string,
   dayIndex: number,
-  input: SaveDayLog,
+  input: DayLogSave,
 ): Promise<Week> {
   return updateDayLog(db, clientId, weekId, dayIndex, {
     completed: true,

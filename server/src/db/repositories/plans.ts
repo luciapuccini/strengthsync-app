@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 
-import type { ActivateGeneratedPlanCommand } from "../../domain/contracts/index.ts";
+import type { ActivateGeneratedPlanCommand } from "../../domain/workflow.ts";
 import type { Plan, Week } from "../../domain/model/index.ts";
 
 import { addDays, nowIso, startOfISOWeek, todayIso } from "../dates.ts";

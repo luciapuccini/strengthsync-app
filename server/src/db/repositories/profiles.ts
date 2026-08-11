@@ -1,7 +1,9 @@
 import { eq } from "drizzle-orm";
 
-import type { UpdateClientProfile } from "../../domain/contracts/index.ts";
-import type { ClientProfile } from "../../domain/model/index.ts";
+import type {
+  ClientProfile,
+  ClientProfileWrite,
+} from "../../domain/model/index.ts";
 
 import { nowIso, todayIso } from "../dates.ts";
 import type { Db } from "../db.ts";
@@ -26,7 +28,7 @@ export async function getProfile(
 export async function upsertProfile(
   db: Db,
   clientId: string,
-  update: UpdateClientProfile,
+  update: ClientProfileWrite,
 ): Promise<ClientProfile> {
   const now = nowIso();
   const snapshotDate = update.snapshot_date ?? todayIso();

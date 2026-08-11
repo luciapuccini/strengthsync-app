@@ -1,4 +1,5 @@
 import type { Hook } from '@hono/zod-openapi'
+import type { Context, Env } from 'hono'
 import type { BlankEnv } from 'hono/types'
 import type { core } from 'zod'
 
@@ -40,13 +41,22 @@ export function validationFailure(
   }
 }
 
+/** What a validator hands the hook. Independent of the app's Env. */
+type HookResult = Parameters<Hook<unknown, BlankEnv, string, unknown>>[0]
+
 /**
  * The single validation hook. Every `OpenAPIHono` instance is constructed with
  * it, so every declared request part — params, query, body — fails into the
  * same envelope regardless of which area declared the route.
+ *
+ * Generic in `E` so the `wf` area, which is typed with the Worker bindings, can
+ * use the same hook as the areas that are not.
  */
-export const defaultHook: Hook<unknown, BlankEnv, string, unknown> = (result, c) => {
-  if (result.success) return
+export function defaultHook<E extends Env>(
+  result: HookResult,
+  c: Context<E>,
+): Response | undefined {
+  if (result.success) return undefined
   const { status, code, message } = validationFailure(result.error, result.target)
   return errorResponse(c, status, code, message)
 }

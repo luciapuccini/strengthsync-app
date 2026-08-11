@@ -7,7 +7,7 @@ import {
 import {
   GeneratedPlanInputSchema,
   type GeneratedPlanInput,
-} from "../domain/contracts/index.ts";
+} from "../domain/workflow.ts";
 import { activateGeneratedPlanV2, listWeeksV2, type Db } from "../db/index.ts";
 
 import type { Env } from "../env";

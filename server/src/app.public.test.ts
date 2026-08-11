@@ -267,6 +267,45 @@ describe('day log writes', () => {
   })
 })
 
+describe('workflow trigger', () => {
+  const stubEnv = {
+    STRENGTHSYNC_WORKFLOW: {
+      create: async ({ params }: { params: { clientId: string } }) => ({
+        id: `instance-for-${params.clientId}`,
+        status: async () => ({ status: 'queued' }),
+      }),
+    },
+  }
+
+  const post = (body: unknown) =>
+    createTestApp().request(
+      '/wf/complete-week',
+      {
+        method: 'POST',
+        headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+      stubEnv,
+    )
+
+  it('starts a workflow instance for a valid clientId', async () => {
+    const res = await post({ clientId: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d' })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { instanceId: string }
+    expect(body.instanceId).toBe('instance-for-1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d')
+  })
+
+  it('rejects a missing or non-uuid clientId with 400', async () => {
+    // Previously a bare req.json<{clientId: string}>() cast: both of these
+    // reached the workflow binding unchecked.
+    for (const body of [{}, { clientId: 'not-a-uuid' }]) {
+      const res = await post(body)
+      expect(res.status, JSON.stringify(body)).toBe(400)
+      expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_input')
+    }
+  })
+})
+
 describe('day save', () => {
   it('saves a day via POST and always marks it completed', async () => {
     const db = createTestDb()
