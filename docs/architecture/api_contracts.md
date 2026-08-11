@@ -31,13 +31,15 @@ The route returns immediately and never waits for model output.[TODO]: The UI do
 
 ## Endpoints current state
 
-Audited 2026-08-11 against UI callers (`client/src/api/client.ts`, `workflows.ts`) and HTTP-level tests (`server/src/app.public.test.ts`). Not all 15 routes in `openapi.json` currently have a product consumer:
+Audited 2026-08-11 against UI callers (`client/src/api/client.ts`, `workflows.ts`) and HTTP-level tests (`server/src/app.public.test.ts`). The audit found three routes with no product consumer; all three were cut, taking the surface from 15 operations to 12:
 
-| Route | UI caller | HTTP test | Verdict |
+| Route | UI caller | HTTP test | Outcome |
 | --- | --- | --- | --- |
-| `GET /api/clients/{clientId}` | none | yes | Soft cut candidate — no product caller, but removing it means dropping its test too |
-| `GET /api/clients/{clientId}/plans` | none | none | Cut candidate — fully dead: no UI caller, no HTTP test, no caller beyond direct repository unit tests |
-| `GET /api/clients/{clientId}/weeks/{weekId}` | none | none | Cut candidate — same story as the plans list |
+| `GET /api/clients/{clientId}` | none | yes | **Cut.** Its malformed-uuid and unknown-client assertions were retargeted rather than dropped |
+| `GET /api/clients/{clientId}/plans` | none | none | **Cut.** Fully dead: no UI caller, no HTTP test |
+| `GET /api/clients/{clientId}/weeks/{weekId}` | none | none | **Cut.** Same story as the plans list |
+
+The repository functions behind them (`getClient`, `listPlans`, `getWeek`) were kept — they still back `requireClient`, plan activation, and `updateDayLog` respectively. This was a reduction of HTTP surface, not of persistence capability. `app.public.test.ts` pins that the three paths are no longer routed.
 
 Also flagged, not a route change:
 

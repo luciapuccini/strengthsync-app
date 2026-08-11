@@ -61,32 +61,32 @@ describe('health + auth', () => {
 })
 
 describe('clients + profile', () => {
-  it('creates, lists, and fetches a client', async () => {
+  it('creates and lists clients', async () => {
     const app = createTestApp()
-    const client = await createClientViaApi(app)
+    await createClientViaApi(app)
 
     const list = await app.request('/api/clients', { headers: { authorization: basicHeader() } })
     expect(list.status).toBe(200)
     expect(((await list.json()) as { clients: unknown[] }).clients).toHaveLength(1)
-
-    const one = await app.request(`/api/clients/${client.id}`, {
-      headers: { authorization: basicHeader() },
-    })
-    expect(one.status).toBe(200)
   })
 
-  it('returns 404 for an unknown client and 400 for a malformed uuid', async () => {
+  it('returns 400 invalid_id for a malformed client uuid', async () => {
     const app = createTestApp()
-    const missing = await app.request('/api/clients/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', {
+    const res = await app.request('/api/clients/not-a-uuid/profile', {
       headers: { authorization: basicHeader() },
     })
-    expect(missing.status).toBe(404)
+    expect(res.status).toBe(400)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_id')
+  })
 
-    const malformed = await app.request('/api/clients/not-a-uuid', {
-      headers: { authorization: basicHeader() },
-    })
-    expect(malformed.status).toBe(400)
-    expect(((await malformed.json()) as { error: { code: string } }).error.code).toBe('invalid_id')
+  it('returns 404 client_not_found for a well-formed id that matches no client', async () => {
+    const app = createTestApp()
+    const res = await app.request(
+      '/api/clients/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/weeks',
+      { headers: { authorization: basicHeader() } },
+    )
+    expect(res.status).toBe(404)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('client_not_found')
   })
 
   it('rejects an invalid create body with 400', async () => {
@@ -112,6 +112,26 @@ describe('clients + profile', () => {
     const body = (await res.json()) as { profile: { age: number; client_id: string } }
     expect(body.profile.age).toBe(34)
     expect(body.profile.client_id).toBe(client.id)
+  })
+})
+
+describe('removed endpoints', () => {
+  // Cut in issues/002: no UI caller and no product need. Pinned so a future
+  // route definition cannot quietly reintroduce them alongside the contract.
+  it('no longer routes the three endpoints cut from the public surface', async () => {
+    const db = createTestDb()
+    const app = createTestApp({ db })
+    const client = await createClientViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-cut')
+
+    for (const path of [
+      `/api/clients/${client.id}`,
+      `/api/clients/${client.id}/plans`,
+      `/api/clients/${client.id}/weeks/${first_week.id}`,
+    ]) {
+      const res = await app.request(path, { headers: { authorization: basicHeader() } })
+      expect(res.status, `${path} should not be routed`).toBe(404)
+    }
   })
 })
 

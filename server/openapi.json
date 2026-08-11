@@ -89,35 +89,6 @@
         }
       }
     },
-    "/api/clients/{clientId}": {
-      "get": {
-        "operationId": "getClient",
-        "summary": "Get a single client",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ClientId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Client found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
     "/api/clients/{clientId}/profile": {
       "get": {
         "operationId": "getClientProfile",
@@ -177,35 +148,6 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
-    "/api/clients/{clientId}/plans": {
-      "get": {
-        "operationId": "listPlans",
-        "summary": "List plans for a client",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ClientId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Plans found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlanListResponse"
-                }
-              }
-            }
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -339,38 +281,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WeekListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFound"
-          }
-        }
-      }
-    },
-    "/api/clients/{clientId}/weeks/{weekId}": {
-      "get": {
-        "operationId": "getWeek",
-        "summary": "Get a week by id",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ClientId"
-          },
-          {
-            "$ref": "#/components/parameters/WeekId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Week found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WeekResponse"
                 }
               }
             }
@@ -627,18 +537,6 @@
           { "type": "array", "items": { "$ref": "#/components/schemas/JsonValue" } },
           { "type": "object", "additionalProperties": { "$ref": "#/components/schemas/JsonValue" } }
         ]
-      },
-      "Coach": {
-        "type": "object",
-        "required": ["id", "display_name", "auth_subject_id", "created_at", "updated_at"],
-        "additionalProperties": false,
-        "properties": {
-          "id": { "$ref": "#/components/schemas/Uuid" },
-          "display_name": { "type": "string", "minLength": 1 },
-          "auth_subject_id": { "type": ["string", "null"] },
-          "created_at": { "$ref": "#/components/schemas/ISODateTime" },
-          "updated_at": { "$ref": "#/components/schemas/ISODateTime" }
-        }
       },
       "Client": {
         "type": "object",
@@ -906,14 +804,6 @@
         "additionalProperties": false,
         "properties": {
           "profile": { "$ref": "#/components/schemas/ClientProfile" }
-        }
-      },
-      "PlanListResponse": {
-        "type": "object",
-        "required": ["plans"],
-        "additionalProperties": false,
-        "properties": {
-          "plans": { "type": "array", "items": { "$ref": "#/components/schemas/Plan" } }
         }
       },
       "PlanResponse": {

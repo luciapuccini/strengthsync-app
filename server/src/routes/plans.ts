@@ -1,9 +1,8 @@
 import { Hono } from "hono";
 
-import { getActivePlan, getPlan, listPlans, type Db } from "../db/index.ts";
+import { getActivePlan, getPlan, type Db } from "../db/index.ts";
 
 import { errorResponse } from "../lib/errors.ts";
-import { requireClient } from "../lib/lookup.ts";
 import { isResponse, parseUuidParam } from "../lib/validate.ts";
 
 /**
@@ -13,14 +12,6 @@ import { isResponse, parseUuidParam } from "../lib/validate.ts";
  */
 export function planRoutes(db: Db): Hono {
   const app = new Hono();
-
-  app.get("/clients/:clientId/plans", async (c) => {
-    const clientId = parseUuidParam(c, c.req.param("clientId"), "clientId");
-    if (isResponse(clientId)) return clientId;
-    const client = await requireClient(db, c, clientId);
-    if (isResponse(client)) return client;
-    return c.json({ plans: await listPlans(db, clientId) });
-  });
 
   app.get("/clients/:clientId/plans/active", async (c) => {
     const clientId = parseUuidParam(c, c.req.param("clientId"), "clientId");

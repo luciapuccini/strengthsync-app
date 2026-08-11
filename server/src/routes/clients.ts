@@ -27,14 +27,6 @@ export function clientRoutes(db: Db): Hono {
     }
   })
 
-  app.get('/clients/:clientId', async (c) => {
-    const clientId = parseUuidParam(c, c.req.param('clientId'), 'clientId')
-    if (isResponse(clientId)) return clientId
-    const client = await requireClient(db, c, clientId)
-    if (isResponse(client)) return client
-    return c.json({ client })
-  })
-
   app.get('/clients/:clientId/profile', async (c) => {
     const clientId = parseUuidParam(c, c.req.param('clientId'), 'clientId')
     if (isResponse(clientId)) return clientId

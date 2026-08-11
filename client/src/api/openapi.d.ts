@@ -39,23 +39,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/clients/{clientId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a single client */
-        get: operations["getClient"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/clients/{clientId}/profile": {
         parameters: {
             query?: never;
@@ -67,23 +50,6 @@ export interface paths {
         get: operations["getClientProfile"];
         /** Update a client's profile */
         put: operations["updateClientProfile"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/clients/{clientId}/plans": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List plans for a client */
-        get: operations["listPlans"];
-        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -151,23 +117,6 @@ export interface paths {
         };
         /** List weeks for a client */
         get: operations["listWeeks"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/clients/{clientId}/weeks/{weekId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a week by id */
-        get: operations["getWeek"];
         put?: never;
         post?: never;
         delete?: never;
@@ -258,13 +207,6 @@ export interface components {
         ExerciseFeedback: "easy" | "hard" | "heavy" | "light";
         JsonValue: string | number | boolean | null | components["schemas"]["JsonValue"][] | {
             [key: string]: components["schemas"]["JsonValue"];
-        };
-        Coach: {
-            id: components["schemas"]["Uuid"];
-            display_name: string;
-            auth_subject_id: string | null;
-            created_at: components["schemas"]["ISODateTime"];
-            updated_at: components["schemas"]["ISODateTime"];
         };
         Client: {
             id: components["schemas"]["Uuid"];
@@ -417,9 +359,6 @@ export interface components {
         ClientProfileResponse: {
             profile: components["schemas"]["ClientProfile"];
         };
-        PlanListResponse: {
-            plans: components["schemas"]["Plan"][];
-        };
         PlanResponse: {
             plan: components["schemas"]["Plan"];
         };
@@ -538,30 +477,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
         };
     };
-    getClient: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                clientId: components["parameters"]["ClientId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Client found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClientResponse"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
     getClientProfile: {
         parameters: {
             query?: never;
@@ -611,30 +526,6 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    listPlans: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                clientId: components["parameters"]["ClientId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Plans found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PlanListResponse"];
-                };
-            };
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
         };
@@ -733,31 +624,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WeekListResponse"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    getWeek: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                clientId: components["parameters"]["ClientId"];
-                weekId: components["parameters"]["WeekId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Week found */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WeekResponse"];
                 };
             };
             401: components["responses"]["Unauthorized"];

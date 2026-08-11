@@ -1,6 +1,6 @@
 # Cut the three endpoints with no caller
 
-**STATUS: TODO**
+**STATUS: DONE**
 
 ## Parent PRD
 
@@ -46,15 +46,39 @@ Explicitly NOT in this slice: adding `@hono/zod-openapi`, moving schemas, or tou
 
 ## Acceptance criteria
 
-- [ ] The three handlers are gone from `routes/clients.ts`, `routes/plans.ts`, `routes/weeks.ts`
-- [ ] `server/openapi.json` describes 12 operations and no orphaned component schemas remain
-- [ ] `pnpm check:openapi` passes and the regenerated client types are committed
-- [ ] The malformed-uuid → 400 `invalid_id` assertion still exists, retargeted at the profile route
-- [ ] The unknown-client → 404 assertion still exists
-- [ ] `getClient`, `listPlans`, and `getWeek` still exist in the repositories and keep their unit coverage
-- [ ] Requesting any of the three removed paths returns 404 from the router
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` all pass from the root
-- [ ] `docs/architecture/api_contracts.md` "Endpoints current state" table is updated — the three cut candidates are recorded as cut, not still pending
+- [x] The three handlers are gone from `routes/clients.ts`, `routes/plans.ts`, `routes/weeks.ts`
+- [x] `server/openapi.json` describes 12 operations and no orphaned component schemas remain
+- [x] `pnpm check:openapi` passes and the regenerated client types are committed
+- [x] The malformed-uuid → 400 `invalid_id` assertion still exists, retargeted at the profile route
+- [x] The unknown-client → 404 assertion still exists — see the deviation note below
+- [x] `getClient`, `listPlans`, and `getWeek` still exist in the repositories and keep their coverage
+- [x] Requesting any of the three removed paths returns 404 from the router — pinned by a new test
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test` all pass from the root (45 server + 37 client)
+- [x] `docs/architecture/api_contracts.md` "Endpoints current state" table is updated — the three cut candidates are recorded as cut, not still pending
+
+### Notes from implementation
+
+**Deviation — the unknown-client assertion did not move to the profile route.** The issue proposed
+retargeting both halves of `'returns 404 for an unknown client and 400 for a malformed uuid'` at
+`GET .../profile`. The malformed-uuid half did move there. The unknown-client half did not: the
+deleted route was the *only* HTTP-level exercise of `requireClient`'s `client_not_found` path, and
+`GET .../profile` does not call `requireClient` — it 404s with `profile_not_found` when the profile
+row is absent, which would have passed the status assertion while silently dropping the coverage.
+That half now targets `GET .../weeks`, which does call `requireClient`, and asserts the
+`client_not_found` code explicitly. One test became two, each named for what it actually pins.
+
+**Scope call — `Coach` was removed from the document too.** It was already an orphan before this
+slice (no operation referenced it), so it is not one of the three cuts. It was removed anyway,
+because the acceptance criterion above asks for no orphaned schemas and because in slice 006 the
+generated document will only contain schemas some route registers — `Coach` would vanish on its own
+there and break `client/src/api/types.ts` at the least convenient moment. Its client alias was
+unused; removing it changed nothing. `CoachSchema` in `domain/model` is untouched: coach is still a
+real record, just not part of the HTTP surface.
+
+**Correction to this issue's text.** It claimed `getWeek` keeps "direct coverage in
+`repositories.test.ts`". It does not appear there. It is still load-bearing — `updateDayLog` calls
+it internally and `db/testing/index.ts` uses it — so keeping it is right, but the stated reason was
+wrong.
 
 ## Blocked by
 

@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono'
 
-import { getCurrentWeek, getWeek, listWeeks, saveDay, updateDayLog, type Db } from '../db/index.ts'
+import { getCurrentWeek, listWeeks, saveDay, updateDayLog, type Db } from '../db/index.ts'
 import { SaveDayLogSchema, UpdateDayLogSchema } from '../domain/contracts/index.ts'
 import { WeekStatusSchema, type WeekStatus } from '../domain/model/index.ts'
 
@@ -52,18 +52,6 @@ export function weekRoutes(db: Db): Hono {
     const filter = parseWeekFilter(c)
     if (isResponse(filter)) return filter
     return c.json({ weeks: await listWeeks(db, clientId, filter) })
-  })
-
-  app.get('/clients/:clientId/weeks/:weekId', async (c) => {
-    const clientId = parseUuidParam(c, c.req.param('clientId'), 'clientId')
-    if (isResponse(clientId)) return clientId
-    const weekId = parseUuidParam(c, c.req.param('weekId'), 'weekId')
-    if (isResponse(weekId)) return weekId
-    const week = await getWeek(db, clientId, weekId)
-    if (!week) {
-      return errorResponse(c, 404, 'week_not_found', `week ${weekId} not found`)
-    }
-    return c.json({ week })
   })
 
   app.patch('/clients/:clientId/weeks/:weekId/days/:dayIndex', async (c) => {
