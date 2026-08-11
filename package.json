@@ -18,12 +18,6 @@
     "build:affected": "turbo run build --affected",
     "deploy:affected": "turbo run deploy --affected",
     "gen:openapi": "pnpm --filter @strengthsync/server gen:openapi && openapi-typescript server/openapi.json -o client/src/api/openapi.d.ts",
-    "check:openapi": "node --experimental-strip-types server/scripts/gen-openapi.ts /tmp/strengthsync-openapi.json && diff -u server/openapi.json /tmp/strengthsync-openapi.json && openapi-typescript server/openapi.json -o /tmp/strengthsync-openapi.d.ts && diff -u client/src/api/openapi.d.ts /tmp/strengthsync-openapi.d.ts",
-    "deps:check": "node scripts/check-dependency-policy.mjs",
-    "ts:diagnostics": "node scripts/ts-metrics.mjs diagnostics",
-    "ts:list-files": "node scripts/ts-metrics.mjs list-files",
-    "ts:explain-files": "node scripts/ts-metrics.mjs explain-files",
-    "ts:trace": "node scripts/ts-metrics.mjs trace",
     "prepare": "lefthook install || echo 'lefthook: skipped (not a git repository yet)'"
   },
   "devDependencies": {
