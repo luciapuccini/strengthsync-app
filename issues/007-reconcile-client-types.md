@@ -1,6 +1,6 @@
 # Reconcile the client against the generated contract
 
-**STATUS: TODO**
+**STATUS: DONE**
 
 ## Parent PRD
 
@@ -53,15 +53,42 @@ component's behavior. Types and imports only.
 
 ## Acceptance criteria
 
-- [ ] `client/src/api/openapi.d.ts` is regenerated from the generated document and committed
-- [ ] All twenty aliases in `client/src/api/types.ts` resolve; any rename was fixed on the server side
-- [ ] `client/src/api/client.ts` compiles with no `any`, no `as` casts, and no `@ts-expect-error` added
-- [ ] The profile read/write path typechecks against the recursive JSON fields
-- [ ] `client/src/api/workflows.ts` still derives `CompleteWeekStarted` from the document
-- [ ] Client-side tests (`client.test.ts`, `dayLog.test.ts`, `historyResource.test.ts`) pass unmodified
-- [ ] `pnpm turbo dev` — the tracker page loads a current week, saves a day, and the history page lists completed weeks against `wrangler dev` on :8787
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm test` pass from the root
-- [ ] `pnpm --filter @strengthsync/client build` and `pnpm --filter @strengthsync/server build` both succeed
+- [x] `client/src/api/openapi.d.ts` is regenerated from the generated document and committed — landed with slice 006
+- [x] All **eighteen** aliases in `client/src/api/types.ts` resolve; none needed a server-side rename (the issue said twenty; it has been eighteen since `Coach` was dropped in slice 002)
+- [x] `client/src/api/client.ts` compiles with no `any`, no `as` casts, and no `@ts-expect-error` added — none were added anywhere
+- [x] The profile read/write path typechecks against the JSON fields, which now render as `{ [key: string]: unknown }`
+- [x] `client/src/api/workflows.ts` still derives `CompleteWeekStarted` from the document
+- [x] Client-side tests pass unmodified (37 tests)
+- [x] Live verification against `wrangler dev` on :8787 — see below
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test` pass from the root
+- [x] `pnpm --filter @strengthsync/client build` and `pnpm --filter @strengthsync/server build` both succeed
+
+### Notes from implementation
+
+**No client code changed.** Every kind of friction this slice budgeted for was already absorbed:
+recursive JSON by the `z.unknown()` decision, component naming by slice 006's registrations,
+input-vs-output shapes because no schema in the contract has a default or transform. The only
+correction was to this issue's own arithmetic — eighteen aliases, not twenty.
+
+**Verified against a live Worker rather than only in the typechecker.** With the local D1 seeded:
+
+| Checked | Result |
+| --- | --- |
+| `GET /health`, `/api/clients`, `.../weeks/current`, `.../plans/active`, `.../profile`, `.../weeks?status=completed` | all 200 with the expected bodies |
+| `POST .../days/1/save` with a full day | 200, day marked `completed` with a `completed_at`, feedback and sets persisted |
+| `PUT .../profile` with deeply nested JSON (`{nested:{deep:[1,2,{x:true}]}}`) | round-tripped byte-identical — the `unknown` columns still store real JSON |
+| Malformed uuid → `invalid_id`; bad `status` filter and out-of-range `dayIndex` → `invalid_input` | error contract holds on the wire, not just in tests |
+| Skipped exercise carrying sets | 400, refinement message intact — it runs at runtime despite being absent from the document |
+| Incomplete day payload | 400 `exercise_log_mismatch` — `RepoError` still maps through `onError` |
+| Malformed JSON body | 400 inside the envelope, confirming slice 003's `HTTPException` fix on a real request |
+| `GET /openapi.json` | 200 `text/html` — the SPA fallback, not the spec |
+
+**Not exercised: triggering a real workflow.** `POST /wf/complete-week` with a valid body starts a
+Cloudflare Workflow that calls the model, so only the two 400 paths were hit live; the success path is
+covered by the stub-binding test from slice 005.
+
+**Not exercised: the browser UI itself.** The client bundle builds and every endpoint it calls was
+verified over HTTP, but no page was driven in a browser. Slice 008's manual pass still owes that.
 
 ## Blocked by
 
