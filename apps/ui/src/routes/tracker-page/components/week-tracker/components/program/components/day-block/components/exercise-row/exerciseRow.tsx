@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 
-import type { ExerciseLog, WeekDay } from "@strengthsync/domain/model";
+import type { ExerciseLog, WeekDay } from "@/api/types";
 
 import { FeedbackControls } from "./components/feedback-controls/feedbackControls";
 import { SetControls } from "./components/set-controls/setControls";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Week } from '@strengthsync/domain/model'
+import type { Week } from '@/api/types'
 
 import { makeWeek } from '@/test/weekFixture'
 

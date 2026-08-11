@@ -1,5 +1,5 @@
-import { WeekSchema } from '@strengthsync/domain/model'
-import type { Week } from '@strengthsync/domain/model'
+import { WeekSchema } from '@/lib/week-draft-schema'
+import type { Week } from '@/lib/week-draft-schema'
 
 const WEEK_DRAFT_PREFIX = 'strengthsync:week-draft:'
 

@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand'
 
-import type { Client, ExerciseFeedback, Plan, Week, WeekDay } from '@strengthsync/domain/model'
+import type { Client, ExerciseFeedback, Plan, Week, WeekDay } from '@/api/types'
 
 import { saveDayLog } from '@/api/client'
 import { toSaveDayLog } from '@/api/dayLog'

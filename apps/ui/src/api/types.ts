@@ -1,0 +1,21 @@
+import type { components } from "@strengthsync/api-contract";
+
+export type ApiError = components["schemas"]["ApiError"];
+export type Client = components["schemas"]["Client"];
+export type ClientProfile = components["schemas"]["ClientProfile"];
+export type Coach = components["schemas"]["Coach"];
+export type CreateClientInput = components["schemas"]["CreateClientInput"];
+export type DayExerciseLog = components["schemas"]["DayExerciseLog"];
+export type DayType = components["schemas"]["DayType"];
+export type ExerciseFeedback = components["schemas"]["ExerciseFeedback"];
+export type ExerciseLog = components["schemas"]["ExerciseLog"];
+export type PerformedSet = components["schemas"]["PerformedSet"];
+export type Plan = components["schemas"]["Plan"];
+export type PlanDay = components["schemas"]["PlanDay"];
+export type PlannedExercise = components["schemas"]["PlannedExercise"];
+export type SaveDayLog = components["schemas"]["SaveDayLog"];
+export type UpdateClientProfile = components["schemas"]["UpdateClientProfile"];
+export type UpdateDayLog = components["schemas"]["UpdateDayLog"];
+export type Week = components["schemas"]["Week"];
+export type WeekDay = components["schemas"]["WeekDay"];
+export type WeekStatus = components["schemas"]["WeekStatus"];

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { FormEvent, JSX } from 'react'
 import { toast } from 'sonner'
 
-import type { Client } from '@strengthsync/domain/model'
+import type { Client } from '@/api/types'
 
 import { createClient } from '@/api/client'
 import { ApiClientError } from '@/api/errors'

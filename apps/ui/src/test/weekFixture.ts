@@ -1,4 +1,4 @@
-import type { Week } from '@strengthsync/domain/model'
+import type { Week } from '@/api/types'
 
 const UUID = '00000000-0000-4000-8000-000000000001'
 const NOW = '2026-07-23T00:00:00.000Z'

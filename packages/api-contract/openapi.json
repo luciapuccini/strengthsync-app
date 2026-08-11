@@ -748,7 +748,7 @@
           "exercise_key": { "type": "string", "minLength": 1 },
           "name": { "type": "string", "minLength": 1 },
           "skipped": { "type": "boolean" },
-          "feedback": { "type": ["string", "null"], "$ref": "#/components/schemas/ExerciseFeedback" },
+          "feedback": { "oneOf": [{ "$ref": "#/components/schemas/ExerciseFeedback" }, { "type": "null" }] },
           "prescribed": {
             "type": "object",
             "required": ["series", "reps", "rest_time_sec", "weight_kg", "notes"],
@@ -863,7 +863,7 @@
         "properties": {
           "exercise_key": { "type": "string", "minLength": 1 },
           "skipped": { "type": "boolean" },
-          "feedback": { "type": ["string", "null"], "$ref": "#/components/schemas/ExerciseFeedback" },
+          "feedback": { "oneOf": [{ "$ref": "#/components/schemas/ExerciseFeedback" }, { "type": "null" }] },
           "sets": { "type": "array", "items": { "$ref": "#/components/schemas/PerformedSet" } }
         }
       },

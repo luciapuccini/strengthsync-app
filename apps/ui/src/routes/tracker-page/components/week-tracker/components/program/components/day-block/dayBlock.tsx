@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { JSX } from "react";
 import { toast } from "sonner";
 
-import type { WeekDay } from "@strengthsync/domain/model";
+import type { WeekDay } from "@/api/types";
 
 import { useAppStore } from "@/store/useAppStore";
 

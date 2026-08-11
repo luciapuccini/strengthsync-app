@@ -1,107 +1,127 @@
-import { z } from 'zod'
+import createOpenApiClient from "openapi-fetch";
+import type { paths } from "@strengthsync/api-contract";
 
-import {
-  CreateClientInputSchema,
-  SaveDayLogSchema,
-  UpdateClientProfileSchema,
-} from '@strengthsync/domain/contracts'
+import { ApiClientError, toApiError } from "./errors";
 import type {
+  Client,
+  ClientProfile,
   CreateClientInput,
+  Plan,
   SaveDayLog,
   UpdateClientProfile,
-} from '@strengthsync/domain/contracts'
-import { ClientProfileSchema, ClientSchema, PlanSchema, WeekSchema } from '@strengthsync/domain/model'
-import type { Client, ClientProfile, Plan, Week } from '@strengthsync/domain/model'
+  UpdateDayLog,
+  Week,
+} from "./types";
 
-import { ApiClientError, toApiError } from './errors'
-
-/**
- * Typed wrappers over the public API (`docs/architecture/api_contracts.md`).
- * Every response is re-validated with the shared domain schemas so the browser
- * and Worker agree on the contract.
- */
-
-type RequestInitJson = {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH'
-  body?: unknown
-}
-
-async function request(path: string, init: RequestInitJson = {}): Promise<unknown> {
-  let res: Response
-  try {
-    res = await fetch(path, {
-      method: init.method ?? 'GET',
-      headers: init.body === undefined ? {} : { 'content-type': 'application/json' },
-      body: init.body === undefined ? null : JSON.stringify(init.body),
-    })
-  } catch {
-    throw new ApiClientError('network', 0, 'network_error', 'could not reach the server')
-  }
-  const body: unknown = await res.json().catch(() => null)
-  if (!res.ok) throw toApiError(res.status, body)
-  return body
-}
+const api = createOpenApiClient<paths>({
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? "",
+});
 
 /** Run a read that treats a 404 as an expected "no record yet" (returns null). */
 async function orNull<T>(fn: () => Promise<T>): Promise<T | null> {
   try {
-    return await fn()
+    return await fn();
   } catch (err) {
-    if (err instanceof ApiClientError && err.kind === 'not_found') return null
-    throw err
+    if (err instanceof ApiClientError && err.kind === "not_found") return null;
+    throw err;
   }
 }
 
-const ClientsResponse = z.object({ clients: z.array(ClientSchema) })
-const ClientResponse = z.object({ client: ClientSchema })
-const ProfileResponse = z.object({ profile: ClientProfileSchema })
-const PlanResponse = z.object({ plan: PlanSchema })
-const WeekResponse = z.object({ week: WeekSchema })
-const WeeksResponse = z.object({ weeks: z.array(WeekSchema) })
+function throwOnError<T>(
+  response: { data?: T; error?: unknown; response: Response },
+): T {
+  if (!response.response.ok || response.data === undefined) {
+    throw toApiError(response.response.status, response.error);
+  }
+  return response.data;
+}
+
+/** Run an openapi-fetch call, mapping a thrown fetch failure to a network error. */
+async function call<T>(
+  fn: () => Promise<{ data?: T; error?: unknown; response: Response }>,
+): Promise<T> {
+  let res: { data?: T; error?: unknown; response: Response };
+  try {
+    res = await fn();
+  } catch {
+    throw new ApiClientError("network", 0, "network_error", "could not reach the server");
+  }
+  return throwOnError(res);
+}
 
 export async function getClients(): Promise<Client[]> {
-  return ClientsResponse.parse(await request('/api/clients')).clients
+  return (await call(() => api.GET("/api/clients"))).clients;
 }
 
 export async function createClient(input: CreateClientInput): Promise<Client> {
-  const body = CreateClientInputSchema.parse(input)
-  return ClientResponse.parse(await request('/api/clients', { method: 'POST', body })).client
+  return (await call(() => api.POST("/api/clients", { body: input }))).client;
 }
 
 export async function getProfile(clientId: string): Promise<ClientProfile | null> {
-  return orNull(async () =>
-    ProfileResponse.parse(await request(`/api/clients/${clientId}/profile`)).profile,
-  )
+  return orNull(async () => {
+    const res = await call(() =>
+      api.GET("/api/clients/{clientId}/profile", {
+        params: { path: { clientId } },
+      }),
+    );
+    return res.profile;
+  });
 }
 
 export async function updateProfile(
   clientId: string,
   input: UpdateClientProfile,
 ): Promise<ClientProfile> {
-  const body = UpdateClientProfileSchema.parse(input)
-  const res = await request(`/api/clients/${clientId}/profile`, { method: 'PUT', body })
-  return ProfileResponse.parse(res).profile
+  const res = await call(() =>
+    api.PUT("/api/clients/{clientId}/profile", {
+      params: { path: { clientId } },
+      body: input,
+    }),
+  );
+  return res.profile;
 }
 
 export async function getActivePlan(clientId: string): Promise<Plan | null> {
-  return orNull(async () =>
-    PlanResponse.parse(await request(`/api/clients/${clientId}/plans/active`)).plan,
-  )
+  return orNull(async () => {
+    const res = await call(() =>
+      api.GET("/api/clients/{clientId}/plans/active", {
+        params: { path: { clientId } },
+      }),
+    );
+    return res.plan;
+  });
 }
 
 export async function getPlan(clientId: string, planId: string): Promise<Plan> {
-  return PlanResponse.parse(await request(`/api/clients/${clientId}/plans/${planId}`)).plan
+  const res = await call(() =>
+    api.GET("/api/clients/{clientId}/plans/{planId}", {
+      params: { path: { clientId, planId } },
+    }),
+  );
+  return res.plan;
 }
 
 export async function getCurrentWeek(clientId: string): Promise<Week | null> {
-  return orNull(async () =>
-    WeekResponse.parse(await request(`/api/clients/${clientId}/weeks/current`)).week,
-  )
+  return orNull(async () => {
+    const res = await call(() =>
+      api.GET("/api/clients/{clientId}/weeks/current", {
+        params: { path: { clientId } },
+      }),
+    );
+    return res.week;
+  });
 }
 
 export async function listCompletedWeeks(clientId: string, planId: string): Promise<Week[]> {
-  const path = `/api/clients/${clientId}/weeks?status=completed&planId=${encodeURIComponent(planId)}`
-  return WeeksResponse.parse(await request(path)).weeks
+  const res = await call(() =>
+    api.GET("/api/clients/{clientId}/weeks", {
+      params: {
+        path: { clientId },
+        query: { status: "completed", planId },
+      },
+    }),
+  );
+  return res.weeks;
 }
 
 export async function saveDayLog(
@@ -110,11 +130,31 @@ export async function saveDayLog(
   dayIndex: number,
   input: SaveDayLog,
 ): Promise<Week> {
-  const body = SaveDayLogSchema.parse(input)
-  const response = await request(
-    `/api/clients/${clientId}/weeks/${weekId}/days/${dayIndex}/save`,
-    { method: 'POST', body },
-  )
-  return WeekResponse.parse(response).week
+  const res = await call(() =>
+    api.POST("/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}/save", {
+      params: { path: { clientId, weekId, dayIndex } },
+      body: input,
+    }),
+  );
+  return res.week;
 }
+
+export async function updateDayLog(
+  clientId: string,
+  weekId: string,
+  dayIndex: number,
+  input: UpdateDayLog,
+): Promise<Week> {
+  const res = await call(() =>
+    api.PATCH("/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}", {
+      params: { path: { clientId, weekId, dayIndex } },
+      body: input,
+    }),
+  );
+  return res.week;
+}
+
+// Re-export the shared openapi-fetch client for callers that need direct access
+// (e.g. the workflow trigger, which uses a different response shape).
+export { api };
 

@@ -1,6 +1,5 @@
-import type { Plan, Week } from '@strengthsync/domain/model'
-
 import { getPlan, listCompletedWeeks } from '@/api/client'
+import type { Plan, Week } from '@/api/types'
 
 export type HistoryData = {
   weeks: Week[]

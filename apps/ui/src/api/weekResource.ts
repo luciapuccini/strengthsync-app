@@ -1,6 +1,5 @@
-import type { Client, Plan, Week } from '@strengthsync/domain/model'
-
 import { getActivePlan, getClients, getCurrentWeek } from '@/api/client'
+import type { Client, Plan, Week } from '@/api/types'
 
 export type TrackerData = {
   client: Client | null

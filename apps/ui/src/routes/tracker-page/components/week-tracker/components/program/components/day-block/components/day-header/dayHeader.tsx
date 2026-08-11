@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type { JSX } from "react";
 
-import type { WeekDay } from "@strengthsync/domain/model";
+import type { WeekDay } from "@/api/types";
 
 import { Badge } from "@/shadcn/ui/badge";
 import { Button } from "@/shadcn/ui/button";

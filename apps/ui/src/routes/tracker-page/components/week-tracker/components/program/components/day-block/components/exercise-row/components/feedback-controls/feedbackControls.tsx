@@ -1,6 +1,6 @@
 import type { JSX } from "react";
 
-import type { ExerciseFeedback, ExerciseLog } from "@strengthsync/domain/model";
+import type { ExerciseFeedback, ExerciseLog } from "@/api/types";
 
 import { Button } from "@/shadcn/ui/button";
 import { useAppStore } from "@/store/useAppStore";

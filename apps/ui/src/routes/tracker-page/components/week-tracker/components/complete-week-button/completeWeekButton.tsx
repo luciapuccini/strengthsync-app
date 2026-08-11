@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { JSX } from "react";
 import { toast } from "sonner";
 
-import { startWeeklyProgression } from "@/api/cf-api/complete-week";
+import { startWeeklyProgression } from "@/api/workflows";
 import { Button } from "@/shadcn/ui/button";
 import { Spinner } from "@/shadcn/ui/spinner";
 import { useAppStore } from "@/store/useAppStore";

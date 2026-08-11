@@ -1,4 +1,4 @@
-import type { ApiError } from '@strengthsync/domain/contracts'
+import type { ApiError } from './types'
 
 /** Coarse classification the UI branches on (auth prompt, not-found, etc.). */
 export type ApiErrorKind =

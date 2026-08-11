@@ -1,8 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { Client } from '@strengthsync/domain/model'
-
+import type { Client } from '@/api/types'
 import { makeWeek } from '@/test/weekFixture'
+
+const { mockGet, mockPost, mockPut, mockPatch } = vi.hoisted(() => ({
+  mockGet: vi.fn(),
+  mockPost: vi.fn(),
+  mockPut: vi.fn(),
+  mockPatch: vi.fn(),
+}))
+
+vi.mock('openapi-fetch', () => ({
+  default: () => ({
+    GET: mockGet,
+    POST: mockPost,
+    PUT: mockPut,
+    PATCH: mockPatch,
+  }),
+}))
 
 import {
   createClient,
@@ -11,6 +26,7 @@ import {
   getProfile,
   listCompletedWeeks,
   saveDayLog,
+  updateDayLog,
 } from './client'
 import { ApiClientError } from './errors'
 
@@ -26,52 +42,48 @@ const sampleClient: Client = {
   updated_at: NOW,
 }
 
-function stubFetch(response: { ok: boolean; status: number; body: unknown }) {
-  const fetchMock = vi.fn().mockResolvedValue({
-    ok: response.ok,
-    status: response.status,
-    json: () => Promise.resolve(response.body),
-  } as Response)
-  vi.stubGlobal('fetch', fetchMock)
-  return fetchMock
+function okResponse<T>(data: T) {
+  return { data, error: undefined, response: { ok: true, status: 200 } as Response }
+}
+
+function errorResponse(status: number, error: unknown) {
+  return { data: undefined, error, response: { ok: false, status } as Response }
 }
 
 afterEach(() => {
-  vi.unstubAllGlobals()
+  vi.clearAllMocks()
 })
 
 describe('api client', () => {
   it('parses a successful list response', async () => {
-    stubFetch({ ok: true, status: 200, body: { clients: [sampleClient] } })
+    mockGet.mockResolvedValue(okResponse({ clients: [sampleClient] }))
     await expect(getClients()).resolves.toEqual([sampleClient])
   })
 
-  it('posts the validated body and parses the created client', async () => {
-    const fetchMock = stubFetch({ ok: true, status: 201, body: { client: sampleClient } })
+  it('posts the body and parses the created client', async () => {
+    mockPost.mockResolvedValue(okResponse({ client: sampleClient }))
     await createClient({ display_name: 'Lucia' })
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/clients',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ display_name: 'Lucia' }) }),
-    )
+    expect(mockPost).toHaveBeenCalledWith('/api/clients', {
+      body: { display_name: 'Lucia' },
+    })
   })
 
   it('maps a 401 to an unauthorized error', async () => {
-    stubFetch({ ok: false, status: 401, body: { error: { code: 'unauthorized', message: 'nope' } } })
+    mockGet.mockResolvedValue(
+      errorResponse(401, { error: { code: 'unauthorized', message: 'nope' } }),
+    )
     await expect(getClients()).rejects.toMatchObject({ kind: 'unauthorized', status: 401 })
   })
 
   it('treats a 404 profile as "no profile yet"', async () => {
-    stubFetch({
-      ok: false,
-      status: 404,
-      body: { error: { code: 'profile_not_found', message: 'none' } },
-    })
+    mockGet.mockResolvedValue(
+      errorResponse(404, { error: { code: 'profile_not_found', message: 'none' } }),
+    )
     await expect(getProfile(UUID)).resolves.toBeNull()
   })
 
   it('surfaces a network failure as a network error', async () => {
-    const fetchMock = vi.fn().mockRejectedValue(new Error('offline'))
-    vi.stubGlobal('fetch', fetchMock)
+    mockGet.mockRejectedValue(new Error('offline'))
     await expect(getClients()).rejects.toBeInstanceOf(ApiClientError)
     await expect(getClients()).rejects.toMatchObject({ kind: 'network' })
   })
@@ -79,31 +91,30 @@ describe('api client', () => {
   it('posts a save-day body and parses the returned week', async () => {
     const week = makeWeek()
     const body = { exercises: [] }
-    const fetchMock = stubFetch({ ok: true, status: 200, body: { week } })
+    mockPost.mockResolvedValue(okResponse({ week }))
     await expect(saveDayLog(UUID, UUID, 2, body)).resolves.toEqual(week)
-    expect(fetchMock).toHaveBeenCalledWith(
-      `/api/clients/${UUID}/weeks/${UUID}/days/2/save`,
-      expect.objectContaining({ method: 'POST', body: JSON.stringify(body) }),
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}/save',
+      {
+        params: { path: { clientId: UUID, weekId: UUID, dayIndex: 2 } },
+        body,
+      },
     )
   })
-
 })
 
 describe('listCompletedWeeks', () => {
-  it('lists completed weeks for a plan and parses the response', async () => {
+  it('lists completed weeks for a plan and passes the query params', async () => {
     const week = { ...makeWeek(), status: 'completed' as const }
     const planId = '00000000-0000-4000-8000-000000000002'
-    const fetchMock = stubFetch({ ok: true, status: 200, body: { weeks: [week] } })
+    mockGet.mockResolvedValue(okResponse({ weeks: [week] }))
     await expect(listCompletedWeeks(UUID, planId)).resolves.toEqual([week])
-    expect(fetchMock).toHaveBeenCalledWith(
-      `/api/clients/${UUID}/weeks?status=completed&planId=${planId}`,
-      expect.any(Object),
-    )
-  })
-
-  it('rejects a bad completed-weeks body via Zod', async () => {
-    stubFetch({ ok: true, status: 200, body: { weeks: [{ id: 'not-a-week' }] } })
-    await expect(listCompletedWeeks(UUID, UUID)).rejects.toThrow()
+    expect(mockGet).toHaveBeenCalledWith('/api/clients/{clientId}/weeks', {
+      params: {
+        path: { clientId: UUID },
+        query: { status: 'completed', planId },
+      },
+    })
   })
 })
 
@@ -122,11 +133,26 @@ describe('getPlan', () => {
       created_at: NOW,
       updated_at: NOW,
     }
-    const fetchMock = stubFetch({ ok: true, status: 200, body: { plan } })
+    mockGet.mockResolvedValue(okResponse({ plan }))
     await expect(getPlan(UUID, planId)).resolves.toEqual(plan)
-    expect(fetchMock).toHaveBeenCalledWith(
-      `/api/clients/${UUID}/plans/${planId}`,
-      expect.any(Object),
+    expect(mockGet).toHaveBeenCalledWith('/api/clients/{clientId}/plans/{planId}', {
+      params: { path: { clientId: UUID, planId } },
+    })
+  })
+})
+
+describe('updateDayLog', () => {
+  it('patches a day and parses the returned week', async () => {
+    const week = makeWeek()
+    const body = { completed: true, exercises: [] }
+    mockPatch.mockResolvedValue(okResponse({ week }))
+    await expect(updateDayLog(UUID, UUID, 2, body)).resolves.toEqual(week)
+    expect(mockPatch).toHaveBeenCalledWith(
+      '/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}',
+      {
+        params: { path: { clientId: UUID, weekId: UUID, dayIndex: 2 } },
+        body,
+      },
     )
   })
 })

@@ -1,6 +1,6 @@
 import type { JSX } from 'react'
 
-import type { Client } from '@strengthsync/domain/model'
+import type { Client } from '@/api/types'
 
 import type { ApiClientError } from '@/api/errors'
 

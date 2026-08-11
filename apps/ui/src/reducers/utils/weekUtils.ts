@@ -1,4 +1,4 @@
-import type { ExerciseLog, Week, WeekDay } from '@strengthsync/domain/model'
+import type { ExerciseLog, Week, WeekDay } from '@/api/types'
 
 export function performedCount(exercise: ExerciseLog): number {
   return exercise.sets.length

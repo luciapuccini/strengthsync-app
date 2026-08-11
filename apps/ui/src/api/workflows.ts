@@ -1,15 +1,16 @@
-import type { components } from "@strengthsync/api-contract";
-import { ApiClientError, toApiError } from "@/api/errors";
-import { wf } from "./workflows-api";
+import type { paths } from "@strengthsync/api-contract";
 
-export type CompleteWeekStarted = components["schemas"]["CompleteWeekStarted"];
+import { ApiClientError, toApiError } from "./errors";
+import { api } from "./client";
+
+export type CompleteWeekStarted =
+  paths["/wf/complete-week"]["post"]["responses"][200]["content"]["application/json"];
 
 export async function startWeeklyProgression(
   clientId: string,
-  // weekId: string, // WIP: user should only have 1 in_flight week to complete
 ): Promise<CompleteWeekStarted> {
   try {
-    const { data, error, response } = await wf.POST("/wf/complete-week", {
+    const { data, error, response } = await api.POST("/wf/complete-week", {
       body: { clientId },
     });
     if (!response.ok || data === undefined) {

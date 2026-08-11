@@ -332,7 +332,7 @@ export interface components {
             exercise_key: string;
             name: string;
             skipped: boolean;
-            feedback: components["schemas"]["ExerciseFeedback"];
+            feedback: components["schemas"]["ExerciseFeedback"] | null;
             prescribed: {
                 series: number;
                 reps: number;
@@ -396,7 +396,7 @@ export interface components {
         DayExerciseLog: {
             exercise_key: string;
             skipped: boolean;
-            feedback: components["schemas"]["ExerciseFeedback"];
+            feedback: components["schemas"]["ExerciseFeedback"] | null;
             sets: components["schemas"]["PerformedSet"][];
         };
         CompleteWeekInput: {

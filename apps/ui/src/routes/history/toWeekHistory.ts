@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
-import { DayTypeSchema, type Week } from '@strengthsync/domain/model'
+import { DAY_TYPES } from '@/lib/day-types'
+import type { Week } from '@/api/types'
 
 export const HistoryExerciseSchema = z.object({
   exercise_key: z.string().min(1),
@@ -14,7 +15,7 @@ export type HistoryExercise = z.infer<typeof HistoryExerciseSchema>
 
 export const HistoryDaySchema = z.object({
   day_index: z.number().int().min(1).max(7),
-  day_type: DayTypeSchema,
+  day_type: z.enum(DAY_TYPES),
   date: z.string().min(1),
   exercises: z.array(HistoryExerciseSchema),
 })

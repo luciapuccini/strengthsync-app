@@ -88,7 +88,7 @@ export default defineConfig([
   // services/db imports domain only, never apps.
   boundary(['services/db/**/*.ts'], ['@strengthsync/domain']),
   // apps/ui only knows HTTP contracts; never db or agent.
-  boundary(['apps/ui/**/*.{ts,tsx}'], ['@strengthsync/domain', '@strengthsync/api-contract']),
+  boundary(['apps/ui/**/*.{ts,tsx}'], ['@strengthsync/api-contract']),
   // apps/api may use domain and db; never other apps.
   boundary(
     ['apps/api/**/*.ts'],

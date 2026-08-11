@@ -1,4 +1,4 @@
-import type { ExerciseFeedback, ExerciseLog, Week, WeekDay } from '@strengthsync/domain/model'
+import type { ExerciseFeedback, ExerciseLog, Week, WeekDay } from '@/api/types'
 
 import { isDayComplete, performedCount, updateDay } from './utils/weekUtils'
 

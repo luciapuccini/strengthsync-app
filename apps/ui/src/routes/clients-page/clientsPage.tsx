@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { JSX } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import type { Client } from '@strengthsync/domain/model'
+import type { Client } from '@/api/types'
 
 import { getClients } from '@/api/client'
 import { ApiClientError } from '@/api/errors'

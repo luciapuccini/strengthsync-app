@@ -105,9 +105,6 @@ importers:
       '@strengthsync/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
-      '@strengthsync/domain':
-        specifier: workspace:*
-        version: link:../../services/domain
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
