@@ -90,7 +90,7 @@ New SQL table `exercise_progress` in [services/db/src/schema.ts](services/db/src
 
 Unique index: `(client_id, exercise_key, performed_on)` so re-saves upsert.
 
-Zod entity in [services/domain/src/model/index.ts](services/domain/src/model/index.ts) (e.g. `ExerciseProgressSchema`). Do **not** rewrite the domain_model ER for Week; document the extension in the future-state doc.
+Zod entity in [server/src/domain/model/index.ts](../../server/src/domain/model/index.ts) (e.g. `ExerciseProgressSchema`). Do **not** rewrite the domain_model ER for Week; document the extension in the future-state doc.
 
 ```mermaid
 

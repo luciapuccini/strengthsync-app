@@ -1,6 +1,6 @@
 /**
  * The Drizzle/D1 persistence adapter: intent-level operations, not raw
- * tables. See docs/architecture/monorepo_structure.md.
+ * tables. See docs/architecture/domain_model.md.
  */
 
 export { createDb, type Db } from "./db.ts";

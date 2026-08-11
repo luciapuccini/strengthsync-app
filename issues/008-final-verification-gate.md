@@ -1,6 +1,6 @@
 # Final verification gate
 
-**STATUS: TODO**
+**STATUS: DONE** — except the browser pass, see Notes.
 
 ## Parent PRD
 
@@ -83,14 +83,50 @@ Root `package.json` declares `deps:check` and four `ts:*` scripts pointing at `s
 
 ## Acceptance criteria
 
-- [ ] All five adversarial drift scenarios fail the check, and all five are reverted
-- [ ] Every grep listed above returns empty
-- [ ] The end-state tree matches the PRD
-- [ ] `docs/architecture/api_contracts.md` no longer claims a hand-maintained source of truth
-- [ ] `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` all pass from the root
-- [ ] `pnpm turbo dev` — full manual pass: create a client, save a profile, load the current week, log sets with feedback, save a day, view history
-- [ ] A separate issue exists for the broken root scripts
-- [ ] All eight slice files in `issues/` are marked `STATUS: DONE`
+- [x] All five adversarial drift scenarios fail the check, and all five are reverted
+- [x] Every grep listed above returns empty
+- [x] The end-state tree matches the PRD
+- [x] `docs/architecture/api_contracts.md` no longer claims a hand-maintained source of truth
+- [x] `pnpm install --frozen-lockfile`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build` all pass from the root
+- [ ] **NOT DONE — `pnpm turbo dev` manual browser pass.** Every endpoint the UI calls was exercised over HTTP against a live Worker in slice 007, and the client bundle builds, but no page was driven in a browser. This one needs a human
+- [x] A separate issue exists for the broken root scripts — `issues/009-restore-or-remove-broken-root-scripts.md`
+- [x] All eight slice files in `issues/` are marked `STATUS: DONE`
+
+### Notes from implementation
+
+**The drift gate is real, and one scenario had to be re-run to prove it.** Scenario 4 (regenerate the
+document but not the client types) initially *passed*, which looked like a hole. It was not: the
+mutation used was `min(1)` → `min(3)`, and `minLength` has no TypeScript representation, so the
+`.d.ts` genuinely did not change. Re-run with a field addition, it failed as required. A control that
+regenerates both artifacts passes.
+
+That exposed a real asymmetry worth knowing: **constraint-only changes alter the document but not the
+generated types.** The document check catches them — scenario 3 proved it — but a types-only check
+would not have. Both stages are needed, and `check:openapi` runs the document stage first. Recorded
+in `api_contracts.md`.
+
+| Scenario | Result |
+| --- | --- |
+| Add a field to a response schema, no regen | check failed ✓ |
+| Rename a component registration, no regen | check failed ✓ |
+| Change a request DTO, no regen | check failed ✓ |
+| Regenerate document only, types stale | check failed ✓ (after re-running with a type-affecting change) |
+| Delete a route | check failed ✓ |
+| Control: regenerate both | check passed ✓ |
+
+**Documentation.** `api_contracts.md` now opens by saying it is not the contract, shows the
+generation pipeline, and states plainly that the document must not be hand-edited. The
+"we need to keep it updated" sentence is gone, along with the "Public API" section that restated
+endpoint specifics the generated document already carries.
+
+Also fixed, all found by grep rather than reported: `server/src/db/index.ts` pointed at
+`docs/architecture/monorepo_structure.md`, which does not exist (this issue's own checklist assumed
+it did); `docs/architecture/workflows.md` and `docs/future_state_after_mvp/stats.md` still used the
+pre-rename `services/domain/src/...` paths.
+
+**`.claude/settings.local.json` was left alone.** It holds six stale permission entries for the old
+rename patterns, but the file is untracked and local to one machine, so editing it is not this
+repo's business. Harmless — they grant permission for commands that no longer exist.
 
 ## Blocked by
 

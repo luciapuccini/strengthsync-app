@@ -123,7 +123,7 @@ compared to starting plan generation as a separate process.
 
 2. **Summarize profile and history in parallel**  
    Run two independent LLM calls using the coaching-rule prompts in
-   `services/domain/src/coach/plan-generation.ts`:
+   `server/src/domain/coach/plan-generation.ts`:
    - profile summary: goals, loads, body composition, nutrition/recovery constraints,
      swimming, and schedule preferences;
    - history summary: adherence, progression, skipped sessions, and
