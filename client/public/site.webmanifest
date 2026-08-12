@@ -1,0 +1,23 @@
+{
+  "name": "StrengthSync",
+  "short_name": "StrengthSync",
+  "description": "A real personal trainer and a dashboard that syncs tracking devices, workouts, and nutrition. Weekly AI reports, plan updates every Sunday.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "lang": "en-US",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

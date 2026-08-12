@@ -1,15 +1,28 @@
-import type { JSX } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import type { JSX } from "react";
+import { Link, Outlet } from "react-router-dom";
 
-import { Toaster } from '@/shadcn/ui/sonner'
+import { Toaster } from "@/shadcn/ui/sonner";
 
-export function AppShell(): JSX.Element {
+export function Layout(): JSX.Element {
   return (
     <div className="flex min-h-svh flex-col">
       <header className="border-b border-border">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 px-4 py-3 md:px-6">
-          <Link to="/" className="text-lg font-semibold tracking-tight">
-            StrengthSync
+          <Link
+            to="/"
+            className="flex items-center gap-2 font-semibold tracking-tight"
+          >
+            <img
+              src="/android-chrome-192x192.png"
+              alt="StrengthSync logo"
+              className="h-8 w-8 rounded-md"
+            />
+            <span className="text-base">
+              StrengthSync
+              <span className="ml-1 align-top text-[10px] font-mono text-muted-foreground">
+                beta
+              </span>
+            </span>
           </Link>
           <nav>
             {/* warning: hardcoded demo client/plan until auth selects the active pair */}
@@ -27,5 +40,5 @@ export function AppShell(): JSX.Element {
       </main>
       <Toaster />
     </div>
-  )
+  );
 }

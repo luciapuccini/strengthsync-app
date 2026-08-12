@@ -1,27 +1,29 @@
-import { Suspense } from 'react'
-import type { JSX } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { Suspense } from "react";
+import type { JSX } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 
-import { AppShell } from '@/components/app-shell/appShell'
-import { ErrorBoundary } from '@/components/error-boundary/errorBoundary'
-import { ClientsPage } from '@/routes/clients-page/clientsPage'
-import { HistoryPage } from '@/routes/history/historyPage'
-import { HomeRedirect } from '@/routes/home-redirect/homeRedirect'
-import { NotFound } from '@/routes/not-found/notFound'
-import { TrackerPage } from '@/routes/tracker-page/trackerPage'
-import { Spinner } from '@/shadcn/ui/spinner'
+import { Layout } from "@/components/layout/layout";
+import { ErrorBoundary } from "@/components/error-boundary/errorBoundary";
+import { ClientsPage } from "@/routes/clients-page/clientsPage";
+import { HistoryPage } from "@/routes/history/historyPage";
+import { Home } from "@/routes/home/home";
+import { NotFound } from "@/routes/not-found/notFound";
+import { TrackerPage } from "@/routes/tracker-page/trackerPage";
+import { Spinner } from "@/shadcn/ui/spinner";
 
 export default function App(): JSX.Element {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<AppShell />}>
+        <Route element={<Layout />}>
           <Route
             path="/"
             element={
               <ErrorBoundary>
-                <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
-                  <HomeRedirect />
+                <Suspense
+                  fallback={<Spinner className="mx-auto mt-12 size-6" />}
+                >
+                  <Home />
                 </Suspense>
               </ErrorBoundary>
             }
@@ -31,7 +33,9 @@ export default function App(): JSX.Element {
             path="/clients/:clientId/track"
             element={
               <ErrorBoundary>
-                <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
+                <Suspense
+                  fallback={<Spinner className="mx-auto mt-12 size-6" />}
+                >
                   <TrackerPage />
                 </Suspense>
               </ErrorBoundary>
@@ -41,7 +45,9 @@ export default function App(): JSX.Element {
             path="/clients/:clientId/plans/:planId/history"
             element={
               <ErrorBoundary>
-                <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
+                <Suspense
+                  fallback={<Spinner className="mx-auto mt-12 size-6" />}
+                >
                   <HistoryPage />
                 </Suspense>
               </ErrorBoundary>
@@ -51,5 +57,5 @@ export default function App(): JSX.Element {
         </Route>
       </Routes>
     </BrowserRouter>
-  )
+  );
 }

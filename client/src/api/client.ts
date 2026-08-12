@@ -27,9 +27,11 @@ async function orNull<T>(fn: () => Promise<T>): Promise<T | null> {
   }
 }
 
-function throwOnError<T>(
-  response: { data?: T; error?: unknown; response: Response },
-): T {
+function throwOnError<T>(response: {
+  data?: T;
+  error?: unknown;
+  response: Response;
+}): T {
   if (!response.response.ok || response.data === undefined) {
     throw toApiError(response.response.status, response.error);
   }
@@ -44,7 +46,12 @@ async function call<T>(
   try {
     res = await fn();
   } catch {
-    throw new ApiClientError("network", 0, "network_error", "could not reach the server");
+    throw new ApiClientError(
+      "network",
+      0,
+      "network_error",
+      "could not reach the server",
+    );
   }
   return throwOnError(res);
 }
@@ -57,7 +64,9 @@ export async function createClient(input: CreateClientInput): Promise<Client> {
   return (await call(() => api.POST("/api/clients", { body: input }))).client;
 }
 
-export async function getProfile(clientId: string): Promise<ClientProfile | null> {
+export async function getProfile(
+  clientId: string,
+): Promise<ClientProfile | null> {
   return orNull(async () => {
     const res = await call(() =>
       api.GET("/api/clients/{clientId}/profile", {
@@ -112,7 +121,10 @@ export async function getCurrentWeek(clientId: string): Promise<Week | null> {
   });
 }
 
-export async function listCompletedWeeks(clientId: string, planId: string): Promise<Week[]> {
+export async function listCompletedWeeks(
+  clientId: string,
+  planId: string,
+): Promise<Week[]> {
   const res = await call(() =>
     api.GET("/api/clients/{clientId}/weeks", {
       params: {
@@ -157,4 +169,3 @@ export async function updateDayLog(
 // Re-export the shared openapi-fetch client for callers that need direct access
 // (e.g. the workflow trigger, which uses a different response shape).
 export { api };
-
