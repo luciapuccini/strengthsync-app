@@ -1,3 +1,7 @@
+## Status
+
+DONE — commit 97404b3
+
 ## Parent PRD
 
 `issues/auth/prd.md`
@@ -22,14 +26,14 @@ See the "Identity model" section of the parent PRD.
 
 ## Acceptance criteria
 
-- [ ] The migration creates the credentials table with a unique constraint on email and a foreign key to the athlete record.
-- [ ] `db:migrate:local` applies the migration cleanly against a fresh database.
-- [ ] Creating a credential and looking it up by email round-trips.
-- [ ] Looking up an unknown email returns nothing rather than throwing.
-- [ ] Creating a second credential with an email already in use raises a conflict repository error.
-- [ ] Email is normalized on both write and lookup: an address stored with mixed case or surrounding whitespace is found by its normalized form, and differs-only-by-case addresses collide.
-- [ ] The athlete table's schema, domain type and generated contract are unchanged by this slice.
-- [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+- [x] The migration creates the credentials table with a unique constraint on email and a foreign key to the athlete record.
+- [x] `db:migrate:local` applies the migration cleanly against a fresh database.
+- [x] Creating a credential and looking it up by email round-trips.
+- [x] Looking up an unknown email returns nothing rather than throwing.
+- [x] Creating a second credential with an email already in use raises a conflict repository error.
+- [x] Email is normalized on both write and lookup: an address stored with mixed case or surrounding whitespace is found by its normalized form, and differs-only-by-case addresses collide.
+- [x] The athlete table's schema, domain type and generated contract are unchanged by this slice.
+- [x] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Blocked by
 
