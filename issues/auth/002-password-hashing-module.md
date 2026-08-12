@@ -1,3 +1,7 @@
+## Status
+
+DONE — commit b2320b5
+
 ## Parent PRD
 
 `issues/auth/prd.md`
@@ -28,14 +32,14 @@ See the "Server modules" section of the parent PRD and the key-derivation note i
 
 ## Acceptance criteria
 
-- [ ] A hash verifies as true against the password it was derived from.
-- [ ] Verification returns false for a wrong password.
-- [ ] Verification returns false — not an exception — for a tampered, truncated or otherwise malformed stored value.
-- [ ] Hashing the same password twice produces two different stored values, proving the salt is per-password.
-- [ ] The stored format records its own algorithm and parameters, so a future parameter change can still verify existing values.
-- [ ] The iteration count is backed by a measurement on the runtime, with the number and its reasoning recorded in the module.
-- [ ] The module depends on neither the database nor HTTP, and its tests need neither.
-- [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+- [x] A hash verifies as true against the password it was derived from.
+- [x] Verification returns false for a wrong password.
+- [x] Verification returns false — not an exception — for a tampered, truncated or otherwise malformed stored value.
+- [x] Hashing the same password twice produces two different stored values, proving the salt is per-password.
+- [x] The stored format records its own algorithm and parameters, so a future parameter change can still verify existing values.
+- [x] The iteration count is backed by a measurement on the runtime, with the number and its reasoning recorded in the module.
+- [x] The module depends on neither the database nor HTTP, and its tests need neither.
+- [x] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Blocked by
 
