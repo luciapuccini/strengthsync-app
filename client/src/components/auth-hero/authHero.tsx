@@ -10,14 +10,17 @@ export function AuthHero({ className }: { className?: string }): JSX.Element {
     <div
       className={cn("relative mx-auto aspect-square w-40 sm:w-48", className)}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-primary/25 blur-2xl"
+      {/* Blurred glow layer: same image, scaled up and heavily blurred, sitting behind the sharp circle so its edge visually bleeds outward instead of hard-cutting to the page background. */}
+      <img
+        src="/splash-athlete.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 size-full scale-125 rounded-full object-cover blur-xl opacity-60"
       />
       <img
         src="/splash-athlete.png"
         alt="Athlete performing a barbell squat"
-        className="size-full rounded-full object-cover [mask-image:radial-gradient(circle,black_55%,transparent_78%)]"
+        className="relative z-10 size-full rounded-full object-cover mask-circle mask-radial-closest-side mask-radial-from-50% mask-radial-to-100%"
       />
     </div>
   );
