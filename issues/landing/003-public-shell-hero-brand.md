@@ -1,6 +1,6 @@
 ## Parent PRD
 
-`issues/prd.md`
+`issues/landing/prd.md`
 
 ## What to build
 
@@ -28,7 +28,7 @@ See the "Layouts" and "Auth screens" sections of the parent PRD.
 
 ## Blocked by
 
-- Blocked by `issues/001-auth-boundary-routing-spine.md`
+- Blocked by `issues/landing/001-auth-boundary-routing-spine.md`
 
 ## User stories addressed
 

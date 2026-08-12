@@ -1,6 +1,6 @@
 ## Parent PRD
 
-`issues/prd.md`
+`issues/landing/prd.md`
 
 ## What to build
 

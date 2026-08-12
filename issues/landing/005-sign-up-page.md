@@ -1,6 +1,6 @@
 ## Parent PRD
 
-`issues/prd.md`
+`issues/landing/prd.md`
 
 ## What to build
 
@@ -28,8 +28,8 @@ See the "Auth screens" and "Shared UI / shadcn changes" sections of the parent P
 
 ## Blocked by
 
-- Blocked by `issues/002-shadcn-primitives.md`
-- Blocked by `issues/003-public-shell-hero-brand.md`
+- Blocked by `issues/landing/002-shadcn-primitives.md`
+- Blocked by `issues/landing/003-public-shell-hero-brand.md`
 
 ## User stories addressed
 
