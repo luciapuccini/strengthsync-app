@@ -3,7 +3,7 @@ import { Link, Outlet } from "react-router-dom";
 
 import { Toaster } from "@/shadcn/ui/sonner";
 
-export function Layout(): JSX.Element {
+export function AppLayout(): JSX.Element {
   return (
     <div className="flex min-h-svh flex-col">
       <header className="border-b border-border">
