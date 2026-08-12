@@ -1,3 +1,7 @@
+## Status
+
+DONE — commit f66d5f0
+
 ## Parent PRD
 
 `issues/auth/prd.md`
@@ -26,13 +30,13 @@ committed-credential note in "Further Notes".
 
 ## Acceptance criteria
 
-- [ ] The script runs with the same runner as the contract generator and prints a stored-format hash for a supplied password.
-- [ ] The script derives its output from the project's password module rather than duplicating the hashing logic.
-- [ ] The seed file inserts a credential row for the seeded demo athlete, referencing the existing athlete id.
-- [ ] The hash committed in the seed verifies against the documented dev password when checked with the password module.
-- [ ] The seed is idempotent and can be applied twice without error, matching the existing seeds' style.
-- [ ] The dev email and password are documented where a developer will find them.
-- [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+- [x] The script runs with the same runner as the contract generator and prints a stored-format hash for a supplied password.
+- [x] The script derives its output from the project's password module rather than duplicating the hashing logic.
+- [x] The seed file inserts a credential row for the seeded demo athlete, referencing the existing athlete id.
+- [x] The hash committed in the seed verifies against the documented dev password when checked with the password module.
+- [x] The seed is idempotent and can be applied twice without error, matching the existing seeds' style.
+- [x] The dev email and password are documented where a developer will find them.
+- [x] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Blocked by
 
