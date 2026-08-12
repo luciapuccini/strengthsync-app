@@ -8,6 +8,13 @@
       "when": 1784624257312,
       "tag": "0000_mixed_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1786566373179,
+      "tag": "0001_soft_maginty",
+      "breakpoints": true
     }
   ]
 }

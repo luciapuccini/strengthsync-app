@@ -50,6 +50,20 @@ export const clients = sqliteTable(
   (t) => [index("clients_coach_id_idx").on(t.coach_id)],
 );
 
+/**
+ * Sign-in credentials, kept off the `clients` row so no existing `SELECT *`
+ * (e.g. `listClients`) can leak a password hash to the browser. Keyed by the
+ * athlete's own id: one credential set per athlete.
+ */
+export const clientCredentials = sqliteTable("client_credentials", {
+  client_id: text("client_id")
+    .primaryKey()
+    .references(() => clients.id),
+  email: text("email").notNull().unique(),
+  password_hash: text("password_hash").notNull(),
+  created_at: text("created_at").notNull(),
+});
+
 // Factory, not a shared builder: drizzle column builders bind their column
 // name on first use, so each column needs its own call.
 const jsonRecord = () => text({ mode: "json" }).$type<Record<string, JsonValue>>();

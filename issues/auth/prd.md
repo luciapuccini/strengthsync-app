@@ -347,6 +347,15 @@ they are not a blocker if they prove fiddly.
   phase adopts its cookie shape, its lifetime and its middleware location, but
   carries the athlete's identity in the payload and retires Basic authentication
   rather than layering on top of it.
+- **`db:generate` is currently broken.** `server/db/drizzle.config.ts`'s
+  `schema` path (`../src/db/schema.ts`) is resolved relative to the process's
+  working directory, not the config file's location. The repository
+  restructuring that produced the current `server/` layout moved the config
+  without accounting for this, so running the documented `pnpm db:generate`
+  from `server/` fails to find the schema. Discovered while generating this
+  phase's first migration by invoking `drizzle-kit generate` directly from
+  `server/db/` instead. Recorded here rather than fixed, the same way the
+  `check:openapi` gap above is recorded — narrower scope than this phase.
 - **Key-derivation cost interacts with the platform's CPU budget.** The free
   Workers plan allows ten milliseconds of CPU per request, and password hashing is
   deliberately expensive. The iteration count should be measured on the platform

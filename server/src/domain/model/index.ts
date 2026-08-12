@@ -63,6 +63,14 @@ export const ClientSchema = z.object({
 });
 export type Client = z.infer<typeof ClientSchema>;
 
+export const ClientCredentialsSchema = z.object({
+  client_id: UuidSchema,
+  email: z.string().min(1),
+  password_hash: z.string().min(1),
+  created_at: ISODateTimeSchema,
+});
+export type ClientCredentials = z.infer<typeof ClientCredentialsSchema>;
+
 export interface JsonObject {
   [key: string]: JsonValue;
 }
