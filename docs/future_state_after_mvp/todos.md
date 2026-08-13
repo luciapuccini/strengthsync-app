@@ -10,3 +10,4 @@ Notes only — not designs. Pointers into existing docs where they already cover
 - **Auto-trigger week workflow:** e.g. start complete-week when the last day of the week is saved. (See [workflows.md](../architecture/workflows.md).)
 - **Password reset.** (Out of MVP auth scope in [stack.md](../architecture/stack.md).)
 - **SSO / social sign-in** (Apple, Google, etc.). (Out of MVP auth scope in [stack.md](../architecture/stack.md).)
+- **Onboarding draft state:** progressive reducer + resume after refresh/later. Decide if Zustand helps. (See [onboarding-draft-state.md](./onboarding-draft-state.md).)
