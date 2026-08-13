@@ -13,7 +13,7 @@ export const SESSION_SECRET = 'test-session-secret'
  * needs one, so tests get the id and the headers together rather than assembling
  * a cookie at each call site.
  */
-export type TestAthlete = {
+export type TestClient = {
   id: string
   /** Cookie only, for reads. */
   headers: Record<string, string>
@@ -34,7 +34,7 @@ export function createTestApp(overrides: Partial<AppConfig> = {}): OpenAPIHono {
  * route as the way tests get a client: that route is now behind the guard, so
  * reaching it would need the very session this produces.
  */
-export async function signUpViaApi(app: OpenAPIHono, displayName = 'Ana'): Promise<TestAthlete> {
+export async function signUpViaApi(app: OpenAPIHono, displayName = 'Ana'): Promise<TestClient> {
   const res = await app.request('/auth/sign-up', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -52,10 +52,10 @@ export async function signUpViaApi(app: OpenAPIHono, displayName = 'Ana'): Promi
   return { id: client.id, headers, jsonHeaders: { ...headers, 'content-type': 'application/json' } }
 }
 
-export async function upsertProfileViaApi(app: OpenAPIHono, athlete: TestAthlete): Promise<void> {
-  await app.request(`/api/clients/${athlete.id}/profile`, {
+export async function upsertProfileViaApi(app: OpenAPIHono, client: TestClient): Promise<void> {
+  await app.request(`/api/clients/${client.id}/profile`, {
     method: 'PUT',
-    headers: athlete.jsonHeaders,
+    headers: client.jsonHeaders,
     body: JSON.stringify({
       snapshot_date: '2026-07-01',
       sex: 'female',

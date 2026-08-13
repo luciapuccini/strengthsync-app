@@ -30,8 +30,8 @@ describe('health + auth', () => {
 
   it('rejects /api/* with a tampered cookie', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
-    const tampered = `${athlete.headers.cookie}x`
+    const client = await signUpViaApi(app)
+    const tampered = `${client.headers.cookie}x`
 
     expect((await app.request('/api/clients', { headers: { cookie: tampered } })).status).toBe(401)
     expect((await app.request('/api/clients', { headers: { cookie: 'session=nonsense' } })).status).toBe(401)
@@ -39,9 +39,9 @@ describe('health + auth', () => {
 
   it('rejects /api/* with an expired cookie', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
+    const client = await signUpViaApi(app)
     const now = Math.floor(Date.now() / 1000)
-    const expired = await sign({ sub: athlete.id, iat: now - 120, exp: now - 60 }, SESSION_SECRET, 'HS256')
+    const expired = await sign({ sub: client.id, iat: now - 120, exp: now - 60 }, SESSION_SECRET, 'HS256')
 
     const res = await app.request('/api/clients', { headers: { cookie: `session=${expired}` } })
     expect(res.status).toBe(401)
@@ -66,18 +66,18 @@ describe('health + auth', () => {
 describe('clients + profile', () => {
   it('creates and lists clients', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
+    const client = await signUpViaApi(app)
 
-    const list = await app.request('/api/clients', { headers: athlete.headers })
+    const list = await app.request('/api/clients', { headers: client.headers })
     expect(list.status).toBe(200)
     expect(((await list.json()) as { clients: unknown[] }).clients).toHaveLength(1)
   })
 
   it('returns 400 invalid_id for a malformed client uuid', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
+    const client = await signUpViaApi(app)
     const res = await app.request('/api/clients/not-a-uuid/profile', {
-      headers: athlete.headers,
+      headers: client.headers,
     })
     expect(res.status).toBe(400)
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_id')
@@ -85,10 +85,10 @@ describe('clients + profile', () => {
 
   it('returns 404 client_not_found for a well-formed id that matches no client', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
+    const client = await signUpViaApi(app)
     const res = await app.request(
       '/api/clients/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/weeks',
-      { headers: athlete.headers },
+      { headers: client.headers },
     )
     expect(res.status).toBe(404)
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe('client_not_found')
@@ -96,10 +96,10 @@ describe('clients + profile', () => {
 
   it('rejects an invalid create body with 400', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
+    const client = await signUpViaApi(app)
     const res = await app.request('/api/clients', {
       method: 'POST',
-      headers: athlete.jsonHeaders,
+      headers: client.jsonHeaders,
       body: JSON.stringify({}),
     })
     expect(res.status).toBe(400)
@@ -110,10 +110,10 @@ describe('clients + profile', () => {
     // Hono rejects unparseable JSON before any validator runs; app.ts maps that
     // 400 back into { error: { code, message } } so the UI can read it.
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
+    const client = await signUpViaApi(app)
     const res = await app.request('/api/clients', {
       method: 'POST',
-      headers: athlete.jsonHeaders,
+      headers: client.jsonHeaders,
       body: '{ not json',
     })
     expect(res.status).toBe(400)
@@ -122,16 +122,16 @@ describe('clients + profile', () => {
 
   it('upserts and reads the client profile', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
-    await upsertProfileViaApi(app, athlete)
+    const client = await signUpViaApi(app)
+    await upsertProfileViaApi(app, client)
 
-    const res = await app.request(`/api/clients/${athlete.id}/profile`, {
-      headers: athlete.headers,
+    const res = await app.request(`/api/clients/${client.id}/profile`, {
+      headers: client.headers,
     })
     expect(res.status).toBe(200)
     const body = (await res.json()) as { profile: { age: number; client_id: string } }
     expect(body.profile.age).toBe(34)
-    expect(body.profile.client_id).toBe(athlete.id)
+    expect(body.profile.client_id).toBe(client.id)
   })
 })
 
@@ -141,15 +141,15 @@ describe('removed endpoints', () => {
   it('no longer routes the three endpoints cut from the public surface', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const athlete = await signUpViaApi(app)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-cut')
+    const client = await signUpViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-cut')
 
     for (const path of [
-      `/api/clients/${athlete.id}`,
-      `/api/clients/${athlete.id}/plans`,
-      `/api/clients/${athlete.id}/weeks/${first_week.id}`,
+      `/api/clients/${client.id}`,
+      `/api/clients/${client.id}/plans`,
+      `/api/clients/${client.id}/weeks/${first_week.id}`,
     ]) {
-      const res = await app.request(path, { headers: athlete.headers })
+      const res = await app.request(path, { headers: client.headers })
       expect(res.status, `${path} should not be routed`).toBe(404)
     }
   })
@@ -158,15 +158,15 @@ describe('removed endpoints', () => {
 describe('training reads', () => {
   it('returns 404 for current week and active plan before any plan exists', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
+    const client = await signUpViaApi(app)
 
-    const week = await app.request(`/api/clients/${athlete.id}/weeks/current`, {
-      headers: athlete.headers,
+    const week = await app.request(`/api/clients/${client.id}/weeks/current`, {
+      headers: client.headers,
     })
     expect(week.status).toBe(404)
 
-    const plan = await app.request(`/api/clients/${athlete.id}/plans/active`, {
-      headers: athlete.headers,
+    const plan = await app.request(`/api/clients/${client.id}/plans/active`, {
+      headers: client.headers,
     })
     expect(plan.status).toBe(404)
   })
@@ -174,17 +174,17 @@ describe('training reads', () => {
   it('returns 404 when the in_flight week has not started yet', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const athlete = await signUpViaApi(app)
-    await upsertProfileViaApi(app, athlete)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-future-week')
+    const client = await signUpViaApi(app)
+    await upsertProfileViaApi(app, client)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-future-week')
     const futureStart = addDays(todayIso(), 7)
     await db
       .update(weeks)
       .set({ start_date: futureStart, end_date: addDays(futureStart, 6) })
       .where(eq(weeks.id, first_week.id))
 
-    const res = await app.request(`/api/clients/${athlete.id}/weeks/current`, {
-      headers: athlete.headers,
+    const res = await app.request(`/api/clients/${client.id}/weeks/current`, {
+      headers: client.headers,
     })
     expect(res.status).toBe(404)
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
@@ -194,9 +194,9 @@ describe('training reads', () => {
 
   it('rejects an invalid week status filter with 400', async () => {
     const app = createTestApp()
-    const athlete = await signUpViaApi(app)
-    const res = await app.request(`/api/clients/${athlete.id}/weeks?status=bogus`, {
-      headers: athlete.headers,
+    const client = await signUpViaApi(app)
+    const res = await app.request(`/api/clients/${client.id}/weeks?status=bogus`, {
+      headers: client.headers,
     })
     expect(res.status).toBe(400)
   })
@@ -209,15 +209,15 @@ describe('week route parameters', () => {
     // an unusable route id, so it keeps invalid_input (see #003's mapping).
     const db = createTestDb()
     const app = createTestApp({ db })
-    const athlete = await signUpViaApi(app)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-day-index')
+    const client = await signUpViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-day-index')
 
     for (const dayIndex of ['0', '8', 'abc']) {
       const res = await app.request(
-        `/api/clients/${athlete.id}/weeks/${first_week.id}/days/${dayIndex}/save`,
+        `/api/clients/${client.id}/weeks/${first_week.id}/days/${dayIndex}/save`,
         {
           method: 'POST',
-          headers: athlete.jsonHeaders,
+          headers: client.jsonHeaders,
           body: JSON.stringify({ exercises: [] }),
         },
       )
@@ -229,17 +229,17 @@ describe('week route parameters', () => {
   it('filters the week list by planId', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const athlete = await signUpViaApi(app)
-    const { plan } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-filter')
+    const client = await signUpViaApi(app)
+    const { plan } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-filter')
 
-    const matching = await app.request(`/api/clients/${athlete.id}/weeks?planId=${plan.id}`, {
-      headers: athlete.headers,
+    const matching = await app.request(`/api/clients/${client.id}/weeks?planId=${plan.id}`, {
+      headers: client.headers,
     })
     expect(((await matching.json()) as { weeks: unknown[] }).weeks.length).toBeGreaterThan(0)
 
     const other = await app.request(
-      `/api/clients/${athlete.id}/weeks?planId=1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d`,
-      { headers: athlete.headers },
+      `/api/clients/${client.id}/weeks?planId=1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d`,
+      { headers: client.headers },
     )
     expect(((await other.json()) as { weeks: unknown[] }).weeks).toHaveLength(0)
   })
@@ -249,14 +249,14 @@ describe('day log writes', () => {
   it('rejects a day patch whose skipped exercise carries sets (400)', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const athlete = await signUpViaApi(app)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-setup')
+    const client = await signUpViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-setup')
 
     const res = await app.request(
-      `/api/clients/${athlete.id}/weeks/${first_week.id}/days/1`,
+      `/api/clients/${client.id}/weeks/${first_week.id}/days/1`,
       {
         method: 'PATCH',
-        headers: athlete.jsonHeaders,
+        headers: client.jsonHeaders,
         body: JSON.stringify({
           completed: false,
           exercises: [
@@ -319,14 +319,14 @@ describe('day save', () => {
   it('saves a day via POST and always marks it completed', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const athlete = await signUpViaApi(app)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-setup')
+    const client = await signUpViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-setup')
 
     const res = await app.request(
-      `/api/clients/${athlete.id}/weeks/${first_week.id}/days/1/save`,
+      `/api/clients/${client.id}/weeks/${first_week.id}/days/1/save`,
       {
         method: 'POST',
-        headers: athlete.jsonHeaders,
+        headers: client.jsonHeaders,
         body: JSON.stringify({
           exercises: [
             {

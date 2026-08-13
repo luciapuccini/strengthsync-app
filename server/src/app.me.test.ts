@@ -9,7 +9,7 @@ import {
   createTestApp,
   signUpViaApi,
   upsertProfileViaApi,
-  type TestAthlete,
+  type TestClient,
 } from './testkit.ts'
 
 /**
@@ -19,10 +19,10 @@ import {
  * most of these tests exists to demonstrate.
  */
 
-type Scene = { db: Db; app: OpenAPIHono; ana: TestAthlete; bea: TestAthlete }
+type Scene = { db: Db; app: OpenAPIHono; ana: TestClient; bea: TestClient }
 
 /** Two registered athletes on one app, so "mine" can be told from "theirs". */
-async function twoAthletes(): Promise<Scene> {
+async function twoClients(): Promise<Scene> {
   const db = createTestDb()
   const app = createTestApp({ db })
   return { db, app, ana: await signUpViaApi(app, 'Ana'), bea: await signUpViaApi(app, 'Bea') }
@@ -34,7 +34,7 @@ async function body<T>(res: Response): Promise<T> {
 
 describe('GET /api/me/profile', () => {
   it('returns 404 before a profile exists', async () => {
-    const { app, ana } = await twoAthletes()
+    const { app, ana } = await twoClients()
     const res = await app.request('/api/me/profile', { headers: ana.headers })
 
     expect(res.status).toBe(404)
@@ -42,7 +42,7 @@ describe('GET /api/me/profile', () => {
   })
 
   it("returns the caller's own profile, never the other athlete's", async () => {
-    const { app, ana, bea } = await twoAthletes()
+    const { app, ana, bea } = await twoClients()
     await upsertProfileViaApi(app, ana)
 
     const mine = await app.request('/api/me/profile', { headers: ana.headers })
@@ -56,7 +56,7 @@ describe('GET /api/me/profile', () => {
 
 describe('PUT /api/me/profile', () => {
   it('creates the profile against the session, with no id in the request', async () => {
-    const { app, ana } = await twoAthletes()
+    const { app, ana } = await twoClients()
     await upsertProfileViaApi(app, ana)
 
     const res = await app.request('/api/me/profile', { headers: ana.headers })
@@ -66,7 +66,7 @@ describe('PUT /api/me/profile', () => {
   })
 
   it('rejects an invalid body with 400', async () => {
-    const { app, ana } = await twoAthletes()
+    const { app, ana } = await twoClients()
     const res = await app.request('/api/me/profile', {
       method: 'PUT',
       headers: ana.jsonHeaders,
@@ -78,7 +78,7 @@ describe('PUT /api/me/profile', () => {
 
 describe('GET /api/me/plans/active', () => {
   it('returns 404 before a plan is activated', async () => {
-    const { app, ana } = await twoAthletes()
+    const { app, ana } = await twoClients()
     const res = await app.request('/api/me/plans/active', { headers: ana.headers })
 
     expect(res.status).toBe(404)
@@ -86,7 +86,7 @@ describe('GET /api/me/plans/active', () => {
   })
 
   it("returns the caller's active plan", async () => {
-    const { db, app, ana, bea } = await twoAthletes()
+    const { db, app, ana, bea } = await twoClients()
     const { plan } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-active')
 
     const mine = await app.request('/api/me/plans/active', { headers: ana.headers })
@@ -99,7 +99,7 @@ describe('GET /api/me/plans/active', () => {
 
 describe('GET /api/me/plans/{planId}', () => {
   it("returns the caller's plan by id", async () => {
-    const { db, app, ana } = await twoAthletes()
+    const { db, app, ana } = await twoClients()
     const { plan } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-by-id')
 
     const res = await app.request(`/api/me/plans/${plan.id}`, { headers: ana.headers })
@@ -109,7 +109,7 @@ describe('GET /api/me/plans/{planId}', () => {
   // The path carries a plan id, which is the one identifier a caller can still
   // choose. Naming someone else's plan finds nothing rather than reading it.
   it("returns 404 for another athlete's plan id", async () => {
-    const { db, app, ana, bea } = await twoAthletes()
+    const { db, app, ana, bea } = await twoClients()
     const { plan } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-not-yours')
 
     const res = await app.request(`/api/me/plans/${plan.id}`, { headers: bea.headers })
@@ -119,7 +119,7 @@ describe('GET /api/me/plans/{planId}', () => {
 
 describe('GET /api/me/weeks/current', () => {
   it('returns 404 before a plan exists', async () => {
-    const { app, ana } = await twoAthletes()
+    const { app, ana } = await twoClients()
     const res = await app.request('/api/me/weeks/current', { headers: ana.headers })
 
     expect(res.status).toBe(404)
@@ -127,7 +127,7 @@ describe('GET /api/me/weeks/current', () => {
   })
 
   it("returns the caller's in-flight week", async () => {
-    const { db, app, ana, bea } = await twoAthletes()
+    const { db, app, ana, bea } = await twoClients()
     const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-current')
 
     const mine = await app.request('/api/me/weeks/current', { headers: ana.headers })
@@ -140,7 +140,7 @@ describe('GET /api/me/weeks/current', () => {
 
 describe('GET /api/me/weeks', () => {
   it("lists only the caller's weeks", async () => {
-    const { db, app, ana, bea } = await twoAthletes()
+    const { db, app, ana, bea } = await twoClients()
     await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-list')
 
     const mine = await app.request('/api/me/weeks', { headers: ana.headers })
@@ -151,7 +151,7 @@ describe('GET /api/me/weeks', () => {
   })
 
   it('filters by planId and rejects an invalid status with 400', async () => {
-    const { db, app, ana } = await twoAthletes()
+    const { db, app, ana } = await twoClients()
     const { plan } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-filter')
 
     const matching = await app.request(`/api/me/weeks?planId=${plan.id}`, { headers: ana.headers })
@@ -170,7 +170,7 @@ describe('GET /api/me/weeks', () => {
 
 describe('day log writes under /api/me', () => {
   it('saves a day and marks it completed', async () => {
-    const { db, app, ana } = await twoAthletes()
+    const { db, app, ana } = await twoClients()
     const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-save')
 
     const res = await app.request(`/api/me/weeks/${first_week.id}/days/1/save`, {
@@ -196,7 +196,7 @@ describe('day log writes under /api/me', () => {
   })
 
   it('patches a day', async () => {
-    const { db, app, ana } = await twoAthletes()
+    const { db, app, ana } = await twoClients()
     const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-patch')
 
     const res = await app.request(`/api/me/weeks/${first_week.id}/days/1`, {
@@ -220,7 +220,7 @@ describe('day log writes under /api/me', () => {
   // The week id is the caller's other free choice: it belongs to Ana, and Bea
   // presenting it must not reach her data.
   it("refuses to write into another athlete's week", async () => {
-    const { db, app, ana, bea } = await twoAthletes()
+    const { db, app, ana, bea } = await twoClients()
     const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-cross')
 
     const res = await app.request(`/api/me/weeks/${first_week.id}/days/1/save`, {
@@ -235,7 +235,7 @@ describe('day log writes under /api/me', () => {
 
 describe('the session is what addresses these routes', () => {
   it('answers 401 without a cookie, on every /me path', async () => {
-    const { app } = await twoAthletes()
+    const { app } = await twoClients()
 
     for (const [method, path] of [
       ['GET', '/api/me/profile'],
