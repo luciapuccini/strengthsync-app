@@ -5,7 +5,6 @@ import { ApiClientError, toApiError } from "./errors";
 import type {
   Client,
   ClientProfile,
-  CreateClientInput,
   Plan,
   SaveDayLog,
   SignInInput,
@@ -108,95 +107,64 @@ export async function getSession(): Promise<Client> {
   return (await call(() => api.GET("/auth/session"))).client;
 }
 
-export async function getClients(): Promise<Client[]> {
-  return (await call(() => api.GET("/api/clients"))).clients;
-}
+/**
+ * Everything below addresses `/api/me`, which takes the athlete from the session
+ * cookie. None of these accepts an athlete id, so the browser cannot ask for
+ * anyone else's data — and no caller has to know whose data it is asking for.
+ */
 
-export async function createClient(input: CreateClientInput): Promise<Client> {
-  return (await call(() => api.POST("/api/clients", { body: input }))).client;
-}
-
-export async function getProfile(
-  clientId: string,
-): Promise<ClientProfile | null> {
+export async function getProfile(): Promise<ClientProfile | null> {
   return orNull(async () => {
-    const res = await call(() =>
-      api.GET("/api/clients/{clientId}/profile", {
-        params: { path: { clientId } },
-      }),
-    );
+    const res = await call(() => api.GET("/api/me/profile"));
     return res.profile;
   });
 }
 
 export async function updateProfile(
-  clientId: string,
   input: UpdateClientProfile,
 ): Promise<ClientProfile> {
-  const res = await call(() =>
-    api.PUT("/api/clients/{clientId}/profile", {
-      params: { path: { clientId } },
-      body: input,
-    }),
-  );
+  const res = await call(() => api.PUT("/api/me/profile", { body: input }));
   return res.profile;
 }
 
-export async function getActivePlan(clientId: string): Promise<Plan | null> {
+export async function getActivePlan(): Promise<Plan | null> {
   return orNull(async () => {
-    const res = await call(() =>
-      api.GET("/api/clients/{clientId}/plans/active", {
-        params: { path: { clientId } },
-      }),
-    );
+    const res = await call(() => api.GET("/api/me/plans/active"));
     return res.plan;
   });
 }
 
-export async function getPlan(clientId: string, planId: string): Promise<Plan> {
+export async function getPlan(planId: string): Promise<Plan> {
   const res = await call(() =>
-    api.GET("/api/clients/{clientId}/plans/{planId}", {
-      params: { path: { clientId, planId } },
-    }),
+    api.GET("/api/me/plans/{planId}", { params: { path: { planId } } }),
   );
   return res.plan;
 }
 
-export async function getCurrentWeek(clientId: string): Promise<Week | null> {
+export async function getCurrentWeek(): Promise<Week | null> {
   return orNull(async () => {
-    const res = await call(() =>
-      api.GET("/api/clients/{clientId}/weeks/current", {
-        params: { path: { clientId } },
-      }),
-    );
+    const res = await call(() => api.GET("/api/me/weeks/current"));
     return res.week;
   });
 }
 
-export async function listCompletedWeeks(
-  clientId: string,
-  planId: string,
-): Promise<Week[]> {
+export async function listCompletedWeeks(planId: string): Promise<Week[]> {
   const res = await call(() =>
-    api.GET("/api/clients/{clientId}/weeks", {
-      params: {
-        path: { clientId },
-        query: { status: "completed", planId },
-      },
+    api.GET("/api/me/weeks", {
+      params: { query: { status: "completed", planId } },
     }),
   );
   return res.weeks;
 }
 
 export async function saveDayLog(
-  clientId: string,
   weekId: string,
   dayIndex: number,
   input: SaveDayLog,
 ): Promise<Week> {
   const res = await call(() =>
-    api.POST("/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}/save", {
-      params: { path: { clientId, weekId, dayIndex } },
+    api.POST("/api/me/weeks/{weekId}/days/{dayIndex}/save", {
+      params: { path: { weekId, dayIndex } },
       body: input,
     }),
   );
@@ -204,14 +172,13 @@ export async function saveDayLog(
 }
 
 export async function updateDayLog(
-  clientId: string,
   weekId: string,
   dayIndex: number,
   input: UpdateDayLog,
 ): Promise<Week> {
   const res = await call(() =>
-    api.PATCH("/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}", {
-      params: { path: { clientId, weekId, dayIndex } },
+    api.PATCH("/api/me/weeks/{weekId}/days/{dayIndex}", {
+      params: { path: { weekId, dayIndex } },
       body: input,
     }),
   );

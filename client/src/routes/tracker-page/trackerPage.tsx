@@ -1,6 +1,5 @@
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
 import type { JSX } from "react";
-import { useParams } from "react-router-dom";
 
 import { WeekTracker } from "@/routes/tracker-page/components/week-tracker/weekTracker";
 import { currentWeekResource } from "@/api/weekResource";
@@ -8,26 +7,20 @@ import type { TrackerData } from "@/api/weekResource";
 import { useAppStore } from "@/store/useAppStore";
 
 export function TrackerPage(): JSX.Element {
-  const clientId = useParams().clientId as string;
-  const data = use(currentWeekResource(clientId));
-  const selectedClientId = useAppStore((s) => s.selectedClientId);
-  const selectClient = useAppStore((s) => s.selectClient);
+  // No athlete id: the resource asks the session whose tracker this is. The
+  // one still in the URL is ignored until the route drops it.
+  const data = use(currentWeekResource());
 
   // Hydrate the store synchronously during render (React's "adjust state
   // during render" pattern), guarded by reference equality against the
   // resolved resource. This keeps the store as the single source of truth
-  // for `week` while avoiding an effect-driven flash or a stale-store
-  // frame when switching clients.
+  // for `week` while avoiding an effect-driven flash or a stale-store frame.
   const [hydratedFrom, setHydratedFrom] = useState<TrackerData | null>(null);
   if (hydratedFrom !== data) {
     setHydratedFrom(data);
     useAppStore.getState().hydrateTracker(data);
   }
   const week = useAppStore((s) => s.week);
-
-  useEffect(() => {
-    if (selectedClientId !== clientId) selectClient(clientId);
-  }, [clientId, selectClient, selectedClientId]);
 
   if (week === null) {
     return (

@@ -7,7 +7,6 @@ import { ErrorBoundary } from "@/components/error-boundary/errorBoundary";
 import { PublicLayout } from "@/components/public-layout/publicLayout";
 import { RequireAuth } from "@/components/require-auth/requireAuth";
 import { RootRedirect } from "@/components/root-redirect/rootRedirect";
-import { ClientsPage } from "@/routes/clients-page/clientsPage";
 import { HistoryPage } from "@/routes/history/historyPage";
 import { NotFound } from "@/routes/not-found/notFound";
 import { SignIn } from "@/routes/sign-in/signIn";
@@ -47,7 +46,6 @@ export default function App(): JSX.Element {
 
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
-            <Route path="/clients" element={<ClientsPage />} />
             <Route
               path="/clients/:clientId/track"
               element={

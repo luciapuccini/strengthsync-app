@@ -6,27 +6,26 @@ export type HistoryData = {
   plan: Plan
 }
 
+/**
+ * Keyed by plan alone: the session decides whose plans these are, so the
+ * athlete half of the old composite key carried no information.
+ */
 const historyPromises = new Map<string, Promise<HistoryData>>()
 
-function cacheKey(clientId: string, planId: string): string {
-  return `${clientId}:${planId}`
-}
-
-export function completedWeeksResource(clientId: string, planId: string): Promise<HistoryData> {
-  const key = cacheKey(clientId, planId)
-  const cached = historyPromises.get(key)
+export function completedWeeksResource(planId: string): Promise<HistoryData> {
+  const cached = historyPromises.get(planId)
   if (cached !== undefined) return cached
 
-  const promise = Promise.all([listCompletedWeeks(clientId, planId), getPlan(clientId, planId)])
+  const promise = Promise.all([listCompletedWeeks(planId), getPlan(planId)])
     .then(([weeks, plan]) => ({ weeks, plan }))
     .catch((error: unknown) => {
-      historyPromises.delete(key)
+      historyPromises.delete(planId)
       throw error
     })
-  historyPromises.set(key, promise)
+  historyPromises.set(planId, promise)
   return promise
 }
 
-export function invalidateCompletedWeeks(clientId: string, planId: string): void {
-  historyPromises.delete(cacheKey(clientId, planId))
+export function invalidateCompletedWeeks(planId: string): void {
+  historyPromises.delete(planId)
 }

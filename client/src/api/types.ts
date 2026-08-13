@@ -3,7 +3,6 @@ import type { components } from "./openapi";
 export type ApiError = components["schemas"]["ApiError"];
 export type Client = components["schemas"]["Client"];
 export type ClientProfile = components["schemas"]["ClientProfile"];
-export type CreateClientInput = components["schemas"]["CreateClientInput"];
 export type DayExerciseLog = components["schemas"]["DayExerciseLog"];
 export type DayType = components["schemas"]["DayType"];
 export type ExerciseFeedback = components["schemas"]["ExerciseFeedback"];

@@ -29,32 +29,32 @@ const samplePlan = {
 }
 
 afterEach(() => {
-  invalidateCompletedWeeks(CLIENT, PLAN)
+  invalidateCompletedWeeks(PLAN)
   vi.clearAllMocks()
 })
 
 describe('completedWeeksResource', () => {
-  it('loads weeks and plan and caches by client and plan', async () => {
+  it('loads weeks and plan and caches by plan alone', async () => {
     const weeks = [{ ...makeWeek(), status: 'completed' as const }]
     listCompletedWeeks.mockResolvedValue(weeks)
     getPlan.mockResolvedValue(samplePlan)
 
-    const first = completedWeeksResource(CLIENT, PLAN)
-    const second = completedWeeksResource(CLIENT, PLAN)
+    const first = completedWeeksResource(PLAN)
+    const second = completedWeeksResource(PLAN)
 
     await expect(first).resolves.toEqual({ weeks, plan: samplePlan })
     await expect(second).resolves.toEqual({ weeks, plan: samplePlan })
     expect(listCompletedWeeks).toHaveBeenCalledTimes(1)
     expect(getPlan).toHaveBeenCalledTimes(1)
-    expect(getPlan).toHaveBeenCalledWith(CLIENT, PLAN)
+    expect(getPlan).toHaveBeenCalledWith(PLAN)
   })
 
   it('drops the cache when the load fails', async () => {
     listCompletedWeeks.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce([])
     getPlan.mockResolvedValue(samplePlan)
 
-    await expect(completedWeeksResource(CLIENT, PLAN)).rejects.toThrow('boom')
-    await expect(completedWeeksResource(CLIENT, PLAN)).resolves.toEqual({
+    await expect(completedWeeksResource(PLAN)).rejects.toThrow('boom')
+    await expect(completedWeeksResource(PLAN)).resolves.toEqual({
       weeks: [],
       plan: samplePlan,
     })

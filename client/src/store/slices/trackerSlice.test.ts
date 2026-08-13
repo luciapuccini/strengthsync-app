@@ -35,7 +35,7 @@ const client: Client = {
 
 beforeEach(() => {
   window.localStorage.clear()
-  useAppStore.setState({ client: null, plan: null, week: null, selectedClientId: null }, false)
+  useAppStore.setState({ client: null, plan: null, week: null }, false)
 })
 
 afterEach(() => {
@@ -200,7 +200,7 @@ describe('trackerSlice API orchestration', () => {
 
     await useAppStore.getState().saveDay(week.schedule[0]!)
 
-    expect(saveDayLog).toHaveBeenCalledWith(client.id, week.id, 1, {
+    expect(saveDayLog).toHaveBeenCalledWith(week.id, 1, {
       exercises: [
         {
           exercise_key: 'bench_press',
@@ -210,7 +210,7 @@ describe('trackerSlice API orchestration', () => {
         },
       ],
     })
-    expect(invalidateCurrentWeek).toHaveBeenCalledWith(client.id)
+    expect(invalidateCurrentWeek).toHaveBeenCalledWith()
     expect(useAppStore.getState().week).toEqual(savedWeek)
   })
 

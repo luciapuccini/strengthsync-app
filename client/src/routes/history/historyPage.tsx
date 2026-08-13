@@ -9,11 +9,10 @@ import { Button } from "@/shadcn/ui/button";
 import { formatIsoDate } from "@/utils/formatIsoDate";
 
 export function HistoryPage(): JSX.Element {
-  const { clientId, planId } = useParams() as {
-    clientId: string;
-    planId: string;
-  };
-  const { weeks, plan } = use(completedWeeksResource(clientId, planId));
+  // The athlete id still in the URL is ignored: the plan is read through the
+  // session. The route drops it in the next slice.
+  const { planId } = useParams() as { planId: string };
+  const { weeks, plan } = use(completedWeeksResource(planId));
   const history = toWeekHistory(weeks, plan.total_weeks);
   const [page, setPage] = useState(() => Math.max(0, history.length - 1));
 

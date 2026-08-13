@@ -84,8 +84,8 @@ export const createTrackerSlice: StateCreator<
     if (client === null || week === null) {
       throw new Error('Cannot save a day before the tracker is hydrated.')
     }
-    const savedWeek = await saveDayLog(client.id, week.id, day.day_index, toSaveDayLog(day))
-    invalidateCurrentWeek(client.id)
+    const savedWeek = await saveDayLog(week.id, day.day_index, toSaveDayLog(day))
+    invalidateCurrentWeek()
     set({ week: mergeSavedDayIntoDraft(savedWeek, client.id, day.day_index) }, false, 'saveDay')
   },
 })

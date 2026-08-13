@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import type { Client } from '@/api/types'
+import type { Client, UpdateClientProfile } from '@/api/types'
 import { makeWeek } from '@/test/weekFixture'
 
 const { mockGet, mockPost, mockPut, mockPatch } = vi.hoisted(() => ({
@@ -20,8 +20,7 @@ vi.mock('openapi-fetch', () => ({
 }))
 
 import {
-  createClient,
-  getClients,
+  getActivePlan,
   getPlan,
   getProfile,
   getSession,
@@ -32,10 +31,12 @@ import {
   signOut,
   signUp,
   updateDayLog,
+  updateProfile,
 } from './client'
 import { ApiClientError } from './errors'
 
 const UUID = '00000000-0000-4000-8000-000000000001'
+const PLAN = '00000000-0000-4000-8000-000000000002'
 const NOW = '2026-05-10T00:00:00.000Z'
 
 const sampleClient: Client = {
@@ -43,6 +44,33 @@ const sampleClient: Client = {
   coach_id: UUID,
   display_name: 'Lucia',
   status: 'active',
+  created_at: NOW,
+  updated_at: NOW,
+}
+
+const profileBody: UpdateClientProfile = {
+  snapshot_date: '2026-07-01',
+  sex: 'female',
+  age: 34,
+  height_cm: 165,
+  goals: { primary: 'strength' },
+  body_composition: { weight_kg: 62 },
+  strength_loads: { press_banca: 60 },
+  nutrition: null,
+  swimming: null,
+  schedule_preferences: null,
+  notes: null,
+}
+
+const samplePlan = {
+  id: PLAN,
+  client_id: UUID,
+  label: 'Block A',
+  status: 'active' as const,
+  total_weeks: 6,
+  week_template: [],
+  rationale: null,
+  activated_at: NOW,
   created_at: NOW,
   updated_at: NOW,
 }
@@ -62,51 +90,49 @@ afterEach(() => {
 })
 
 describe('api client', () => {
-  it('parses a successful list response', async () => {
-    mockGet.mockResolvedValue(okResponse({ clients: [sampleClient] }))
-    await expect(getClients()).resolves.toEqual([sampleClient])
+  it('reads through a session-addressed path, with no athlete id', async () => {
+    mockGet.mockResolvedValue(okResponse({ plan: samplePlan }))
+    await expect(getActivePlan()).resolves.toEqual(samplePlan)
+    expect(mockGet).toHaveBeenCalledWith('/api/me/plans/active')
   })
 
-  it('posts the body and parses the created client', async () => {
-    mockPost.mockResolvedValue(okResponse({ client: sampleClient }))
-    await createClient({ display_name: 'Lucia' })
-    expect(mockPost).toHaveBeenCalledWith('/api/clients', {
-      body: { display_name: 'Lucia' },
-    })
+  it('puts the body and parses the saved profile', async () => {
+    const profile = { id: UUID, client_id: UUID, age: 34 }
+    mockPut.mockResolvedValue(okResponse({ profile }))
+    await expect(updateProfile(profileBody)).resolves.toEqual(profile)
+    expect(mockPut).toHaveBeenCalledWith('/api/me/profile', { body: profileBody })
   })
 
   it('maps a 401 to an unauthorized error', async () => {
     mockGet.mockResolvedValue(
       errorResponse(401, { error: { code: 'unauthorized', message: 'nope' } }),
     )
-    await expect(getClients()).rejects.toMatchObject({ kind: 'unauthorized', status: 401 })
+    await expect(getActivePlan()).rejects.toMatchObject({ kind: 'unauthorized', status: 401 })
   })
 
   it('treats a 404 profile as "no profile yet"', async () => {
     mockGet.mockResolvedValue(
       errorResponse(404, { error: { code: 'profile_not_found', message: 'none' } }),
     )
-    await expect(getProfile(UUID)).resolves.toBeNull()
+    await expect(getProfile()).resolves.toBeNull()
+    expect(mockGet).toHaveBeenCalledWith('/api/me/profile')
   })
 
   it('surfaces a network failure as a network error', async () => {
     mockGet.mockRejectedValue(new Error('offline'))
-    await expect(getClients()).rejects.toBeInstanceOf(ApiClientError)
-    await expect(getClients()).rejects.toMatchObject({ kind: 'network' })
+    await expect(getActivePlan()).rejects.toBeInstanceOf(ApiClientError)
+    await expect(getActivePlan()).rejects.toMatchObject({ kind: 'network' })
   })
 
   it('posts a save-day body and parses the returned week', async () => {
     const week = makeWeek()
     const body = { exercises: [] }
     mockPost.mockResolvedValue(okResponse({ week }))
-    await expect(saveDayLog(UUID, UUID, 2, body)).resolves.toEqual(week)
-    expect(mockPost).toHaveBeenCalledWith(
-      '/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}/save',
-      {
-        params: { path: { clientId: UUID, weekId: UUID, dayIndex: 2 } },
-        body,
-      },
-    )
+    await expect(saveDayLog(UUID, 2, body)).resolves.toEqual(week)
+    expect(mockPost).toHaveBeenCalledWith('/api/me/weeks/{weekId}/days/{dayIndex}/save', {
+      params: { path: { weekId: UUID, dayIndex: 2 } },
+      body,
+    })
   })
 })
 
@@ -176,7 +202,7 @@ describe('unauthorized handler', () => {
       errorResponse(401, { error: { code: 'unauthorized', message: 'sign in required' } }),
     )
 
-    await expect(getClients()).rejects.toBeInstanceOf(ApiClientError)
+    await expect(getActivePlan()).rejects.toBeInstanceOf(ApiClientError)
     expect(handler).toHaveBeenCalledTimes(1)
   })
 
@@ -187,7 +213,9 @@ describe('unauthorized handler', () => {
       errorResponse(404, { error: { code: 'not_found', message: 'no such thing' } }),
     )
 
-    await expect(getClients()).rejects.toBeInstanceOf(ApiClientError)
+    // `getPlan`, not `getActivePlan`: the latter maps a 404 to null by design,
+    // so it would resolve rather than reject.
+    await expect(getPlan(PLAN)).rejects.toBeInstanceOf(ApiClientError)
     expect(handler).not.toHaveBeenCalled()
   })
 
@@ -196,7 +224,7 @@ describe('unauthorized handler', () => {
     setUnauthorizedHandler(handler)
     mockGet.mockRejectedValue(new Error('offline'))
 
-    await expect(getClients()).rejects.toMatchObject({ kind: 'network' })
+    await expect(getPlan(PLAN)).rejects.toMatchObject({ kind: 'network' })
     expect(handler).not.toHaveBeenCalled()
   })
 })
@@ -204,37 +232,20 @@ describe('unauthorized handler', () => {
 describe('listCompletedWeeks', () => {
   it('lists completed weeks for a plan and passes the query params', async () => {
     const week = { ...makeWeek(), status: 'completed' as const }
-    const planId = '00000000-0000-4000-8000-000000000002'
     mockGet.mockResolvedValue(okResponse({ weeks: [week] }))
-    await expect(listCompletedWeeks(UUID, planId)).resolves.toEqual([week])
-    expect(mockGet).toHaveBeenCalledWith('/api/clients/{clientId}/weeks', {
-      params: {
-        path: { clientId: UUID },
-        query: { status: 'completed', planId },
-      },
+    await expect(listCompletedWeeks(PLAN)).resolves.toEqual([week])
+    expect(mockGet).toHaveBeenCalledWith('/api/me/weeks', {
+      params: { query: { status: 'completed', planId: PLAN } },
     })
   })
 })
 
 describe('getPlan', () => {
   it('fetches a plan by id and parses the response', async () => {
-    const planId = '00000000-0000-4000-8000-000000000002'
-    const plan = {
-      id: planId,
-      client_id: UUID,
-      label: 'Block A',
-      status: 'active' as const,
-      total_weeks: 6,
-      week_template: [],
-      rationale: null,
-      activated_at: NOW,
-      created_at: NOW,
-      updated_at: NOW,
-    }
-    mockGet.mockResolvedValue(okResponse({ plan }))
-    await expect(getPlan(UUID, planId)).resolves.toEqual(plan)
-    expect(mockGet).toHaveBeenCalledWith('/api/clients/{clientId}/plans/{planId}', {
-      params: { path: { clientId: UUID, planId } },
+    mockGet.mockResolvedValue(okResponse({ plan: samplePlan }))
+    await expect(getPlan(PLAN)).resolves.toEqual(samplePlan)
+    expect(mockGet).toHaveBeenCalledWith('/api/me/plans/{planId}', {
+      params: { path: { planId: PLAN } },
     })
   })
 })
@@ -244,13 +255,10 @@ describe('updateDayLog', () => {
     const week = makeWeek()
     const body = { completed: true, exercises: [] }
     mockPatch.mockResolvedValue(okResponse({ week }))
-    await expect(updateDayLog(UUID, UUID, 2, body)).resolves.toEqual(week)
-    expect(mockPatch).toHaveBeenCalledWith(
-      '/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}',
-      {
-        params: { path: { clientId: UUID, weekId: UUID, dayIndex: 2 } },
-        body,
-      },
-    )
+    await expect(updateDayLog(UUID, 2, body)).resolves.toEqual(week)
+    expect(mockPatch).toHaveBeenCalledWith('/api/me/weeks/{weekId}/days/{dayIndex}', {
+      params: { path: { weekId: UUID, dayIndex: 2 } },
+      body,
+    })
   })
 })
