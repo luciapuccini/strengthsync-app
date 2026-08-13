@@ -8,6 +8,7 @@ import type {
   CreateClientInput,
   Plan,
   SaveDayLog,
+  SignUpInput,
   UpdateClientProfile,
   UpdateDayLog,
   Week,
@@ -54,6 +55,21 @@ async function call<T>(
     );
   }
   return throwOnError(res);
+}
+
+/**
+ * Register and sign in in one call. The session cookie rides on the response;
+ * it is HttpOnly, so nothing here reads or stores it — the browser attaches it
+ * to later requests on its own, same-origin in both dev (through the vite
+ * proxy) and production (the Worker serves the app).
+ */
+export async function signUp(input: SignUpInput): Promise<Client> {
+  return (await call(() => api.POST("/auth/sign-up", { body: input }))).client;
+}
+
+/** The signed-in client, or a 401 thrown as an unauthorized ApiClientError. */
+export async function getSession(): Promise<Client> {
+  return (await call(() => api.GET("/auth/session"))).client;
 }
 
 export async function getClients(): Promise<Client[]> {

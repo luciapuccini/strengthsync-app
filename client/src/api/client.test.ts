@@ -24,8 +24,10 @@ import {
   getClients,
   getPlan,
   getProfile,
+  getSession,
   listCompletedWeeks,
   saveDayLog,
+  signUp,
   updateDayLog,
 } from './client'
 import { ApiClientError } from './errors'
@@ -100,6 +102,39 @@ describe('api client', () => {
         body,
       },
     )
+  })
+})
+
+describe('auth', () => {
+  it('posts the registration body and parses the created client', async () => {
+    const body = { display_name: 'Lucia', email: 'lucia@example.com', password: 'dev-password-123' }
+    mockPost.mockResolvedValue(okResponse({ client: sampleClient }))
+    await expect(signUp(body)).resolves.toEqual(sampleClient)
+    expect(mockPost).toHaveBeenCalledWith('/auth/sign-up', { body })
+  })
+
+  it('surfaces a duplicate email as a conflict error', async () => {
+    mockPost.mockResolvedValue(
+      errorResponse(409, {
+        error: { code: 'email_already_registered', message: 'email already registered' },
+      }),
+    )
+    await expect(
+      signUp({ display_name: 'Lucia', email: 'lucia@example.com', password: 'dev-password-123' }),
+    ).rejects.toMatchObject({ kind: 'conflict', message: 'email already registered' })
+  })
+
+  it('reads the session back as the signed-in client', async () => {
+    mockGet.mockResolvedValue(okResponse({ client: sampleClient }))
+    await expect(getSession()).resolves.toEqual(sampleClient)
+    expect(mockGet).toHaveBeenCalledWith('/auth/session')
+  })
+
+  it('throws unauthorized when no session is present', async () => {
+    mockGet.mockResolvedValue(
+      errorResponse(401, { error: { code: 'unauthorized', message: 'sign in required' } }),
+    )
+    await expect(getSession()).rejects.toMatchObject({ kind: 'unauthorized', status: 401 })
   })
 })
 
