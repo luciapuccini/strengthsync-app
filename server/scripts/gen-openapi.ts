@@ -41,10 +41,6 @@ document.components = {
   },
 };
 
-// Optional output path so `check:openapi` can regenerate into a scratch file
-// and diff, rather than mutating the committed one.
-const out = process.argv[2]
-  ? resolve(process.cwd(), process.argv[2])
-  : resolve(import.meta.dirname, '../openapi.json');
+const out = resolve(import.meta.dirname, '../openapi.json');
 writeFileSync(out, `${JSON.stringify(document, null, 2)}\n`);
 console.log(`wrote ${out}`);

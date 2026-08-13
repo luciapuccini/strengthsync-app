@@ -386,7 +386,7 @@ they are not a blocker if they prove fiddly.
     untested-by-that-issue behaviour change under a docs commit. It is the
     first thing to pick up after this phase; nothing else on this list is a
     live data leak.
-- **The contract-check script referenced by continuous integration does not
+- ~~**The contract-check script referenced by continuous integration does not
   exist.** The pipeline invokes it on every pull request, the contract
   documentation describes it as the guard that makes drift unmergeable, and the
   generator script accepts an output-path argument built specifically to serve
@@ -399,7 +399,14 @@ they are not a blocker if they prove fiddly.
   unnecessary" — it is not, it is missing. **Standing known defect after issue
   015**, which corrected that scratch note in `NOTES.md` but deliberately did
   not add the script: writing it is a CI change with its own verification, and
-  015's own scope says the defect stays recorded for separate work.
+  015's own scope says the defect stays recorded for separate work.~~
+  **RESOLVED**, and not by writing the missing script. The pipeline now runs
+  `pnpm gen:openapi` and then `git diff --exit-code` on the two artifacts —
+  regeneration must be a no-op. That is the same guard with no scratch files
+  and no second copy of the generation pipeline, so the generator's
+  output-path argument was removed rather than kept for a caller that never
+  arrived. Both artifacts were verified in sync at the time of the fix, so the
+  phase's route rewrites did not in fact drift while the step was red.
 - **A read route for a plan by identifier is consumerless.** With the history
   page resolving the athlete's active plan itself, the by-identifier plan read
   has no remaining caller — and neither does its api-client wrapper, `getPlan`,

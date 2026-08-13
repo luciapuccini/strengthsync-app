@@ -25,14 +25,19 @@ schemas are built from, and is shared with persistence and the workflows.
 
 **Do not edit `server/openapi.json` by hand.** Change the Zod schema and run `pnpm gen:openapi`.
 
-`pnpm check:openapi` runs in CI and regenerates both artifacts from scratch, failing on any
-difference. A route whose schema no longer matches the committed contract cannot merge, so the two
-cannot drift. The document is a build artifact only — no route serves it, and `GET /openapi.json`
-against the Worker returns the SPA.
+CI runs `pnpm gen:openapi` and then `git diff --exit-code` against both artifacts. Regenerating
+must be a no-op; if it is not, the committed contract no longer matches the routes and the build
+fails. A route whose schema drifted from the contract cannot merge. The document is a build artifact
+only — no route serves it, and `GET /openapi.json` against the Worker returns the SPA.
+
+Why this is worth a CI step when the client already typechecks against the generated types: a stale
+`openapi.d.ts` fails silently in the direction that matters. Added fields break the client's
+typecheck, but a renamed or removed field leaves the old declaration in place, so the client compiles
+green against a shape the server no longer returns and fails at runtime instead.
 
 One asymmetry worth knowing: constraint-only changes (`minLength`, `minimum`, …) alter the document
-but not the generated TypeScript, because those constraints have no type representation. The
-document check catches them; the type check alone would not.
+but not the generated TypeScript, because those constraints have no type representation. Diffing the
+document catches them; the type check alone would not.
 
 ## Authentication and conventions
 
