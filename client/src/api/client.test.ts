@@ -27,6 +27,9 @@ import {
   getSession,
   listCompletedWeeks,
   saveDayLog,
+  setUnauthorizedHandler,
+  signIn,
+  signOut,
   signUp,
   updateDayLog,
 } from './client'
@@ -54,6 +57,8 @@ function errorResponse(status: number, error: unknown) {
 
 afterEach(() => {
   vi.clearAllMocks()
+  // The handler is module state, so it outlives the test that registered it.
+  setUnauthorizedHandler(() => {})
 })
 
 describe('api client', () => {
@@ -135,6 +140,64 @@ describe('auth', () => {
       errorResponse(401, { error: { code: 'unauthorized', message: 'sign in required' } }),
     )
     await expect(getSession()).rejects.toMatchObject({ kind: 'unauthorized', status: 401 })
+  })
+
+  it('posts the credentials and parses the signed-in client', async () => {
+    const body = { email: 'lucia@example.com', password: 'dev-password-123' }
+    mockPost.mockResolvedValue(okResponse({ client: sampleClient }))
+    await expect(signIn(body)).resolves.toEqual(sampleClient)
+    expect(mockPost).toHaveBeenCalledWith('/auth/sign-in', { body })
+  })
+
+  it('surfaces rejected credentials as an unauthorized error', async () => {
+    mockPost.mockResolvedValue(
+      errorResponse(401, {
+        error: { code: 'invalid_credentials', message: 'email or password is incorrect' },
+      }),
+    )
+    await expect(signIn({ email: 'lucia@example.com', password: 'wrong' })).rejects.toMatchObject({
+      kind: 'unauthorized',
+      message: 'email or password is incorrect',
+    })
+  })
+
+  it('posts to the sign-out route', async () => {
+    mockPost.mockResolvedValue(okResponse({ ok: true }))
+    await expect(signOut()).resolves.toBeUndefined()
+    expect(mockPost).toHaveBeenCalledWith('/auth/sign-out', {})
+  })
+})
+
+describe('unauthorized handler', () => {
+  it('runs on an unauthorized response from any call, and still rejects', async () => {
+    const handler = vi.fn()
+    setUnauthorizedHandler(handler)
+    mockGet.mockResolvedValue(
+      errorResponse(401, { error: { code: 'unauthorized', message: 'sign in required' } }),
+    )
+
+    await expect(getClients()).rejects.toBeInstanceOf(ApiClientError)
+    expect(handler).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves other failures alone', async () => {
+    const handler = vi.fn()
+    setUnauthorizedHandler(handler)
+    mockGet.mockResolvedValue(
+      errorResponse(404, { error: { code: 'not_found', message: 'no such thing' } }),
+    )
+
+    await expect(getClients()).rejects.toBeInstanceOf(ApiClientError)
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('is not reached by a network failure, which is not an auth verdict', async () => {
+    const handler = vi.fn()
+    setUnauthorizedHandler(handler)
+    mockGet.mockRejectedValue(new Error('offline'))
+
+    await expect(getClients()).rejects.toMatchObject({ kind: 'network' })
+    expect(handler).not.toHaveBeenCalled()
   })
 })
 

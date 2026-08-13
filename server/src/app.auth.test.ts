@@ -3,7 +3,7 @@ import type { OpenAPIHono } from '@hono/zod-openapi'
 import { describe, expect, it } from 'vitest'
 
 import { coaches } from './db/schema.ts'
-import { createTestDb } from './db/testing/index.ts'
+import { createDemoSeededDb, createTestDb } from './db/testing/index.ts'
 
 import { SESSION_SECRET, createTestApp } from './testkit.ts'
 
@@ -156,6 +156,50 @@ describe('session bootstrap', () => {
     const expired = await sign({ sub: client.id, iat: now - 120, exp: now - 60 }, SESSION_SECRET, 'HS256')
 
     expect((await withSession(app, expired)).status).toBe(401)
+  })
+})
+
+// The credential seed is only worth committing if it actually opens the demo
+// athlete's data. Asserted here against the seed files themselves, so it does
+// not rest on someone remembering to try it in a browser.
+describe('the seeded demo athlete', () => {
+  const DEMO = { email: 'lucia@example.com', password: 'dev-password-123' }
+  const DEMO_CLIENT_ID = '00000000-0000-4000-8000-000000000010'
+
+  it('signs in with the documented credential', async () => {
+    const app = createTestApp({ db: createDemoSeededDb() })
+    const res = await signIn(app, DEMO)
+
+    expect(res.status).toBe(200)
+    expect((await clientOf(res)).id).toBe(DEMO_CLIENT_ID)
+  })
+
+  it('reaches their plan and history under that identity', async () => {
+    const app = createTestApp({ db: createDemoSeededDb() })
+    const client = await clientOf(await signIn(app, DEMO))
+
+    const plan = (await (
+      await app.request(`/api/clients/${client.id}/plans/active`)
+    ).json()) as { plan: { id: string } }
+    const history = (await (
+      await app.request(`/api/clients/${client.id}/weeks?status=completed&planId=${plan.plan.id}`)
+    ).json()) as { weeks: unknown[] }
+
+    expect(plan.plan.id).toBe('00000000-0000-4000-8000-000000000012')
+    expect(history.weeks.length).toBeGreaterThan(0)
+  })
+
+  // Not a bug in this slice: `getCurrentWeek` refuses a week whose date window
+  // has passed, and the seed's in-flight week is pinned to 2026-07-20..26. The
+  // demo athlete therefore lands on the empty tracker until the seed is
+  // refreshed. Asserted rather than left to be discovered, so refreshing the
+  // seed has a test that notices.
+  it('has no current week, because the seeded window has expired', async () => {
+    const app = createTestApp({ db: createDemoSeededDb() })
+    const client = await clientOf(await signIn(app, DEMO))
+
+    const res = await app.request(`/api/clients/${client.id}/weeks/current`)
+    expect(res.status).toBe(404)
   })
 })
 

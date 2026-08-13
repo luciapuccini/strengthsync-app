@@ -50,13 +50,30 @@ export function applySeeds(sqlite: BetterSqlite3.Database): void {
   applySqlFile(sqlite, baseSeed)
 }
 
+function toDb(sqlite: BetterSqlite3.Database): Db {
+  return drizzle(new FakeD1Database(sqlite) as unknown as D1Database, { schema }) as unknown as DrizzleD1Database<
+    typeof schema
+  > as Db
+}
+
 /** A fully migrated + seeded in-memory `Db` backed by the fake D1, for tests. */
 export function createTestDb(): Db {
   const sqlite = createMigratedSqlite()
   applySeeds(sqlite)
-  return drizzle(new FakeD1Database(sqlite) as unknown as D1Database, { schema }) as unknown as DrizzleD1Database<
-    typeof schema
-  > as Db
+  return toDb(sqlite)
+}
+
+/**
+ * Every committed seed, not just the coach: the demo athlete, their plan, weeks
+ * and credential. Reads the same files a developer applies by hand, so a test
+ * over this db is a test of what the repository actually ships.
+ */
+export function createDemoSeededDb(): Db {
+  const sqlite = createMigratedSqlite()
+  for (const seed of readSqlDir('seeds')) {
+    applySqlFile(sqlite, seed)
+  }
+  return toDb(sqlite)
 }
 
 /** Mark every scheduled day completed so `completeWeek` can freeze the week. */

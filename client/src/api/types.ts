@@ -13,6 +13,7 @@ export type Plan = components["schemas"]["Plan"];
 export type PlanDay = components["schemas"]["PlanDay"];
 export type PlannedExercise = components["schemas"]["PlannedExercise"];
 export type SaveDayLog = components["schemas"]["SaveDayLog"];
+export type SignInInput = components["schemas"]["SignInInput"];
 export type SignUpInput = components["schemas"]["SignUpInput"];
 export type UpdateClientProfile = components["schemas"]["UpdateClientProfile"];
 export type UpdateDayLog = components["schemas"]["UpdateDayLog"];

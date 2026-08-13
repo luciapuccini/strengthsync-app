@@ -8,6 +8,7 @@ import type {
   CreateClientInput,
   Plan,
   SaveDayLog,
+  SignInInput,
   SignUpInput,
   UpdateClientProfile,
   UpdateDayLog,
@@ -28,15 +29,33 @@ async function orNull<T>(fn: () => Promise<T>): Promise<T | null> {
   }
 }
 
+/**
+ * Invoked for every unauthorized response, so an expired session behaves the
+ * same no matter which screen was open. It is registered at startup rather than
+ * imported, which keeps this module free of a store dependency and its tests
+ * independent of the store.
+ */
+let onUnauthorized: () => void = () => {};
+
+export function setUnauthorizedHandler(handler: () => void): void {
+  onUnauthorized = handler;
+}
+
 function throwOnError<T>(response: {
   data?: T;
   error?: unknown;
   response: Response;
 }): T {
-  if (!response.response.ok || response.data === undefined) {
-    throw toApiError(response.response.status, response.error);
+  if (response.response.ok && response.data !== undefined) {
+    return response.data;
   }
-  return response.data;
+  const error = toApiError(response.response.status, response.error);
+  // The auth calls raise a 401 of their own — a bootstrap with no cookie, a
+  // wrong password — and this fires for those too. Signing out an athlete who
+  // is already signed out changes nothing, and exempting them would mean
+  // threading an opt-out through every wrapper for no gain.
+  if (error.kind === "unauthorized") onUnauthorized();
+  throw error;
 }
 
 /** Run an openapi-fetch call, mapping a thrown fetch failure to a network error. */
@@ -65,6 +84,23 @@ async function call<T>(
  */
 export async function signUp(input: SignUpInput): Promise<Client> {
   return (await call(() => api.POST("/auth/sign-up", { body: input }))).client;
+}
+
+/**
+ * Exchange credentials for a session cookie. The server answers one 401 for a
+ * wrong password and an unknown email alike, so the message this rejects with
+ * is safe to show verbatim.
+ */
+export async function signIn(input: SignInInput): Promise<Client> {
+  return (await call(() => api.POST("/auth/sign-in", { body: input }))).client;
+}
+
+/**
+ * Clear the session cookie server-side. Safe to call with an expired cookie or
+ * none at all — the route is deliberately outside the session guard.
+ */
+export async function signOut(): Promise<void> {
+  await call(() => api.POST("/auth/sign-out", {}));
 }
 
 /** The signed-in client, or a 401 thrown as an unauthorized ApiClientError. */
