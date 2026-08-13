@@ -1,5 +1,10 @@
 -- Demo data adapted from services/db/seed/data and translated to English.
 -- Apply after migrations and 000_default_coach.sql.
+--
+-- The in-flight week (id ...0013) is anchored to the Monday on-or-before
+-- `date('now')` rather than a fixed calendar date, so it never expires; see
+-- 002_historical_weeks.sql for the three completed weeks immediately before
+-- it and the auth PRD's Further Notes for why.
 
 INSERT OR IGNORE INTO clients (
   id,
@@ -8,14 +13,15 @@ INSERT OR IGNORE INTO clients (
   status,
   created_at,
   updated_at
-) VALUES (
+)
+SELECT
   '00000000-0000-4000-8000-000000000010',
   '00000000-0000-4000-8000-000000000001',
   'Lucia',
   'active',
-  '2026-07-20T00:00:00.000Z',
-  '2026-07-23T00:00:00.000Z'
-);
+  week4_start || 'T00:00:00.000Z',
+  date(week4_start, '+3 days') || 'T00:00:00.000Z'
+FROM (SELECT date('now', '-6 days', 'weekday 1') AS week4_start);
 
 INSERT OR IGNORE INTO client_profiles (
   id,
@@ -32,7 +38,8 @@ INSERT OR IGNORE INTO client_profiles (
   schedule_preferences,
   notes,
   updated_at
-) VALUES (
+)
+SELECT
   '00000000-0000-4000-8000-000000000011',
   '00000000-0000-4000-8000-000000000010',
   '2026-05-10',
@@ -46,8 +53,8 @@ INSERT OR IGNORE INTO client_profiles (
   '{"sessions_per_week":2,"session_types":{"wednesday":"Pyramid","friday":"Endurance 2000 m"},"benchmarks_achieved":{"distance_per_stroke_above_2_2_m":true,"swolf_at_or_below_53":true,"endurance_2000_m":true,"best_pace_per_100_m":"2:46 on 2026-05-03"},"targets":{"swolf":"53 or lower consistently","average_pace_per_100_m":"toward 2:45","average_endurance_heart_rate_bpm":"125 or lower"}}',
   '{"job_activity_level":"very sedentary with long sitting hours","training_days_per_week":6,"rest_day":"Sunday","weekly_schedule":{"monday":"Upper body - Day 1","tuesday":"Legs - Day 2","wednesday":"Swimming - Pyramid","thursday":"Upper body - Day 3","friday":"Swimming - Endurance","saturday":"Legs - Day 4","sunday":"Rest"}}',
   'Uses no birth control. Menstrual cycle is regular, usually around days 10-13 of the month.',
-  '2026-07-23T00:00:00.000Z'
-);
+  date(week4_start, '+3 days') || 'T00:00:00.000Z'
+FROM (SELECT date('now', '-6 days', 'weekday 1') AS week4_start);
 
 INSERT OR IGNORE INTO plans (
   id,
@@ -61,7 +68,8 @@ INSERT OR IGNORE INTO plans (
   workflow_id,
   created_at,
   updated_at
-) VALUES (
+)
+SELECT
   '00000000-0000-4000-8000-000000000012',
   '00000000-0000-4000-8000-000000000010',
   'Strength and Swimming Block',
@@ -107,11 +115,11 @@ INSERT OR IGNORE INTO plans (
     {"day_index":7,"type":"rest","notes":"Active recovery: aim for 10,000 steps and gentle mobility.","exercises":[]}
   ]',
   'Six-week strength block with two swimming sessions and one active recovery day.',
-  '2026-07-20T00:00:00.000Z',
+  week4_start || 'T00:00:00.000Z',
   NULL,
-  '2026-07-20T00:00:00.000Z',
-  '2026-07-23T00:00:00.000Z'
-);
+  week4_start || 'T00:00:00.000Z',
+  date(week4_start, '+3 days') || 'T00:00:00.000Z'
+FROM (SELECT date('now', '-6 days', 'weekday 1') AS week4_start);
 
 INSERT OR IGNORE INTO weeks (
   id,
@@ -125,15 +133,16 @@ INSERT OR IGNORE INTO weeks (
   workflow_id,
   created_at,
   updated_at
-) VALUES (
+)
+SELECT
   '00000000-0000-4000-8000-000000000013',
   '00000000-0000-4000-8000-000000000010',
   '00000000-0000-4000-8000-000000000012',
   4,
-  '2026-07-20',
-  '2026-07-26',
+  week4_start,
+  date(week4_start, '+6 days'),
   'in_flight',
-  '[
+  json_set('[
     {"day_index":1,"date":"2026-07-20","type":"upper_body","notes":null,"completed":true,"completed_at":"2026-07-20T16:00:00.000Z","exercises":[
       {"exercise_key":"flat_bench_press","name":"Flat Bench Press","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_kg":28,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":28},{"performed_reps":12,"performed_weight_kg":28},{"performed_reps":12,"performed_weight_kg":28},{"performed_reps":12,"performed_weight_kg":28}]},
       {"exercise_key":"lat_pulldown","name":"Lat Pulldown","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_kg":30,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30}]},
@@ -172,7 +181,17 @@ INSERT OR IGNORE INTO weeks (
     ]},
     {"day_index":7,"date":"2026-07-26","type":"rest","notes":"Active recovery: aim for 10,000 steps and gentle mobility. Add an easy walk, yoga, or a gentle Pilates class if you feel like it.","completed":false,"completed_at":null,"exercises":[]}
   ]',
+    '$[0].date', week4_start,
+    '$[0].completed_at', week4_start || 'T16:00:00.000Z',
+    '$[1].date', date(week4_start, '+1 days'),
+    '$[1].completed_at', date(week4_start, '+1 days') || 'T16:00:00.000Z',
+    '$[2].date', date(week4_start, '+2 days'),
+    '$[3].date', date(week4_start, '+3 days'),
+    '$[4].date', date(week4_start, '+4 days'),
+    '$[5].date', date(week4_start, '+5 days'),
+    '$[6].date', date(week4_start, '+6 days')
+  ),
   NULL,
-  '2026-07-20T00:00:00.000Z',
-  '2026-07-23T00:00:00.000Z'
-);
+  week4_start || 'T00:00:00.000Z',
+  date(week4_start, '+3 days') || 'T00:00:00.000Z'
+FROM (SELECT date('now', '-6 days', 'weekday 1') AS week4_start);

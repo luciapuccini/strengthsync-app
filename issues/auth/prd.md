@@ -342,12 +342,21 @@ they are not a blocker if they prove fiddly.
     only caller, which was the condition this entry set for the rename: it is
     now `getActivePlanOrThrow`, and a wrapper over `getActivePlan` rather than
     a duplicate of its query.
-  - **The demo seed's in-flight week has expired.** `001_demo_seed.sql` pins it
-    to 2026-07-20..26, and `getCurrentWeek` refuses a week whose window has
+  - ~~**The demo seed's in-flight week has expired.** `001_demo_seed.sql` pins
+    it to 2026-07-20..26, and `getCurrentWeek` refuses a week whose window has
     passed, so signing in as the seeded athlete lands on the empty tracker. Not
     owned by any issue. Refreshing it is not a two-line edit: the day dates are
     baked into the week's `schedule` JSON. `src/app.auth.test.ts` asserts the
-    present behaviour, so a refresh has a test that notices.
+    present behaviour, so a refresh has a test that notices.~~ **RESOLVED.**
+    `001_demo_seed.sql` and `002_historical_weeks.sql` now anchor to
+    `date('now', '-6 days', 'weekday 1')` — the Monday on-or-before today — in
+    SQL rather than a fixed calendar date, so the window cannot go stale again.
+    Week 4 is that Monday's week and stays in flight; weeks 1-3 are the three
+    contiguous Mon-Sun windows immediately before it. Each day's `date` and
+    `completed_at` inside the `schedule` JSON is rewritten to match via
+    `json_set` at seed time, and the plan's and client's timestamps shift with
+    the same anchor. `app.auth.test.ts` now asserts the seeded athlete has a
+    current week instead of asserting its absence.
   - **`POST /wf/complete-week` declares a 401 it can never return.** The route
     is unauthenticated by design (already recorded below as a known MVP gap);
     issue 009 corrected its `security` declaration but left the response.

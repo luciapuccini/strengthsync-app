@@ -192,26 +192,25 @@ describe('the seeded demo athlete', () => {
     expect(history.weeks.length).toBeGreaterThan(0)
   })
 
-  // Not a bug in this slice: `getCurrentWeek` refuses a week whose date window
-  // has passed, and the seed's in-flight week is pinned to 2026-07-20..26. The
-  // demo athlete therefore lands on the empty tracker until the seed is
-  // refreshed. Asserted rather than left to be discovered, so refreshing the
-  // seed has a test that notices.
-  it('has no current week, because the seeded window has expired', async () => {
+  // The seed's in-flight week is anchored to the Monday on-or-before "now"
+  // (see 001_demo_seed.sql), not a fixed calendar date, so it never expires.
+  // Asserted here rather than left to be discovered, so a future re-pin to
+  // fixed dates has a test that notices.
+  it('has a current week, in flight and containing today', async () => {
     const app = createTestApp({ db: createDemoSeededDb() })
     const signedIn = await signIn(app, DEMO)
 
     const res = await app.request('/api/me/weeks/current', {
       headers: { cookie: `session=${sessionCookie(signedIn)}` },
     })
-    expect(res.status).toBe(404)
-    // The code, not just the status: an unrouted path 404s too, which is how
-    // this test kept passing after `issues/auth/013` deleted the path it used
-    // to call. The route has to exist and answer for the assertion to mean
-    // "the seeded week has expired".
-    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
-      'current_week_not_found',
-    )
+    expect(res.status).toBe(200)
+    const { week } = (await res.json()) as {
+      week: { id: string; status: string; start_date: string; end_date: string }
+    }
+    expect(week.id).toBe('00000000-0000-4000-8000-000000000013')
+    expect(week.status).toBe('in_flight')
+    const today = new Date().toISOString().slice(0, 10)
+    expect(week.start_date <= today && today <= week.end_date).toBe(true)
   })
 })
 
