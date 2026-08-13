@@ -6,7 +6,7 @@ Committed providers and platform choices for the MVP. This is intentionally a sm
 
 | Concern | MVP choice | Free-usage status | Decision |
 | --- | --- | --- | --- |
-| Product access | HTTP Basic Authentication | No provider cost | Use one shared coach credential, enforced by the API Worker |
+| Product access | Client accounts: hashed passwords + a signed session cookie | No provider cost | Each athlete registers and signs in for themselves; the API Worker verifies the cookie on every `/api/*` request and reads the athlete's identity from it |
 | Public API + chat | Hono on Cloudflare Workers | Yes | Use the existing Worker direction |
 | SQL database | Cloudflare D1 + Drizzle ORM | Yes | Use D1 as the system of record and Drizzle as its typed data layer |
 | Workflow orchestration | Cloudflare Workflows (in-Worker) | Yes | One workflow (`StrengthsyncWorkflow`) runs weekly progression and plan turnover; no local worker or tunnel |
@@ -15,16 +15,36 @@ Committed providers and platform choices for the MVP. This is intentionally a sm
 | CI/CD | GitHub Actions | Yes | Build, test, and deploy from GitHub Actions |
 | LLM | OpenAI API | No guaranteed permanent free tier | Continue with the current provider; set a spending limit |
 
-## Access: HTTP Basic Authentication
+## Access: client accounts with signed session cookies
 
-Use Hono's Basic Auth middleware (or an equivalent constant-time credential check) at the edge.
+Every athlete has their own account. `/auth/sign-up` and `/auth/sign-in` mint a
+session cookie, `/auth/sign-out` expires it, and `/auth/session` answers who the
+cookie belongs to on a cold page load. `app.ts` mounts `requireSession` on
+`/api/*`, which verifies the cookie and puts the athlete's id on the request
+context — that context, not the URL, is what every handler reads.
 
-- Store the shared username/password as Worker secrets, never in the browser bundle or repository.
-- Require HTTPS; Basic credentials are sent on every authenticated request and are only Base64-encoded, not encrypted by the scheme itself. See [RFC 7617 background](https://en.wikipedia.org/wiki/Basic_access_authentication).
-- Protect all data, workflow-start, and chat routes. Static SPA assets may be public because they contain no client data; if the entire app must be password-protected, route asset delivery through the Worker after the same check.
-- This is **not user identity**: it has no per-user ownership, roles, invitation flow, or reliable logout. It is appropriate only while the MVP is private and single-coach.
+- **Passwords** are hashed with PBKDF2-SHA256 over WebCrypto (`server/src/lib/password.ts`): bcrypt and argon2 are not available on Workers, and WebCrypto is at the edge already, so no dependency is added. The iteration count is 30,000 — measured against the free plan's 10ms per-request CPU ceiling rather than copied from general guidance, which assumes no such ceiling. The stored value is self-describing, so that count can rise later without invalidating existing hashes.
+- **The hash lives in its own table**, `client_credentials`, keyed by the athlete's id rather than on the `clients` row — so that no `SELECT *` over a client, which is how every client read is written, can carry a password hash to the browser.
+- **The cookie** is `HttpOnly`, `SameSite=Lax`, path-wide, and `Secure` outside development. It carries an HS256 JWT whose payload is the athlete's id, issued-at and expiry, and nothing else. Thirty-day lifetime, defined once in `session-token.ts` and reused by the cookie so the two cannot drift.
+- **`SESSION_JWT_SECRET`** is a Worker secret, never in the browser bundle or the repository. Rotating it invalidates every session already issued.
+- **The guard runs in every environment.** There is deliberately no development exemption: a guard that is off while the code is being written is a guard nobody tests.
+- **Require HTTPS.** The cookie is bearer-equivalent — whoever holds it is that athlete until it expires. It is signed, not encrypted: it cannot be tampered with, but it is not a place to keep anything secret.
+- **Static SPA assets stay public**; they contain no athlete data.
+- **`/wf/*` is outside the guard.** `POST /wf/complete-week` starts a workflow instance for any caller that reaches the origin. Known and accepted for the MVP — see [api_contracts.md](./api_contracts.md).
 
-No external auth provider is needed for the MVP. Replacing this later with real identity must happen before exposing client-facing accounts.
+This **is** user identity, which the MVP's original decision here was not. That
+decision was a single shared coach credential over HTTP Basic, and this document
+carried a warning beside it: *not user identity — no per-user ownership, roles,
+invitation flow or reliable logout — and replacing it with real identity must
+happen before exposing client-facing accounts.* **That warning is addressed.**
+Each athlete owns their data, signing out actually ends the session, and no route
+accepts an athlete identifier in its path at all, so no request can name anyone
+else; reading another athlete's data is not something the API can express.
+
+Still absent, and deliberately out of scope for the MVP: roles, an invitation
+flow, password reset, email verification, and social sign-in — the Apple and
+Google buttons on the auth screens render disabled with a caption saying so.
+No external auth provider is needed for any of it yet.
 
 ## Cloudflare Workers + Hono
 

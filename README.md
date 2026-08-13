@@ -12,17 +12,20 @@ StrengthSync helps a self-coached athlete — or a coach with a small caseload �
 | DB        | Cloudflare D1 + Drizzle ORM (`server/db`)                                        |
 | Workflows | Cloudflare Workflows, in-Worker with `server` (`StrengthsyncWorkflow`)           |
 | LLM       | OpenAI via Vercel AI SDK                                                           |
-| Auth      | HTTP Basic Auth (shared coach credential)                                          |
+| Auth      | Client accounts: hashed passwords + a signed session cookie                        |
 | CI        | GitHub Actions; Lefthook pre-commit                                                |
 
 See [docs/architecture/stack.md](docs/architecture/stack.md) for decisions and boundaries.
 
 ## Purpose and user flows
 
-### Clients
+### Sign up and sign in
 
-Open **Clients**, create or pick an athlete, and open their tracker.
-One shared coach login covers the whole caseload in MVP.
+Register with a name, email and password, and you land on your own tracker.
+Every athlete has their own account, and the API reads whose data to serve from
+the session cookie rather than from the URL — no screen asks you to pick an
+athlete, and no request can name one. Social sign-in is not built: the Apple and
+Google buttons render disabled and say so.
 
 ### Week tracker
 
@@ -58,7 +61,11 @@ Copy the example file and fill in values:
 
 | Copy from                                                | Copy to              | Used by                         |
 | -------------------------------------------------------- | -------------------- | ------------------------------- |
-| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars` | API Worker: `BASIC_AUTH_*`, `OPENAI_*` |
+| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars` | API Worker: `SESSION_JWT_SECRET`, `OPENAI_*` |
+
+`SESSION_JWT_SECRET` signs the session cookie. Any value works locally; rotating
+it invalidates every session already issued. In production it is a Worker secret
+(`wrangler secret put SESSION_JWT_SECRET`), never a committed value.
 
 ### Getting started
 
@@ -69,9 +76,23 @@ pnpm --filter @strengthsync/server db:migrate:local
 pnpm --filter @strengthsync/server db:seed:local
 ```
 
+`db:seed:local` applies the coach, demo, history and credential seeds in order —
+one command, not four.
+
 ```bash
-pn turbo dev
+pnpm turbo dev
 ```
+
+Then either register a new account at `/sign-up`, or sign in as the seeded demo
+athlete, who owns the only plan and history in the repository:
+
+| Email               | Password           |
+| ------------------- | ------------------ |
+| `lucia@example.com` | `dev-password-123` |
+
+That credential is committed on purpose, in `server/db/seeds/003_demo_credentials.sql`.
+It is safe only because no command in this repository can apply that seed to
+production — see below.
 
 ### Seeding production
 

@@ -37,10 +37,12 @@ document check catches them; the type check alone would not.
 ## Authentication and conventions
 
 - `GET /health` is unauthenticated.
-- `/api/*` requires the shared HTTP Basic credential defined in [stack.md](./stack.md) — **but only when `NODE_ENV=production`**. `wrangler dev` runs with `NODE_ENV=development`, where the middleware is not mounted at all and every `/api/*` route answers without credentials.
-- `/wf/*` (Cloudflare Workflow start) is **not authenticated**. `app.ts` mounts Basic auth on `/api/*` only, so `POST /wf/complete-week` will start a workflow instance for any caller that reaches the origin. Known and accepted for the MVP.
+- `/auth/*` is unauthenticated by definition: sign-up and sign-in mint the cookie the guard checks, and sign-out expires it. `GET /auth/session` is the exception in spirit only — it reads a cookie and answers `401` itself rather than being guarded, because a cold page load has to be able to ask "am I signed in?" and get an answer rather than an error.
+- `/api/*` requires a valid session cookie, verified by `requireSession` in `server/src/lib/session.ts` and declared in the document as the `sessionCookie` scheme. **In every environment.** There is no development exemption — the guard that runs under `wrangler dev` is the one that runs in production.
+- `/wf/*` (Cloudflare Workflow start) is **not authenticated**. `app.ts` guards `/api/*` only, so `POST /wf/complete-week` will start a workflow instance for any caller that reaches the origin. Known and accepted for the MVP. Its `security` is declared empty and it declares no `401`, because nothing on that path could produce one.
+- No route accepts an athlete identifier in its path. The athlete is read from the verified cookie, so the only ids a caller can still name are a plan's and a week's — and the repository scopes both to the caller, which is why naming someone else's returns `404` rather than their data.
 - JSON responses use `application/json`.
-- Invalid input returns `400`; missing records return `404`; invalid shared credentials return `401`.
+- Invalid input returns `400`; missing records return `404`; a missing, expired or tampered session returns `401`.
 - Public route ids are UUIDs, enforced by the route's declared param schema.
 
 Every error response uses one envelope, built by `errorResponse` in `server/src/lib/errors.ts` and documented as the `ApiError` component by `server/src/routes/shared.ts`:
@@ -65,27 +67,34 @@ Cross-field rules (for example: a skipped exercise carries no performed sets) ar
 
 ## Public API
 
-Twelve operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
+Fourteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
 schemas — and is always current by construction, so they are not restated here.
 
-Workflow requests are asynchronous. `POST /wf/complete-week` validates its body (`clientId` must be a UUID) and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. [TODO]: the UI does not poll workflow status.
+The shape, which the document does not state in one place:
+
+| Area | Operations |
+| --- | --- |
+| Liveness | `GET /health` |
+| Session | `POST /auth/sign-up`, `POST /auth/sign-in`, `POST /auth/sign-out`, `GET /auth/session` |
+| The signed-in athlete | `GET`/`PUT /api/me/profile`, `GET /api/me/plans/active`, `GET /api/me/plans/{planId}`, `GET /api/me/weeks`, `GET /api/me/weeks/current`, `POST /api/me/weeks/{weekId}/days/{dayIndex}/save`, `PATCH /api/me/weeks/{weekId}/days/{dayIndex}` |
+| Workflow start | `POST /wf/complete-week` |
+
+Workflow requests are asynchronous. `POST /wf/complete-week` validates its body (`clientId` must be a UUID) and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. [TODO]: the UI does not poll workflow status. It is also the one place a client id still crosses the wire in a request body, because the workflow is started for an athlete rather than by one.
 
 
 ## Endpoints current state
 
-Audited 2026-08-11 against UI callers (`client/src/api/client.ts`, `workflows.ts`) and HTTP-level tests (`server/src/app.public.test.ts`). The audit found three routes with no product consumer; all three were cut, taking the surface from 15 operations to 12:
+Two passes have shaped this surface.
 
-| Route | UI caller | HTTP test | Outcome |
-| --- | --- | --- | --- |
-| `GET /api/clients/{clientId}` | none | yes | **Cut.** Its malformed-uuid and unknown-client assertions were retargeted rather than dropped |
-| `GET /api/clients/{clientId}/plans` | none | none | **Cut.** Fully dead: no UI caller, no HTTP test |
-| `GET /api/clients/{clientId}/weeks/{weekId}` | none | none | **Cut.** Same story as the plans list |
+**Audited 2026-08-11** against UI callers (`client/src/api/client.ts`, `workflows.ts`) and HTTP-level tests. Three routes had no product consumer and were cut, taking the surface from 15 operations to 12: `GET /api/clients/{clientId}`, `GET /api/clients/{clientId}/plans`, and `GET /api/clients/{clientId}/weeks/{weekId}`. The repository functions behind them were kept, because they still backed client-existence checks, plan activation and `updateDayLog` — that pass reduced HTTP surface, not persistence capability.
 
-The repository functions behind them (`getClient`, `listPlans`, `getWeek`) were kept — they still back the inline client-existence checks, plan activation, and `updateDayLog` respectively. This was a reduction of HTTP surface, not of persistence capability. `app.public.test.ts` pins that the three paths are no longer routed.
+**The authentication phase** then replaced the athlete-id routes with session-addressed ones and deleted the originals (`issues/auth/010`–`013`). Ten operations went in the deletion; four session routes and the `/me` set came in. `GET /api/clients` and `POST /api/clients` went with them — listing every athlete, and creating one without registering, are both capabilities the phase exists to remove; sign-up creates athletes now. `app.public.test.ts` pins all thirteen removed paths as no longer routed, the same way it pinned the earlier three.
 
-Also flagged, not a route change:
+Two consumerless routes are known and deliberately left:
 
-- `getProfile` / `updateProfile` (`GET`/`PUT .../profile`) have api-client wrappers and client-side tests, but no UI page calls them — there's no profile page built (only `clients-page`, `tracker-page`, `history`). Keep the routes; the missing frontend is the gap.
-- `PATCH /.../days/{dayIndex}` is intentionally scoped as "tests/tools" per the workflow docs — not drift, just narrower than the `POST .../save` path.
+- **`GET /api/me/plans/{planId}`** has no UI caller. The history page resolves the athlete's active plan itself, so nothing asks for a plan by id; `getPlan` in `client/src/api/client.ts` is called only by its own test. Flagged for the same kind of audit that cut the three above, rather than cut here.
+- **`GET`/`PUT /api/me/profile`** have api-client wrappers and tests but no page: there is no profile screen (only `tracker-page` and `history`). The workflow needs the profile it writes, so the routes stay; the missing frontend is the gap.
+
+`PATCH /api/me/weeks/{weekId}/days/{dayIndex}` is intentionally scoped as "tests/tools" per the workflow docs — not drift, just narrower than the `POST .../save` path.
 
 All other routes have both a UI caller and test coverage.
