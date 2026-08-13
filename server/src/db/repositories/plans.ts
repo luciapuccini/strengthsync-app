@@ -40,6 +40,29 @@ export async function getActivePlan(
   return row ? toPlan(row) : null;
 }
 
+/**
+ * One of a client's plans, by id, or null when they have no such plan.
+ *
+ * Distinct from `getPlan` below, which despite its name and its `planId`-shaped
+ * caller in `routes/plans/endpoints.ts` reads the *active* plan and throws when
+ * there is none. That is left alone — `issues/auth/010` is not to touch the
+ * athlete-id routes, and `issues/auth/013` deletes them — but the /me route
+ * that outlives them needs a lookup that means what it says.
+ */
+export async function findPlanById(
+  db: Db,
+  clientId: string,
+  planId: string,
+): Promise<Plan | null> {
+  const rows = await db
+    .select()
+    .from(plans)
+    .where(and(eq(plans.client_id, clientId), eq(plans.id, planId)))
+    .limit(1);
+  const row = rows[0];
+  return row ? toPlan(row) : null;
+}
+
 export async function getPlan(db: Db, clientId: string): Promise<Plan> {
   const rows = await db
     .select()

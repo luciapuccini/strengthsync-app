@@ -9,6 +9,27 @@ import { nowIso, todayIso } from "../dates.ts";
 import type { Db } from "../db.ts";
 import { clientProfiles } from "../schema.ts";
 
+/**
+ * A client's profile, or null when they have none.
+ *
+ * `getProfile` below throws instead, which the workflow relies on but which
+ * makes `GET /api/clients/{clientId}/profile` answer 500 where it declares 404
+ * — a client with no profile yet is ordinary, not exceptional. That route is
+ * left alone (`issues/auth/010` is not to touch it, `013` deletes it); the /me
+ * route that replaces it uses this.
+ */
+export async function findProfile(
+  db: Db,
+  clientId: string,
+): Promise<ClientProfile | null> {
+  const rows = await db
+    .select()
+    .from(clientProfiles)
+    .where(eq(clientProfiles.client_id, clientId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export async function getProfile(
   db: Db,
   clientId: string,

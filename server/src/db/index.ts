@@ -17,9 +17,14 @@ export {
   createCredential,
   getCredentialByEmail,
 } from "./repositories/credentials.ts";
-export { getProfile, upsertProfile } from "./repositories/profiles.ts";
+export {
+  findProfile,
+  getProfile,
+  upsertProfile,
+} from "./repositories/profiles.ts";
 export {
   activateGeneratedPlanV2,
+  findPlanById,
   getActivePlan,
   getPlan,
   listPlans,

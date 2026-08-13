@@ -31,3 +31,6 @@ export const PlanParamsSchema = z.object({
   clientId: uuidParam('clientId'),
   planId: uuidParam('planId'),
 })
+
+/** The same params without the athlete id, which /me takes from the session. */
+export const PlanIdParamSchema = z.object({ planId: uuidParam('planId') })

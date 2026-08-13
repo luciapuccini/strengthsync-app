@@ -54,6 +54,9 @@ export const DayParamsSchema = z.object({
     .openapi({ param: { name: 'dayIndex', in: 'path' } }),
 })
 
+/** The same params without the athlete id, which /me takes from the session. */
+export const MyDayParamsSchema = DayParamsSchema.omit({ clientId: true })
+
 export const WeekListQuerySchema = z.object({
   status: WeekStatusSchema.optional().openapi({ param: { name: 'status', in: 'query' } }),
   // Left as a plain string to match today's behaviour: an unknown planId
