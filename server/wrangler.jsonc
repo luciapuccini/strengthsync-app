@@ -6,14 +6,18 @@
   "observability": {
     "enabled": true,
     "logs": {
-      "invocation_logs": true
-    }
+      "invocation_logs": true,
+    },
   },
   "assets": {
     "directory": "../client/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-      "run_worker_first": ["/api/*", "/wf/*", "/health"]
+    // Anything not listed here is answered from ../client/dist first, and
+    // single-page-application turns a miss into index.html. /auth/* has to be
+    // on the list or GET /auth/session returns the app shell instead of the
+    // session — invisible locally, where vite proxies to the Worker directly.
+    "run_worker_first": ["/api/*", "/wf/*", "/auth/*", "/health"],
   },
   "d1_databases": [
     {
@@ -23,14 +27,14 @@
       // `wrangler d1 create strengthsync` and paste the real database_id,
       // then apply migrations + seed (see package.json scripts).
       "database_id": "3d9980fa-e3f2-4a19-9dac-1c63db6132a6",
-      "migrations_dir": "./db/drizzle"
-    }
+      "migrations_dir": "./db/drizzle",
+    },
   ],
   "workflows": [
-		{
-			"name": "strengthsync-workflow",
-			"binding": "STRENGTHSYNC_WORKFLOW",
-			"class_name": "StrengthsyncWorkflow"
-		}
-	]
+    {
+      "name": "strengthsync-workflow",
+      "binding": "STRENGTHSYNC_WORKFLOW",
+      "class_name": "StrengthsyncWorkflow",
+    },
+  ],
 }

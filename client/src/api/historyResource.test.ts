@@ -1,19 +1,19 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { makeWeek } from '@/test/weekFixture'
+import { makeWeek } from '@/test/weekFixture';
 
-const { listCompletedWeeks, getPlan } = vi.hoisted(() => ({
+const { listCompletedWeeks, getActivePlan } = vi.hoisted(() => ({
   listCompletedWeeks: vi.fn(),
-  getPlan: vi.fn(),
-}))
+  getActivePlan: vi.fn(),
+}));
 
-vi.mock('@/api/client', () => ({ listCompletedWeeks, getPlan }))
+vi.mock('@/api/client', () => ({ listCompletedWeeks, getActivePlan }));
 
-import { completedWeeksResource, invalidateCompletedWeeks } from './historyResource'
+import { completedWeeksResource, invalidateCompletedWeeks } from './historyResource';
 
-const CLIENT = '00000000-0000-4000-8000-000000000001'
-const PLAN = '00000000-0000-4000-8000-000000000002'
-const NOW = '2026-05-10T00:00:00.000Z'
+const CLIENT = '00000000-0000-4000-8000-000000000001';
+const PLAN = '00000000-0000-4000-8000-000000000002';
+const NOW = '2026-05-10T00:00:00.000Z';
 
 const samplePlan = {
   id: PLAN,
@@ -26,38 +26,49 @@ const samplePlan = {
   activated_at: NOW,
   created_at: NOW,
   updated_at: NOW,
-}
+};
 
 afterEach(() => {
-  invalidateCompletedWeeks(CLIENT, PLAN)
-  vi.clearAllMocks()
-})
+  invalidateCompletedWeeks();
+  vi.clearAllMocks();
+});
 
 describe('completedWeeksResource', () => {
-  it('loads weeks and plan and caches by client and plan', async () => {
-    const weeks = [{ ...makeWeek(), status: 'completed' as const }]
-    listCompletedWeeks.mockResolvedValue(weeks)
-    getPlan.mockResolvedValue(samplePlan)
+  it("resolves the active plan itself and reads that plan's completed weeks", async () => {
+    const weeks = [{ ...makeWeek(), status: 'completed' as const }];
+    getActivePlan.mockResolvedValue(samplePlan);
+    listCompletedWeeks.mockResolvedValue(weeks);
 
-    const first = completedWeeksResource(CLIENT, PLAN)
-    const second = completedWeeksResource(CLIENT, PLAN)
+    await expect(completedWeeksResource()).resolves.toEqual({ weeks, plan: samplePlan });
+    expect(listCompletedWeeks).toHaveBeenCalledWith(PLAN);
+  });
 
-    await expect(first).resolves.toEqual({ weeks, plan: samplePlan })
-    await expect(second).resolves.toEqual({ weeks, plan: samplePlan })
-    expect(listCompletedWeeks).toHaveBeenCalledTimes(1)
-    expect(getPlan).toHaveBeenCalledTimes(1)
-    expect(getPlan).toHaveBeenCalledWith(CLIENT, PLAN)
-  })
+  it('caches, so a second read does not refetch', async () => {
+    getActivePlan.mockResolvedValue(samplePlan);
+    listCompletedWeeks.mockResolvedValue([]);
+
+    const first = completedWeeksResource();
+    const second = completedWeeksResource();
+
+    await Promise.all([first, second]);
+    expect(first).toBe(second);
+    expect(getActivePlan).toHaveBeenCalledTimes(1);
+    expect(listCompletedWeeks).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports no plan and no weeks when nothing is active, without asking for weeks', async () => {
+    getActivePlan.mockResolvedValue(null);
+
+    await expect(completedWeeksResource()).resolves.toEqual({ weeks: [], plan: null });
+    expect(listCompletedWeeks).not.toHaveBeenCalled();
+  });
 
   it('drops the cache when the load fails', async () => {
-    listCompletedWeeks.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce([])
-    getPlan.mockResolvedValue(samplePlan)
+    getActivePlan.mockResolvedValue(samplePlan);
+    listCompletedWeeks.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce([]);
 
-    await expect(completedWeeksResource(CLIENT, PLAN)).rejects.toThrow('boom')
-    await expect(completedWeeksResource(CLIENT, PLAN)).resolves.toEqual({
-      weeks: [],
-      plan: samplePlan,
-    })
-    expect(listCompletedWeeks).toHaveBeenCalledTimes(2)
-  })
-})
+    await expect(completedWeeksResource()).rejects.toThrow('boom');
+    await expect(completedWeeksResource()).resolves.toEqual({ weeks: [], plan: samplePlan });
+    expect(listCompletedWeeks).toHaveBeenCalledTimes(2);
+  });
+});

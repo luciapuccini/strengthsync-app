@@ -1,24 +1,28 @@
-import type { StateCreator } from 'zustand'
+import type { StateCreator } from 'zustand';
 
-import type { Client, ExerciseFeedback, Plan, Week, WeekDay } from '@/api/types'
+import type { Client, ExerciseFeedback, Plan, Week, WeekDay } from '@/api/types';
 
-import { saveDayLog } from '@/api/client'
-import { toSaveDayLog } from '@/api/dayLog'
-import type { TrackerData } from '@/api/weekResource'
-import { invalidateCurrentWeek } from '@/api/weekResource'
+import { saveDayLog } from '@/api/client';
+import { toSaveDayLog } from '@/api/dayLog';
+import type { TrackerData } from '@/api/weekResource';
+import { invalidateCurrentWeek } from '@/api/weekResource';
 import {
   setFeedback as applySetFeedback,
   toggleSet as applyToggleSet,
   toggleSkip as applyToggleSkip,
-} from '@/reducers/weekReducer'
-import { reconcileWeekDraft, mergeSavedDayIntoDraft, writeWeekDraft } from '@/store/weekDraftStorage'
+} from '@/reducers/weekReducer';
+import {
+  reconcileWeekDraft,
+  mergeSavedDayIntoDraft,
+  writeWeekDraft,
+} from '@/store/weekDraftStorage';
 
-import type { AppStore } from '../useAppStore'
+import type { AppStore } from '../useAppStore';
 
 function applyPersistedWeekChange(week: Week, change: (current: Week) => Week): Week {
-  const nextWeek = change(week)
-  writeWeekDraft(nextWeek)
-  return nextWeek
+  const nextWeek = change(week);
+  writeWeekDraft(nextWeek);
+  return nextWeek;
 }
 
 function patchWeek(
@@ -31,23 +35,19 @@ function patchWeek(
       state.week === null ? state : { week: applyPersistedWeekChange(state.week, change) },
     false,
     action,
-  )
+  );
 }
 
 export type TrackerSlice = {
-  client: Client | null
-  plan: Plan | null
-  week: Week | null
-  hydrateTracker: (data: TrackerData) => void
-  toggleSet: (dayIndex: number, exerciseKey: string, setIndex: number) => void
-  setFeedback: (
-    dayIndex: number,
-    exerciseKey: string,
-    feedback: ExerciseFeedback | null,
-  ) => void
-  toggleSkip: (dayIndex: number, exerciseKey: string) => void
-  saveDay: (day: WeekDay) => Promise<void>
-}
+  client: Client | null;
+  plan: Plan | null;
+  week: Week | null;
+  hydrateTracker: (data: TrackerData) => void;
+  toggleSet: (dayIndex: number, exerciseKey: string, setIndex: number) => void;
+  setFeedback: (dayIndex: number, exerciseKey: string, feedback: ExerciseFeedback | null) => void;
+  toggleSkip: (dayIndex: number, exerciseKey: string) => void;
+  saveDay: (day: WeekDay) => Promise<void>;
+};
 
 export const createTrackerSlice: StateCreator<
   AppStore,
@@ -74,19 +74,20 @@ export const createTrackerSlice: StateCreator<
     patchWeek(set, 'toggleSet', (week) => applyToggleSet(week, dayIndex, exerciseKey, setIndex)),
 
   setFeedback: (dayIndex, exerciseKey, feedback) =>
-    patchWeek(set, 'setFeedback', (week) => applySetFeedback(week, dayIndex, exerciseKey, feedback)),
+    patchWeek(set, 'setFeedback', (week) =>
+      applySetFeedback(week, dayIndex, exerciseKey, feedback),
+    ),
 
   toggleSkip: (dayIndex, exerciseKey) =>
     patchWeek(set, 'toggleSkip', (week) => applyToggleSkip(week, dayIndex, exerciseKey)),
 
   saveDay: async (day) => {
-    const { client, week } = get()
+    const { client, week } = get();
     if (client === null || week === null) {
-      throw new Error('Cannot save a day before the tracker is hydrated.')
+      throw new Error('Cannot save a day before the tracker is hydrated.');
     }
-    const savedWeek = await saveDayLog(client.id, week.id, day.day_index, toSaveDayLog(day))
-    invalidateCurrentWeek(client.id)
-    set({ week: mergeSavedDayIntoDraft(savedWeek, client.id, day.day_index) }, false, 'saveDay')
+    const savedWeek = await saveDayLog(week.id, day.day_index, toSaveDayLog(day));
+    invalidateCurrentWeek();
+    set({ week: mergeSavedDayIntoDraft(savedWeek, client.id, day.day_index) }, false, 'saveDay');
   },
-})
-
+});

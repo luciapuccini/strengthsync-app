@@ -1,27 +1,27 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs';
 
-import BetterSqlite3 from 'better-sqlite3'
-import type { DrizzleD1Database } from 'drizzle-orm/d1'
+import BetterSqlite3 from 'better-sqlite3';
+import type { DrizzleD1Database } from 'drizzle-orm/d1';
 
-import type { Db } from '../db.ts'
-import * as schema from '../schema.ts'
-import { getWeek, updateDayLog } from '../repositories/weeks.ts'
-import { FakeD1Database } from './fake-d1.ts'
+import type { Db } from '../db.ts';
+import * as schema from '../schema.ts';
+import { getWeek, updateDayLog } from '../repositories/weeks.ts';
+import { FakeD1Database } from './fake-d1.ts';
 
 // drizzle-orm/d1 is typed against its own minimal D1Database interface;
 // the fake implements it structurally.
-import { drizzle } from 'drizzle-orm/d1'
+import { drizzle } from 'drizzle-orm/d1';
 
 // drizzle/ and seeds/ live in server/db/, not next to the TypeScript
 // source (server/src/db/) — see server/db/drizzle.config.ts.
-const DB_ARTIFACTS_ROOT = new URL('../../../db/', import.meta.url)
+const DB_ARTIFACTS_ROOT = new URL('../../../db/', import.meta.url);
 
 function readSqlDir(relativeDir: string): string[] {
-  const dirUrl = new URL(`${relativeDir}/`, DB_ARTIFACTS_ROOT)
+  const dirUrl = new URL(`${relativeDir}/`, DB_ARTIFACTS_ROOT);
   return readdirSync(dirUrl)
     .filter((name) => name.endsWith('.sql'))
     .sort()
-    .map((name) => readFileSync(new URL(name, dirUrl), 'utf8'))
+    .map((name) => readFileSync(new URL(name, dirUrl), 'utf8'));
 }
 
 /** Execute every statement in a drizzle-kit SQL file (splits on breakpoints). */
@@ -29,48 +29,65 @@ function applySqlFile(sqlite: BetterSqlite3.Database, sql: string): void {
   const statements = sql
     .split('--> statement-breakpoint')
     .map((s) => s.trim())
-    .filter((s) => s.length > 0)
+    .filter((s) => s.length > 0);
   for (const statement of statements) {
-    sqlite.exec(statement)
+    sqlite.exec(statement);
   }
 }
 
 /** In-memory sqlite with the drizzle migrations applied. */
 export function createMigratedSqlite(): BetterSqlite3.Database {
-  const sqlite = new BetterSqlite3(':memory:')
+  const sqlite = new BetterSqlite3(':memory:');
   for (const migration of readSqlDir('drizzle')) {
-    applySqlFile(sqlite, migration)
+    applySqlFile(sqlite, migration);
   }
-  return sqlite
+  return sqlite;
 }
 
 /** Apply the seed data (single shared coach for the MVP). */
 export function applySeeds(sqlite: BetterSqlite3.Database): void {
-  const baseSeed = readFileSync(new URL('seeds/000_default_coach.sql', DB_ARTIFACTS_ROOT), 'utf8')
-  applySqlFile(sqlite, baseSeed)
+  const baseSeed = readFileSync(new URL('seeds/000_default_coach.sql', DB_ARTIFACTS_ROOT), 'utf8');
+  applySqlFile(sqlite, baseSeed);
+}
+
+function toDb(sqlite: BetterSqlite3.Database): Db {
+  return drizzle(new FakeD1Database(sqlite) as unknown as D1Database, {
+    schema,
+  }) as unknown as DrizzleD1Database<typeof schema> as Db;
 }
 
 /** A fully migrated + seeded in-memory `Db` backed by the fake D1, for tests. */
 export function createTestDb(): Db {
-  const sqlite = createMigratedSqlite()
-  applySeeds(sqlite)
-  return drizzle(new FakeD1Database(sqlite) as unknown as D1Database, { schema }) as unknown as DrizzleD1Database<
-    typeof schema
-  > as Db
+  const sqlite = createMigratedSqlite();
+  applySeeds(sqlite);
+  return toDb(sqlite);
+}
+
+/**
+ * Every committed seed, not just the coach: the demo athlete, their plan, weeks
+ * and credential. Reads the same files a developer applies by hand, so a test
+ * over this db is a test of what the repository actually ships.
+ */
+export function createDemoSeededDb(): Db {
+  const sqlite = createMigratedSqlite();
+  for (const seed of readSqlDir('seeds')) {
+    applySqlFile(sqlite, seed);
+  }
+  return toDb(sqlite);
 }
 
 /** Mark every scheduled day completed so `completeWeek` can freeze the week. */
-export { addDays, todayIso } from '../dates.ts'
+export { addDays, todayIso } from '../dates.ts';
 
 export async function markAllDaysCompleted(
   db: Db,
   clientId: string,
   weekId: string,
 ): Promise<void> {
-  const week = await getWeek(db, clientId, weekId)
-  if (!week) throw new Error(`week ${weekId} not found`)
+  const week = await getWeek(db, clientId, weekId);
+  if (!week) throw new Error(`week ${weekId} not found`);
   for (const day of week.schedule) {
-    if (day.completed) continue
+    if (day.completed) continue;
     await updateDayLog(db, clientId, weekId, day.day_index, {
       completed: true,
       exercises: day.exercises.map((exercise) => ({
@@ -79,6 +96,6 @@ export async function markAllDaysCompleted(
         feedback: null,
         sets: [],
       })),
-    })
+    });
   }
 }

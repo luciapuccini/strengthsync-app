@@ -1,5 +1,5 @@
-import type { JSX } from "react";
-import { CompleteWeekButton } from "../complete-week-button/completeWeekButton";
+import type { JSX } from 'react';
+import { CompleteWeekButton } from '../complete-week-button/completeWeekButton';
 
 export function WeekHeading(): JSX.Element {
   return (

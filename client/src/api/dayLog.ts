@@ -1,4 +1,4 @@
-import type { SaveDayLog, WeekDay } from "./types";
+import type { SaveDayLog, WeekDay } from './types';
 
 export function toSaveDayLog(day: WeekDay): SaveDayLog {
   return {

@@ -3,10 +3,4 @@
  * this array exists for places that need a runtime value (e.g. Zod schemas)
  * without importing server domain code.
  */
-export const DAY_TYPES = [
-  "upper_body",
-  "leg_day",
-  "rest",
-  "swimming",
-  "cardio",
-] as const;
+export const DAY_TYPES = ['upper_body', 'leg_day', 'rest', 'swimming', 'cardio'] as const;

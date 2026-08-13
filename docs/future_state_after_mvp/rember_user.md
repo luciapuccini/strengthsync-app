@@ -1,23 +1,47 @@
 ---
 name: Remember Device Cookie
-overview: Extend Basic Auth with a 30-day signed HttpOnly cookie, preserving Basic credentials as the initial/fallback login method without browser storage or D1 sessions.
+overview: SUPERSEDED by the authentication phase (issues/auth). Proposed extending Basic Auth with a 30-day signed HttpOnly cookie, keeping Basic as the fallback login. What shipped keeps the cookie and retires Basic instead of layering on it.
 todos:
   - id: cookie-middleware
     content: Implement signed 30-day cookie middleware with Basic Auth fallback
-    status: pending
+    status: superseded
   - id: auth-config
     content: Wire AUTH_SESSION_SECRET through Worker and tests
-    status: pending
+    status: superseded
   - id: auth-tests
     content: Test issuance, cookie-only access, expiry, and tampering
-    status: pending
+    status: superseded
   - id: auth-docs-verify
     content: Document secret setup and run full verification
-    status: pending
+    status: superseded
 isProject: false
 ---
 
 # Remember-device authentication
+
+> **Superseded by `issues/auth` (the authentication phase).** This note is kept
+> for the reasoning it settled, not as work to do. Read it as the design that
+> the shipped one grew out of.
+>
+> **Adopted from it, more or less unchanged:**
+>
+> - The cookie shape: signed, `HttpOnly`, `SameSite=Lax`, path-wide, `Secure` outside development. No browser storage.
+> - The thirty-day lifetime.
+> - No sessions table in D1. The token is self-contained and verified by signature, so signing in costs no read and there is no server-side state to expire.
+> - Middleware location: one guard mounted in `app.ts`, with `/health` outside it.
+> - A signing secret separate from any password, wired through the Worker env and the test kit.
+> - The test list — issuance, cookie-only access, expiry, tampering — which is close to what `app.auth.test.ts` asserts today.
+>
+> **Where it diverged, and why:**
+>
+> - **The payload carries identity.** This note's cookie proved only that *a* valid Basic login had happened; the shipped one carries the athlete's id as the JWT `sub`, which is what lets the API address data by session instead of by a URL parameter. That single change is what turned the cookie from a convenience into the authentication mechanism.
+> - **Basic is retired, not kept as a fallback.** With per-athlete accounts there is no shared credential left to fall back to. `/auth/sign-up` and `/auth/sign-in` replace it, backed by PBKDF2 hashes in `client_credentials`, and sign-out actually ends a session — which Basic could never do.
+> - **HS256 JWTs via `hono/jwt`**, rather than a hand-rolled versioned signed payload. Same properties, no new dependency, and one less format to get wrong.
+> - **The guard has no development exemption.** The Basic middleware it replaced was mounted only when `NODE_ENV=production`; the session guard runs everywhere, so the guard under `wrangler dev` is the guard in production.
+> - **Names.** `AUTH_SESSION_SECRET` → `SESSION_JWT_SECRET`; `server/src/middleware/auth.ts` → `server/src/lib/session.ts` and `session-token.ts`; the cookie is `session`, not `strengthsync_session`.
+>
+> The file paths referenced below are from the original proposal and several no
+> longer exist. See [stack.md](../architecture/stack.md) for what is actually built.
 
 - Add a focused auth middleware in [`server/src/middleware/auth.ts`](server/src/middleware/auth.ts) that:
   - accepts a valid, unexpired signed `strengthsync_session` cookie;

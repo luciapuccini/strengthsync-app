@@ -1,9 +1,8 @@
 ---
 description: React best practices and patterns for this codebase
-globs: *.tsx,*.jsx
+globs: *.tsx,*.jsx,*.css
 alwaysApply: false
 ---
-
 # React Development Guidelines
 
 ## Core Principles
@@ -208,7 +207,11 @@ import { FixedSizeList } from 'react-window';
 
 ## Styling with TailwindCSS
 
-Always reach for tailwind first for styling components.
+Always reach for tailwind first for styling components. standard Tailwind breakpoints ALWAYS first.
+
+Responsive breakpoints (sm:/md:/lg:/xl:/2xl:, driven by --breakpoint-*): 640 / 768 / 1024 / 1280 / 1536px — these gate when styles apply, not container widths.
+
+max-w-* scale (driven by --container-*): max-w-xs 320px, max-w-sm 384px, max-w-md 448px, max-w-lg 512px, etc. 
 
 ### Class Name Organization
 

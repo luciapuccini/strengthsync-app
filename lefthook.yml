@@ -1,8 +1,12 @@
 # Pre-commit guard required by docs/implementation_preferences.md:
-# TypeScript typecheck, lint, and unit tests must pass before a commit lands.
+# Formatting, TypeScript typecheck, lint, and unit tests must pass before a
+# commit lands. `format` checks rather than writes, like the other three —
+# run `pnpm format` to fix what it reports.
 pre-commit:
   parallel: true
   commands:
+    format:
+      run: pnpm format:check
     typecheck:
       run: pnpm typecheck
     lint:

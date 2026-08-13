@@ -3,38 +3,60 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Dark neutral theme (mirrors the POC palette). Tokens follow the shadcn
- * new-york convention so ported components resolve their colors.
- */
 :root {
+  /*
+    Brand palette — the ONLY hand-picked colors. Everything else derives
+    from these five via var() / color-mix().
+      black  : deep ash / near-black surface
+      ash    : layered neutral for cards, inputs, borders
+      white  : warm off-white text
+      yellow : vivid primary (CTAs, rings)
+      accent : highlight tint (currently the same yellow, tune here)
+  */
+  --brand-black: oklch(0.16 0.004 260);
+  --brand-ash: oklch(0.24 0.004 260);
+  --brand-white: oklch(0.97 0.005 95);
+  --brand-yellow: oklch(0.88 0.19 95);
+  --brand-accent: oklch(0.88 0.19 95);
+
+  /* Functional/system color — an error red can't come from the brand five. */
+  --brand-danger: oklch(0.62 0.22 25);
+
+  /* Semantic tokens (shadcn) — all derived from the palette above. */
+  --background: var(--brand-black);
+  --foreground: var(--brand-white);
+
+  --card: color-mix(in oklch, var(--brand-black) 66%, var(--brand-ash));
+  --card-foreground: var(--brand-white);
+
+  --popover: var(--card);
+  --popover-foreground: var(--brand-white);
+
+  --primary: var(--brand-yellow);
+  --primary-foreground: var(--brand-black);
+
+  --secondary: var(--brand-ash);
+  --secondary-foreground: var(--brand-white);
+
+  --muted: var(--brand-ash);
+  --muted-foreground: color-mix(in oklch, var(--brand-white) 66%, var(--brand-ash));
+
+  --accent: var(--brand-accent);
+  --accent-foreground: var(--brand-black);
+
+  --destructive: var(--brand-danger);
+  --destructive-foreground: var(--brand-white);
+
+  --border: color-mix(in oklch, var(--brand-ash) 88%, var(--brand-white));
+  --input: color-mix(in oklch, var(--brand-ash) 92%, var(--brand-white));
+  --ring: var(--brand-yellow);
+
   --radius: 0.625rem;
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.92 0.01 80);
-  --card: oklch(0.17 0 0);
-  --card-foreground: oklch(0.92 0.01 80);
-  --popover: oklch(0.17 0 0);
-  --popover-foreground: oklch(0.92 0.01 80);
-  --primary: oklch(0.82 0.18 88);
-  --primary-foreground: oklch(0.15 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.92 0.01 80);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.92 0.01 80);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.82 0.18 88);
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -54,6 +76,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {
@@ -63,6 +89,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;

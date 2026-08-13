@@ -13,7 +13,7 @@
   ],
   "security": [
     {
-      "basicAuth": []
+      "sessionCookie": []
     }
   ],
   "components": {
@@ -29,18 +29,15 @@
           "ok"
         ]
       },
-      "ClientListResponse": {
+      "ClientResponse": {
         "type": "object",
         "properties": {
-          "clients": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Client"
-            }
+          "client": {
+            "$ref": "#/components/schemas/Client"
           }
         },
         "required": [
-          "clients"
+          "client"
         ]
       },
       "Client": {
@@ -106,27 +103,53 @@
           "error"
         ]
       },
-      "ClientResponse": {
-        "type": "object",
-        "properties": {
-          "client": {
-            "$ref": "#/components/schemas/Client"
-          }
-        },
-        "required": [
-          "client"
-        ]
-      },
-      "CreateClientInput": {
+      "SignUpInput": {
         "type": "object",
         "properties": {
           "display_name": {
             "type": "string",
             "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
           }
         },
         "required": [
-          "display_name"
+          "display_name",
+          "email",
+          "password"
+        ]
+      },
+      "SignInInput": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "SignedOutResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok"
         ]
       },
       "ClientProfileResponse": {
@@ -828,9 +851,10 @@
     },
     "parameters": {},
     "securitySchemes": {
-      "basicAuth": {
-        "type": "http",
-        "scheme": "basic"
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
       }
     }
   },
@@ -853,22 +877,42 @@
         }
       }
     },
-    "/api/clients": {
-      "get": {
-        "summary": "List clients",
+    "/auth/sign-up": {
+      "post": {
+        "summary": "Register a client and start a session",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpInput"
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
-            "description": "Clients found",
+          "201": {
+            "description": "Client registered and signed in",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClientListResponse"
+                  "$ref": "#/components/schemas/ClientResponse"
                 }
               }
             }
           },
-          "401": {
-            "description": "Missing or invalid credentials",
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with existing state",
             "content": {
               "application/json": {
                 "schema": {
@@ -878,21 +922,24 @@
             }
           }
         }
-      },
+      }
+    },
+    "/auth/sign-in": {
       "post": {
-        "summary": "Create a client",
+        "summary": "Start a session for an existing client",
+        "security": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateClientInput"
+                "$ref": "#/components/schemas/SignInInput"
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "Client created",
+          "200": {
+            "description": "Signed in",
             "content": {
               "application/json": {
                 "schema": {
@@ -924,20 +971,54 @@
         }
       }
     },
-    "/api/clients/{clientId}/profile": {
-      "get": {
-        "summary": "Get a client's profile",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "clientId",
-            "in": "path"
+    "/auth/sign-out": {
+      "post": {
+        "summary": "End the current session",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Signed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedOutResponse"
+                }
+              }
+            }
           }
-        ],
+        }
+      }
+    },
+    "/auth/session": {
+      "get": {
+        "summary": "Return the signed-in client",
+        "responses": {
+          "200": {
+            "description": "Signed in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/profile": {
+      "get": {
+        "summary": "Get the signed-in client's profile",
         "responses": {
           "200": {
             "description": "Profile found",
@@ -945,16 +1026,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClientProfileResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -982,18 +1053,7 @@
         }
       },
       "put": {
-        "summary": "Create or replace a client's profile",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "clientId",
-            "in": "path"
-          }
-        ],
+        "summary": "Create or replace the signed-in client's profile",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1047,20 +1107,9 @@
         }
       }
     },
-    "/api/clients/{clientId}/plans/active": {
+    "/api/me/plans/active": {
       "get": {
-        "summary": "Get the client's active plan",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "clientId",
-            "in": "path"
-          }
-        ],
+        "summary": "Get the signed-in client's active plan",
         "responses": {
           "200": {
             "description": "Plan found",
@@ -1068,16 +1117,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PlanResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -1105,19 +1144,10 @@
         }
       }
     },
-    "/api/clients/{clientId}/plans/{planId}": {
+    "/api/me/plans/{planId}": {
       "get": {
-        "summary": "Get a plan by id",
+        "summary": "Get one of the signed-in client's plans by id",
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "clientId",
-            "in": "path"
-          },
           {
             "schema": {
               "type": "string",
@@ -1172,20 +1202,9 @@
         }
       }
     },
-    "/api/clients/{clientId}/weeks/current": {
+    "/api/me/weeks/current": {
       "get": {
-        "summary": "Get the client's current in-flight week",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "clientId",
-            "in": "path"
-          }
-        ],
+        "summary": "Get the signed-in client's current in-flight week",
         "responses": {
           "200": {
             "description": "Week found",
@@ -1193,16 +1212,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/WeekResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }
@@ -1230,19 +1239,10 @@
         }
       }
     },
-    "/api/clients/{clientId}/weeks": {
+    "/api/me/weeks": {
       "get": {
-        "summary": "List weeks for a client",
+        "summary": "List the signed-in client's weeks",
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "clientId",
-            "in": "path"
-          },
           {
             "schema": {
               "$ref": "#/components/schemas/WeekStatus"
@@ -1304,19 +1304,10 @@
         }
       }
     },
-    "/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}/save": {
+    "/api/me/weeks/{weekId}/days/{dayIndex}/save": {
       "post": {
         "summary": "Save a day's exercise logs and mark the day completed",
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "clientId",
-            "in": "path"
-          },
           {
             "schema": {
               "type": "string",
@@ -1390,19 +1381,10 @@
         }
       }
     },
-    "/api/clients/{clientId}/weeks/{weekId}/days/{dayIndex}": {
+    "/api/me/weeks/{weekId}/days/{dayIndex}": {
       "patch": {
         "summary": "Low-level day log patch (tests/tools)",
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "required": true,
-            "name": "clientId",
-            "in": "path"
-          },
           {
             "schema": {
               "type": "string",
@@ -1479,6 +1461,7 @@
     "/wf/complete-week": {
       "post": {
         "summary": "Complete a week for a client (starts the Cloudflare Workflow)",
+        "security": [],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1501,16 +1484,6 @@
           },
           "400": {
             "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid credentials",
             "content": {
               "application/json": {
                 "schema": {

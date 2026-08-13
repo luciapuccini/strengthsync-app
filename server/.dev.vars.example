@@ -1,7 +1,6 @@
-# Shared coach credential for HTTP Basic auth on /api/*
-# (docs/architecture/stack.md — not per-user identity).
-BASIC_AUTH_USERNAME=coach
-BASIC_AUTH_PASSWORD=change-me
+# Signs session JWTs (server/src/lib/session-token.ts). Rotating this value
+# invalidates every issued session.
+SESSION_JWT_SECRET=change-me
 
 # OpenAI model used by the in-Worker Cloudflare Workflow.
 OPENAI_API_KEY=sk-...

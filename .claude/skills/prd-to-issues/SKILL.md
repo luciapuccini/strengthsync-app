@@ -59,6 +59,20 @@ Create files in dependency order (blockers first) so you can reference real file
 
 Do NOT use `gh issue create` or any GitHub CLI commands. Do NOT reference GitHub issue numbers. Use local filenames for all cross-references.
 
+### 6. Add a final control issue
+
+After PRD slices issues are clear, add one more to make a final swipe of the PRD implementation to answer these:
+
+  - are we on track with what we planned
+  for?
+  - any notable files or funtions that
+  diverged from our project standards and
+  notations? - are bugs or out of scope
+  side findings documented and not
+  actioned?
+  - was the documentation (/docs) updated consistently with the progress? 
+  - suggested next steps?
+
 <issue-template>
 ## Parent PRD
 
@@ -86,6 +100,9 @@ Reference by number from the parent PRD:
 
 - User story 3
 - User story 7
+
+## STATUS
+mark as "DONE" once implemented sucessfully and validated with user.
 
 </issue-template>
 

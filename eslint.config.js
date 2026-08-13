@@ -1,21 +1,21 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+import { defineConfig, globalIgnores } from 'eslint/config';
 
-// Import-boundary enforcement for the dependency graph 
+// Import-boundary enforcement for the dependency graph
 //  A package may only import the @strengthsync/* workspaces listed as `allowed` for its directory.
-const ALL_WORKSPACES = ['@strengthsync/client', '@strengthsync/server']
+const ALL_WORKSPACES = ['@strengthsync/client', '@strengthsync/server'];
 
-const BOUNDARY_MESSAGE =
-  'Import-boundary violation'
+const BOUNDARY_MESSAGE = 'Import-boundary violation';
 
 const boundary = (files, allowed, extraBanned = []) => {
-  const banned = ALL_WORKSPACES.filter((name) => !allowed.includes(name)).flatMap(
-    (name) => [name, `${name}/*`],
-  )
+  const banned = ALL_WORKSPACES.filter((name) => !allowed.includes(name)).flatMap((name) => [
+    name,
+    `${name}/*`,
+  ]);
   return {
     files,
     rules: {
@@ -29,8 +29,8 @@ const boundary = (files, allowed, extraBanned = []) => {
         },
       ],
     },
-  }
-}
+  };
+};
 
 export default defineConfig([
   globalIgnores([
@@ -92,9 +92,5 @@ export default defineConfig([
   // server/src/db may use domain, but never reaches into HTTP/workflow/
   // agent code. Declared after the server boundary above so it wins for
   // files under this narrower glob.
-  boundary(
-    ['server/src/db/**/*.ts'],
-    [],
-    ['**/routes/**', '**/workflows/**', '**/agent/**'],
-  ),
-])
+  boundary(['server/src/db/**/*.ts'], [], ['**/routes/**', '**/workflows/**', '**/agent/**']),
+]);

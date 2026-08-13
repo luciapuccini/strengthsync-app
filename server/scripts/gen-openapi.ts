@@ -1,8 +1,8 @@
-import { writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-import { createApp } from '../src/app.ts'
-import type { Db } from '../src/db/index.ts'
+import { createApp } from '../src/app.ts';
+import type { Db } from '../src/db/index.ts';
 
 /**
  * Writes `server/openapi.json` from the route definitions.
@@ -16,10 +16,7 @@ import type { Db } from '../src/db/index.ts'
  * imports carry explicit .ts extensions.
  */
 
-const app = createApp({
-  db: {} as Db,
-  basicAuth: { username: '', password: '' },
-})
+const app = createApp({ db: {} as Db, sessionSecret: '' });
 
 const document = app.getOpenAPI31Document({
   openapi: '3.1.0',
@@ -30,23 +27,20 @@ const document = app.getOpenAPI31Document({
       'Public HTTP boundary for the StrengthSync client/server monolith. Generated from the server route definitions by `pnpm gen:openapi` — do not edit by hand.',
   },
   servers: [{ url: '/', description: 'Cloudflare Workers origin' }],
-  security: [{ basicAuth: [] }],
-})
+  security: [{ sessionCookie: [] }],
+});
 
 // The security scheme is referenced by `security` above but has to be
-// registered as a component for the reference to resolve.
+// registered as a component for the reference to resolve. Routes reachable
+// without a session declare `security: []` and opt out of this default.
 document.components = {
   ...document.components,
   securitySchemes: {
     ...document.components?.securitySchemes,
-    basicAuth: { type: 'http', scheme: 'basic' },
+    sessionCookie: { type: 'apiKey', in: 'cookie', name: 'session' },
   },
-}
+};
 
-// Optional output path so `check:openapi` can regenerate into a scratch file
-// and diff, rather than mutating the committed one.
-const out = process.argv[2]
-  ? resolve(process.cwd(), process.argv[2])
-  : resolve(import.meta.dirname, '../openapi.json')
-writeFileSync(out, `${JSON.stringify(document, null, 2)}\n`)
-console.log(`wrote ${out}`)
+const out = resolve(import.meta.dirname, '../openapi.json');
+writeFileSync(out, `${JSON.stringify(document, null, 2)}\n`);
+console.log(`wrote ${out}`);

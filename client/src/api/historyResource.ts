@@ -1,32 +1,33 @@
-import { getPlan, listCompletedWeeks } from '@/api/client'
-import type { Plan, Week } from '@/api/types'
+import { getActivePlan, listCompletedWeeks } from '@/api/client';
+import type { Plan, Week } from '@/api/types';
 
 export type HistoryData = {
-  weeks: Week[]
-  plan: Plan
-}
+  weeks: Week[];
+  /** Null when there is no active plan, which is also when `weeks` is empty. */
+  plan: Plan | null;
+};
 
-const historyPromises = new Map<string, Promise<HistoryData>>()
+/**
+ * One promise and no arguments: the URL no longer names a plan, so this resolves
+ * the signed-in client's active plan and reads that plan's completed weeks.
+ *
+ * The consequence, accepted in the PRD: there is no way to view an archived
+ * plan's history. No screen offered one either.
+ */
+let historyPromise: Promise<HistoryData> | null = null;
 
-function cacheKey(clientId: string, planId: string): string {
-  return `${clientId}:${planId}`
-}
-
-export function completedWeeksResource(clientId: string, planId: string): Promise<HistoryData> {
-  const key = cacheKey(clientId, planId)
-  const cached = historyPromises.get(key)
-  if (cached !== undefined) return cached
-
-  const promise = Promise.all([listCompletedWeeks(clientId, planId), getPlan(clientId, planId)])
-    .then(([weeks, plan]) => ({ weeks, plan }))
+export function completedWeeksResource(): Promise<HistoryData> {
+  historyPromise ??= getActivePlan()
+    .then(async (plan) =>
+      plan === null ? { weeks: [], plan } : { weeks: await listCompletedWeeks(plan.id), plan },
+    )
     .catch((error: unknown) => {
-      historyPromises.delete(key)
-      throw error
-    })
-  historyPromises.set(key, promise)
-  return promise
+      historyPromise = null;
+      throw error;
+    });
+  return historyPromise;
 }
 
-export function invalidateCompletedWeeks(clientId: string, planId: string): void {
-  historyPromises.delete(cacheKey(clientId, planId))
+export function invalidateCompletedWeeks(): void {
+  historyPromise = null;
 }

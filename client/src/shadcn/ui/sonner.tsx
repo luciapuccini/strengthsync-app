@@ -1,5 +1,5 @@
-import * as React from 'react'
-import { Toaster as Sonner, type ToasterProps } from 'sonner'
+import * as React from 'react';
+import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
 // The app renders on a fixed dark theme (see index.html / index.css); no
 // theme provider is wired for the MVP.
@@ -23,7 +23,7 @@ function Toaster({ ...props }: ToasterProps) {
       }
       {...props}
     />
-  )
+  );
 }
 
-export { Toaster }
+export { Toaster };

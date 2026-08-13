@@ -1,6 +1,6 @@
-import type { ExerciseFeedback, ExerciseLog, Week, WeekDay } from '@/api/types'
+import type { ExerciseFeedback, ExerciseLog, Week, WeekDay } from '@/api/types';
 
-import { isDayComplete, performedCount, updateDay } from './utils/weekUtils'
+import { isDayComplete, performedCount, updateDay } from './utils/weekUtils';
 
 function updateExercise(
   day: WeekDay,
@@ -9,9 +9,9 @@ function updateExercise(
 ): WeekDay {
   const exercises = day.exercises.map((exercise) =>
     exercise.exercise_key === exerciseKey ? update(exercise) : exercise,
-  )
-  const nextDay = { ...day, exercises }
-  return { ...nextDay, completed: exercises.length > 0 && isDayComplete(nextDay) }
+  );
+  const nextDay = { ...day, exercises };
+  return { ...nextDay, completed: exercises.length > 0 && isDayComplete(nextDay) };
 }
 
 export function toggleSet(
@@ -22,10 +22,10 @@ export function toggleSet(
 ): Week {
   return updateDay(week, dayIndex, (day) =>
     updateExercise(day, exerciseKey, (exercise) => {
-      if (exercise.skipped) return exercise
-      const done = performedCount(exercise)
+      if (exercise.skipped) return exercise;
+      const done = performedCount(exercise);
       if (setIndex === done - 1) {
-        return { ...exercise, sets: exercise.sets.slice(0, -1) }
+        return { ...exercise, sets: exercise.sets.slice(0, -1) };
       }
       if (setIndex === done && done < exercise.prescribed.series) {
         return {
@@ -37,11 +37,11 @@ export function toggleSet(
               performed_weight_kg: exercise.prescribed.weight_kg,
             },
           ],
-        }
+        };
       }
-      return exercise
+      return exercise;
     }),
-  )
+  );
 }
 
 export function setFeedback(
@@ -52,7 +52,7 @@ export function setFeedback(
 ): Week {
   return updateDay(week, dayIndex, (day) =>
     updateExercise(day, exerciseKey, (exercise) => ({ ...exercise, feedback })),
-  )
+  );
 }
 
 export function toggleSkip(week: Week, dayIndex: number, exerciseKey: string): Week {
@@ -62,5 +62,5 @@ export function toggleSkip(week: Week, dayIndex: number, exerciseKey: string): W
       skipped: !exercise.skipped,
       sets: [],
     })),
-  )
+  );
 }

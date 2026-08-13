@@ -1,7 +1,7 @@
-import type { JSX } from "react";
+import type { JSX } from 'react';
 
-import { Program } from "@/routes/tracker-page/components/week-tracker/components/program/program";
-import { WeekHeading } from "@/routes/tracker-page/components/week-tracker/components/week-heading/weekHeading";
+import { Program } from '@/routes/tracker-page/components/week-tracker/components/program/program';
+import { WeekHeading } from '@/routes/tracker-page/components/week-tracker/components/week-heading/weekHeading';
 
 export function WeekTracker(): JSX.Element {
   return (

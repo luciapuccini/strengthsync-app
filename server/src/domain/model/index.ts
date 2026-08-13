@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Core domain entities and value types, as Zod schemas.
@@ -17,17 +17,11 @@ export type Uuid = z.infer<typeof UuidSchema>;
 export type ISODate = z.infer<typeof ISODateSchema>;
 export type ISODateTime = z.infer<typeof ISODateTimeSchema>;
 
-export const DAY_TYPES = [
-  "upper_body",
-  "leg_day",
-  "rest",
-  "swimming",
-  "cardio",
-] as const;
-export const CLIENT_STATUSES = ["active", "archived"] as const;
-export const PLAN_STATUSES = ["draft", "active", "archived"] as const;
-export const WEEK_STATUSES = ["in_flight", "completed", "abandoned"] as const;
-export const EXERCISE_FEEDBACKS = ["easy", "hard", "heavy", "light"] as const;
+export const DAY_TYPES = ['upper_body', 'leg_day', 'rest', 'swimming', 'cardio'] as const;
+export const CLIENT_STATUSES = ['active', 'archived'] as const;
+export const PLAN_STATUSES = ['draft', 'active', 'archived'] as const;
+export const WEEK_STATUSES = ['in_flight', 'completed', 'abandoned'] as const;
+export const EXERCISE_FEEDBACKS = ['easy', 'hard', 'heavy', 'light'] as const;
 
 export const DayTypeSchema = z.enum(DAY_TYPES);
 export const ClientStatusSchema = z.enum(CLIENT_STATUSES);
@@ -62,6 +56,14 @@ export const ClientSchema = z.object({
   ...timestampFields,
 });
 export type Client = z.infer<typeof ClientSchema>;
+
+export const ClientCredentialsSchema = z.object({
+  client_id: UuidSchema,
+  email: z.string().min(1),
+  password_hash: z.string().min(1),
+  created_at: ISODateTimeSchema,
+});
+export type ClientCredentials = z.infer<typeof ClientCredentialsSchema>;
 
 export interface JsonObject {
   [key: string]: JsonValue;
@@ -209,7 +211,7 @@ export const DayLogPatchSchema = z.object({
 });
 export type DayLogPatch = z.infer<typeof DayLogPatchSchema>;
 /** Athlete save: the server decides `completed`. */
-export type DayLogSave = Pick<DayLogPatch, "exercises">;
+export type DayLogSave = Pick<DayLogPatch, 'exercises'>;
 
 export const WeekSchema = z.object({
   id: UuidSchema,

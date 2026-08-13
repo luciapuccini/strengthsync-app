@@ -20,13 +20,19 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
       - name: Resolve turbo affected base
         id: turbo-base
         run: .github/workflows/resolve-turbo-base.sh
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BEFORE_SHA: ${{ github.event.before }}
-      - run: pnpm check:openapi
+      # The committed contract artifacts are generated from the route
+      # definitions, so regenerating them here must be a no-op. A stale
+      # openapi.d.ts is worse than a missing one: the client typechecks green
+      # against shapes the server no longer returns.
+      - run: pnpm gen:openapi
+      - run: git diff --exit-code -- server/openapi.json client/src/api/openapi.d.ts
       - run: pnpm typecheck:affected
         env:
           TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}

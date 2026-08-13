@@ -1,19 +1,12 @@
-import type { JSX } from 'react'
+import type { JSX } from 'react';
 
-import type { HistoryDay } from '@/routes/history/toWeekHistory'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/shadcn/ui/table'
+import type { HistoryDay } from '@/routes/history/toWeekHistory';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shadcn/ui/table';
 
 type HistoryDaySectionProps = {
-  day: HistoryDay
-  sn: string
-}
+  day: HistoryDay;
+  sn: string;
+};
 
 export function HistoryDaySection({ day, sn }: HistoryDaySectionProps): JSX.Element {
   if (day.day_type === 'rest' || day.day_type === 'swimming') {
@@ -26,7 +19,7 @@ export function HistoryDaySection({ day, sn }: HistoryDaySectionProps): JSX.Elem
             : 'Swimming day. No strength exercises.'}
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -52,5 +45,5 @@ export function HistoryDaySection({ day, sn }: HistoryDaySectionProps): JSX.Elem
         ))}
       </TableBody>
     </Table>
-  )
+  );
 }

@@ -13,17 +13,17 @@
     "lint": "eslint .",
     "test": "vitest run",
     "gen:openapi": "node --experimental-strip-types scripts/gen-openapi.ts",
+    "hash-password": "node --experimental-strip-types scripts/hash-password.ts",
     "build": "wrangler deploy --dry-run",
     "deploy": "pnpm run db:migrate:remote && wrangler deploy",
     "db:generate": "drizzle-kit generate --config db/drizzle.config.ts",
     "db:migrate:local": "wrangler d1 migrations apply strengthsync --local",
-    "db:seed:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/000_default_coach.sql",
+    "db:seed:local": "pnpm run db:seed:coach:local && pnpm run db:seed:demo:local && pnpm run db:seed:history:local && pnpm run db:seed:credentials:local",
+    "db:seed:coach:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/000_default_coach.sql",
     "db:seed:demo:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/001_demo_seed.sql",
     "db:seed:history:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/002_historical_weeks.sql",
-    "db:migrate:remote": "wrangler d1 migrations apply strengthsync --remote",
-    "db:seed:remote": "wrangler d1 execute strengthsync --remote --file ./db/seeds/000_default_coach.sql",
-    "db:seed:demo:remote": "wrangler d1 execute strengthsync --remote --file ./db/seeds/001_demo_seed.sql",
-    "db:seed:history:remote": "wrangler d1 execute strengthsync --remote --file ./db/seeds/002_historical_weeks.sql"
+    "db:seed:credentials:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/003_demo_credentials.sql",
+    "db:migrate:remote": "wrangler d1 migrations apply strengthsync --remote"
   },
   "dependencies": {
     "@ai-sdk/openai": "catalog:",

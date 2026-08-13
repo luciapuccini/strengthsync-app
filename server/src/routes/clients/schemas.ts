@@ -1,10 +1,10 @@
-import { z } from '@hono/zod-openapi'
+import { z } from '@hono/zod-openapi';
 
 import {
   ClientProfileSchema,
   ClientProfileWriteSchema,
   ClientSchema,
-} from '../../domain/model/index.ts'
+} from '../../domain/model/index.ts';
 
 /**
  * HTTP shapes for the clients area, registered as OpenAPI components.
@@ -25,21 +25,16 @@ import {
  * schemas in `routes/weeks/schemas.ts` do, and are built differently.
  */
 
-export const CreateClientInputSchema = z
-  .object({ display_name: z.string().min(1) })
-  .openapi('CreateClientInput')
-
 export const UpdateClientProfileSchema = z
   .object(ClientProfileWriteSchema.shape)
-  .openapi('UpdateClientProfile')
+  .openapi('UpdateClientProfile');
 
-const Client = z.object(ClientSchema.shape).openapi('Client')
-const ClientProfile = z.object(ClientProfileSchema.shape).openapi('ClientProfile')
+const Client = z.object(ClientSchema.shape).openapi('Client');
+const ClientProfile = z.object(ClientProfileSchema.shape).openapi('ClientProfile');
 
-export const ClientListResponseSchema = z
-  .object({ clients: z.array(Client) })
-  .openapi('ClientListResponse')
-export const ClientResponseSchema = z.object({ client: Client }).openapi('ClientResponse')
+// `Client` reaches the contract through this one response, which sign-up and
+// sign-in return. The list shape that used to carry it went with its route.
+export const ClientResponseSchema = z.object({ client: Client }).openapi('ClientResponse');
 export const ClientProfileResponseSchema = z
   .object({ profile: ClientProfile })
-  .openapi('ClientProfileResponse')
+  .openapi('ClientProfileResponse');

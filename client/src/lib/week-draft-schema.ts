@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * UI-local schema for validating week drafts stored in localStorage.
@@ -12,15 +12,9 @@ const UuidSchema = z.string().uuid();
 const ISODateSchema = z.string().date();
 const ISODateTimeSchema = z.string().datetime();
 
-const DayTypeSchema = z.enum([
-  "upper_body",
-  "leg_day",
-  "rest",
-  "swimming",
-  "cardio",
-]);
+const DayTypeSchema = z.enum(['upper_body', 'leg_day', 'rest', 'swimming', 'cardio']);
 
-const ExerciseFeedbackSchema = z.enum(["easy", "hard", "heavy", "light"]);
+const ExerciseFeedbackSchema = z.enum(['easy', 'hard', 'heavy', 'light']);
 
 const PerformedSetSchema = z.object({
   performed_reps: z.number().int().nonnegative(),
@@ -59,7 +53,7 @@ export const WeekSchema = z.object({
   week_index: z.number().int().positive(),
   start_date: ISODateSchema,
   end_date: ISODateSchema,
-  status: z.enum(["in_flight", "completed", "abandoned"]),
+  status: z.enum(['in_flight', 'completed', 'abandoned']),
   schedule: z.array(WeekDaySchema),
   created_at: ISODateTimeSchema,
   updated_at: ISODateTimeSchema,

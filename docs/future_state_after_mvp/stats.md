@@ -122,17 +122,27 @@ No backfill of historical weeks in this pass (table starts empty until the next 
 
 ## API
 
+> **The route shape below predates the authentication phase.** No route accepts
+> an athlete identifier in its path any more — the athlete is read from the
+> verified session cookie, and the `/api/clients/{clientId}/...` family was
+> deleted in `issues/auth/013`. When this is built it is `GET
+> /api/me/exercise-progress`, taking the client id from `c.get('clientId')`, and
+> the `/clients/:clientId/stats` page in the overview above is `/stats`. Nothing
+> else in this design changes: the scoping was always "one athlete's records",
+> which the session now supplies instead of the URL. See
+> [api_contracts.md](../architecture/api_contracts.md).
+
 New route module (e.g. [server/src/routes/exerciseProgress.ts](server/src/routes/exerciseProgress.ts)), mount under `/api` in [server/src/app.ts](server/src/app.ts):
 
 ```text
 
-GET /api/clients/:clientId/exercise-progress
+GET /api/me/exercise-progress
 
 → 200 { records: ExerciseProgress[] }
 
 ```
 
-- Scoped by `clientId` only (no `planId`).
+- Scoped to the signed-in athlete only (no `planId`, and no `clientId` in the path).
 
 - Order by `performed_on` asc, then `exercise_key`.
 
