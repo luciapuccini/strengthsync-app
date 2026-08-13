@@ -1,11 +1,11 @@
-import { useState } from "react";
-import type { JSX } from "react";
-import { toast } from "sonner";
+import { useState } from 'react';
+import type { JSX } from 'react';
+import { toast } from 'sonner';
 
-import { startWeeklyProgression } from "@/api/workflows";
-import { Button } from "@/shadcn/ui/button";
-import { Spinner } from "@/shadcn/ui/spinner";
-import { useAppStore } from "@/store/useAppStore";
+import { startWeeklyProgression } from '@/api/workflows';
+import { Button } from '@/shadcn/ui/button';
+import { Spinner } from '@/shadcn/ui/spinner';
+import { useAppStore } from '@/store/useAppStore';
 
 export function CompleteWeekButton(): JSX.Element {
   const clientId = useAppStore((s) => s.client?.id)!;
@@ -15,11 +15,11 @@ export function CompleteWeekButton(): JSX.Element {
     // setIsRunning(true);
     try {
       const { instanceId, details } = await startWeeklyProgression(clientId);
-      console.log("started", instanceId, details);
-      toast.success("Week complete triggered");
+      console.log('started', instanceId, details);
+      toast.success('Week complete triggered');
     } catch (error) {
-      toast.error("Could not complete the week", {
-        description: error instanceof Error ? error.message : "Unknown error",
+      toast.error('Could not complete the week', {
+        description: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
       setIsRunning(false);
@@ -27,14 +27,9 @@ export function CompleteWeekButton(): JSX.Element {
   }
 
   return (
-    <Button
-      size="sm"
-      className="min-h-11 px-3"
-      disabled={isRunning}
-      onClick={completeWeek}
-    >
+    <Button size="sm" className="min-h-11 px-3" disabled={isRunning} onClick={completeWeek}>
       {isRunning && <Spinner />}
-      {isRunning ? "Analyzing…" : "Complete week"}
+      {isRunning ? 'Analyzing…' : 'Complete week'}
     </Button>
   );
 }

@@ -1,4 +1,4 @@
-import { z } from '@hono/zod-openapi'
+import { z } from '@hono/zod-openapi';
 
 import {
   DAY_TYPES,
@@ -9,8 +9,8 @@ import {
   WEEK_STATUSES,
   WeekDaySchema,
   WeekSchema,
-} from '../../domain/model/index.ts'
-import { uuidParam } from '../shared.ts'
+} from '../../domain/model/index.ts';
+import { uuidParam } from '../shared.ts';
 
 /**
  * HTTP shapes for the weeks area. See `routes/clients/schemas.ts` for why
@@ -21,25 +21,25 @@ import { uuidParam } from '../shared.ts'
  * the document has to emit them rather than inline them.
  */
 
-export const DayTypeSchema = z.enum(DAY_TYPES).openapi('DayType')
-export const WeekStatusSchema = z.enum(WEEK_STATUSES).openapi('WeekStatus')
-export const ExerciseFeedbackSchema = z.enum(EXERCISE_FEEDBACKS).openapi('ExerciseFeedback')
-const PerformedSet = z.object(PerformedSetSchema.shape).openapi('PerformedSet')
+export const DayTypeSchema = z.enum(DAY_TYPES).openapi('DayType');
+export const WeekStatusSchema = z.enum(WEEK_STATUSES).openapi('WeekStatus');
+export const ExerciseFeedbackSchema = z.enum(EXERCISE_FEEDBACKS).openapi('ExerciseFeedback');
+const PerformedSet = z.object(PerformedSetSchema.shape).openapi('PerformedSet');
 const ExerciseLog = z
   .object({ ...ExerciseLogSchema.shape, sets: z.array(PerformedSet) })
-  .openapi('ExerciseLog')
+  .openapi('ExerciseLog');
 const WeekDay = z
   .object({ ...WeekDaySchema.shape, type: DayTypeSchema, exercises: z.array(ExerciseLog) })
-  .openapi('WeekDay')
+  .openapi('WeekDay');
 
 const Week = z
   .object({ ...WeekSchema.shape, status: WeekStatusSchema, schedule: z.array(WeekDay) })
-  .openapi('Week')
+  .openapi('Week');
 
-export const WeekResponseSchema = z.object({ week: Week }).openapi('WeekResponse')
+export const WeekResponseSchema = z.object({ week: Week }).openapi('WeekResponse');
 export const WeekListResponseSchema = z
   .object({ weeks: z.array(Week) })
-  .openapi('WeekListResponse')
+  .openapi('WeekListResponse');
 
 /** The week and day alone: the athlete comes from the session, never the path. */
 export const DayParamsSchema = z.object({
@@ -52,14 +52,17 @@ export const DayParamsSchema = z.object({
     .min(1)
     .max(7)
     .openapi({ param: { name: 'dayIndex', in: 'path' } }),
-})
+});
 
 export const WeekListQuerySchema = z.object({
   status: WeekStatusSchema.optional().openapi({ param: { name: 'status', in: 'query' } }),
   // Left as a plain string to match today's behaviour: an unknown planId
   // filters to an empty list rather than 400ing.
-  planId: z.string().optional().openapi({ param: { name: 'planId', in: 'query' } }),
-})
+  planId: z
+    .string()
+    .optional()
+    .openapi({ param: { name: 'planId', in: 'query' } }),
+});
 
 const DayExerciseLog = z
   .object({
@@ -67,7 +70,7 @@ const DayExerciseLog = z
     feedback: ExerciseFeedbackSchema.nullable(),
     sets: z.array(PerformedSet),
   })
-  .openapi('DayExerciseLog')
+  .openapi('DayExerciseLog');
 
 /**
  * A skipped exercise was not performed, so it cannot carry performed sets.
@@ -84,7 +87,7 @@ function refineSkippedExercisesHaveEmptySets(
         code: 'custom',
         message: `exercise ${exercise.exercise_key}: a skipped exercise must have empty sets`,
         path: ['exercises'],
-      })
+      });
     }
   }
 }
@@ -96,10 +99,10 @@ function refineSkippedExercisesHaveEmptySets(
 export const UpdateDayLogSchema = z
   .object({ completed: z.boolean(), exercises: z.array(DayExerciseLog) })
   .superRefine(refineSkippedExercisesHaveEmptySets)
-  .openapi('UpdateDayLog')
+  .openapi('UpdateDayLog');
 
 /** Athlete save: exercise logs only; the server sets `completed`. */
 export const SaveDayLogSchema = z
   .object({ exercises: z.array(DayExerciseLog) })
   .superRefine(refineSkippedExercisesHaveEmptySets)
-  .openapi('SaveDayLog')
+  .openapi('SaveDayLog');

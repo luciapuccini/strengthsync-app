@@ -5,9 +5,9 @@
  * and the payload shape are defined only here, so changing the token format
  * later touches one file.
  */
-import { sign, verify as verifyJwt } from "hono/jwt";
+import { sign, verify as verifyJwt } from 'hono/jwt';
 
-const ALGORITHM = "HS256";
+const ALGORITHM = 'HS256';
 
 /**
  * Thirty days. Exported so the cookie that carries the token can set the same
@@ -33,7 +33,7 @@ export async function issue(clientId: string, secret: string): Promise<string> {
 export async function read(token: string, secret: string): Promise<string | undefined> {
   try {
     const payload = await verifyJwt(token, secret, ALGORITHM);
-    return typeof payload.sub === "string" ? payload.sub : undefined;
+    return typeof payload.sub === 'string' ? payload.sub : undefined;
   } catch {
     return undefined;
   }

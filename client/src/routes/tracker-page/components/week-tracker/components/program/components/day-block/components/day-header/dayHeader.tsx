@@ -1,18 +1,18 @@
-import { ChevronDown } from "lucide-react";
-import type { JSX } from "react";
+import { ChevronDown } from 'lucide-react';
+import type { JSX } from 'react';
 
-import type { WeekDay } from "@/api/types";
+import type { WeekDay } from '@/api/types';
 
-import { Badge } from "@/shadcn/ui/badge";
-import { Button } from "@/shadcn/ui/button";
-import { Spinner } from "@/shadcn/ui/spinner";
+import { Badge } from '@/shadcn/ui/badge';
+import { Button } from '@/shadcn/ui/button';
+import { Spinner } from '@/shadcn/ui/spinner';
 
-const DAY_TYPE_LABELS: Record<WeekDay["type"], string> = {
-  upper_body: "Upper body",
-  leg_day: "Leg day",
-  swimming: "Swimming",
-  cardio: "Cardio",
-  rest: "Rest",
+const DAY_TYPE_LABELS: Record<WeekDay['type'], string> = {
+  upper_body: 'Upper body',
+  leg_day: 'Leg day',
+  swimming: 'Swimming',
+  cardio: 'Cardio',
+  rest: 'Rest',
 };
 
 type DayHeaderProps = {
@@ -39,14 +39,14 @@ export function DayHeader({
         onClick={onToggle}
       >
         <ChevronDown
-          className={`size-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "" : "-rotate-90"}`}
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? '' : '-rotate-90'}`}
           aria-hidden
         />
         <Badge
           className={
-            day.type === "upper_body"
-              ? "border-primary/20 bg-primary/15 text-primary"
-              : "bg-foreground/10 text-foreground/70"
+            day.type === 'upper_body'
+              ? 'border-primary/20 bg-primary/15 text-primary'
+              : 'bg-foreground/10 text-foreground/70'
           }
         >
           {DAY_TYPE_LABELS[day.type]}
@@ -55,9 +55,7 @@ export function DayHeader({
           Day {day.day_index} · {day.date}
         </span>
         {day.completed && (
-          <Badge className="border-primary/20 bg-primary/15 text-primary">
-            Done
-          </Badge>
+          <Badge className="border-primary/20 bg-primary/15 text-primary">Done</Badge>
         )}
       </button>
       <Button
@@ -68,7 +66,7 @@ export function DayHeader({
         onClick={onSave}
       >
         {isSaving && <Spinner />}
-        {isSaving ? "Saving…" : "Save day"}
+        {isSaving ? 'Saving…' : 'Save day'}
       </Button>
     </div>
   );

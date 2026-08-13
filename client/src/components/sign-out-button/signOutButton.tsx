@@ -1,9 +1,9 @@
-import { useState } from "react";
-import type { JSX } from "react";
+import { useState } from 'react';
+import type { JSX } from 'react';
 
-import { signOut } from "@/api/client";
-import { Button } from "@/shadcn/ui/button";
-import { useAppStore } from "@/store/useAppStore";
+import { signOut } from '@/api/client';
+import { Button } from '@/shadcn/ui/button';
+import { useAppStore } from '@/store/useAppStore';
 
 /**
  * Leaving has two halves: the server clears the cookie, and the store clears the

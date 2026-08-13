@@ -1,11 +1,11 @@
-import { use, useState } from "react";
-import type { JSX } from "react";
+import { use, useState } from 'react';
+import type { JSX } from 'react';
 
-import { completedWeeksResource } from "@/api/historyResource";
-import { HistoryDaySection } from "@/routes/history/components/history-day-section/historyDaySection";
-import { toWeekHistory } from "@/routes/history/toWeekHistory";
-import { Button } from "@/shadcn/ui/button";
-import { formatIsoDate } from "@/utils/formatIsoDate";
+import { completedWeeksResource } from '@/api/historyResource';
+import { HistoryDaySection } from '@/routes/history/components/history-day-section/historyDaySection';
+import { toWeekHistory } from '@/routes/history/toWeekHistory';
+import { Button } from '@/shadcn/ui/button';
+import { formatIsoDate } from '@/utils/formatIsoDate';
 
 export function HistoryPage(): JSX.Element {
   // No parameters: the resource resolves the signed-in client's active plan.
@@ -27,7 +27,7 @@ export function HistoryPage(): JSX.Element {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">
-          Week {sn} / S{week.total_weeks}{" "}
+          Week {sn} / S{week.total_weeks}{' '}
           <span className="text-base font-normal text-muted-foreground">
             {formatIsoDate(week.start_date)} – {formatIsoDate(week.end_date)}
           </span>

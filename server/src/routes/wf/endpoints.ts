@@ -1,10 +1,10 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 
-import type { Env } from '../../env.ts'
-import { defaultHook } from '../../lib/validation-error.ts'
-import { invalidInput, json } from '../shared.ts'
+import type { Env } from '../../env.ts';
+import { defaultHook } from '../../lib/validation-error.ts';
+import { invalidInput, json } from '../shared.ts';
 
-import { CompleteWeekInputSchema, CompleteWeekStartedSchema } from './schemas.ts'
+import { CompleteWeekInputSchema, CompleteWeekStartedSchema } from './schemas.ts';
 
 const completeWeekRoute = createRoute({
   method: 'post',
@@ -27,7 +27,7 @@ const completeWeekRoute = createRoute({
     200: json('Week completed workflow started', CompleteWeekStartedSchema),
     400: invalidInput,
   },
-})
+});
 
 /**
  * Cloudflare Workers Workflow routes.
@@ -38,13 +38,13 @@ const completeWeekRoute = createRoute({
  * unchecked; it is now validated like every other request.
  */
 export function cfWorkflowRoutes(): OpenAPIHono<{ Bindings: Env }> {
-  const app = new OpenAPIHono<{ Bindings: Env }>({ defaultHook })
+  const app = new OpenAPIHono<{ Bindings: Env }>({ defaultHook });
 
   app.openapi(completeWeekRoute, async (c) => {
-    const { clientId } = c.req.valid('json')
-    const instance = await c.env.STRENGTHSYNC_WORKFLOW.create({ params: { clientId } })
-    return c.json({ instanceId: instance.id, details: await instance.status() }, 200)
-  })
+    const { clientId } = c.req.valid('json');
+    const instance = await c.env.STRENGTHSYNC_WORKFLOW.create({ params: { clientId } });
+    return c.json({ instanceId: instance.id, details: await instance.status() }, 200);
+  });
 
-  return app
+  return app;
 }

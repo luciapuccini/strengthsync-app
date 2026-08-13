@@ -1,28 +1,18 @@
-import type { WorkflowStep } from "cloudflare:workers";
+import type { WorkflowStep } from 'cloudflare:workers';
 import {
   COACHING_RULES,
   HistorySummarySchema,
   ProfileSummarySchema,
-} from "../domain/coach/index.ts";
-import {
-  GeneratedPlanInputSchema,
-  type GeneratedPlanInput,
-} from "../domain/workflow.ts";
-import { activateGeneratedPlanV2, listWeeksV2, type Db } from "../db/index.ts";
+} from '../domain/coach/index.ts';
+import { GeneratedPlanInputSchema, type GeneratedPlanInput } from '../domain/workflow.ts';
+import { activateGeneratedPlanV2, listWeeksV2, type Db } from '../db/index.ts';
 
-import type { Env } from "../env";
-import { getAgentRuntime } from "../agent/agent-core";
-import type { ClientProfile, Plan, Week } from "../domain/model/index.ts";
+import type { Env } from '../env';
+import { getAgentRuntime } from '../agent/agent-core';
+import type { ClientProfile, Plan, Week } from '../domain/model/index.ts';
 
-export async function loadCompletedWeeks(
-  step: WorkflowStep,
-  db: Db,
-  clientId: string,
-  plan: Plan,
-) {
-  return step.do("load-completed-weeks", async () =>
-    listWeeksV2(db, clientId, plan.id),
-  );
+export async function loadCompletedWeeks(step: WorkflowStep, db: Db, clientId: string, plan: Plan) {
+  return step.do('load-completed-weeks', async () => listWeeksV2(db, clientId, plan.id));
 }
 
 export async function summarizeProfile(
@@ -32,18 +22,18 @@ export async function summarizeProfile(
   rules: string,
 ) {
   return step.do(
-    "summarize-profile",
-    { retries: { limit: 2, delay: "1 second", backoff: "linear" } },
+    'summarize-profile',
+    { retries: { limit: 2, delay: '1 second', backoff: 'linear' } },
     async () =>
       getAgentRuntime({
         apiKey: env.OPENAI_API_KEY,
-        model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
+        model: env.OPENAI_MODEL ?? 'gpt-4.1-mini',
         system: [
-          "You are a strength coach summarizing a client profile for plan generation.",
-          "Return only the facts that affect training design: goals, loads, body composition,",
-          "nutrition/recovery constraints, and schedule preferences.",
-          "Do not invent missing data.",
-        ].join(" "),
+          'You are a strength coach summarizing a client profile for plan generation.',
+          'Return only the facts that affect training design: goals, loads, body composition,',
+          'nutrition/recovery constraints, and schedule preferences.',
+          'Do not invent missing data.',
+        ].join(' '),
         prompt: JSON.stringify(
           {
             coaching_rules: rules,
@@ -65,17 +55,17 @@ export async function summarizeHistory(
   rules: string,
 ) {
   return step.do(
-    "summarize-history",
-    { retries: { limit: 2, delay: "1 second", backoff: "linear" } },
+    'summarize-history',
+    { retries: { limit: 2, delay: '1 second', backoff: 'linear' } },
     async () =>
       getAgentRuntime({
         apiKey: env.OPENAI_API_KEY,
-        model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
+        model: env.OPENAI_MODEL ?? 'gpt-4.1-mini',
         system: [
-          "You are a strength coach summarizing a completed training block.",
-          "Cover adherence, progression, skipped sessions, and easy/hard/heavy/light feedback patterns.",
-          "Do not invent missing data.",
-        ].join(" "),
+          'You are a strength coach summarizing a completed training block.',
+          'Cover adherence, progression, skipped sessions, and easy/hard/heavy/light feedback patterns.',
+          'Do not invent missing data.',
+        ].join(' '),
         prompt: JSON.stringify(
           {
             coaching_rules: rules,
@@ -103,18 +93,18 @@ export async function generatePlan(
   historySummary: { summary: string },
 ) {
   return step.do(
-    "generate-plan",
-    { retries: { limit: 2, delay: "1 second", backoff: "linear" } },
+    'generate-plan',
+    { retries: { limit: 2, delay: '1 second', backoff: 'linear' } },
     async () =>
       getAgentRuntime({
         apiKey: env.OPENAI_API_KEY,
-        model: env.OPENAI_MODEL ?? "gpt-4.1-mini",
+        model: env.OPENAI_MODEL ?? 'gpt-4.1-mini',
         system: [
-          "You are a strength coach generating a multi-week training plan.",
-          "Produce a canonical week_template for days 1–7 with exercise_key, series, reps, rest, and optional weight.",
-          "Follow the coaching rules. Prefer progressive overload on compound lifts.",
-          "week_template must include every day_index from 1 to 7 exactly once.",
-        ].join(" "),
+          'You are a strength coach generating a multi-week training plan.',
+          'Produce a canonical week_template for days 1–7 with exercise_key, series, reps, rest, and optional weight.',
+          'Follow the coaching rules. Prefer progressive overload on compound lifts.',
+          'week_template must include every day_index from 1 to 7 exactly once.',
+        ].join(' '),
         prompt: JSON.stringify(
           {
             coaching_rules: COACHING_RULES,
@@ -143,7 +133,7 @@ export async function activateGeneratedPlan(
   workflowId: string,
   plan: GeneratedPlanInput,
 ) {
-  return step.do("activate-plan", async () =>
+  return step.do('activate-plan', async () =>
     activateGeneratedPlanV2(db, clientId, { workflow_id: workflowId, plan }),
   );
 }

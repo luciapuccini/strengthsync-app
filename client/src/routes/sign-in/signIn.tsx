@@ -1,17 +1,17 @@
-import { useState } from "react";
-import type { FormEvent, JSX } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import type { FormEvent, JSX } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-import { signIn } from "@/api/client";
-import { ApiClientError } from "@/api/errors";
-import { AuthHero } from "@/components/auth-hero/authHero";
-import { BrandMark } from "@/components/brand-mark/brandMark";
-import { SocialAuthButtons } from "@/components/social-auth-buttons/socialAuthButtons";
-import { Button } from "@/shadcn/ui/button";
-import { Field, FieldLabel } from "@/shadcn/ui/field";
-import { Input } from "@/shadcn/ui/input";
-import { Spinner } from "@/shadcn/ui/spinner";
-import { useAppStore } from "@/store/useAppStore";
+import { signIn } from '@/api/client';
+import { ApiClientError } from '@/api/errors';
+import { AuthHero } from '@/components/auth-hero/authHero';
+import { BrandMark } from '@/components/brand-mark/brandMark';
+import { SocialAuthButtons } from '@/components/social-auth-buttons/socialAuthButtons';
+import { Button } from '@/shadcn/ui/button';
+import { Field, FieldLabel } from '@/shadcn/ui/field';
+import { Input } from '@/shadcn/ui/input';
+import { Spinner } from '@/shadcn/ui/spinner';
+import { useAppStore } from '@/store/useAppStore';
 
 /**
  * Mirrors the sign-up form: native `required` and email validation for the
@@ -40,18 +40,16 @@ function useSignInForm(): SignInForm {
     setError(null);
     try {
       const client = await signIn({
-        email: String(form.get("email")),
-        password: String(form.get("password")),
+        email: String(form.get('email')),
+        password: String(form.get('password')),
       });
       markSignedIn(client);
       // The root redirect owns where a signed-in athlete lands, so this does
       // not need to know the tracker's path.
-      void navigate("/", { replace: true });
+      void navigate('/', { replace: true });
     } catch (err) {
       setError(
-        err instanceof ApiClientError
-          ? err.message
-          : "Something went wrong. Please try again.",
+        err instanceof ApiClientError ? err.message : 'Something went wrong. Please try again.',
       );
       setPending(false);
     }
@@ -115,17 +113,14 @@ export function SignIn(): JSX.Element {
 
         <Button type="submit" size="xl" className="w-full" disabled={pending}>
           {pending && <Spinner />}
-          {pending ? "Signing in…" : "Sign in"}
+          {pending ? 'Signing in…' : 'Sign in'}
         </Button>
 
         <SocialAuthButtons />
 
         <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
-          <Link
-            to="/sign-up"
-            className="font-medium text-foreground hover:underline"
-          >
+          Don&apos;t have an account?{' '}
+          <Link to="/sign-up" className="font-medium text-foreground hover:underline">
             Sign up
           </Link>
         </p>

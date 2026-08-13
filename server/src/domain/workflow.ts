@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-import { PlanDaySchema } from "./model/index.ts";
+import { PlanDaySchema } from './model/index.ts';
 
 /**
  * Shapes exchanged between the plan-turnover workflow and persistence. These
@@ -26,6 +26,4 @@ export const ActivateGeneratedPlanCommandSchema = z.object({
   workflow_id: z.string().min(1),
   plan: GeneratedPlanInputSchema,
 });
-export type ActivateGeneratedPlanCommand = z.infer<
-  typeof ActivateGeneratedPlanCommandSchema
->;
+export type ActivateGeneratedPlanCommand = z.infer<typeof ActivateGeneratedPlanCommandSchema>;

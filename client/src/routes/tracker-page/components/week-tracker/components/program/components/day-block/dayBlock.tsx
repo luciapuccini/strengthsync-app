@@ -1,13 +1,13 @@
-import { useState } from "react";
-import type { JSX } from "react";
-import { toast } from "sonner";
+import { useState } from 'react';
+import type { JSX } from 'react';
+import { toast } from 'sonner';
 
-import type { WeekDay } from "@/api/types";
+import type { WeekDay } from '@/api/types';
 
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from '@/store/useAppStore';
 
-import { DayHeader } from "./components/day-header/dayHeader";
-import { ExerciseRow } from "./components/exercise-row/exerciseRow";
+import { DayHeader } from './components/day-header/dayHeader';
+import { ExerciseRow } from './components/exercise-row/exerciseRow';
 
 type DayBlockProps = {
   day: WeekDay;
@@ -26,7 +26,7 @@ export function DayBlock({ day, isFirst }: DayBlockProps): JSX.Element {
       toast.success(`Day ${day.day_index} saved`);
     } catch (error) {
       toast.error(`Could not save day ${day.day_index}`, {
-        description: error instanceof Error ? error.message : "Unknown error",
+        description: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
       setIsSaving(false);
@@ -34,7 +34,7 @@ export function DayBlock({ day, isFirst }: DayBlockProps): JSX.Element {
   }
 
   return (
-    <section className={isFirst ? "py-4" : "border-t border-border/50 py-4"}>
+    <section className={isFirst ? 'py-4' : 'border-t border-border/50 py-4'}>
       <DayHeader
         day={day}
         isOpen={isOpen}
@@ -45,17 +45,11 @@ export function DayBlock({ day, isFirst }: DayBlockProps): JSX.Element {
       {isOpen && (
         <>
           {day.notes !== null && (
-            <p className="mb-3 text-sm leading-relaxed text-muted-foreground">
-              {day.notes}
-            </p>
+            <p className="mb-3 text-sm leading-relaxed text-muted-foreground">{day.notes}</p>
           )}
           <div className="flex flex-col gap-3">
             {day.exercises.map((exercise) => (
-              <ExerciseRow
-                key={exercise.exercise_key}
-                day={day}
-                exercise={exercise}
-              />
+              <ExerciseRow key={exercise.exercise_key} day={day} exercise={exercise} />
             ))}
           </div>
         </>

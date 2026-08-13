@@ -15,4 +15,4 @@ export const COACHING_RULES = `## Fitness coach rules for weight training progre
 3. Extra daily activities compond and also cause fatigue to the client. Walking and extra cardio activities can be a good reason to post-pone the pushing rule (1) to next week
 
 4. Rest days, include light activities. Clients should target 10k steps and other cardio activities. Ask for personal preferences. Ex.swimming, taking a pilates class, yoga ...
-`
+`;

@@ -1,25 +1,25 @@
-import { Component } from 'react'
-import type { ErrorInfo, JSX, ReactNode } from 'react'
+import { Component } from 'react';
+import type { ErrorInfo, JSX, ReactNode } from 'react';
 
-import { Button } from '@/shadcn/ui/button'
+import { Button } from '@/shadcn/ui/button';
 
 type ErrorBoundaryProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 type ErrorBoundaryState = {
-  error: Error | null
-}
+  error: Error | null;
+};
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public override state: ErrorBoundaryState = { error: null }
+  public override state: ErrorBoundaryState = { error: null };
 
   public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { error }
+    return { error };
   }
 
   public override componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error('Tracker failed to render', error, info)
+    console.error('Tracker failed to render', error, info);
   }
 
   public override render(): JSX.Element {
@@ -32,8 +32,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             Try again
           </Button>
         </div>
-      )
+      );
     }
-    return <>{this.props.children}</>
+    return <>{this.props.children}</>;
   }
 }

@@ -1,10 +1,10 @@
-import { use, useState } from "react";
-import type { JSX } from "react";
+import { use, useState } from 'react';
+import type { JSX } from 'react';
 
-import { WeekTracker } from "@/routes/tracker-page/components/week-tracker/weekTracker";
-import { currentWeekResource } from "@/api/weekResource";
-import type { TrackerData } from "@/api/weekResource";
-import { useAppStore } from "@/store/useAppStore";
+import { WeekTracker } from '@/routes/tracker-page/components/week-tracker/weekTracker';
+import { currentWeekResource } from '@/api/weekResource';
+import type { TrackerData } from '@/api/weekResource';
+import { useAppStore } from '@/store/useAppStore';
 
 export function TrackerPage(): JSX.Element {
   // No athlete id: the resource asks the session whose tracker this is. The
@@ -35,8 +35,8 @@ export function TrackerPage(): JSX.Element {
             promising a plan is on its way. */}
         <h1 className="text-xl font-semibold">You&apos;re all set up</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          There&apos;s no training plan on your account yet, so there&apos;s
-          nothing to track. That&apos;s expected for a new account.
+          There&apos;s no training plan on your account yet, so there&apos;s nothing to track.
+          That&apos;s expected for a new account.
         </p>
       </div>
     );

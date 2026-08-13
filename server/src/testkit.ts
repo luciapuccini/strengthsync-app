@@ -1,12 +1,12 @@
-import type { OpenAPIHono } from '@hono/zod-openapi'
+import type { OpenAPIHono } from '@hono/zod-openapi';
 
-import { activateGeneratedPlanV2, type Db } from './db/index.ts'
-import { createTestDb } from './db/testing/index.ts'
-import type { PlanDay, Week } from './domain/model/index.ts'
+import { activateGeneratedPlanV2, type Db } from './db/index.ts';
+import { createTestDb } from './db/testing/index.ts';
+import type { PlanDay, Week } from './domain/model/index.ts';
 
-import { createApp, type AppConfig } from './app.ts'
+import { createApp, type AppConfig } from './app.ts';
 
-export const SESSION_SECRET = 'test-session-secret'
+export const SESSION_SECRET = 'test-session-secret';
 
 /**
  * A registered athlete and the cookie that speaks for them. Every /api/* request
@@ -14,19 +14,19 @@ export const SESSION_SECRET = 'test-session-secret'
  * a cookie at each call site.
  */
 export type TestClient = {
-  id: string
+  id: string;
   /** Cookie only, for reads. */
-  headers: Record<string, string>
+  headers: Record<string, string>;
   /** Cookie plus a JSON content type, for writes. */
-  jsonHeaders: Record<string, string>
-}
+  jsonHeaders: Record<string, string>;
+};
 
 export function createTestApp(overrides: Partial<AppConfig> = {}): OpenAPIHono {
   return createApp({
     db: createTestDb(),
     sessionSecret: SESSION_SECRET,
     ...overrides,
-  })
+  });
 }
 
 /**
@@ -43,13 +43,17 @@ export async function signUpViaApi(app: OpenAPIHono, displayName = 'Ana'): Promi
       email: `${displayName.toLowerCase()}@example.com`,
       password: 'dev-password-123',
     }),
-  })
-  const token = res.headers.get('set-cookie')?.match(/session=([^;]*)/)?.[1]
-  if (!token) throw new Error(`sign-up set no session cookie (status ${res.status})`)
+  });
+  const token = res.headers.get('set-cookie')?.match(/session=([^;]*)/)?.[1];
+  if (!token) throw new Error(`sign-up set no session cookie (status ${res.status})`);
 
-  const { client } = (await res.json()) as { client: { id: string } }
-  const headers = { cookie: `session=${token}` }
-  return { id: client.id, headers, jsonHeaders: { ...headers, 'content-type': 'application/json' } }
+  const { client } = (await res.json()) as { client: { id: string } };
+  const headers = { cookie: `session=${token}` };
+  return {
+    id: client.id,
+    headers,
+    jsonHeaders: { ...headers, 'content-type': 'application/json' },
+  };
 }
 
 export async function upsertProfileViaApi(app: OpenAPIHono, client: TestClient): Promise<void> {
@@ -69,7 +73,7 @@ export async function upsertProfileViaApi(app: OpenAPIHono, client: TestClient):
       schedule_preferences: null,
       notes: null,
     }),
-  })
+  });
 }
 
 export const weekTemplate: PlanDay[] = [
@@ -89,7 +93,7 @@ export const weekTemplate: PlanDay[] = [
       },
     ],
   },
-]
+];
 
 export async function activateGeneratedPlanViaRepository(
   db: Db,
@@ -99,6 +103,6 @@ export async function activateGeneratedPlanViaRepository(
   const result = await activateGeneratedPlanV2(db, clientId, {
     workflow_id: workflowId,
     plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
-  })
-  return { plan: { id: result.plan.id }, first_week: result.first_week }
+  });
+  return { plan: { id: result.plan.id }, first_week: result.first_week };
 }

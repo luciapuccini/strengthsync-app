@@ -1,7 +1,7 @@
-import createOpenApiClient from "openapi-fetch";
-import type { paths } from "./openapi";
+import createOpenApiClient from 'openapi-fetch';
+import type { paths } from './openapi';
 
-import { ApiClientError, toApiError } from "./errors";
+import { ApiClientError, toApiError } from './errors';
 import type {
   Client,
   ClientProfile,
@@ -12,10 +12,10 @@ import type {
   UpdateClientProfile,
   UpdateDayLog,
   Week,
-} from "./types";
+} from './types';
 
 const api = createOpenApiClient<paths>({
-  baseUrl: import.meta.env.VITE_API_BASE_URL ?? "",
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
 });
 
 /** Run a read that treats a 404 as an expected "no record yet" (returns null). */
@@ -23,7 +23,7 @@ async function orNull<T>(fn: () => Promise<T>): Promise<T | null> {
   try {
     return await fn();
   } catch (err) {
-    if (err instanceof ApiClientError && err.kind === "not_found") return null;
+    if (err instanceof ApiClientError && err.kind === 'not_found') return null;
     throw err;
   }
 }
@@ -40,11 +40,7 @@ export function setUnauthorizedHandler(handler: () => void): void {
   onUnauthorized = handler;
 }
 
-function throwOnError<T>(response: {
-  data?: T;
-  error?: unknown;
-  response: Response;
-}): T {
+function throwOnError<T>(response: { data?: T; error?: unknown; response: Response }): T {
   if (response.response.ok && response.data !== undefined) {
     return response.data;
   }
@@ -53,7 +49,7 @@ function throwOnError<T>(response: {
   // wrong password — and this fires for those too. Signing out an athlete who
   // is already signed out changes nothing, and exempting them would mean
   // threading an opt-out through every wrapper for no gain.
-  if (error.kind === "unauthorized") onUnauthorized();
+  if (error.kind === 'unauthorized') onUnauthorized();
   throw error;
 }
 
@@ -65,12 +61,7 @@ async function call<T>(
   try {
     res = await fn();
   } catch {
-    throw new ApiClientError(
-      "network",
-      0,
-      "network_error",
-      "could not reach the server",
-    );
+    throw new ApiClientError('network', 0, 'network_error', 'could not reach the server');
   }
   return throwOnError(res);
 }
@@ -82,7 +73,7 @@ async function call<T>(
  * proxy) and production (the Worker serves the app).
  */
 export async function signUp(input: SignUpInput): Promise<Client> {
-  return (await call(() => api.POST("/auth/sign-up", { body: input }))).client;
+  return (await call(() => api.POST('/auth/sign-up', { body: input }))).client;
 }
 
 /**
@@ -91,7 +82,7 @@ export async function signUp(input: SignUpInput): Promise<Client> {
  * is safe to show verbatim.
  */
 export async function signIn(input: SignInInput): Promise<Client> {
-  return (await call(() => api.POST("/auth/sign-in", { body: input }))).client;
+  return (await call(() => api.POST('/auth/sign-in', { body: input }))).client;
 }
 
 /**
@@ -99,12 +90,12 @@ export async function signIn(input: SignInInput): Promise<Client> {
  * none at all — the route is deliberately outside the session guard.
  */
 export async function signOut(): Promise<void> {
-  await call(() => api.POST("/auth/sign-out", {}));
+  await call(() => api.POST('/auth/sign-out', {}));
 }
 
 /** The signed-in client, or a 401 thrown as an unauthorized ApiClientError. */
 export async function getSession(): Promise<Client> {
-  return (await call(() => api.GET("/auth/session"))).client;
+  return (await call(() => api.GET('/auth/session'))).client;
 }
 
 /**
@@ -115,21 +106,19 @@ export async function getSession(): Promise<Client> {
 
 export async function getProfile(): Promise<ClientProfile | null> {
   return orNull(async () => {
-    const res = await call(() => api.GET("/api/me/profile"));
+    const res = await call(() => api.GET('/api/me/profile'));
     return res.profile;
   });
 }
 
-export async function updateProfile(
-  input: UpdateClientProfile,
-): Promise<ClientProfile> {
-  const res = await call(() => api.PUT("/api/me/profile", { body: input }));
+export async function updateProfile(input: UpdateClientProfile): Promise<ClientProfile> {
+  const res = await call(() => api.PUT('/api/me/profile', { body: input }));
   return res.profile;
 }
 
 export async function getActivePlan(): Promise<Plan | null> {
   return orNull(async () => {
-    const res = await call(() => api.GET("/api/me/plans/active"));
+    const res = await call(() => api.GET('/api/me/plans/active'));
     return res.plan;
   });
 }
@@ -141,23 +130,21 @@ export async function getActivePlan(): Promise<Plan | null> {
  * rather than cutting it inside this phase.
  */
 export async function getPlan(planId: string): Promise<Plan> {
-  const res = await call(() =>
-    api.GET("/api/me/plans/{planId}", { params: { path: { planId } } }),
-  );
+  const res = await call(() => api.GET('/api/me/plans/{planId}', { params: { path: { planId } } }));
   return res.plan;
 }
 
 export async function getCurrentWeek(): Promise<Week | null> {
   return orNull(async () => {
-    const res = await call(() => api.GET("/api/me/weeks/current"));
+    const res = await call(() => api.GET('/api/me/weeks/current'));
     return res.week;
   });
 }
 
 export async function listCompletedWeeks(planId: string): Promise<Week[]> {
   const res = await call(() =>
-    api.GET("/api/me/weeks", {
-      params: { query: { status: "completed", planId } },
+    api.GET('/api/me/weeks', {
+      params: { query: { status: 'completed', planId } },
     }),
   );
   return res.weeks;
@@ -169,7 +156,7 @@ export async function saveDayLog(
   input: SaveDayLog,
 ): Promise<Week> {
   const res = await call(() =>
-    api.POST("/api/me/weeks/{weekId}/days/{dayIndex}/save", {
+    api.POST('/api/me/weeks/{weekId}/days/{dayIndex}/save', {
       params: { path: { weekId, dayIndex } },
       body: input,
     }),
@@ -183,7 +170,7 @@ export async function updateDayLog(
   input: UpdateDayLog,
 ): Promise<Week> {
   const res = await call(() =>
-    api.PATCH("/api/me/weeks/{weekId}/days/{dayIndex}", {
+    api.PATCH('/api/me/weeks/{weekId}/days/{dayIndex}', {
       params: { path: { weekId, dayIndex } },
       body: input,
     }),

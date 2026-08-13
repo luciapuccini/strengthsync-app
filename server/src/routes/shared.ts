@@ -1,4 +1,4 @@
-import { z } from '@hono/zod-openapi'
+import { z } from '@hono/zod-openapi';
 
 /**
  * Pieces every route area needs: the error envelope, the response-object
@@ -17,18 +17,18 @@ export const ApiErrorSchema = z
       message: z.string(),
     }),
   })
-  .openapi('ApiError')
+  .openapi('ApiError');
 
 export const json = <S>(description: string, schema: S) => ({
   description,
   content: { 'application/json': { schema } },
-})
+});
 
-export const unauthorized = json('Missing or invalid credentials', ApiErrorSchema)
-export const invalidInput = json('Invalid input', ApiErrorSchema)
-export const notFound = json('Not found', ApiErrorSchema)
-export const conflict = json('Conflicts with existing state', ApiErrorSchema)
+export const unauthorized = json('Missing or invalid credentials', ApiErrorSchema);
+export const invalidInput = json('Invalid input', ApiErrorSchema);
+export const notFound = json('Not found', ApiErrorSchema);
+export const conflict = json('Conflicts with existing state', ApiErrorSchema);
 
 // No shared client-id param: no route takes one. The athlete is read from the
 // session, so the only ids left in a path are a week's and a plan's.
-export const uuidParam = (name: string) => z.uuid().openapi({ param: { name, in: 'path' } })
+export const uuidParam = (name: string) => z.uuid().openapi({ param: { name, in: 'path' } });

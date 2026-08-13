@@ -1,10 +1,10 @@
-import { create } from 'zustand'
-import { devtools } from 'zustand/middleware'
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
-import { createSessionSlice } from './slices/sessionSlice'
-import type { SessionSlice } from './slices/sessionSlice'
-import { createTrackerSlice } from './slices/trackerSlice'
-import type { TrackerSlice } from './slices/trackerSlice'
+import { createSessionSlice } from './slices/sessionSlice';
+import type { SessionSlice } from './slices/sessionSlice';
+import { createTrackerSlice } from './slices/trackerSlice';
+import type { TrackerSlice } from './slices/trackerSlice';
 
 /**
  * Single, devtools-inspectable source of truth for the app's core state: who is
@@ -13,7 +13,7 @@ import type { TrackerSlice } from './slices/trackerSlice'
  * nothing to select.
  * See docs/in_progress/ui_refactor_audit.md (F1).
  */
-export type AppStore = SessionSlice & TrackerSlice
+export type AppStore = SessionSlice & TrackerSlice;
 
 export const useAppStore = create<AppStore>()(
   devtools(
@@ -23,4 +23,4 @@ export const useAppStore = create<AppStore>()(
     }),
     { name: 'strengthsync-app-store' },
   ),
-)
+);

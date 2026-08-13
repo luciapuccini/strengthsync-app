@@ -1,10 +1,10 @@
-import type { StateCreator } from 'zustand'
+import type { StateCreator } from 'zustand';
 
-import type { Client } from '@/api/types'
+import type { Client } from '@/api/types';
 
-import { getSession } from '@/api/client'
+import { getSession } from '@/api/client';
 
-import type { AppStore } from '../useAppStore'
+import type { AppStore } from '../useAppStore';
 
 /**
  * Who is signed in. The store holds this rather than a module-level promise
@@ -15,15 +15,15 @@ import type { AppStore } from '../useAppStore'
  * initial one: on a cold load nobody knows yet whether the cookie is good, and
  * the guard must not redirect to sign-in while that is still open.
  */
-export type SessionStatus = 'loading' | 'signed-in' | 'signed-out'
+export type SessionStatus = 'loading' | 'signed-in' | 'signed-out';
 
 export type SessionSlice = {
-  sessionStatus: SessionStatus
-  sessionClient: Client | null
-  bootstrapSession: () => Promise<void>
-  markSignedIn: (client: Client) => void
-  signOutSession: () => void
-}
+  sessionStatus: SessionStatus;
+  sessionClient: Client | null;
+  bootstrapSession: () => Promise<void>;
+  markSignedIn: (client: Client) => void;
+  signOutSession: () => void;
+};
 
 export const createSessionSlice: StateCreator<
   AppStore,
@@ -39,10 +39,10 @@ export const createSessionSlice: StateCreator<
   // rejected cookie does.
   bootstrapSession: async () => {
     try {
-      const client = await getSession()
-      set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'bootstrapSession/in')
+      const client = await getSession();
+      set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'bootstrapSession/in');
     } catch {
-      set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'bootstrapSession/out')
+      set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'bootstrapSession/out');
     }
   },
 
@@ -51,4 +51,4 @@ export const createSessionSlice: StateCreator<
 
   signOutSession: () =>
     set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'signOutSession'),
-})
+});

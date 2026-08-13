@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 
 import {
   getClient,
@@ -7,12 +7,12 @@ import {
   saveDay,
   updateDayLog,
   type Db,
-} from '../../db/index.ts'
-import type { WeekStatus } from '../../domain/model/index.ts'
+} from '../../db/index.ts';
+import type { WeekStatus } from '../../domain/model/index.ts';
 
-import type { SessionVariables } from '../../lib/session.ts'
-import { defaultHook } from '../../lib/validation-error.ts'
-import { invalidInput, json, notFound, unauthorized } from '../shared.ts'
+import type { SessionVariables } from '../../lib/session.ts';
+import { defaultHook } from '../../lib/validation-error.ts';
+import { invalidInput, json, notFound, unauthorized } from '../shared.ts';
 
 import {
   DayParamsSchema,
@@ -21,7 +21,7 @@ import {
   WeekListQuerySchema,
   WeekListResponseSchema,
   WeekResponseSchema,
-} from './schemas.ts'
+} from './schemas.ts';
 
 const getMyCurrentWeekRoute = createRoute({
   method: 'get',
@@ -32,7 +32,7 @@ const getMyCurrentWeekRoute = createRoute({
     401: unauthorized,
     404: notFound,
   },
-})
+});
 
 const listMyWeeksRoute = createRoute({
   method: 'get',
@@ -45,7 +45,7 @@ const listMyWeeksRoute = createRoute({
     401: unauthorized,
     404: notFound,
   },
-})
+});
 
 const saveMyDayLogRoute = createRoute({
   method: 'post',
@@ -61,7 +61,7 @@ const saveMyDayLogRoute = createRoute({
     401: unauthorized,
     404: notFound,
   },
-})
+});
 
 const updateMyDayLogRoute = createRoute({
   method: 'patch',
@@ -77,7 +77,7 @@ const updateMyDayLogRoute = createRoute({
     401: unauthorized,
     404: notFound,
   },
-})
+});
 
 /**
  * Public week read routes + the day log writes.
@@ -90,46 +90,46 @@ const updateMyDayLogRoute = createRoute({
  * only free choice, and the repository scopes it to them.
  */
 export function weekRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables }> {
-  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook })
+  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook });
 
   app.openapi(getMyCurrentWeekRoute, async (c) => {
-    const week = await getCurrentWeek(db, c.get('clientId'))
+    const week = await getCurrentWeek(db, c.get('clientId'));
     if (!week) {
       return c.json(
         { error: { code: 'current_week_not_found', message: 'no in_flight week' } },
         404,
-      )
+      );
     }
-    return c.json({ week }, 200)
-  })
+    return c.json({ week }, 200);
+  });
 
   app.openapi(listMyWeeksRoute, async (c) => {
-    const clientId = c.get('clientId')
+    const clientId = c.get('clientId');
     // The session outlives the row it names by up to thirty days, so a deleted
     // athlete can still present a valid cookie.
     if (!(await getClient(db, clientId))) {
-      return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404)
+      return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404);
     }
-    const { status, planId } = c.req.valid('query')
+    const { status, planId } = c.req.valid('query');
     // Built conditionally rather than spread: exactOptionalPropertyTypes means
     // an explicit `undefined` is not assignable to an optional property.
-    const filter: { status?: WeekStatus; planId?: string } = {}
-    if (status !== undefined) filter.status = status
-    if (planId !== undefined) filter.planId = planId
-    return c.json({ weeks: await listWeeks(db, clientId, filter) }, 200)
-  })
+    const filter: { status?: WeekStatus; planId?: string } = {};
+    if (status !== undefined) filter.status = status;
+    if (planId !== undefined) filter.planId = planId;
+    return c.json({ weeks: await listWeeks(db, clientId, filter) }, 200);
+  });
 
   app.openapi(saveMyDayLogRoute, async (c) => {
-    const { weekId, dayIndex } = c.req.valid('param')
-    const week = await saveDay(db, c.get('clientId'), weekId, dayIndex, c.req.valid('json'))
-    return c.json({ week }, 200)
-  })
+    const { weekId, dayIndex } = c.req.valid('param');
+    const week = await saveDay(db, c.get('clientId'), weekId, dayIndex, c.req.valid('json'));
+    return c.json({ week }, 200);
+  });
 
   app.openapi(updateMyDayLogRoute, async (c) => {
-    const { weekId, dayIndex } = c.req.valid('param')
-    const week = await updateDayLog(db, c.get('clientId'), weekId, dayIndex, c.req.valid('json'))
-    return c.json({ week }, 200)
-  })
+    const { weekId, dayIndex } = c.req.valid('param');
+    const week = await updateDayLog(db, c.get('clientId'), weekId, dayIndex, c.req.valid('json'));
+    return c.json({ week }, 200);
+  });
 
-  return app
+  return app;
 }

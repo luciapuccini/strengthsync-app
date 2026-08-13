@@ -1,19 +1,13 @@
-import { eq } from "drizzle-orm";
+import { eq } from 'drizzle-orm';
 
-import type {
-  ClientProfile,
-  ClientProfileWrite,
-} from "../../domain/model/index.ts";
+import type { ClientProfile, ClientProfileWrite } from '../../domain/model/index.ts';
 
-import { nowIso, todayIso } from "../dates.ts";
-import type { Db } from "../db.ts";
-import { clientProfiles } from "../schema.ts";
+import { nowIso, todayIso } from '../dates.ts';
+import type { Db } from '../db.ts';
+import { clientProfiles } from '../schema.ts';
 
 /** A client's profile, or null when they have none. What the routes use. */
-export async function findProfile(
-  db: Db,
-  clientId: string,
-): Promise<ClientProfile | null> {
+export async function findProfile(db: Db, clientId: string): Promise<ClientProfile | null> {
   const rows = await db
     .select()
     .from(clientProfiles)
@@ -28,17 +22,14 @@ export async function findProfile(
  * did, and answered 500 where it declared 404, until `issues/auth/013` deleted
  * it.
  */
-export async function getProfile(
-  db: Db,
-  clientId: string,
-): Promise<ClientProfile> {
+export async function getProfile(db: Db, clientId: string): Promise<ClientProfile> {
   const rows = await db
     .select()
     .from(clientProfiles)
     .where(eq(clientProfiles.client_id, clientId))
     .limit(1);
   if (!rows[0]) {
-    throw new Error("No profile found for client");
+    throw new Error('No profile found for client');
   }
   return rows[0];
 }
@@ -67,7 +58,7 @@ export async function upsertProfile(
     .returning();
   const row = rows[0];
   if (!row) {
-    throw new Error("upsertProfile: expected one returned row");
+    throw new Error('upsertProfile: expected one returned row');
   }
   return row;
 }

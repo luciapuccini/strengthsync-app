@@ -18,7 +18,7 @@
  * changes (e.g. a paid Workers plan).
  */
 
-const ALGORITHM = "pbkdf2-sha256";
+const ALGORITHM = 'pbkdf2-sha256';
 const ITERATIONS = 30_000;
 const SALT_BYTES = 16;
 const KEY_LENGTH_BITS = 256;
@@ -26,7 +26,7 @@ const KEY_LENGTH_BITS = 256;
 const encoder = new TextEncoder();
 
 function toBase64(bytes: Uint8Array): string {
-  let binary = "";
+  let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary);
 }
@@ -43,15 +43,11 @@ async function deriveBits(
   salt: Uint8Array,
   iterations: number,
 ): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(password),
-    "PBKDF2",
-    false,
-    ["deriveBits"],
-  );
+  const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, [
+    'deriveBits',
+  ]);
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: salt as BufferSource, iterations, hash: "SHA-256" },
+    { name: 'PBKDF2', salt: salt as BufferSource, iterations, hash: 'SHA-256' },
     key,
     KEY_LENGTH_BITS,
   );
@@ -78,7 +74,7 @@ export async function hash(password: string): Promise<string> {
  */
 export async function verify(password: string, stored: string): Promise<boolean> {
   try {
-    const parts = stored.split("$");
+    const parts = stored.split('$');
     const [algorithm, iterationsPart, saltPart, digestPart] = parts;
     if (
       parts.length !== 4 ||

@@ -1,4 +1,4 @@
-import { hash } from '../src/lib/password.ts'
+import { hash } from '../src/lib/password.ts';
 
 /**
  * Prints a PBKDF2 stored-format hash for a supplied password, using the
@@ -11,10 +11,10 @@ import { hash } from '../src/lib/password.ts'
  * Usage: node --experimental-strip-types scripts/hash-password.ts '<password>'
  */
 
-const password = process.argv[2]
+const password = process.argv[2];
 if (!password) {
-  console.error('usage: hash-password.ts <password>')
-  process.exit(1)
+  console.error('usage: hash-password.ts <password>');
+  process.exit(1);
 }
 
-console.log(await hash(password))
+console.log(await hash(password));

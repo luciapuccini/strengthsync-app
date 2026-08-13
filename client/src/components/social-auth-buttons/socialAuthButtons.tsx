@@ -1,16 +1,11 @@
-import { useId } from "react";
-import type { JSX } from "react";
+import { useId } from 'react';
+import type { JSX } from 'react';
 
-import { Button } from "@/shadcn/ui/button";
+import { Button } from '@/shadcn/ui/button';
 
 function AppleIcon(): JSX.Element {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className="size-4"
-      fill="currentColor"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden="true">
       <path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.12 0-.23-.02-.3-.03-.017-.09-.05-.29-.05-.5 0-1.14.572-2.27 1.207-2.98.744-.85 2.037-1.5 3.075-1.55.03.13.232.28.232.41zM20.94 17.4c-.35.81-.52 1.17-.97 1.9-.63 1.02-1.52 2.3-2.62 2.31-.98.01-1.23-.63-2.56-.62-1.33.01-1.6.63-2.59.62-1.1-.01-1.94-1.16-2.57-2.18-1.76-2.85-1.94-6.2-.86-7.98.77-1.27 1.98-2.02 3.11-2.02 1.15 0 1.87.66 2.82.66.92 0 1.48-.66 2.82-.66 1.01 0 2.08.55 2.84 1.5-2.5 1.37-2.09 4.94.58 6.47z" />
     </svg>
   );

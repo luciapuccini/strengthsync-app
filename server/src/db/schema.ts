@@ -1,12 +1,5 @@
-import { sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  real,
-  sqliteTable,
-  text,
-  uniqueIndex,
-} from "drizzle-orm/sqlite-core";
+import { sql } from 'drizzle-orm';
+import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 import {
   CLIENT_STATUSES,
@@ -15,7 +8,7 @@ import {
   type JsonValue,
   type PlanDay,
   type WeekDay,
-} from "../domain/model/index.ts";
+} from '../domain/model/index.ts';
 
 /**
  * Drizzle/D1 schema for the five core records: Coach → Client →
@@ -27,27 +20,27 @@ import {
  * part of the public domain model.
  */
 
-export const coaches = sqliteTable("coaches", {
-  id: text("id").primaryKey(),
-  display_name: text("display_name").notNull(),
-  auth_subject_id: text("auth_subject_id"),
-  created_at: text("created_at").notNull(),
-  updated_at: text("updated_at").notNull(),
+export const coaches = sqliteTable('coaches', {
+  id: text('id').primaryKey(),
+  display_name: text('display_name').notNull(),
+  auth_subject_id: text('auth_subject_id'),
+  created_at: text('created_at').notNull(),
+  updated_at: text('updated_at').notNull(),
 });
 
 export const clients = sqliteTable(
-  "clients",
+  'clients',
   {
-    id: text("id").primaryKey(),
-    coach_id: text("coach_id")
+    id: text('id').primaryKey(),
+    coach_id: text('coach_id')
       .notNull()
       .references(() => coaches.id),
-    display_name: text("display_name").notNull(),
-    status: text("status", { enum: CLIENT_STATUSES }).notNull(),
-    created_at: text("created_at").notNull(),
-    updated_at: text("updated_at").notNull(),
+    display_name: text('display_name').notNull(),
+    status: text('status', { enum: CLIENT_STATUSES }).notNull(),
+    created_at: text('created_at').notNull(),
+    updated_at: text('updated_at').notNull(),
   },
-  (t) => [index("clients_coach_id_idx").on(t.coach_id)],
+  (t) => [index('clients_coach_id_idx').on(t.coach_id)],
 );
 
 /**
@@ -56,94 +49,92 @@ export const clients = sqliteTable(
  * hash to the browser. Keyed by the athlete's own id: one credential set per
  * athlete.
  */
-export const clientCredentials = sqliteTable("client_credentials", {
-  client_id: text("client_id")
+export const clientCredentials = sqliteTable('client_credentials', {
+  client_id: text('client_id')
     .primaryKey()
     .references(() => clients.id),
-  email: text("email").notNull().unique(),
-  password_hash: text("password_hash").notNull(),
-  created_at: text("created_at").notNull(),
+  email: text('email').notNull().unique(),
+  password_hash: text('password_hash').notNull(),
+  created_at: text('created_at').notNull(),
 });
 
 // Factory, not a shared builder: drizzle column builders bind their column
 // name on first use, so each column needs its own call.
-const jsonRecord = () => text({ mode: "json" }).$type<Record<string, JsonValue>>();
+const jsonRecord = () => text({ mode: 'json' }).$type<Record<string, JsonValue>>();
 
-export const clientProfiles = sqliteTable("client_profiles", {
-  id: text("id").primaryKey(),
-  client_id: text("client_id")
+export const clientProfiles = sqliteTable('client_profiles', {
+  id: text('id').primaryKey(),
+  client_id: text('client_id')
     .notNull()
     .unique()
     .references(() => clients.id),
-  snapshot_date: text("snapshot_date").notNull(),
-  sex: text("sex"),
-  age: integer("age"),
-  height_cm: real("height_cm"),
+  snapshot_date: text('snapshot_date').notNull(),
+  sex: text('sex'),
+  age: integer('age'),
+  height_cm: real('height_cm'),
   goals: jsonRecord().notNull(),
   body_composition: jsonRecord().notNull(),
   strength_loads: jsonRecord().notNull(),
   nutrition: jsonRecord(),
   swimming: jsonRecord(),
   schedule_preferences: jsonRecord(),
-  notes: text("notes"),
-  updated_at: text("updated_at").notNull(),
+  notes: text('notes'),
+  updated_at: text('updated_at').notNull(),
 });
 
 export const plans = sqliteTable(
-  "plans",
+  'plans',
   {
-    id: text("id").primaryKey(),
-    client_id: text("client_id")
+    id: text('id').primaryKey(),
+    client_id: text('client_id')
       .notNull()
       .references(() => clients.id),
-    label: text("label").notNull(),
-    status: text("status", { enum: PLAN_STATUSES }).notNull(),
-    total_weeks: integer("total_weeks").notNull(),
-    week_template: text("week_template", { mode: "json" })
-      .notNull()
-      .$type<PlanDay[]>(),
-    rationale: text("rationale"),
-    activated_at: text("activated_at"),
+    label: text('label').notNull(),
+    status: text('status', { enum: PLAN_STATUSES }).notNull(),
+    total_weeks: integer('total_weeks').notNull(),
+    week_template: text('week_template', { mode: 'json' }).notNull().$type<PlanDay[]>(),
+    rationale: text('rationale'),
+    activated_at: text('activated_at'),
     /** Idempotency key: the workflow that created this plan. */
-    workflow_id: text("workflow_id"),
-    created_at: text("created_at").notNull(),
-    updated_at: text("updated_at").notNull(),
+    workflow_id: text('workflow_id'),
+    created_at: text('created_at').notNull(),
+    updated_at: text('updated_at').notNull(),
   },
   (t) => [
     // Invariant: at most one active plan per client.
-    uniqueIndex("plans_one_active_per_client")
+    uniqueIndex('plans_one_active_per_client')
       .on(t.client_id)
       .where(sql`status = 'active'`),
-    index("plans_client_id_idx").on(t.client_id),
+    index('plans_client_id_idx').on(t.client_id),
   ],
 );
 
 export const weeks = sqliteTable(
-  "weeks",
+  'weeks',
   {
-    id: text("id").primaryKey(),
-    client_id: text("client_id")
+    id: text('id').primaryKey(),
+    client_id: text('client_id')
       .notNull()
       .references(() => clients.id),
-    plan_id: text("plan_id")
+    plan_id: text('plan_id')
       .notNull()
       .references(() => plans.id),
-    week_index: integer("week_index").notNull(),
-    start_date: text("start_date").notNull(),
-    end_date: text("end_date").notNull(),
-    status: text("status", { enum: WEEK_STATUSES }).notNull(),
+    week_index: integer('week_index').notNull(),
+    start_date: text('start_date').notNull(),
+    end_date: text('end_date').notNull(),
+    status: text('status', { enum: WEEK_STATUSES }).notNull(),
     /** Snapshot of the planned work for this week, including AI adjustments. */
-    schedule: text("schedule", { mode: "json" }).notNull().$type<WeekDay[]>(),
+    schedule: text('schedule', { mode: 'json' }).notNull().$type<WeekDay[]>(),
     /** Idempotency key: the workflow that created this week. */
-    workflow_id: text("workflow_id"),
-    created_at: text("created_at").notNull(),
-    updated_at: text("updated_at").notNull(),
+    workflow_id: text('workflow_id'),
+    created_at: text('created_at').notNull(),
+    updated_at: text('updated_at').notNull(),
   },
   (t) => [
     // Invariant: at most one in_flight week per client.
-    uniqueIndex("weeks_one_in_flight_per_client")
+    uniqueIndex('weeks_one_in_flight_per_client')
       .on(t.client_id)
       .where(sql`status = 'in_flight'`),
-    index("weeks_client_plan_idx").on(t.client_id, t.plan_id),
+    index('weeks_client_plan_idx').on(t.client_id, t.plan_id),
   ],
 );

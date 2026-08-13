@@ -1,12 +1,12 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 
-import { findPlanById, getActivePlan, type Db } from '../../db/index.ts'
+import { findPlanById, getActivePlan, type Db } from '../../db/index.ts';
 
-import type { SessionVariables } from '../../lib/session.ts'
-import { defaultHook } from '../../lib/validation-error.ts'
-import { invalidInput, json, notFound, unauthorized } from '../shared.ts'
+import type { SessionVariables } from '../../lib/session.ts';
+import { defaultHook } from '../../lib/validation-error.ts';
+import { invalidInput, json, notFound, unauthorized } from '../shared.ts';
 
-import { PlanIdParamSchema, PlanResponseSchema } from './schemas.ts'
+import { PlanIdParamSchema, PlanResponseSchema } from './schemas.ts';
 
 const getMyActivePlanRoute = createRoute({
   method: 'get',
@@ -17,7 +17,7 @@ const getMyActivePlanRoute = createRoute({
     401: unauthorized,
     404: notFound,
   },
-})
+});
 
 const getMyPlanRoute = createRoute({
   method: 'get',
@@ -30,7 +30,7 @@ const getMyPlanRoute = createRoute({
     401: unauthorized,
     404: notFound,
   },
-})
+});
 
 /**
  * Public plan read routes. Plan creation/activation is workflow-only in the
@@ -41,32 +41,29 @@ const getMyPlanRoute = createRoute({
  * `routes/clients/endpoints.ts`.
  */
 export function planRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables }> {
-  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook })
+  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook });
 
   app.openapi(getMyActivePlanRoute, async (c) => {
-    const plan = await getActivePlan(db, c.get('clientId'))
+    const plan = await getActivePlan(db, c.get('clientId'));
     if (!plan) {
-      return c.json(
-        { error: { code: 'active_plan_not_found', message: 'no active plan' } },
-        404,
-      )
+      return c.json({ error: { code: 'active_plan_not_found', message: 'no active plan' } }, 404);
     }
-    return c.json({ plan }, 200)
-  })
+    return c.json({ plan }, 200);
+  });
 
   // Scoped to the caller, so naming someone else's plan id finds nothing
   // rather than reading it.
   app.openapi(getMyPlanRoute, async (c) => {
-    const { planId } = c.req.valid('param')
-    const plan = await findPlanById(db, c.get('clientId'), planId)
+    const { planId } = c.req.valid('param');
+    const plan = await findPlanById(db, c.get('clientId'), planId);
     if (!plan) {
       return c.json(
         { error: { code: 'plan_not_found', message: `plan ${planId} not found` } },
         404,
-      )
+      );
     }
-    return c.json({ plan }, 200)
-  })
+    return c.json({ plan }, 200);
+  });
 
-  return app
+  return app;
 }

@@ -1,12 +1,12 @@
-import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 
-import { findProfile, getClient, upsertProfile, type Db } from '../../db/index.ts'
+import { findProfile, getClient, upsertProfile, type Db } from '../../db/index.ts';
 
-import type { SessionVariables } from '../../lib/session.ts'
-import { defaultHook } from '../../lib/validation-error.ts'
-import { invalidInput, json, notFound, unauthorized } from '../shared.ts'
+import type { SessionVariables } from '../../lib/session.ts';
+import { defaultHook } from '../../lib/validation-error.ts';
+import { invalidInput, json, notFound, unauthorized } from '../shared.ts';
 
-import { ClientProfileResponseSchema, UpdateClientProfileSchema } from './schemas.ts'
+import { ClientProfileResponseSchema, UpdateClientProfileSchema } from './schemas.ts';
 
 const getMyProfileRoute = createRoute({
   method: 'get',
@@ -17,7 +17,7 @@ const getMyProfileRoute = createRoute({
     401: unauthorized,
     404: notFound,
   },
-})
+});
 
 const putMyProfileRoute = createRoute({
   method: 'put',
@@ -30,7 +30,7 @@ const putMyProfileRoute = createRoute({
     401: unauthorized,
     404: notFound,
   },
-})
+});
 
 /**
  * Profile routes for the signed-in client. See docs/architecture/api_contracts.md.
@@ -44,31 +44,28 @@ const putMyProfileRoute = createRoute({
  * else's profile is not a request the API can express.
  */
 export function clientRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables }> {
-  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook })
+  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook });
 
   // `findProfile`, not `getProfile`: having no profile yet is ordinary rather
   // than exceptional, so it is a 404 and not a thrown error.
   app.openapi(getMyProfileRoute, async (c) => {
-    const profile = await findProfile(db, c.get('clientId'))
+    const profile = await findProfile(db, c.get('clientId'));
     if (!profile) {
-      return c.json(
-        { error: { code: 'profile_not_found', message: 'no profile yet' } },
-        404,
-      )
+      return c.json({ error: { code: 'profile_not_found', message: 'no profile yet' } }, 404);
     }
-    return c.json({ profile }, 200)
-  })
+    return c.json({ profile }, 200);
+  });
 
   app.openapi(putMyProfileRoute, async (c) => {
-    const clientId = c.get('clientId')
+    const clientId = c.get('clientId');
     // The session outlives the row it names by up to thirty days, so a deleted
     // athlete can still present a valid cookie.
     if (!(await getClient(db, clientId))) {
-      return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404)
+      return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404);
     }
-    const profile = await upsertProfile(db, clientId, c.req.valid('json'))
-    return c.json({ profile }, 200)
-  })
+    const profile = await upsertProfile(db, clientId, c.req.valid('json'));
+    return c.json({ profile }, 200);
+  });
 
-  return app
+  return app;
 }

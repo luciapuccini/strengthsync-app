@@ -1,12 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest';
 
-import {
-  ClientProfileSchema,
-  PlanSchema,
-  WeekSchema,
-  type PlanDay,
-  type WeekDay,
-} from './index'
+import { ClientProfileSchema, PlanSchema, WeekSchema, type PlanDay, type WeekDay } from './index';
 
 const planDay: PlanDay = {
   day_index: 1,
@@ -23,7 +17,7 @@ const planDay: PlanDay = {
       notes: null,
     },
   ],
-}
+};
 
 const weekDay: WeekDay = {
   day_index: 1,
@@ -48,7 +42,7 @@ const weekDay: WeekDay = {
       sets: [],
     },
   ],
-}
+};
 
 describe('PlanSchema', () => {
   it('accepts a valid plan', () => {
@@ -63,10 +57,10 @@ describe('PlanSchema', () => {
       activated_at: '2026-07-20T08:00:00.000Z',
       created_at: '2026-07-19T12:00:00.000Z',
       updated_at: '2026-07-20T08:00:00.000Z',
-    }
+    };
 
-    expect(PlanSchema.parse(plan)).toEqual(plan)
-  })
+    expect(PlanSchema.parse(plan)).toEqual(plan);
+  });
 
   it('rejects a day_index outside 1–7', () => {
     const result = PlanSchema.safeParse({
@@ -80,11 +74,11 @@ describe('PlanSchema', () => {
       activated_at: null,
       created_at: '2026-07-19T12:00:00.000Z',
       updated_at: '2026-07-19T12:00:00.000Z',
-    })
+    });
 
-    expect(result.success).toBe(false)
-  })
-})
+    expect(result.success).toBe(false);
+  });
+});
 
 describe('WeekSchema', () => {
   it('accepts a valid in-flight week', () => {
@@ -99,10 +93,10 @@ describe('WeekSchema', () => {
       schedule: [weekDay],
       created_at: '2026-07-20T08:00:00.000Z',
       updated_at: '2026-07-20T08:00:00.000Z',
-    }
+    };
 
-    expect(WeekSchema.parse(week)).toEqual(week)
-  })
+    expect(WeekSchema.parse(week)).toEqual(week);
+  });
 
   it('rejects an invalid exercise feedback value', () => {
     const result = WeekSchema.safeParse({
@@ -121,10 +115,10 @@ describe('WeekSchema', () => {
       ],
       created_at: '2026-07-20T08:00:00.000Z',
       updated_at: '2026-07-20T08:00:00.000Z',
-    })
+    });
 
-    expect(result.success).toBe(false)
-  })
+    expect(result.success).toBe(false);
+  });
 
   it('rejects a malformed ISO date', () => {
     const result = WeekSchema.safeParse({
@@ -138,11 +132,11 @@ describe('WeekSchema', () => {
       schedule: [weekDay],
       created_at: '2026-07-20T08:00:00.000Z',
       updated_at: '2026-07-20T08:00:00.000Z',
-    })
+    });
 
-    expect(result.success).toBe(false)
-  })
-})
+    expect(result.success).toBe(false);
+  });
+});
 
 describe('ClientProfileSchema', () => {
   it('accepts nested objects and arrays in json record fields', () => {
@@ -179,8 +173,8 @@ describe('ClientProfileSchema', () => {
       },
       notes: null,
       updated_at: '2026-07-20T08:00:00.000Z',
-    }
+    };
 
-    expect(ClientProfileSchema.parse(profile)).toEqual(profile)
-  })
-})
+    expect(ClientProfileSchema.parse(profile)).toEqual(profile);
+  });
+});

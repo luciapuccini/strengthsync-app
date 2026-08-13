@@ -1,4 +1,4 @@
-import { z } from '@hono/zod-openapi'
+import { z } from '@hono/zod-openapi';
 
 /**
  * HTTP shapes for the authentication area.
@@ -19,12 +19,10 @@ export const SignUpInputSchema = z
     email: z.email(),
     password: z.string().min(8),
   })
-  .openapi('SignUpInput')
+  .openapi('SignUpInput');
 
 export const SignInInputSchema = z
   .object({ email: z.email(), password: z.string() })
-  .openapi('SignInInput')
+  .openapi('SignInInput');
 
-export const SignedOutResponseSchema = z
-  .object({ ok: z.boolean() })
-  .openapi('SignedOutResponse')
+export const SignedOutResponseSchema = z.object({ ok: z.boolean() }).openapi('SignedOutResponse');
