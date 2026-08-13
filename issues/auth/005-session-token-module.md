@@ -1,3 +1,7 @@
+## Status
+
+DONE — commit c06fdfd
+
 ## Parent PRD
 
 `issues/auth/prd.md`
@@ -24,15 +28,15 @@ See the "Session mechanism" and "Server modules" sections of the parent PRD.
 
 ## Acceptance criteria
 
-- [ ] A token issued for an athlete reads back to that same athlete id.
-- [ ] A token signed with a different secret is rejected.
-- [ ] An expired token is rejected.
-- [ ] A structurally malformed token is rejected without throwing.
-- [ ] A token whose payload has been altered is rejected.
-- [ ] The thirty-day lifetime and the payload shape are defined only in this module.
-- [ ] The signing secret is present in the local development variables and the example file, and the Worker's generated types include it.
-- [ ] No new dependency is added to the manifest.
-- [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+- [x] A token issued for an athlete reads back to that same athlete id.
+- [x] A token signed with a different secret is rejected.
+- [x] An expired token is rejected.
+- [x] A structurally malformed token is rejected without throwing.
+- [x] A token whose payload has been altered is rejected.
+- [x] The thirty-day lifetime and the payload shape are defined only in this module.
+- [x] The signing secret is present in the local development variables and the example file, and the Worker's generated types include it.
+- [x] No new dependency is added to the manifest.
+- [x] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Blocked by
 
