@@ -1,3 +1,7 @@
+## Status
+
+DONE — commit 23078a4
+
 ## Parent PRD
 
 `issues/auth/prd.md`
@@ -26,13 +30,24 @@ See the "Routing and screens" section of the parent PRD.
 
 ## Acceptance criteria
 
-- [ ] The route table is the root redirect, sign-in, sign-up, tracker, history and not-found — and nothing else.
-- [ ] No browser route pattern contains an athlete or plan identifier.
-- [ ] Opening the root while signed in lands on the tracker; while signed out, on sign-in.
-- [ ] The header's history link is static, and both hardcoded identifiers and the warning comment are gone.
-- [ ] The history page resolves the active plan itself and renders that plan's completed weeks.
-- [ ] Navigating between the tracker and history works in both directions without a full reload.
-- [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+- [x] The route table is the root redirect, sign-in, sign-up, tracker, history and not-found — and nothing else.
+- [x] No browser route pattern contains an athlete or plan identifier. — the routes are `/`, `/sign-in`, `/sign-up`, `/track`, `/history`, `*`.
+- [x] Opening the root while signed in lands on the tracker; while signed out, on sign-in. — covered by `components/root-redirect/rootRedirect.test.tsx`, added here.
+- [x] The header's history link is static, and both hardcoded identifiers and the warning comment are gone. — this closes the criterion left partial in `issues/auth/007-sign-up-end-to-end.md`.
+- [x] The history page resolves the active plan itself and renders that plan's completed weeks.
+- [x] Navigating between the tracker and history works in both directions without a full reload. — both are `<Link>`s inside the same router; not separately tested.
+- [x] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+
+## Notes
+
+- The optional router-level tests were taken: `rootRedirect.test.tsx` here,
+  `requireAuth.test.tsx` back in `issues/auth/008`.
+- `HistoryData.plan` is nullable now. With no active plan there are no completed
+  weeks either, and the screen already renders that case as "No completed
+  weeks", so the two collapse into one empty state rather than needing a second.
+- `getPlan` and `GET /api/me/plans/{planId}` are now consumerless, which is the
+  outcome the parent PRD predicted. Both are kept deliberately and flagged there
+  for a separate consumerless-route audit, rather than cut inside this phase.
 
 ## Blocked by
 
