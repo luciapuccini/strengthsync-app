@@ -39,6 +39,8 @@ See the "Seeds, scripts and documentation" section of the parent PRD and its
 - [ ] The remember-device note is marked superseded, with what was adopted and what diverged.
 - [ ] The scratch note about the contract-check script is corrected, and the missing script remains recorded as a known defect for separate work.
 - [ ] Following the readme from a clean checkout produces a running app in which a new account can be registered.
+- [ ] `POST /wf/complete-week` no longer declares a 401 it cannot return, and the contract is regenerated.
+- [ ] The parent PRD's "Found while implementing this phase" list is worked through: each entry is either fixed, or restated as a standing known defect with its reason.
 - [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Blocked by

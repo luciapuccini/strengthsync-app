@@ -326,6 +326,32 @@ they are not a blocker if they prove fiddly.
 
 ## Further Notes
 
+- **Found while implementing this phase; not yet resolved.** Collected here so a
+  final pass has one place to look. Each says who, if anyone, already owns it.
+  - **`getProfile` throws when a client has no profile**, so
+    `GET /api/clients/{clientId}/profile` answers 500 where it declares 404 —
+    which is what every newly registered athlete would get. Not reachable from
+    the UI: nothing in the client calls it. *Resolved by deleting the route in
+    issue 013; the /me replacement added in 010 uses `findProfile`, which
+    returns null.*
+  - **`getPlan` reads the *active* plan and throws when there is none**, despite
+    its name and its `planId`-shaped caller, so
+    `GET /api/clients/{clientId}/plans/{planId}` returns the active plan
+    whatever id is asked for. Masked today because the only caller passes the
+    active plan's id. *Resolved by deleting the route in issue 013; the /me
+    replacement uses `findPlanById`.* The workflow's own use of `getPlan` is
+    correct for its intent and stays — but the name is a trap and should be
+    changed to say "active plan" once nothing else calls it.
+  - **The demo seed's in-flight week has expired.** `001_demo_seed.sql` pins it
+    to 2026-07-20..26, and `getCurrentWeek` refuses a week whose window has
+    passed, so signing in as the seeded athlete lands on the empty tracker. Not
+    owned by any issue. Refreshing it is not a two-line edit: the day dates are
+    baked into the week's `schedule` JSON. `src/app.auth.test.ts` asserts the
+    present behaviour, so a refresh has a test that notices.
+  - **`POST /wf/complete-week` declares a 401 it can never return.** The route
+    is unauthenticated by design (already recorded below as a known MVP gap);
+    issue 009 corrected its `security` declaration but left the response.
+    *Belongs with issue 015.*
 - **The contract-check script referenced by continuous integration does not
   exist.** The pipeline invokes it on every pull request, the contract
   documentation describes it as the guard that makes drift unmergeable, and the
