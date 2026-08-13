@@ -1,8 +1,0 @@
-# Revisions to skip when running `git blame`, so a mechanical reformat does not
-# claim authorship of every line in the repository.
-#
-# Enable locally with:
-#   git config blame.ignoreRevsFile .git-blame-ignore-revs
-
-# style: format the repo with prettier
-74e7a8774193c40bd0dee9fef098c0b0fc857092
