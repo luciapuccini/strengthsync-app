@@ -1,3 +1,7 @@
+## Status
+
+DONE — commit 8ed6667
+
 ## Parent PRD
 
 `issues/auth/prd.md`
@@ -30,15 +34,15 @@ See the "Client modules" and "Routing and screens" sections of the parent PRD.
 
 ## Acceptance criteria
 
-- [ ] The session slice exposes loading, signed-in and signed-out states plus the signed-in athlete, and is covered by tests in the style of the existing store-slice tests.
-- [ ] The session is bootstrapped once when the app mounts.
-- [ ] The guard renders a spinner while the session resolves, redirects to sign-in when signed out, and renders the private tree when signed in.
-- [ ] Opening the root URL while signed in lands on the signed-in athlete's tracker; while signed out it lands on sign-in.
-- [ ] Submitting the sign-up form creates an account and leaves the athlete signed in without a second credential entry.
-- [ ] The submit button shows progress and refuses a second press while a request is in flight.
-- [ ] A duplicate email and a too-short password each produce a message that stays on screen while the field is corrected.
-- [ ] The dummy authentication module is deleted and no hardcoded demo athlete id remains anywhere in the client.
-- [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+- [x] The session slice exposes loading, signed-in and signed-out states plus the signed-in athlete, and is covered by tests in the style of the existing store-slice tests.
+- [x] The session is bootstrapped once when the app mounts.
+- [x] The guard renders a spinner while the session resolves, redirects to sign-in when signed out, and renders the private tree when signed in.
+- [x] Opening the root URL while signed in lands on the signed-in athlete's tracker; while signed out it lands on sign-in.
+- [x] Submitting the sign-up form creates an account and leaves the athlete signed in without a second credential entry.
+- [x] The submit button shows progress and refuses a second press while a request is in flight.
+- [x] A duplicate email and a too-short password each produce a message that stays on screen while the field is corrected.
+- [x] The dummy authentication module is deleted and no hardcoded demo athlete id remains anywhere in the client. — **partial**: `lib/auth.ts` is deleted, but the app header's History link still hardcodes the demo athlete and plan ids. It cannot resolve them in this slice, because the history route still takes both in its path. The parent PRD assigns that link to the route cutover ("The header's history link, currently two hardcoded UUIDs with a warning comment, becomes a static link"), so it is left with its warning comment for `issues/auth/012-browser-route-cutover.md`.
+- [x] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Blocked by
 
