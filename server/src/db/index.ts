@@ -22,7 +22,6 @@ export {
   getCurrentWeek,
   getWeek,
   listWeeks,
-  listWeeksV2,
   saveDay,
   updateDayLog,
   completeWeek,
