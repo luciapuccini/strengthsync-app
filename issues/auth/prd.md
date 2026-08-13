@@ -361,6 +361,20 @@ they are not a blocker if they prove fiddly.
     is unauthenticated by design (already recorded below as a known MVP gap);
     issue 009 corrected its `security` declaration but left the response.
     *Belongs with issue 015.*
+  - **The browser's resource caches survive a sign-out, so a second athlete
+    signing in on the same tab reads the first one's data.**
+    `api/weekResource.ts` and `api/historyResource.ts` each hold a
+    module-level promise, and `signOutSession` is an in-SPA state change with
+    no reload — the route guard swaps the tree, nothing clears the modules.
+    Neither `invalidateCurrentWeek` nor `invalidateCompletedWeeks` is wired to
+    the session, so Ana signs out, Bea signs in, and `use(currentWeekResource())`
+    hands Bea the promise holding Ana's client, plan and week. The local draft
+    store is not affected: `reconcileWeekDraft` is keyed by client id.
+    `invalidateCompletedWeeks` has no production caller at all — its only
+    reference in the repository is its own test — which is the signal that
+    caught this. Found while implementing issue 014, which changes neither the
+    session nor either resource. *Not owned by any issue.* It is the same
+    cross-athlete read this phase removed from the API, surviving in the tab.
 - **The contract-check script referenced by continuous integration does not
   exist.** The pipeline invokes it on every pull request, the contract
   documentation describes it as the guard that makes drift unmergeable, and the
