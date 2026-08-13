@@ -1,31 +1,33 @@
-import { getPlan, listCompletedWeeks } from '@/api/client'
+import { getActivePlan, listCompletedWeeks } from '@/api/client'
 import type { Plan, Week } from '@/api/types'
 
 export type HistoryData = {
   weeks: Week[]
-  plan: Plan
+  /** Null when there is no active plan, which is also when `weeks` is empty. */
+  plan: Plan | null
 }
 
 /**
- * Keyed by plan alone: the session decides whose plans these are, so the
- * athlete half of the old composite key carried no information.
+ * One promise and no arguments: the URL no longer names a plan, so this resolves
+ * the signed-in client's active plan and reads that plan's completed weeks.
+ *
+ * The consequence, accepted in the PRD: there is no way to view an archived
+ * plan's history. No screen offered one either.
  */
-const historyPromises = new Map<string, Promise<HistoryData>>()
+let historyPromise: Promise<HistoryData> | null = null
 
-export function completedWeeksResource(planId: string): Promise<HistoryData> {
-  const cached = historyPromises.get(planId)
-  if (cached !== undefined) return cached
-
-  const promise = Promise.all([listCompletedWeeks(planId), getPlan(planId)])
-    .then(([weeks, plan]) => ({ weeks, plan }))
+export function completedWeeksResource(): Promise<HistoryData> {
+  historyPromise ??= getActivePlan()
+    .then(async (plan) =>
+      plan === null ? { weeks: [], plan } : { weeks: await listCompletedWeeks(plan.id), plan },
+    )
     .catch((error: unknown) => {
-      historyPromises.delete(planId)
+      historyPromise = null
       throw error
     })
-  historyPromises.set(planId, promise)
-  return promise
+  return historyPromise
 }
 
-export function invalidateCompletedWeeks(planId: string): void {
-  historyPromises.delete(planId)
+export function invalidateCompletedWeeks(): void {
+  historyPromise = null
 }

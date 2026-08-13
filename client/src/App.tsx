@@ -47,7 +47,7 @@ export default function App(): JSX.Element {
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
             <Route
-              path="/clients/:clientId/track"
+              path="/track"
               element={
                 <ErrorBoundary>
                   <Suspense
@@ -59,7 +59,7 @@ export default function App(): JSX.Element {
               }
             />
             <Route
-              path="/clients/:clientId/plans/:planId/history"
+              path="/history"
               element={
                 <ErrorBoundary>
                   <Suspense

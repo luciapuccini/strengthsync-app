@@ -26,9 +26,8 @@ export function AppLayout(): JSX.Element {
             </span>
           </Link>
           <nav className="flex items-center gap-3">
-            {/* warning: hardcoded demo client/plan until the routes drop both ids */}
             <Link
-              to="/clients/00000000-0000-4000-8000-000000000010/plans/00000000-0000-4000-8000-000000000012/history"
+              to="/history"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               History

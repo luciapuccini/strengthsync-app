@@ -134,6 +134,12 @@ export async function getActivePlan(): Promise<Plan | null> {
   });
 }
 
+/**
+ * No caller since the history screen started resolving the active plan itself.
+ * Kept deliberately, with its route: the parent PRD flags the by-id plan read
+ * for the same consumerless-route audit that previously cut three others,
+ * rather than cutting it inside this phase.
+ */
 export async function getPlan(planId: string): Promise<Plan> {
   const res = await call(() =>
     api.GET("/api/me/plans/{planId}", { params: { path: { planId } } }),
