@@ -1,6 +1,6 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
-import { activateGeneratedPlanV2, type Db } from './db/index.ts';
+import { activateGeneratedPlan, type Db } from './db/index.ts';
 import { createTestDb } from './db/testing/index.ts';
 import type { PlanDay, Week } from './domain/model/index.ts';
 
@@ -100,7 +100,7 @@ export async function activateGeneratedPlanViaRepository(
   clientId: string,
   workflowId: string,
 ): Promise<{ plan: { id: string }; first_week: Week }> {
-  const result = await activateGeneratedPlanV2(db, clientId, {
+  const result = await activateGeneratedPlan(db, clientId, {
     workflow_id: workflowId,
     plan: { label: 'Block 1', total_weeks: 2, week_template: weekTemplate, rationale: null },
   });

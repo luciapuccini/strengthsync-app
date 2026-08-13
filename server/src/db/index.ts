@@ -12,7 +12,7 @@ export { createClient, getClient } from './repositories/clients.ts';
 export { createCredential, getCredentialByEmail } from './repositories/credentials.ts';
 export { findProfile, getProfile, upsertProfile } from './repositories/profiles.ts';
 export {
-  activateGeneratedPlanV2,
+  activateGeneratedPlan,
   findPlanById,
   getActivePlan,
   getActivePlanOrThrow,

@@ -5,7 +5,7 @@ import {
   ProfileSummarySchema,
 } from '../domain/coach/index.ts';
 import { GeneratedPlanInputSchema, type GeneratedPlanInput } from '../domain/workflow.ts';
-import { activateGeneratedPlanV2, listWeeksV2, type Db } from '../db/index.ts';
+import { activateGeneratedPlan, listWeeksV2, type Db } from '../db/index.ts';
 
 import type { Env } from '../env';
 import { getAgentRuntime } from '../agent/agent-core';
@@ -126,7 +126,7 @@ export async function generatePlan(
   );
 }
 
-export async function activateGeneratedPlan(
+export async function activatePlan(
   step: WorkflowStep,
   db: Db,
   clientId: string,
@@ -134,6 +134,6 @@ export async function activateGeneratedPlan(
   plan: GeneratedPlanInput,
 ) {
   return step.do('activate-plan', async () =>
-    activateGeneratedPlanV2(db, clientId, { workflow_id: workflowId, plan }),
+    activateGeneratedPlan(db, clientId, { workflow_id: workflowId, plan }),
   );
 }
