@@ -21,10 +21,10 @@ import { conflict, invalidInput, json, unauthorized } from '../shared.ts'
 
 import { SignInInputSchema, SignUpInputSchema, SignedOutResponseSchema } from './schemas.ts'
 
-// `security: []` on every route: this area is mounted outside the /api Basic
-// gate, so the document must not inherit the global requirement. The session
-// route is guarded by the cookie instead, which the document cannot yet name —
-// the scheme is swapped from Basic to the session cookie when Basic retires.
+// `security: []` on the three routes reachable without a session: they are the
+// way in, so requiring one would be circular. Sign-out is among them on
+// purpose — clearing an expired cookie has to work. The session route declares
+// nothing and so inherits the document's default, which is what guards it.
 const signUpRoute = createRoute({
   method: 'post',
   path: '/sign-up',
@@ -63,7 +63,6 @@ const sessionRoute = createRoute({
   method: 'get',
   path: '/session',
   summary: 'Return the signed-in client',
-  security: [],
   responses: {
     200: json('Signed in', ClientResponseSchema),
     401: unauthorized,

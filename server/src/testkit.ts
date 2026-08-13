@@ -6,37 +6,56 @@ import type { PlanDay, Week } from './domain/model/index.ts'
 
 import { createApp, type AppConfig } from './app.ts'
 
-export const BASIC = { username: 'coach', password: 'test-secret' }
-
 export const SESSION_SECRET = 'test-session-secret'
 
-export function basicHeader(): string {
-  return `Basic ${btoa(`${BASIC.username}:${BASIC.password}`)}`
+/**
+ * A registered athlete and the cookie that speaks for them. Every /api/* request
+ * needs one, so tests get the id and the headers together rather than assembling
+ * a cookie at each call site.
+ */
+export type TestAthlete = {
+  id: string
+  /** Cookie only, for reads. */
+  headers: Record<string, string>
+  /** Cookie plus a JSON content type, for writes. */
+  jsonHeaders: Record<string, string>
 }
 
 export function createTestApp(overrides: Partial<AppConfig> = {}): OpenAPIHono {
   return createApp({
     db: createTestDb(),
-    basicAuth: BASIC,
     sessionSecret: SESSION_SECRET,
     ...overrides,
   })
 }
 
-export async function createClientViaApi(app: OpenAPIHono, displayName = 'Ana'): Promise<{ id: string }> {
-  const res = await app.request('/api/clients', {
+/**
+ * Register an athlete and keep their session. This replaced the athlete-creation
+ * route as the way tests get a client: that route is now behind the guard, so
+ * reaching it would need the very session this produces.
+ */
+export async function signUpViaApi(app: OpenAPIHono, displayName = 'Ana'): Promise<TestAthlete> {
+  const res = await app.request('/auth/sign-up', {
     method: 'POST',
-    headers: { authorization: basicHeader(), 'content-type': 'application/json' },
-    body: JSON.stringify({ display_name: displayName }),
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      display_name: displayName,
+      email: `${displayName.toLowerCase()}@example.com`,
+      password: 'dev-password-123',
+    }),
   })
-  const body = (await res.json()) as { client: { id: string } }
-  return body.client
+  const token = res.headers.get('set-cookie')?.match(/session=([^;]*)/)?.[1]
+  if (!token) throw new Error(`sign-up set no session cookie (status ${res.status})`)
+
+  const { client } = (await res.json()) as { client: { id: string } }
+  const headers = { cookie: `session=${token}` }
+  return { id: client.id, headers, jsonHeaders: { ...headers, 'content-type': 'application/json' } }
 }
 
-export async function upsertProfileViaApi(app: OpenAPIHono, clientId: string): Promise<void> {
-  await app.request(`/api/clients/${clientId}/profile`, {
+export async function upsertProfileViaApi(app: OpenAPIHono, athlete: TestAthlete): Promise<void> {
+  await app.request(`/api/clients/${athlete.id}/profile`, {
     method: 'PUT',
-    headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+    headers: athlete.jsonHeaders,
     body: JSON.stringify({
       snapshot_date: '2026-07-01',
       sex: 'female',

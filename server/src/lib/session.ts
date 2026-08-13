@@ -10,9 +10,10 @@ import { LIFETIME_SECONDS, issue, read } from "./session-token.ts";
  * lifetime live in `session-token.ts`, and this module only decides how that
  * token travels.
  *
- * `Secure` follows the same `NODE_ENV` check `app.ts` uses for the Basic gate:
- * wrangler dev sets development, deploy/build set production. Without that
- * split the cookie would be dropped over plain http in local development.
+ * `Secure` is set from `NODE_ENV`: wrangler dev sets development, deploy/build
+ * set production. Without that split the cookie would be dropped over plain
+ * http in local development. Note this is the only environment split left in
+ * the auth path — the guard itself runs everywhere.
  */
 
 const COOKIE_NAME = "session";

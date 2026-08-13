@@ -176,13 +176,17 @@ describe('the seeded demo athlete', () => {
 
   it('reaches their plan and history under that identity', async () => {
     const app = createTestApp({ db: createDemoSeededDb() })
-    const client = await clientOf(await signIn(app, DEMO))
+    const res = await signIn(app, DEMO)
+    const client = await clientOf(res)
+    const headers = { cookie: `session=${sessionCookie(res)}` }
 
     const plan = (await (
-      await app.request(`/api/clients/${client.id}/plans/active`)
+      await app.request(`/api/clients/${client.id}/plans/active`, { headers })
     ).json()) as { plan: { id: string } }
     const history = (await (
-      await app.request(`/api/clients/${client.id}/weeks?status=completed&planId=${plan.plan.id}`)
+      await app.request(`/api/clients/${client.id}/weeks?status=completed&planId=${plan.plan.id}`, {
+        headers,
+      })
     ).json()) as { weeks: unknown[] }
 
     expect(plan.plan.id).toBe('00000000-0000-4000-8000-000000000012')
@@ -196,9 +200,12 @@ describe('the seeded demo athlete', () => {
   // seed has a test that notices.
   it('has no current week, because the seeded window has expired', async () => {
     const app = createTestApp({ db: createDemoSeededDb() })
-    const client = await clientOf(await signIn(app, DEMO))
+    const signedIn = await signIn(app, DEMO)
+    const client = await clientOf(signedIn)
 
-    const res = await app.request(`/api/clients/${client.id}/weeks/current`)
+    const res = await app.request(`/api/clients/${client.id}/weeks/current`, {
+      headers: { cookie: `session=${sessionCookie(signedIn)}` },
+    })
     expect(res.status).toBe(404)
   })
 })

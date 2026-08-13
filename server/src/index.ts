@@ -17,10 +17,6 @@ export default {
   ): Response | Promise<Response> {
     const app = createApp({
       db: createDb(env.DB),
-      basicAuth: {
-        username: env.BASIC_AUTH_USERNAME,
-        password: env.BASIC_AUTH_PASSWORD,
-      },
       sessionSecret: env.SESSION_JWT_SECRET,
     });
     return app.fetch(request, env, ctx);

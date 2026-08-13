@@ -10,6 +10,11 @@ const completeWeekRoute = createRoute({
   method: 'post',
   path: '/complete-week',
   summary: 'Complete a week for a client (starts the Cloudflare Workflow)',
+  // Unauthenticated, like /health: app.ts guards /api/* only. Previously this
+  // inherited the document's Basic requirement without ever being behind it —
+  // declared now so the swap to the session scheme does not carry that forward.
+  // The route being open at all is the known MVP gap in api_contracts.md.
+  security: [],
   request: {
     body: { content: { 'application/json': { schema: CompleteWeekInputSchema } } },
   },

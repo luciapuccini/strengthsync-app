@@ -13,7 +13,7 @@
   ],
   "security": [
     {
-      "basicAuth": []
+      "sessionCookie": []
     }
   ],
   "components": {
@@ -877,9 +877,10 @@
     },
     "parameters": {},
     "securitySchemes": {
-      "basicAuth": {
-        "type": "http",
-        "scheme": "basic"
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
       }
     }
   },
@@ -1017,7 +1018,6 @@
     "/auth/session": {
       "get": {
         "summary": "Return the signed-in client",
-        "security": [],
         "responses": {
           "200": {
             "description": "Signed in",
@@ -1668,6 +1668,7 @@
     "/wf/complete-week": {
       "post": {
         "summary": "Complete a week for a client (starts the Cloudflare Workflow)",
+        "security": [],
         "requestBody": {
           "content": {
             "application/json": {

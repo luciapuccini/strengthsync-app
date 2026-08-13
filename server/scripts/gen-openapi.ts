@@ -16,11 +16,7 @@ import type { Db } from '../src/db/index.ts'
  * imports carry explicit .ts extensions.
  */
 
-const app = createApp({
-  db: {} as Db,
-  basicAuth: { username: '', password: '' },
-  sessionSecret: '',
-})
+const app = createApp({ db: {} as Db, sessionSecret: '' })
 
 const document = app.getOpenAPI31Document({
   openapi: '3.1.0',
@@ -31,16 +27,17 @@ const document = app.getOpenAPI31Document({
       'Public HTTP boundary for the StrengthSync client/server monolith. Generated from the server route definitions by `pnpm gen:openapi` — do not edit by hand.',
   },
   servers: [{ url: '/', description: 'Cloudflare Workers origin' }],
-  security: [{ basicAuth: [] }],
+  security: [{ sessionCookie: [] }],
 })
 
 // The security scheme is referenced by `security` above but has to be
-// registered as a component for the reference to resolve.
+// registered as a component for the reference to resolve. Routes reachable
+// without a session declare `security: []` and opt out of this default.
 document.components = {
   ...document.components,
   securitySchemes: {
     ...document.components?.securitySchemes,
-    basicAuth: { type: 'http', scheme: 'basic' },
+    sessionCookie: { type: 'apiKey', in: 'cookie', name: 'session' },
   },
 }
 

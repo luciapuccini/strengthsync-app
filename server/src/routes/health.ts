@@ -8,8 +8,8 @@ const healthRoute = createRoute({
   method: 'get',
   path: '/health',
   summary: 'Liveness probe',
-  // Unauthenticated: app.ts mounts basicAuth on /api/* only. Declared so the
-  // document does not inherit the global basicAuth requirement for this route.
+  // Unauthenticated: app.ts guards /api/* only. Declared so the document does
+  // not inherit the global session requirement for this route.
   security: [],
   responses: { 200: json('Service is alive', HealthResponseSchema) },
 })

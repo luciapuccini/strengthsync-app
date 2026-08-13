@@ -1,10 +1,10 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { basicAuth } from "hono/basic-auth";
 import { HTTPException } from "hono/http-exception";
 
 import { RepoError, type Db } from "./db/index.ts";
 
 import { errorResponse, repoErrorResponse } from "./lib/errors.ts";
+import { requireSession } from "./lib/session.ts";
 import { defaultHook } from "./lib/validation-error.ts";
 import { authRoutes } from "./routes/auth/endpoints.ts";
 import { clientRoutes } from "./routes/clients/endpoints.ts";
@@ -15,8 +15,6 @@ import { cfWorkflowRoutes } from "./routes/wf/endpoints.ts";
 
 export type AppConfig = {
   db: Db;
-  /** Shared coach credential (docs/architecture/stack.md). */
-  basicAuth: { username: string; password: string };
   /** Signs session JWTs (`lib/session-token.ts`). */
   sessionSecret: string;
 };
@@ -33,7 +31,7 @@ export function createApp(config: AppConfig): OpenAPIHono {
       if (err.status === 400) {
         return errorResponse(c, 400, "invalid_input", err.message);
       }
-      // Anything else hono raised itself (e.g. the 401 from basicAuth).
+      // Anything else hono raised itself.
       return err.getResponse();
     }
     if (err instanceof RepoError) return repoErrorResponse(c, err);
@@ -44,22 +42,14 @@ export function createApp(config: AppConfig): OpenAPIHono {
   // Unauthenticated liveness (docs/architecture/api_contracts.md).
   app.route("/", healthRoutes());
 
-  // Registration and sign-in, outside /api because they mint the token the
-  // guard checks. Mounted alongside the Basic gate below rather than replacing
-  // it; the swap happens when Basic auth retires.
+  // Registration and sign-in, outside /api because they mint the cookie the
+  // guard below checks.
   app.route("/auth", authRoutes(config.db, config.sessionSecret));
 
-  // Public API: shared Basic credential on every /api/* route (production only).
-  // wrangler dev sets NODE_ENV=development; deploy/build set production.
-  if (process.env.NODE_ENV === "production") {
-    app.use(
-      "/api/*",
-      basicAuth({
-        username: config.basicAuth.username,
-        password: config.basicAuth.password,
-      }),
-    );
-  }
+  // The session cookie is the only way into the API, in every environment.
+  // There is deliberately no development exemption: a guard that is off while
+  // the code is being written is a guard nobody tests.
+  app.use("/api/*", requireSession(config.sessionSecret));
   app.route("/api", clientRoutes(config.db));
   app.route("/api", planRoutes(config.db));
   app.route("/api", weekRoutes(config.db));

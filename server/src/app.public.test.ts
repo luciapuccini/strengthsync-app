@@ -1,3 +1,4 @@
+import { sign } from 'hono/jwt'
 import { describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 
@@ -5,10 +6,10 @@ import { weeks } from './db/schema.ts'
 import { addDays, createTestDb, todayIso } from './db/testing/index.ts'
 
 import {
+  SESSION_SECRET,
   activateGeneratedPlanViaRepository,
-  basicHeader,
-  createClientViaApi,
   createTestApp,
+  signUpViaApi,
   upsertProfileViaApi,
 } from './testkit.ts'
 
@@ -20,60 +21,63 @@ describe('health + auth', () => {
     expect(await res.json()).toEqual({ ok: true })
   })
 
-  it('rejects /api/* without credentials (401) in production', async () => {
-    const prev = process.env.NODE_ENV
-    process.env.NODE_ENV = 'production'
-    try {
-      const app = createTestApp()
-      const res = await app.request('/api/clients')
-      expect(res.status).toBe(401)
-    } finally {
-      process.env.NODE_ENV = prev
-    }
+  // These four replace the tests that pinned authentication as production-only.
+  // The guard now runs in every environment, so there is no NODE_ENV to set.
+  it('rejects /api/* without a cookie', async () => {
+    const app = createTestApp()
+    expect((await app.request('/api/clients')).status).toBe(401)
   })
 
-  it('rejects /api/* with wrong credentials (401) in production', async () => {
-    const prev = process.env.NODE_ENV
-    process.env.NODE_ENV = 'production'
-    try {
-      const app = createTestApp()
-      const res = await app.request('/api/clients', {
-        headers: { authorization: `Basic ${btoa('coach:wrong')}` },
-      })
-      expect(res.status).toBe(401)
-    } finally {
-      process.env.NODE_ENV = prev
-    }
+  it('rejects /api/* with a tampered cookie', async () => {
+    const app = createTestApp()
+    const athlete = await signUpViaApi(app)
+    const tampered = `${athlete.headers.cookie}x`
+
+    expect((await app.request('/api/clients', { headers: { cookie: tampered } })).status).toBe(401)
+    expect((await app.request('/api/clients', { headers: { cookie: 'session=nonsense' } })).status).toBe(401)
   })
 
-  it('allows /api/* without credentials when not production', async () => {
-    const prev = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
-    try {
-      const app = createTestApp()
-      const res = await app.request('/api/clients')
-      expect(res.status).not.toBe(401)
-    } finally {
-      process.env.NODE_ENV = prev
-    }
+  it('rejects /api/* with an expired cookie', async () => {
+    const app = createTestApp()
+    const athlete = await signUpViaApi(app)
+    const now = Math.floor(Date.now() / 1000)
+    const expired = await sign({ sub: athlete.id, iat: now - 120, exp: now - 60 }, SESSION_SECRET, 'HS256')
+
+    const res = await app.request('/api/clients', { headers: { cookie: `session=${expired}` } })
+    expect(res.status).toBe(401)
   })
 
+  it('leaves the way in open: sign-up, sign-in and sign-out need no cookie', async () => {
+    const app = createTestApp()
+    await signUpViaApi(app)
+
+    const signIn = await app.request('/auth/sign-in', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'ana@example.com', password: 'dev-password-123' }),
+    })
+    const signOut = await app.request('/auth/sign-out', { method: 'POST' })
+
+    expect(signIn.status).toBe(200)
+    expect(signOut.status).toBe(200)
+  })
 })
 
 describe('clients + profile', () => {
   it('creates and lists clients', async () => {
     const app = createTestApp()
-    await createClientViaApi(app)
+    const athlete = await signUpViaApi(app)
 
-    const list = await app.request('/api/clients', { headers: { authorization: basicHeader() } })
+    const list = await app.request('/api/clients', { headers: athlete.headers })
     expect(list.status).toBe(200)
     expect(((await list.json()) as { clients: unknown[] }).clients).toHaveLength(1)
   })
 
   it('returns 400 invalid_id for a malformed client uuid', async () => {
     const app = createTestApp()
+    const athlete = await signUpViaApi(app)
     const res = await app.request('/api/clients/not-a-uuid/profile', {
-      headers: { authorization: basicHeader() },
+      headers: athlete.headers,
     })
     expect(res.status).toBe(400)
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_id')
@@ -81,9 +85,10 @@ describe('clients + profile', () => {
 
   it('returns 404 client_not_found for a well-formed id that matches no client', async () => {
     const app = createTestApp()
+    const athlete = await signUpViaApi(app)
     const res = await app.request(
       '/api/clients/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/weeks',
-      { headers: { authorization: basicHeader() } },
+      { headers: athlete.headers },
     )
     expect(res.status).toBe(404)
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe('client_not_found')
@@ -91,9 +96,10 @@ describe('clients + profile', () => {
 
   it('rejects an invalid create body with 400', async () => {
     const app = createTestApp()
+    const athlete = await signUpViaApi(app)
     const res = await app.request('/api/clients', {
       method: 'POST',
-      headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+      headers: athlete.jsonHeaders,
       body: JSON.stringify({}),
     })
     expect(res.status).toBe(400)
@@ -104,9 +110,10 @@ describe('clients + profile', () => {
     // Hono rejects unparseable JSON before any validator runs; app.ts maps that
     // 400 back into { error: { code, message } } so the UI can read it.
     const app = createTestApp()
+    const athlete = await signUpViaApi(app)
     const res = await app.request('/api/clients', {
       method: 'POST',
-      headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+      headers: athlete.jsonHeaders,
       body: '{ not json',
     })
     expect(res.status).toBe(400)
@@ -115,16 +122,16 @@ describe('clients + profile', () => {
 
   it('upserts and reads the client profile', async () => {
     const app = createTestApp()
-    const client = await createClientViaApi(app)
-    await upsertProfileViaApi(app, client.id)
+    const athlete = await signUpViaApi(app)
+    await upsertProfileViaApi(app, athlete)
 
-    const res = await app.request(`/api/clients/${client.id}/profile`, {
-      headers: { authorization: basicHeader() },
+    const res = await app.request(`/api/clients/${athlete.id}/profile`, {
+      headers: athlete.headers,
     })
     expect(res.status).toBe(200)
     const body = (await res.json()) as { profile: { age: number; client_id: string } }
     expect(body.profile.age).toBe(34)
-    expect(body.profile.client_id).toBe(client.id)
+    expect(body.profile.client_id).toBe(athlete.id)
   })
 })
 
@@ -134,15 +141,15 @@ describe('removed endpoints', () => {
   it('no longer routes the three endpoints cut from the public surface', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const client = await createClientViaApi(app)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-cut')
+    const athlete = await signUpViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-cut')
 
     for (const path of [
-      `/api/clients/${client.id}`,
-      `/api/clients/${client.id}/plans`,
-      `/api/clients/${client.id}/weeks/${first_week.id}`,
+      `/api/clients/${athlete.id}`,
+      `/api/clients/${athlete.id}/plans`,
+      `/api/clients/${athlete.id}/weeks/${first_week.id}`,
     ]) {
-      const res = await app.request(path, { headers: { authorization: basicHeader() } })
+      const res = await app.request(path, { headers: athlete.headers })
       expect(res.status, `${path} should not be routed`).toBe(404)
     }
   })
@@ -151,15 +158,15 @@ describe('removed endpoints', () => {
 describe('training reads', () => {
   it('returns 404 for current week and active plan before any plan exists', async () => {
     const app = createTestApp()
-    const client = await createClientViaApi(app)
+    const athlete = await signUpViaApi(app)
 
-    const week = await app.request(`/api/clients/${client.id}/weeks/current`, {
-      headers: { authorization: basicHeader() },
+    const week = await app.request(`/api/clients/${athlete.id}/weeks/current`, {
+      headers: athlete.headers,
     })
     expect(week.status).toBe(404)
 
-    const plan = await app.request(`/api/clients/${client.id}/plans/active`, {
-      headers: { authorization: basicHeader() },
+    const plan = await app.request(`/api/clients/${athlete.id}/plans/active`, {
+      headers: athlete.headers,
     })
     expect(plan.status).toBe(404)
   })
@@ -167,17 +174,17 @@ describe('training reads', () => {
   it('returns 404 when the in_flight week has not started yet', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const client = await createClientViaApi(app)
-    await upsertProfileViaApi(app, client.id)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-future-week')
+    const athlete = await signUpViaApi(app)
+    await upsertProfileViaApi(app, athlete)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-future-week')
     const futureStart = addDays(todayIso(), 7)
     await db
       .update(weeks)
       .set({ start_date: futureStart, end_date: addDays(futureStart, 6) })
       .where(eq(weeks.id, first_week.id))
 
-    const res = await app.request(`/api/clients/${client.id}/weeks/current`, {
-      headers: { authorization: basicHeader() },
+    const res = await app.request(`/api/clients/${athlete.id}/weeks/current`, {
+      headers: athlete.headers,
     })
     expect(res.status).toBe(404)
     expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
@@ -187,9 +194,9 @@ describe('training reads', () => {
 
   it('rejects an invalid week status filter with 400', async () => {
     const app = createTestApp()
-    const client = await createClientViaApi(app)
-    const res = await app.request(`/api/clients/${client.id}/weeks?status=bogus`, {
-      headers: { authorization: basicHeader() },
+    const athlete = await signUpViaApi(app)
+    const res = await app.request(`/api/clients/${athlete.id}/weeks?status=bogus`, {
+      headers: athlete.headers,
     })
     expect(res.status).toBe(400)
   })
@@ -202,15 +209,15 @@ describe('week route parameters', () => {
     // an unusable route id, so it keeps invalid_input (see #003's mapping).
     const db = createTestDb()
     const app = createTestApp({ db })
-    const client = await createClientViaApi(app)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-day-index')
+    const athlete = await signUpViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-day-index')
 
     for (const dayIndex of ['0', '8', 'abc']) {
       const res = await app.request(
-        `/api/clients/${client.id}/weeks/${first_week.id}/days/${dayIndex}/save`,
+        `/api/clients/${athlete.id}/weeks/${first_week.id}/days/${dayIndex}/save`,
         {
           method: 'POST',
-          headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+          headers: athlete.jsonHeaders,
           body: JSON.stringify({ exercises: [] }),
         },
       )
@@ -222,17 +229,17 @@ describe('week route parameters', () => {
   it('filters the week list by planId', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const client = await createClientViaApi(app)
-    const { plan } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-filter')
+    const athlete = await signUpViaApi(app)
+    const { plan } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-filter')
 
-    const matching = await app.request(`/api/clients/${client.id}/weeks?planId=${plan.id}`, {
-      headers: { authorization: basicHeader() },
+    const matching = await app.request(`/api/clients/${athlete.id}/weeks?planId=${plan.id}`, {
+      headers: athlete.headers,
     })
     expect(((await matching.json()) as { weeks: unknown[] }).weeks.length).toBeGreaterThan(0)
 
     const other = await app.request(
-      `/api/clients/${client.id}/weeks?planId=1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d`,
-      { headers: { authorization: basicHeader() } },
+      `/api/clients/${athlete.id}/weeks?planId=1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d`,
+      { headers: athlete.headers },
     )
     expect(((await other.json()) as { weeks: unknown[] }).weeks).toHaveLength(0)
   })
@@ -242,14 +249,14 @@ describe('day log writes', () => {
   it('rejects a day patch whose skipped exercise carries sets (400)', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const client = await createClientViaApi(app)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-setup')
+    const athlete = await signUpViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-setup')
 
     const res = await app.request(
-      `/api/clients/${client.id}/weeks/${first_week.id}/days/1`,
+      `/api/clients/${athlete.id}/weeks/${first_week.id}/days/1`,
       {
         method: 'PATCH',
-        headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+        headers: athlete.jsonHeaders,
         body: JSON.stringify({
           completed: false,
           exercises: [
@@ -277,12 +284,14 @@ describe('workflow trigger', () => {
     },
   }
 
+  // No cookie: /wf/* is outside the guard, as it was outside the Basic gate.
+  // The requests used to carry a Basic header that nothing checked.
   const post = (body: unknown) =>
     createTestApp().request(
       '/wf/complete-week',
       {
         method: 'POST',
-        headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
       },
       stubEnv,
@@ -310,14 +319,14 @@ describe('day save', () => {
   it('saves a day via POST and always marks it completed', async () => {
     const db = createTestDb()
     const app = createTestApp({ db })
-    const client = await createClientViaApi(app)
-    const { first_week } = await activateGeneratedPlanViaRepository(db, client.id, 'wf-setup')
+    const athlete = await signUpViaApi(app)
+    const { first_week } = await activateGeneratedPlanViaRepository(db, athlete.id, 'wf-setup')
 
     const res = await app.request(
-      `/api/clients/${client.id}/weeks/${first_week.id}/days/1/save`,
+      `/api/clients/${athlete.id}/weeks/${first_week.id}/days/1/save`,
       {
         method: 'POST',
-        headers: { authorization: basicHeader(), 'content-type': 'application/json' },
+        headers: athlete.jsonHeaders,
         body: JSON.stringify({
           exercises: [
             {
