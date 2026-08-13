@@ -1,3 +1,7 @@
+## Status
+
+DONE — commit c514126
+
 ## Parent PRD
 
 `issues/auth/prd.md`
@@ -30,18 +34,18 @@ See the "Authorization" and "Server modules" sections of the parent PRD.
 
 ## Acceptance criteria
 
-- [ ] Sign-up with a name, email and password creates both the athlete and the credential, responds with the athlete, and sets the session cookie.
-- [ ] The new athlete is attached to the seeded coach through the existing creation function, which is unchanged.
-- [ ] Signing up with an email already registered returns a conflict.
-- [ ] A password shorter than eight characters returns invalid input, enforced by the request schema.
-- [ ] Sign-in with correct credentials responds with the athlete and sets the session cookie.
-- [ ] A wrong password and an unknown email both return unauthorized, with responses a caller cannot tell apart.
-- [ ] Sign-out clears the cookie.
-- [ ] The bootstrap route returns the athlete with a valid cookie, and unauthorized with no cookie, a tampered cookie, or an expired one.
-- [ ] The cookie is HttpOnly, SameSite=Lax and path-wide, and is marked Secure in production.
-- [ ] The contract is regenerated and both generated artifacts are committed.
-- [ ] Every pre-existing test still passes untouched — the Basic gate and its production-only condition are not modified in this slice.
-- [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+- [x] Sign-up with a name, email and password creates both the athlete and the credential, responds with the athlete, and sets the session cookie.
+- [x] The new athlete is attached to the seeded coach through the existing creation function, which is unchanged.
+- [x] Signing up with an email already registered returns a conflict.
+- [x] A password shorter than eight characters returns invalid input, enforced by the request schema.
+- [x] Sign-in with correct credentials responds with the athlete and sets the session cookie.
+- [x] A wrong password and an unknown email both return unauthorized, with responses a caller cannot tell apart.
+- [x] Sign-out clears the cookie.
+- [x] The bootstrap route returns the athlete with a valid cookie, and unauthorized with no cookie, a tampered cookie, or an expired one.
+- [x] The cookie is HttpOnly, SameSite=Lax and path-wide, and is marked Secure in production.
+- [x] The contract is regenerated and both generated artifacts are committed.
+- [x] Every pre-existing test still passes untouched — the Basic gate and its production-only condition are not modified in this slice.
+- [x] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Blocked by
 
