@@ -67,13 +67,27 @@ pnpm install
 
 pnpm --filter @strengthsync/server db:migrate:local
 pnpm --filter @strengthsync/server db:seed:local
-pnpm --filter @strengthsync/server db:seed:demo:local
 ```
-
 
 ```bash
 pn turbo dev
 ```
+
+### Seeding production
+
+There is no `:remote` counterpart to any local seed command — seeding production
+is a deliberate manual step, not something a package script can trigger by
+accident:
+
+```bash
+pnpm --filter @strengthsync/server db:migrate:remote
+wrangler d1 execute strengthsync --remote --file ./server/db/seeds/000_default_coach.sql
+```
+
+Only the coach row belongs in production. The demo, history and credential
+seeds exist to make a freshly migrated local database usable by hand — the
+credential seed in particular commits a real password hash, which is safe
+only because nothing in the package manifest can push it to production.
 
 ## Troubleshoot
 
