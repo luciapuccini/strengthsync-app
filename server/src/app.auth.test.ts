@@ -174,19 +174,18 @@ describe('the seeded demo athlete', () => {
     expect((await clientOf(res)).id).toBe(DEMO_CLIENT_ID)
   })
 
+  // The cookie is the whole address: the seeded id appears nowhere in these
+  // requests, only in the assertion about what came back.
   it('reaches their plan and history under that identity', async () => {
     const app = createTestApp({ db: createDemoSeededDb() })
     const res = await signIn(app, DEMO)
-    const client = await clientOf(res)
     const headers = { cookie: `session=${sessionCookie(res)}` }
 
     const plan = (await (
-      await app.request(`/api/clients/${client.id}/plans/active`, { headers })
+      await app.request('/api/me/plans/active', { headers })
     ).json()) as { plan: { id: string } }
     const history = (await (
-      await app.request(`/api/clients/${client.id}/weeks?status=completed&planId=${plan.plan.id}`, {
-        headers,
-      })
+      await app.request(`/api/me/weeks?status=completed&planId=${plan.plan.id}`, { headers })
     ).json()) as { weeks: unknown[] }
 
     expect(plan.plan.id).toBe('00000000-0000-4000-8000-000000000012')
@@ -201,12 +200,18 @@ describe('the seeded demo athlete', () => {
   it('has no current week, because the seeded window has expired', async () => {
     const app = createTestApp({ db: createDemoSeededDb() })
     const signedIn = await signIn(app, DEMO)
-    const client = await clientOf(signedIn)
 
-    const res = await app.request(`/api/clients/${client.id}/weeks/current`, {
+    const res = await app.request('/api/me/weeks/current', {
       headers: { cookie: `session=${sessionCookie(signedIn)}` },
     })
     expect(res.status).toBe(404)
+    // The code, not just the status: an unrouted path 404s too, which is how
+    // this test kept passing after `issues/auth/013` deleted the path it used
+    // to call. The route has to exist and answer for the assertion to mean
+    // "the seeded week has expired".
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'current_week_not_found',
+    )
   })
 })
 

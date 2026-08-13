@@ -41,8 +41,8 @@ export const WeekListResponseSchema = z
   .object({ weeks: z.array(Week) })
   .openapi('WeekListResponse')
 
+/** The week and day alone: the athlete comes from the session, never the path. */
 export const DayParamsSchema = z.object({
-  clientId: uuidParam('clientId'),
   weekId: uuidParam('weekId'),
   // Coerced because path params arrive as strings. A failure here is not a
   // malformed route id, so it stays `invalid_input` — see lib/validation-error.
@@ -53,9 +53,6 @@ export const DayParamsSchema = z.object({
     .max(7)
     .openapi({ param: { name: 'dayIndex', in: 'path' } }),
 })
-
-/** The same params without the athlete id, which /me takes from the session. */
-export const MyDayParamsSchema = DayParamsSchema.omit({ clientId: true })
 
 export const WeekListQuerySchema = z.object({
   status: WeekStatusSchema.optional().openapi({ param: { name: 'status', in: 'query' } }),

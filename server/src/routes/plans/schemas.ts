@@ -27,10 +27,5 @@ const Plan = z
 
 export const PlanResponseSchema = z.object({ plan: Plan }).openapi('PlanResponse')
 
-export const PlanParamsSchema = z.object({
-  clientId: uuidParam('clientId'),
-  planId: uuidParam('planId'),
-})
-
-/** The same params without the athlete id, which /me takes from the session. */
+/** The plan id alone: the athlete comes from the session, never from the path. */
 export const PlanIdParamSchema = z.object({ planId: uuidParam('planId') })

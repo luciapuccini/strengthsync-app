@@ -4,7 +4,7 @@ import z from "zod";
 import { COACHING_RULES } from "../domain/coach/index.ts";
 import {
   completeWeek,
-  getPlan,
+  getActivePlanOrThrow,
   getProfile,
   saveNextWeek,
   type Db,
@@ -62,7 +62,7 @@ async function handleLoadContext(
   clientId: string,
 ): Promise<{ currentPlan: Plan; rules: string; userProfile: ClientProfile }> {
   const [currentPlan, userProfile] = await Promise.all([
-    getPlan(db, clientId),
+    getActivePlanOrThrow(db, clientId),
     getProfile(db, clientId),
   ]);
 

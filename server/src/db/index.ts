@@ -8,11 +8,7 @@ export { RepoError, type RepoErrorKind } from "./errors.ts";
 export * as schema from "./schema.ts";
 export { addDays, todayIso } from "./dates.ts";
 
-export {
-  createClient,
-  getClient,
-  listClients,
-} from "./repositories/clients.ts";
+export { createClient, getClient } from "./repositories/clients.ts";
 export {
   createCredential,
   getCredentialByEmail,
@@ -26,7 +22,7 @@ export {
   activateGeneratedPlanV2,
   findPlanById,
   getActivePlan,
-  getPlan,
+  getActivePlanOrThrow,
   listPlans,
 } from "./repositories/plans.ts";
 export {

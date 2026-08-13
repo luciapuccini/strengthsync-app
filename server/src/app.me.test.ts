@@ -13,10 +13,10 @@ import {
 } from './testkit.ts'
 
 /**
- * The session-addressed API. Every path here is missing the athlete id its
- * /clients counterpart carries, so the athlete comes from the verified cookie
- * and no request can name anyone else — which is what the second athlete in
- * most of these tests exists to demonstrate.
+ * The session-addressed API — since `issues/auth/013`, the only API. No path
+ * carries an athlete id, so the athlete comes from the verified cookie and no
+ * request can name anyone else, which is what the second athlete in most of
+ * these tests exists to demonstrate.
  */
 
 type Scene = { db: Db; app: OpenAPIHono; ana: TestClient; bea: TestClient }
@@ -190,9 +190,15 @@ describe('day log writes under /api/me', () => {
 
     expect(res.status).toBe(200)
     const week = (
-      await body<{ week: { schedule: Array<{ day_index: number; completed: boolean }> } }>(res)
+      await body<{
+        week: {
+          schedule: Array<{ day_index: number; completed: boolean; completed_at: string | null }>
+        }
+      }>(res)
     ).week
-    expect(week.schedule.find((d) => d.day_index === 1)?.completed).toBe(true)
+    const day = week.schedule.find((d) => d.day_index === 1)
+    expect(day?.completed).toBe(true)
+    expect(day?.completed_at).not.toBeNull()
   })
 
   it('patches a day', async () => {

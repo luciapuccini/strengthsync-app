@@ -53,7 +53,7 @@ export async function signUpViaApi(app: OpenAPIHono, displayName = 'Ana'): Promi
 }
 
 export async function upsertProfileViaApi(app: OpenAPIHono, client: TestClient): Promise<void> {
-  await app.request(`/api/clients/${client.id}/profile`, {
+  await app.request('/api/me/profile', {
     method: 'PUT',
     headers: client.jsonHeaders,
     body: JSON.stringify({

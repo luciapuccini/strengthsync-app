@@ -7,10 +7,9 @@ import type { Db } from "../db.ts";
 import { RepoError } from "../errors.ts";
 import { clients, coaches } from "../schema.ts";
 
-export async function listClients(db: Db): Promise<Client[]> {
-  return db.select().from(clients).orderBy(clients.created_at);
-}
-
+// There is deliberately no `listClients`: it went with the route that used it
+// in `issues/auth/013`. Reading every client is not something this application
+// does — an athlete sees their own data, addressed by their session.
 export async function getClient(
   db: Db,
   clientId: string,

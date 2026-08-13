@@ -25,10 +25,6 @@ import {
  * schemas in `routes/weeks/schemas.ts` do, and are built differently.
  */
 
-export const CreateClientInputSchema = z
-  .object({ display_name: z.string().min(1) })
-  .openapi('CreateClientInput')
-
 export const UpdateClientProfileSchema = z
   .object(ClientProfileWriteSchema.shape)
   .openapi('UpdateClientProfile')
@@ -36,9 +32,8 @@ export const UpdateClientProfileSchema = z
 const Client = z.object(ClientSchema.shape).openapi('Client')
 const ClientProfile = z.object(ClientProfileSchema.shape).openapi('ClientProfile')
 
-export const ClientListResponseSchema = z
-  .object({ clients: z.array(Client) })
-  .openapi('ClientListResponse')
+// `Client` reaches the contract through this one response, which sign-up and
+// sign-in return. The list shape that used to carry it went with its route.
 export const ClientResponseSchema = z.object({ client: Client }).openapi('ClientResponse')
 export const ClientProfileResponseSchema = z
   .object({ profile: ClientProfile })

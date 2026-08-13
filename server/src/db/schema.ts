@@ -51,9 +51,10 @@ export const clients = sqliteTable(
 );
 
 /**
- * Sign-in credentials, kept off the `clients` row so no existing `SELECT *`
- * (e.g. `listClients`) can leak a password hash to the browser. Keyed by the
- * athlete's own id: one credential set per athlete.
+ * Sign-in credentials, kept off the `clients` row so that no `SELECT *` over
+ * `clients` — which is how every client read is written — can leak a password
+ * hash to the browser. Keyed by the athlete's own id: one credential set per
+ * athlete.
  */
 export const clientCredentials = sqliteTable("client_credentials", {
   client_id: text("client_id")

@@ -40,15 +40,7 @@ export async function getActivePlan(
   return row ? toPlan(row) : null;
 }
 
-/**
- * One of a client's plans, by id, or null when they have no such plan.
- *
- * Distinct from `getPlan` below, which despite its name and its `planId`-shaped
- * caller in `routes/plans/endpoints.ts` reads the *active* plan and throws when
- * there is none. That is left alone — `issues/auth/010` is not to touch the
- * athlete-id routes, and `issues/auth/013` deletes them — but the /me route
- * that outlives them needs a lookup that means what it says.
- */
+/** One of a client's plans, by id, or null when they have no such plan. */
 export async function findPlanById(
   db: Db,
   clientId: string,
@@ -63,18 +55,25 @@ export async function findPlanById(
   return row ? toPlan(row) : null;
 }
 
-export async function getPlan(db: Db, clientId: string): Promise<Plan> {
-  const rows = await db
-    .select()
-    .from(plans)
-    .where(and(eq(plans.client_id, clientId), eq(plans.status, "active")))
-    .limit(1);
-  const row = rows[0];
-
-  if (!row) {
-    throw new Error("No plan found for client");
+/**
+ * The active plan, or a thrown error. For the workflow, which cannot proceed
+ * without one and has no way to answer a caller.
+ *
+ * Named `getPlan` until the route deletion in `issues/auth/013` left the
+ * workflow as its only caller: it read the *active* plan while sitting behind
+ * `GET /clients/{clientId}/plans/{planId}`, which therefore answered with the
+ * active plan whatever id was asked for. Renamed so the name cannot mislead
+ * the next caller, and reduced to a wrapper so the query lives in one place.
+ */
+export async function getActivePlanOrThrow(
+  db: Db,
+  clientId: string,
+): Promise<Plan> {
+  const plan = await getActivePlan(db, clientId);
+  if (!plan) {
+    throw new Error(`client ${clientId} has no active plan`);
   }
-  return toPlan(row);
+  return plan;
 }
 
 /**

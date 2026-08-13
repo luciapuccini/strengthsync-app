@@ -7,7 +7,7 @@ import { addDays, todayIso } from '../dates'
 import type { Db } from '../db'
 import { RepoError } from '../errors'
 import { weeks } from '../schema'
-import { createClient, getClient, listClients } from '../repositories/clients'
+import { createClient, getClient } from '../repositories/clients'
 import { activateGeneratedPlanV2, getActivePlan, listPlans } from '../repositories/plans'
 import { upsertProfile } from '../repositories/profiles'
 import {
@@ -65,10 +65,11 @@ beforeEach(async () => {
 
 describe('clients', () => {
   it('creates a client under the seeded coach', async () => {
-    const clients = await listClients(db)
-    expect(clients).toHaveLength(1)
-    expect(clients[0]?.coach_id).toBe('00000000-0000-4000-8000-000000000001')
-    expect(await getClient(db, clientId)).toMatchObject({ display_name: 'Ana', status: 'active' })
+    expect(await getClient(db, clientId)).toMatchObject({
+      coach_id: '00000000-0000-4000-8000-000000000001',
+      display_name: 'Ana',
+      status: 'active',
+    })
   })
 })
 
