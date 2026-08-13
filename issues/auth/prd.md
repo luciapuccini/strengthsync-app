@@ -357,10 +357,13 @@ they are not a blocker if they prove fiddly.
     `json_set` at seed time, and the plan's and client's timestamps shift with
     the same anchor. `app.auth.test.ts` now asserts the seeded athlete has a
     current week instead of asserting its absence.
-  - **`POST /wf/complete-week` declares a 401 it can never return.** The route
+  - ~~**`POST /wf/complete-week` declares a 401 it can never return.** The route
     is unauthenticated by design (already recorded below as a known MVP gap);
     issue 009 corrected its `security` declaration but left the response.
-    *Belongs with issue 015.*
+    *Belongs with issue 015.*~~ **RESOLVED in issue 015.** The response is
+    dropped and the contract regenerated: one operation changed, nothing added,
+    nothing removed elsewhere, no schema touched. The route being open at all
+    stays a known MVP gap, recorded in `api_contracts.md`.
   - **The browser's resource caches survive a sign-out, so a second athlete
     signing in on the same tab reads the first one's data.**
     `api/weekResource.ts` and `api/historyResource.ts` each hold a
@@ -373,8 +376,16 @@ they are not a blocker if they prove fiddly.
     `invalidateCompletedWeeks` has no production caller at all — its only
     reference in the repository is its own test — which is the signal that
     caught this. Found while implementing issue 014, which changes neither the
-    session nor either resource. *Not owned by any issue.* It is the same
-    cross-athlete read this phase removed from the API, surviving in the tab.
+    session nor either resource. It is the same cross-athlete read this phase
+    removed from the API, surviving in the tab.
+    **Standing known defect after issue 015, not owned by any issue.** The
+    reason it is not fixed here: the fix is a behaviour change to the session
+    lifecycle, needing its own test that a second sign-in refetches rather than
+    replaying — and issue 015 is a documentation sweep whose one code change is
+    a response declaration. Folding a session fix into it would put an
+    untested-by-that-issue behaviour change under a docs commit. It is the
+    first thing to pick up after this phase; nothing else on this list is a
+    live data leak.
 - **The contract-check script referenced by continuous integration does not
   exist.** The pipeline invokes it on every pull request, the contract
   documentation describes it as the guard that makes drift unmergeable, and the
@@ -385,18 +396,30 @@ they are not a blocker if they prove fiddly.
   at that step, so a genuine break is hard to distinguish from the standing one;
   and contract drift is unguarded precisely while nearly every path is being
   rewritten. The repository's own scratch notes guessed the script "may be
-  unnecessary" — it is not, it is missing.
-- **A read route for a plan by identifier may become consumerless.** With the
-  history page resolving the athlete's active plan itself, the by-identifier plan
-  read has no remaining caller. It is deliberately left in place here rather than
-  cut, and flagged for the same kind of audit that previously removed three
-  consumerless routes.
-- **The remember-device design note is superseded.** It proposed extending Basic
+  unnecessary" — it is not, it is missing. **Standing known defect after issue
+  015**, which corrected that scratch note in `NOTES.md` but deliberately did
+  not add the script: writing it is a CI change with its own verification, and
+  015's own scope says the defect stays recorded for separate work.
+- **A read route for a plan by identifier is consumerless.** With the history
+  page resolving the athlete's active plan itself, the by-identifier plan read
+  has no remaining caller — and neither does its api-client wrapper, `getPlan`,
+  whose only reference is its own test. It is deliberately left in place rather
+  than cut, and flagged for the same kind of audit that previously removed three
+  consumerless routes. **Standing known defect after issue 015**, which recorded
+  it in `docs/architecture/api_contracts.md` under "Endpoints current state" so
+  the audit has one place to find it. Cutting a route is a contract change, not
+  a documentation one, so it is not 015's to make.
+- ~~**The remember-device design note is superseded.** It proposed extending Basic
   authentication with a signed thirty-day cookie carrying only an expiry. This
   phase adopts its cookie shape, its lifetime and its middleware location, but
   carries the athlete's identity in the payload and retires Basic authentication
-  rather than layering on top of it.
-- **`db:generate` is currently broken.** `server/db/drizzle.config.ts`'s
+  rather than layering on top of it.~~ **RESOLVED in issue 015.**
+  `docs/future_state_after_mvp/rember_user.md` now carries a superseded banner
+  listing what was adopted (cookie shape, thirty-day lifetime, no sessions
+  table, middleware location, the test list) and what diverged (identity in the
+  payload, Basic retired rather than kept as a fallback, `hono/jwt` instead of a
+  hand-rolled payload, no development exemption, and the renames).
+- ~~**`db:generate` is currently broken.** `server/db/drizzle.config.ts`'s
   `schema` path (`../src/db/schema.ts`) is resolved relative to the process's
   working directory, not the config file's location. The repository
   restructuring that produced the current `server/` layout moved the config
@@ -404,7 +427,12 @@ they are not a blocker if they prove fiddly.
   from `server/` fails to find the schema. Discovered while generating this
   phase's first migration by invoking `drizzle-kit generate` directly from
   `server/db/` instead. Recorded here rather than fixed, the same way the
-  `check:openapi` gap above is recorded — narrower scope than this phase.
+  `check:openapi` gap above is recorded — narrower scope than this phase.~~
+  **RESOLVED in commit `83416d0`**, which anchored both paths to the script's
+  working directory (`./src/db/schema.ts`, `./db/drizzle`) and left a comment
+  saying which directory that is. `out` had also pointed at `server/drizzle`,
+  which wrangler never applies — that would have surfaced as the next silent
+  failure once the schema error cleared.
 - **Key-derivation cost interacts with the platform's CPU budget.** The free
   Workers plan allows ten milliseconds of CPU per request, and password hashing is
   deliberately expensive. The iteration count should be measured on the platform
