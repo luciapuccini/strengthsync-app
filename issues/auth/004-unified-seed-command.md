@@ -1,3 +1,7 @@
+## Status
+
+DONE — commit 0d6f96c
+
 ## Parent PRD
 
 `issues/auth/prd.md`
@@ -21,13 +25,13 @@ See the "Seeds, scripts and documentation" section of the parent PRD.
 
 ## Acceptance criteria
 
-- [ ] One local seed command applies all four seeds in the correct order against a fresh migrated database.
-- [ ] The granular local seed commands still exist and still work individually.
-- [ ] No remote seed command remains in any package manifest.
-- [ ] The readme's getting-started section shows migrate plus one seed command.
-- [ ] The readme documents seeding the production coach row as a manual step, and says why the other seeds have no remote command.
-- [ ] Running migrate followed by the one seed command from scratch produces a database in which the demo athlete can be looked up by email.
-- [ ] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
+- [x] One local seed command applies all four seeds in the correct order against a fresh migrated database.
+- [x] The granular local seed commands still exist and still work individually.
+- [x] No remote seed command remains in any package manifest.
+- [x] The readme's getting-started section shows migrate plus one seed command.
+- [x] The readme documents seeding the production coach row as a manual step, and says why the other seeds have no remote command.
+- [x] Running migrate followed by the one seed command from scratch produces a database in which the demo athlete can be looked up by email.
+- [x] Commit passes lefthook pre-commit: `pnpm typecheck`, `pnpm lint`, `pnpm test`.
 
 ## Blocked by
 
