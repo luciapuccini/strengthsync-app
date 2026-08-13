@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { JSX } from "react";
 
 import { Button } from "@/shadcn/ui/button";
@@ -38,17 +39,50 @@ function GoogleIcon(): JSX.Element {
   );
 }
 
+/**
+ * Apple and Google sign-in are not built. The buttons stay on both auth screens
+ * because the front door is designed around them, but they render natively
+ * `disabled` rather than as the live-looking no-ops they were: `disabled` takes
+ * a button out of the tab order, and the shared variant already carries
+ * `disabled:pointer-events-none`, so neither pointer nor keyboard reaches them.
+ * `aria-disabled` would have announced the state while leaving them focusable
+ * and clickable.
+ *
+ * The caption sits below the buttons rather than above them, so nothing between
+ * the first field and the submit button moves and the screens' mobile layout is
+ * unchanged. `useId` rather than a constant because two ids would collide if
+ * this ever rendered twice on one screen.
+ */
 export function SocialAuthButtons(): JSX.Element {
+  const captionId = useId();
+
   return (
     <div className="flex w-full flex-col gap-3">
-      <Button type="button" variant="outline" size="lg" className="w-full gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        className="w-full gap-2"
+        disabled
+        aria-describedby={captionId}
+      >
         <AppleIcon />
         Continue with Apple
       </Button>
-      <Button type="button" variant="outline" size="lg" className="w-full gap-2">
+      <Button
+        type="button"
+        variant="outline"
+        size="lg"
+        className="w-full gap-2"
+        disabled
+        aria-describedby={captionId}
+      >
         <GoogleIcon />
         Continue with Google
       </Button>
+      <p id={captionId} className="text-center text-xs text-muted-foreground">
+        Social sign-in isn&apos;t available yet.
+      </p>
     </div>
   );
 }
