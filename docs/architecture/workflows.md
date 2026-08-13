@@ -174,3 +174,8 @@ through Cloudflare Workers Logs; the UI does not poll workflow status.
 - Streaming coach chat is not part of the MVP workflow surface.
 - No product-table `JobRun` or `LlmCall`: the workflow runtime provides execution records;
   LLM tracing is deferred.
+
+**Post-MVP notes** (see [future_state_after_mvp/todos.md](../future_state_after_mvp/todos.md)):
+
+- Auto-trigger the week-complete workflow (e.g. when the last day of the week is saved), instead of only a manual Complete week action.
+- Chat AI over “my profile” (coach chat grounded in the athlete profile).
