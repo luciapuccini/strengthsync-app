@@ -13,6 +13,10 @@ export {
   getClient,
   listClients,
 } from "./repositories/clients.ts";
+export {
+  createCredential,
+  getCredentialByEmail,
+} from "./repositories/credentials.ts";
 export { getProfile, upsertProfile } from "./repositories/profiles.ts";
 export {
   activateGeneratedPlanV2,

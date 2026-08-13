@@ -8,13 +8,18 @@
 import { sign, verify as verifyJwt } from "hono/jwt";
 
 const ALGORITHM = "HS256";
-const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60;
+
+/**
+ * Thirty days. Exported so the cookie that carries the token can set the same
+ * lifetime rather than declaring a second one that could drift from this.
+ */
+export const LIFETIME_SECONDS = 30 * 24 * 60 * 60;
 
 /** Issue a session token for a client, valid for thirty days. */
 export async function issue(clientId: string, secret: string): Promise<string> {
   const issuedAt = Math.floor(Date.now() / 1000);
   return sign(
-    { sub: clientId, iat: issuedAt, exp: issuedAt + THIRTY_DAYS_SECONDS },
+    { sub: clientId, iat: issuedAt, exp: issuedAt + LIFETIME_SECONDS },
     secret,
     ALGORITHM,
   );

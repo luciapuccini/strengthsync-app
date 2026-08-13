@@ -6,6 +6,7 @@ import { RepoError, type Db } from "./db/index.ts";
 
 import { errorResponse, repoErrorResponse } from "./lib/errors.ts";
 import { defaultHook } from "./lib/validation-error.ts";
+import { authRoutes } from "./routes/auth/endpoints.ts";
 import { clientRoutes } from "./routes/clients/endpoints.ts";
 import { healthRoutes } from "./routes/health.ts";
 import { planRoutes } from "./routes/plans/endpoints.ts";
@@ -16,6 +17,8 @@ export type AppConfig = {
   db: Db;
   /** Shared coach credential (docs/architecture/stack.md). */
   basicAuth: { username: string; password: string };
+  /** Signs session JWTs (`lib/session-token.ts`). */
+  sessionSecret: string;
 };
 
 /** The document builder in `scripts/gen-openapi.ts` needs the OpenAPIHono type. */
@@ -40,6 +43,11 @@ export function createApp(config: AppConfig): OpenAPIHono {
 
   // Unauthenticated liveness (docs/architecture/api_contracts.md).
   app.route("/", healthRoutes());
+
+  // Registration and sign-in, outside /api because they mint the token the
+  // guard checks. Mounted alongside the Basic gate below rather than replacing
+  // it; the swap happens when Basic auth retires.
+  app.route("/auth", authRoutes(config.db, config.sessionSecret));
 
   // Public API: shared Basic credential on every /api/* route (production only).
   // wrangler dev sets NODE_ENV=development; deploy/build set production.

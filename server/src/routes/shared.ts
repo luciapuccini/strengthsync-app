@@ -27,6 +27,7 @@ export const json = <S>(description: string, schema: S) => ({
 export const unauthorized = json('Missing or invalid credentials', ApiErrorSchema)
 export const invalidInput = json('Invalid input', ApiErrorSchema)
 export const notFound = json('Not found', ApiErrorSchema)
+export const conflict = json('Conflicts with existing state', ApiErrorSchema)
 
 export const uuidParam = (name: string) => z.uuid().openapi({ param: { name, in: 'path' } })
 

@@ -19,6 +19,7 @@ import type { Db } from '../src/db/index.ts'
 const app = createApp({
   db: {} as Db,
   basicAuth: { username: '', password: '' },
+  sessionSecret: '',
 })
 
 const document = app.getOpenAPI31Document({

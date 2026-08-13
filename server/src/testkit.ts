@@ -8,6 +8,8 @@ import { createApp, type AppConfig } from './app.ts'
 
 export const BASIC = { username: 'coach', password: 'test-secret' }
 
+export const SESSION_SECRET = 'test-session-secret'
+
 export function basicHeader(): string {
   return `Basic ${btoa(`${BASIC.username}:${BASIC.password}`)}`
 }
@@ -16,6 +18,7 @@ export function createTestApp(overrides: Partial<AppConfig> = {}): OpenAPIHono {
   return createApp({
     db: createTestDb(),
     basicAuth: BASIC,
+    sessionSecret: SESSION_SECRET,
     ...overrides,
   })
 }
