@@ -6,10 +6,12 @@ Operations for the MVP's durable workflow. The workflow is a Cloudflare Worker W
 
 The workflow ships with `server`:
 
-1. Deploy `server` and D1 migrations through CI/CD (see [`ci_cd.md`](./ci_cd.md)).
+1. Deploy `server` and D1 migrations through CI/CD (see [stack.md](../architecture/stack.md) CI/CD).
 2. `wrangler deploy` uploads the Worker including the workflow entrypoint and binding; no separate rollout step exists.
 
 Deploy order matters: apply D1 schema migrations before deploying a workflow version that depends on them.
+
+**MVP todo:** production host should be `app.strengthsync.ai` (align with the product domain).
 
 ## Starting and observing runs
 

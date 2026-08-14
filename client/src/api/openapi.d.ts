@@ -342,6 +342,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save the signed-in client's onboarding answers as their coaching profile */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OnboardingAnswers"];
+                };
+            };
+            responses: {
+                /** @description Profile saved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ClientProfileResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Missing or invalid credentials */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/plans/active": {
         parameters: {
             query?: never;
@@ -455,6 +522,60 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/plans/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate and activate the signed-in client's first plan */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Plan generated and activated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GeneratePlanResponse"];
+                    };
+                };
+                /** @description Missing or invalid credentials */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Conflicts with existing state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -838,7 +959,7 @@ export interface components {
             nutrition: {
                 [key: string]: unknown;
             } | null;
-            swimming: {
+            activities: {
                 [key: string]: unknown;
             } | null;
             schedule_preferences: {
@@ -866,13 +987,46 @@ export interface components {
             nutrition: {
                 [key: string]: unknown;
             } | null;
-            swimming: {
+            activities: {
                 [key: string]: unknown;
             } | null;
             schedule_preferences: {
                 [key: string]: unknown;
             } | null;
             notes: string | null;
+        };
+        OnboardingAnswers: {
+            /** @enum {string} */
+            sex: "male" | "female" | "other";
+            age: number;
+            height_cm: number;
+            weight_kg: number;
+            body_fat_percent?: number;
+            /** @enum {string} */
+            goal: "lose_fat" | "build_muscle" | "get_stronger";
+            /** Format: date */
+            target_date?: string;
+            target_weight_kg?: number;
+            note?: string;
+            /** @enum {string} */
+            experience: "beginner" | "intermediate" | "advanced";
+            squat_kg?: number;
+            bench_press_kg?: number;
+            deadlift_kg?: number;
+            overhead_press_kg?: number;
+            days_per_week: number;
+            rest_day: number;
+            activities?: {
+                name: string;
+                sessions_per_week: number;
+                note?: string;
+            }[];
+            /** @enum {string} */
+            daily_activity_level?: "sedentary" | "lightly_active" | "moderately_active" | "very_active";
+            /** @enum {string} */
+            eating_phase?: "deficit" | "maintenance" | "surplus";
+            protein_target_g?: number;
+            injury_note?: string;
         };
         PlanResponse: {
             plan: components["schemas"]["Plan"];
@@ -902,7 +1056,7 @@ export interface components {
             exercises: components["schemas"]["PlannedExercise"][];
         };
         /** @enum {string} */
-        DayType: "upper_body" | "leg_day" | "rest" | "swimming" | "cardio";
+        DayType: "upper_body" | "leg_day" | "full_body" | "rest" | "activity" | "cardio";
         PlannedExercise: {
             exercise_key: string;
             name: string;
@@ -912,8 +1066,9 @@ export interface components {
             weight_kg: number | null;
             notes: string | null;
         };
-        WeekResponse: {
-            week: components["schemas"]["Week"];
+        GeneratePlanResponse: {
+            plan: components["schemas"]["Plan"];
+            first_week: components["schemas"]["Week"];
         };
         Week: {
             /** Format: uuid */
@@ -965,6 +1120,9 @@ export interface components {
         PerformedSet: {
             performed_reps: number;
             performed_weight_kg: number | null;
+        };
+        WeekResponse: {
+            week: components["schemas"]["Week"];
         };
         WeekListResponse: {
             weeks: components["schemas"]["Week"][];

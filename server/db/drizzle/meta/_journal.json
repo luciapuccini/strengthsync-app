@@ -15,6 +15,13 @@
       "when": 1786566373179,
       "tag": "0001_soft_maginty",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786700945886,
+      "tag": "0002_cloudy_bromley",
+      "breakpoints": true
     }
   ]
 }

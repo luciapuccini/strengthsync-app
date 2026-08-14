@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { DAY_TYPES } from '@/lib/day-types';
+
 /**
  * UI-local schema for validating week drafts stored in localStorage.
  *
@@ -12,7 +14,7 @@ const UuidSchema = z.string().uuid();
 const ISODateSchema = z.string().date();
 const ISODateTimeSchema = z.string().datetime();
 
-const DayTypeSchema = z.enum(['upper_body', 'leg_day', 'rest', 'swimming', 'cardio']);
+const DayTypeSchema = z.enum(DAY_TYPES);
 
 const ExerciseFeedbackSchema = z.enum(['easy', 'hard', 'heavy', 'light']);
 

@@ -67,9 +67,8 @@ export async function getActivePlanOrThrow(db: Db, clientId: string): Promise<Pl
  * Archive the prior active plan, create + activate the generated plan, and
  * create week 1 from its canonical template — atomically via D1 `batch()`.
  * Idempotent by `workflow_id`.
- * V2 lives here during migration; the original in internal.ts is retained for legacy callers.
  */
-export async function activateGeneratedPlanV2(
+export async function activateGeneratedPlan(
   db: Db,
   clientId: string,
   cmd: ActivateGeneratedPlanCommand,

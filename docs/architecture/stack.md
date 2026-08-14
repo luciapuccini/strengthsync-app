@@ -12,6 +12,7 @@ Committed providers and platform choices for the MVP. This is intentionally a sm
 | Workflow orchestration | Cloudflare Workflows (in-Worker) | Yes | One workflow (`StrengthsyncWorkflow`) runs weekly progression and plan turnover; no local worker or tunnel |
 | LLM evals/tracing | Braintrust | Yes | Target for workflow LLM calls; not wired in this pass and will be redefined in `server/src/agent` when tracing returns (see [evals.md](./evals.md)) |
 | General platform observability | Cloudflare | Included platform telemetry | Use Cloudflare logs/analytics for Worker and D1 operations |
+| Product analytics | PostHog | Free tier available | **MVP todo** — wire product metrics (see open todos below) |
 | CI/CD | GitHub Actions | Yes | Build, test, and deploy from GitHub Actions |
 | LLM | OpenAI API | No guaranteed permanent free tier | Continue with the current provider; set a spending limit |
 
@@ -45,6 +46,9 @@ Still absent, and deliberately out of scope for the MVP: roles, an invitation
 flow, password reset, email verification, and social sign-in — the Apple and
 Google buttons on the auth screens render disabled with a caption saying so.
 No external auth provider is needed for any of it yet.
+
+**Post-MVP auth notes:** password reset; SSO / social sign-in (Apple, Google, etc.).
+See [future_state_after_mvp/todos.md](../future_state_after_mvp/todos.md).
 
 ## Cloudflare Workers + Hono
 
@@ -89,15 +93,16 @@ The MVP runs the weekly-turn workflow as a Cloudflare Worker Workflow inside `se
 
 Workflow-visible retries and failure policy live in the workflow definition (`server/src/workflows/strengthsync-workflow.ts`) and in [workflows.md](./workflows.md)
 
-## Evals and LLM observability: Braintrust (NEXT STEPS)
+## Evals and LLM observability: Braintrust (post-MVP)
 
-Braintrust remains the target for workflow LLM evalualtion, but it is **not wired**.
+Braintrust remains the target for workflow LLM evaluation, but it is **not wired** for MVP.
 
 - Traces, prompts, outputs, latency, and evaluation scores will live in Braintrust.
-- D1 remains product data only;
+- D1 remains product data only.
 
 Cloudflare covers platform-level Worker/D1 logs and operational metrics. Braintrust will cover
 LLM-specific traces and evals once reconnected; they are complementary.
+See [evals.md](./evals.md) and [future_state_after_mvp/todos.md](../future_state_after_mvp/todos.md).
 
 ## CI/CD: GitHub Actions
 
@@ -107,10 +112,20 @@ GitHub Actions is the MVP pipeline:
 2. Main: build and deploy `server` — including the `StrengthsyncWorkflow` entrypoint — and run schema migrations through the API/Worker deployment path.
 3. Workflow orchestration tests are deferred: the Cloudflare Workflow runtime is not exercised in the test suite.
 
+**MVP todo:** align production with the product domain — deploy at `app.strengthsync.ai`.
+
 ## LLM: OpenAI API
 
 Keep OpenAI for the MVP because the current agent core already uses it. This is a paid dependency; do not model it as a reliable free tier.
 
-[TBD] Set a project budget, model allowlist, and per-workflow token limit.
+**Post-MVP:** set an LLM cost budget (project spend limit, model allowlist, per-workflow token cap). See [future_state_after_mvp/todos.md](../future_state_after_mvp/todos.md).
 
 Do not opt into data-sharing token programs for client health/training context without an explicit privacy decision.
+
+## Production / MVP open todos
+
+Short notes only — not a design write-up:
+
+- Deploy production on `app.strengthsync.ai` (match the StrengthSync domain).
+- Product metrics via PostHog.
+- Onboarding that generates the athlete’s initial plan.

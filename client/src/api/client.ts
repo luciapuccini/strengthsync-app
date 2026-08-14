@@ -5,6 +5,7 @@ import { ApiClientError, toApiError } from './errors';
 import type {
   Client,
   ClientProfile,
+  OnboardingAnswers,
   Plan,
   SaveDayLog,
   SignInInput,
@@ -116,6 +117,12 @@ export async function updateProfile(input: UpdateClientProfile): Promise<ClientP
   return res.profile;
 }
 
+/** Turns onboarding answers into the signed-in client's coaching profile. */
+export async function submitOnboarding(input: OnboardingAnswers): Promise<ClientProfile> {
+  const res = await call(() => api.POST('/api/me/onboarding', { body: input }));
+  return res.profile;
+}
+
 export async function getActivePlan(): Promise<Plan | null> {
   return orNull(async () => {
     const res = await call(() => api.GET('/api/me/plans/active'));
@@ -132,6 +139,11 @@ export async function getActivePlan(): Promise<Plan | null> {
 export async function getPlan(planId: string): Promise<Plan> {
   const res = await call(() => api.GET('/api/me/plans/{planId}', { params: { path: { planId } } }));
   return res.plan;
+}
+
+/** Generates and activates the signed-in client's first plan from their profile. */
+export async function generatePlan(): Promise<{ plan: Plan; first_week: Week }> {
+  return call(() => api.POST('/api/me/plans/generate', {}));
 }
 
 export async function getCurrentWeek(): Promise<Week | null> {

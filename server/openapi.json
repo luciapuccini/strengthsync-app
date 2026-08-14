@@ -217,7 +217,7 @@
             ],
             "additionalProperties": {}
           },
-          "swimming": {
+          "activities": {
             "type": [
               "object",
               "null"
@@ -253,7 +253,7 @@
           "body_composition",
           "strength_loads",
           "nutrition",
-          "swimming",
+          "activities",
           "schedule_preferences",
           "notes",
           "updated_at"
@@ -305,7 +305,7 @@
             ],
             "additionalProperties": {}
           },
-          "swimming": {
+          "activities": {
             "type": [
               "object",
               "null"
@@ -335,9 +335,167 @@
           "body_composition",
           "strength_loads",
           "nutrition",
-          "swimming",
+          "activities",
           "schedule_preferences",
           "notes"
+        ]
+      },
+      "OnboardingAnswers": {
+        "type": "object",
+        "properties": {
+          "sex": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other"
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 13,
+            "maximum": 100
+          },
+          "height_cm": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 250
+          },
+          "weight_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 400
+          },
+          "body_fat_percent": {
+            "type": "number",
+            "minimum": 3,
+            "maximum": 60
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "lose_fat",
+              "build_muscle",
+              "get_stronger"
+            ]
+          },
+          "target_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "target_weight_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 400
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "experience": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ]
+          },
+          "squat_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 500
+          },
+          "bench_press_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 500
+          },
+          "deadlift_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 500
+          },
+          "overhead_press_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 500
+          },
+          "days_per_week": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "rest_day": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "sessions_per_week": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7
+                },
+                "note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              },
+              "required": [
+                "name",
+                "sessions_per_week"
+              ]
+            },
+            "maxItems": 10
+          },
+          "daily_activity_level": {
+            "type": "string",
+            "enum": [
+              "sedentary",
+              "lightly_active",
+              "moderately_active",
+              "very_active"
+            ]
+          },
+          "eating_phase": {
+            "type": "string",
+            "enum": [
+              "deficit",
+              "maintenance",
+              "surplus"
+            ]
+          },
+          "protein_target_g": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 400
+          },
+          "injury_note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "sex",
+          "age",
+          "height_cm",
+          "weight_kg",
+          "goal",
+          "experience",
+          "days_per_week",
+          "rest_day"
         ]
       },
       "PlanResponse": {
@@ -455,8 +613,9 @@
         "enum": [
           "upper_body",
           "leg_day",
+          "full_body",
           "rest",
-          "swimming",
+          "activity",
           "cardio"
         ]
       },
@@ -507,15 +666,19 @@
           "notes"
         ]
       },
-      "WeekResponse": {
+      "GeneratePlanResponse": {
         "type": "object",
         "properties": {
-          "week": {
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          },
+          "first_week": {
             "$ref": "#/components/schemas/Week"
           }
         },
         "required": [
-          "week"
+          "plan",
+          "first_week"
         ]
       },
       "Week": {
@@ -730,6 +893,17 @@
         "required": [
           "performed_reps",
           "performed_weight_kg"
+        ]
+      },
+      "WeekResponse": {
+        "type": "object",
+        "properties": {
+          "week": {
+            "$ref": "#/components/schemas/Week"
+          }
+        },
+        "required": [
+          "week"
         ]
       },
       "WeekListResponse": {
@@ -1107,6 +1281,62 @@
         }
       }
     },
+    "/api/me/onboarding": {
+      "post": {
+        "summary": "Save the signed-in client's onboarding answers as their coaching profile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingAnswers"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/me/plans/active": {
       "get": {
         "summary": "Get the signed-in client's active plan",
@@ -1191,6 +1421,43 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/plans/generate": {
+      "post": {
+        "summary": "Generate and activate the signed-in client's first plan",
+        "responses": {
+          "200": {
+            "description": "Plan generated and activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratePlanResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with existing state",
             "content": {
               "application/json": {
                 "schema": {

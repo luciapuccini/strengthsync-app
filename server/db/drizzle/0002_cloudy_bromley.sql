@@ -1,0 +1,1 @@
+ALTER TABLE `client_profiles` RENAME COLUMN "swimming" TO "activities";

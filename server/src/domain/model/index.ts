@@ -17,7 +17,14 @@ export type Uuid = z.infer<typeof UuidSchema>;
 export type ISODate = z.infer<typeof ISODateSchema>;
 export type ISODateTime = z.infer<typeof ISODateTimeSchema>;
 
-export const DAY_TYPES = ['upper_body', 'leg_day', 'rest', 'swimming', 'cardio'] as const;
+export const DAY_TYPES = [
+  'upper_body',
+  'leg_day',
+  'full_body',
+  'rest',
+  'activity',
+  'cardio',
+] as const;
 export const CLIENT_STATUSES = ['active', 'archived'] as const;
 export const PLAN_STATUSES = ['draft', 'active', 'archived'] as const;
 export const WEEK_STATUSES = ['in_flight', 'completed', 'abandoned'] as const;
@@ -103,7 +110,16 @@ export const ClientProfileSchema = z.object({
   body_composition: jsonRecord,
   strength_loads: jsonRecord,
   nutrition: jsonRecord.nullable(),
-  swimming: jsonRecord.nullable(),
+  /**
+   * Whatever the client does outside lifting — swimming, cycling, a pilates
+   * class. Free-form like its siblings, but the convention is `{ items: [...] }`
+   * with each item shaped `{ name, sessions_per_week, days?, note? }`: a
+   * declared activity's name, how often, which days (optional), and free text
+   * (optional). Coaching rules use this to plan around a client's other sport
+   * rather than stack training on top of it. Keep new writers on this shape
+   * rather than inventing a second one.
+   */
+  activities: jsonRecord.nullable(),
   schedule_preferences: jsonRecord.nullable(),
   notes: z.string().nullable(),
   updated_at: ISODateTimeSchema,

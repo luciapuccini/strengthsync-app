@@ -124,7 +124,7 @@ function buildNextWeekPrompt({
 }
 
 import {
-  activateGeneratedPlan,
+  activatePlan,
   generatePlan,
   loadCompletedWeeks,
   summarizeHistory,
@@ -154,7 +154,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
         profileSummary,
         historySummary,
       );
-      const { plan, first_week } = await activateGeneratedPlan(
+      const { plan, first_week } = await activatePlan(
         step,
         db,
         clientId,

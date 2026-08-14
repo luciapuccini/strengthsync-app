@@ -1,5 +1,7 @@
 # LLM evaluation (future plan)
 
+**Post-MVP todo:** wire Braintrust for workflow LLM traces and evals.
+See [future_state_after_mvp/todos.md](../future_state_after_mvp/todos.md).
 
 Braintrust is the target evaluation provider. The goal is to learn from real
 workflow calls and a tiny set of hand fixtures without paying for LLM evaluation in CI.

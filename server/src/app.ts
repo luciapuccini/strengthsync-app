@@ -9,6 +9,7 @@ import { defaultHook } from './lib/validation-error.ts';
 import { authRoutes } from './routes/auth/endpoints.ts';
 import { clientRoutes } from './routes/clients/endpoints.ts';
 import { healthRoutes } from './routes/health.ts';
+import { onboardingRoutes } from './routes/onboarding/endpoints.ts';
 import { planRoutes } from './routes/plans/endpoints.ts';
 import { weekRoutes } from './routes/weeks/endpoints.ts';
 import { cfWorkflowRoutes } from './routes/wf/endpoints.ts';
@@ -51,6 +52,7 @@ export function createApp(config: AppConfig): OpenAPIHono {
   // the code is being written is a guard nobody tests.
   app.use('/api/*', requireSession(config.sessionSecret));
   app.route('/api', clientRoutes(config.db));
+  app.route('/api', onboardingRoutes(config.db));
   app.route('/api', planRoutes(config.db));
   app.route('/api', weekRoutes(config.db));
   app.route('/wf', cfWorkflowRoutes());

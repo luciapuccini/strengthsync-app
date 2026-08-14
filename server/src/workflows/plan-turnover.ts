@@ -5,14 +5,16 @@ import {
   ProfileSummarySchema,
 } from '../domain/coach/index.ts';
 import { GeneratedPlanInputSchema, type GeneratedPlanInput } from '../domain/workflow.ts';
-import { activateGeneratedPlanV2, listWeeksV2, type Db } from '../db/index.ts';
+import { activateGeneratedPlan, listWeeks, type Db } from '../db/index.ts';
 
 import type { Env } from '../env';
 import { getAgentRuntime } from '../agent/agent-core';
 import type { ClientProfile, Plan, Week } from '../domain/model/index.ts';
 
 export async function loadCompletedWeeks(step: WorkflowStep, db: Db, clientId: string, plan: Plan) {
-  return step.do('load-completed-weeks', async () => listWeeksV2(db, clientId, plan.id));
+  return step.do('load-completed-weeks', async () =>
+    listWeeks(db, clientId, { planId: plan.id, status: 'completed' }),
+  );
 }
 
 export async function summarizeProfile(
@@ -126,7 +128,7 @@ export async function generatePlan(
   );
 }
 
-export async function activateGeneratedPlan(
+export async function activatePlan(
   step: WorkflowStep,
   db: Db,
   clientId: string,
@@ -134,6 +136,6 @@ export async function activateGeneratedPlan(
   plan: GeneratedPlanInput,
 ) {
   return step.do('activate-plan', async () =>
-    activateGeneratedPlanV2(db, clientId, { workflow_id: workflowId, plan }),
+    activateGeneratedPlan(db, clientId, { workflow_id: workflowId, plan }),
   );
 }

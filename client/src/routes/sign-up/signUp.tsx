@@ -48,9 +48,11 @@ function useSignUpForm(): SignUpForm {
         password: String(form.get('password')),
       });
       markSignedIn(client);
-      // The root redirect owns where a signed-in athlete lands, so this does
-      // not need to know the tracker's path.
-      void navigate('/', { replace: true });
+      // Unlike sign-in, registration does not go through the root redirect:
+      // a brand-new account has no plan yet, and the root redirect is
+      // deliberately plan-unaware, so only this one call site can know to
+      // send a fresh registration straight into the questionnaire.
+      void navigate('/onboarding', { replace: true });
     } catch (err) {
       setError(
         err instanceof ApiClientError ? err.message : 'Something went wrong. Please try again.',

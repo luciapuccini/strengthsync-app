@@ -4,6 +4,8 @@
 
 export { COACHING_RULES } from './coaching-rules.ts';
 
+export { buildFirstPlanPrompt, type FirstPlanPrompt } from './first-plan.ts';
+
 export {
   ProfileSummarySchema,
   HistorySummarySchema,

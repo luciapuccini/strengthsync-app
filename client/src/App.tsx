@@ -9,6 +9,8 @@ import { RequireAuth } from '@/components/require-auth/requireAuth';
 import { RootRedirect } from '@/components/root-redirect/rootRedirect';
 import { HistoryPage } from '@/routes/history/historyPage';
 import { NotFound } from '@/routes/not-found/notFound';
+import { ComposingScreenPreview } from '@/routes/onboarding/components/composing-screen/composingScreenPreview';
+import { OnboardingPage } from '@/routes/onboarding/onboardingPage';
 import { SignIn } from '@/routes/sign-in/signIn';
 import { SignUp } from '@/routes/sign-up/signUp';
 import { TrackerPage } from '@/routes/tracker-page/trackerPage';
@@ -47,6 +49,16 @@ export default function App(): JSX.Element {
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
             <Route
+              path="/onboarding"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
+                    <OnboardingPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
               path="/track"
               element={
                 <ErrorBoundary>
@@ -68,6 +80,10 @@ export default function App(): JSX.Element {
             />
           </Route>
         </Route>
+
+        {import.meta.env.DEV && (
+          <Route path="/dev/composing" element={<ComposingScreenPreview />} />
+        )}
 
         <Route path="*" element={<NotFound />} />
       </Routes>

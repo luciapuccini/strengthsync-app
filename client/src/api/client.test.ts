@@ -57,7 +57,7 @@ const profileBody: UpdateClientProfile = {
   body_composition: { weight_kg: 62 },
   strength_loads: { press_banca: 60 },
   nutrition: null,
-  swimming: null,
+  activities: null,
   schedule_preferences: null,
   notes: null,
 };

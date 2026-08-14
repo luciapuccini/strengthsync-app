@@ -1,9 +1,11 @@
 import { use, useState } from 'react';
 import type { JSX } from 'react';
+import { Link } from 'react-router-dom';
 
 import { WeekTracker } from '@/routes/tracker-page/components/week-tracker/weekTracker';
 import { currentWeekResource } from '@/api/weekResource';
 import type { TrackerData } from '@/api/weekResource';
+import { Button } from '@/shadcn/ui/button';
 import { useAppStore } from '@/store/useAppStore';
 
 export function TrackerPage(): JSX.Element {
@@ -22,22 +24,21 @@ export function TrackerPage(): JSX.Element {
   }
   const week = useAppStore((s) => s.week);
 
-  // What a newly registered athlete lands on, thirty seconds after signing up.
-  // The wording it replaced reported that plan generation was temporarily
-  // unavailable, which described an outage that was not happening: nothing is
-  // wrong, there is simply no plan on the account yet.
+  // What a newly registered athlete lands on, thirty seconds after signing up
+  // — and also what catches anyone who abandoned the questionnaire halfway or
+  // registered before onboarding existed. The invitation back in, not a dead
+  // end: nothing is wrong, there is simply no plan on the account yet.
   if (week === null) {
     return (
       <div className="rounded-xl border border-border bg-card p-6">
-        {/* TODO: first-plan onboarding, the next phase, replaces this branch
-            with the flow that builds the athlete's first plan. Until it exists
-            there is nothing to offer here, so this says so rather than
-            promising a plan is on its way. */}
         <h1 className="text-xl font-semibold">You&apos;re all set up</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          There&apos;s no training plan on your account yet, so there&apos;s nothing to track.
-          That&apos;s expected for a new account.
+          There&apos;s no training plan on your account yet. Answer a few questions and we&apos;ll
+          build your first one.
         </p>
+        <Button asChild size="xl" className="mt-4">
+          <Link to="/onboarding">Build your plan</Link>
+        </Button>
       </div>
     );
   }

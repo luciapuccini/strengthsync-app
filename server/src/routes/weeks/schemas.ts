@@ -32,7 +32,7 @@ const WeekDay = z
   .object({ ...WeekDaySchema.shape, type: DayTypeSchema, exercises: z.array(ExerciseLog) })
   .openapi('WeekDay');
 
-const Week = z
+export const Week = z
   .object({ ...WeekSchema.shape, status: WeekStatusSchema, schedule: z.array(WeekDay) })
   .openapi('Week');
 
