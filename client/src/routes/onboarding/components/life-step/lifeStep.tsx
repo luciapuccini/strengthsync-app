@@ -2,6 +2,7 @@ import { useActionState, useRef, useState } from 'react';
 import type { JSX } from 'react';
 
 import { generatePlan, submitOnboarding } from '@/api/client';
+import { invalidateActivePlan } from '@/api/activePlanResource';
 import { invalidateCurrentWeek } from '@/api/weekResource';
 import {
   LifeStepSchema,
@@ -179,6 +180,7 @@ export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Elem
       try {
         await composePlan(validAnswers.current, profileSaved);
         invalidateCurrentWeek();
+        invalidateActivePlan();
         onSubmitted();
         return initialState;
       } catch {

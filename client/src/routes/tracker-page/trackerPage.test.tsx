@@ -1,5 +1,6 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { Suspense } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Client } from '@/api/types';
@@ -51,9 +52,11 @@ afterEach(() => {
 async function renderTracker(): Promise<void> {
   await act(async () => {
     render(
-      <Suspense fallback={null}>
-        <TrackerPage />
-      </Suspense>,
+      <MemoryRouter>
+        <Suspense fallback={null}>
+          <TrackerPage />
+        </Suspense>
+      </MemoryRouter>,
     );
   });
 }
@@ -76,5 +79,13 @@ describe('the tracker with no current week', () => {
     expect(screen.queryByText(/unavailable/i)).toBeNull();
     expect(screen.queryByText(/temporarily/i)).toBeNull();
     expect(screen.queryByText(/check back/i)).toBeNull();
+  });
+
+  // The dead end this slice closes: `issues/007-entry-points-and-guards.md`.
+  it('invites the athlete into onboarding rather than leaving them with nothing to do', async () => {
+    await renderTracker();
+
+    const link = screen.getByRole('link', { name: /build your plan/i });
+    expect(link).toHaveAttribute('href', '/onboarding');
   });
 });

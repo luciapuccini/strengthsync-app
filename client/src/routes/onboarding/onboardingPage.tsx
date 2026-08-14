@@ -1,6 +1,8 @@
-import { useReducer } from 'react';
+import { use, useReducer } from 'react';
 import type { JSX } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+
+import { activePlanResource } from '@/api/activePlanResource';
 
 import { GoalStep } from './components/goal-step/goalStep';
 import { LifeStep } from './components/life-step/lifeStep';
@@ -13,11 +15,20 @@ import { ONBOARDING_STEPS, initialOnboardingState, onboardingReducer } from './o
  * The questionnaire that turns a new client into a coaching profile. Step
  * state is a reducer local to this route — no store slice, no draft
  * persistence, so an abandoned wizard leaves nothing behind to clean up.
+ *
+ * Redirects to the tracker when an active plan already exists, so a client
+ * cannot run the questionnaire a second time from the browser — closing the
+ * same path the generate route already refuses server-side.
  */
 export function OnboardingPage(): JSX.Element {
+  const activePlan = use(activePlanResource());
   const [state, dispatch] = useReducer(onboardingReducer, initialOnboardingState);
   const navigate = useNavigate();
   const stepNumber = ONBOARDING_STEPS.indexOf(state.step) + 1;
+
+  if (activePlan !== null) {
+    return <Navigate to="/track" replace />;
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6">

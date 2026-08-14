@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Client } from '@/api/types';
@@ -39,8 +39,11 @@ function fillAndSubmit(): void {
 beforeEach(() => {
   useAppStore.setState({ sessionStatus: 'loading', sessionClient: null }, false);
   render(
-    <MemoryRouter>
-      <SignUp />
+    <MemoryRouter initialEntries={['/sign-up']}>
+      <Routes>
+        <Route path="/sign-up" element={<SignUp />} />
+        <Route path="/onboarding" element={<p>onboarding screen</p>} />
+      </Routes>
     </MemoryRouter>,
   );
 });
@@ -64,6 +67,16 @@ describe('sign-up form', () => {
     });
     await waitFor(() => expect(useAppStore.getState().sessionStatus).toBe('signed-in'));
     expect(useAppStore.getState().sessionClient).toEqual(client);
+  });
+
+  // `issues/007-entry-points-and-guards.md`: registration lands on the
+  // questionnaire directly, not through the (deliberately plan-unaware) root
+  // redirect.
+  it('lands a freshly registered client on the questionnaire', async () => {
+    signUp.mockResolvedValue(client);
+    fillAndSubmit();
+
+    expect(await screen.findByText('onboarding screen')).toBeInTheDocument();
   });
 
   it('disables the button while in flight, so a second press cannot register twice', async () => {

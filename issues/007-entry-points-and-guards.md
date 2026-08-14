@@ -49,4 +49,4 @@ See "Entry and gating" in the parent PRD.
 
 ## STATUS
 
-TODO
+DONE
