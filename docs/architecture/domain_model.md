@@ -17,7 +17,7 @@ type Uuid = string;
 type ISODate = string;
 type ISODateTime = string;
 
-type DayType = "upper_body" | "leg_day" | "rest" | "swimming" | "cardio";
+type DayType = "upper_body" | "leg_day" | "full_body" | "rest" | "activity" | "cardio";
 type ClientStatus = "active" | "archived";
 type PlanStatus = "draft" | "active" | "archived";
 type WeekStatus = "in_flight" | "completed" | "abandoned";
@@ -67,12 +67,18 @@ type ClientProfile = {
   body_composition: Record<string, unknown>;
   strength_loads: Record<string, unknown>;
   nutrition: Record<string, unknown> | null;
-  swimming: Record<string, unknown> | null;
+  activities: Record<string, unknown> | null;
   schedule_preferences: Record<string, unknown> | null;
   notes: string | null;
   updated_at: ISODateTime;
 };
 ```
+
+`activities` is whatever the client does outside lifting — swimming, cycling, a
+pilates class. Free-form like its siblings, but the convention is
+`{ items: [...] }` with each item shaped `{ name, sessions_per_week, days?,
+note? }`. Coaching rules use it to plan around a client's other sport rather
+than stack training on top of it.
 
 ## Plan
 

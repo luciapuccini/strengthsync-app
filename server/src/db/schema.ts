@@ -76,7 +76,7 @@ export const clientProfiles = sqliteTable('client_profiles', {
   body_composition: jsonRecord().notNull(),
   strength_loads: jsonRecord().notNull(),
   nutrition: jsonRecord(),
-  swimming: jsonRecord(),
+  activities: jsonRecord(),
   schedule_preferences: jsonRecord(),
   notes: text('notes'),
   updated_at: text('updated_at').notNull(),

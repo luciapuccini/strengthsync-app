@@ -34,7 +34,7 @@ INSERT OR IGNORE INTO client_profiles (
   body_composition,
   strength_loads,
   nutrition,
-  swimming,
+  activities,
   schedule_preferences,
   notes,
   updated_at
@@ -50,7 +50,7 @@ SELECT
   '{"current_may_2026":{"weight_kg":60.65,"body_fat_percent":28,"bmr_kcal":null,"tdee_kcal":1835},"baseline_feb_2026":{"weight_kg":63,"body_fat_percent":33,"bmr_kcal":1387,"tdee_kcal":1907},"first_block_changes":{"fat_lost_kg":-3.8,"muscle_gained_kg":1.5,"weight_change_kg":-2.35,"body_fat_change_percentage_points":-5}}',
   '{"upper_body":{"bench_press":"27.5 kg","lat_pulldown":"30 kg","seated_cable_row":"27.5 kg","45_degree_row":"28 kg","barbell_shoulder_press":"17 kg","biceps_curl":"12 kg","band_assisted_pull_ups":"4 x 6","push_ups":"4 x 8","inverted_rows":"3 x 8","overhead_triceps_extension":"3 x 12","face_pull":"7.5 kg"},"lower_body":{"squat":"42.5 kg","deadlift":"42.5 kg","sumo_deadlift":"50 kg","hip_thrust":"40 kg / 4 x 10","lunges":"15 kg bag","leg_curl":"27.5 kg","leg_extension":"27.5 kg","back_extension":"10 kg"}}',
   '{"daily_targets":{"kcal":1750,"protein_g":130,"carbs_g":175,"fat_g":58,"minimum_fiber_g":25},"approach":"clean whole foods","primary_grocery_store":"Mercadona","meal_schedule":{"breakfast":"09:00","lunch":"12:30","training":"14:00-15:00","post_workout":"16:30","dinner":"20:00"},"cheat_meals_per_week":2,"cheat_meal_examples":["burger and fries","pizza"],"supplements":{"whey_protein":"post-workout","creatine_g_per_day":5,"vitamin_d":true,"magnesium_bisglycinate":"added in week 4 for cramps","training_electrolytes":"salt and lemon in water"}}',
-  '{"sessions_per_week":2,"session_types":{"wednesday":"Pyramid","friday":"Endurance 2000 m"},"benchmarks_achieved":{"distance_per_stroke_above_2_2_m":true,"swolf_at_or_below_53":true,"endurance_2000_m":true,"best_pace_per_100_m":"2:46 on 2026-05-03"},"targets":{"swolf":"53 or lower consistently","average_pace_per_100_m":"toward 2:45","average_endurance_heart_rate_bpm":"125 or lower"}}',
+  '{"items":[{"name":"swimming","sessions_per_week":2,"days":["wednesday","friday"],"note":"Session types: Wednesday pyramid, Friday endurance 2000 m. Benchmarks achieved: distance per stroke above 2.2 m, SWOLF at or below 53, endurance 2000 m, best pace per 100 m 2:46 on 2026-05-03. Targets: SWOLF 53 or lower consistently, average pace per 100 m toward 2:45, average endurance heart rate 125 bpm or lower."}]}',
   '{"job_activity_level":"very sedentary with long sitting hours","training_days_per_week":6,"rest_day":"Sunday","weekly_schedule":{"monday":"Upper body - Day 1","tuesday":"Legs - Day 2","wednesday":"Swimming - Pyramid","thursday":"Upper body - Day 3","friday":"Swimming - Endurance","saturday":"Legs - Day 4","sunday":"Rest"}}',
   'Uses no birth control. Menstrual cycle is regular, usually around days 10-13 of the month.',
   date(week4_start, '+3 days') || 'T00:00:00.000Z'
@@ -93,7 +93,7 @@ SELECT
       {"exercise_key":"leg_extension","name":"Leg Extension","series":3,"reps":12,"rest_time_sec":90,"weight_kg":28,"notes":null},
       {"exercise_key":"leg_curl","name":"Leg Curl","series":3,"reps":12,"rest_time_sec":90,"weight_kg":28,"notes":null}
     ]},
-    {"day_index":3,"type":"swimming","notes":"Technique swim and pyramid: 50 m / 100 m / 150 m / 300 m / 150 m / 100 m / 50 m.","exercises":[]},
+    {"day_index":3,"type":"activity","notes":"Technique swim and pyramid: 50 m / 100 m / 150 m / 300 m / 150 m / 100 m / 50 m.","exercises":[]},
     {"day_index":4,"type":"upper_body","notes":null,"exercises":[
       {"exercise_key":"pull_ups","name":"Pull-Ups","series":4,"reps":6,"rest_time_sec":90,"weight_kg":null,"notes":"Use a resistance band."},
       {"exercise_key":"45_degree_row","name":"45-Degree Row","series":4,"reps":10,"rest_time_sec":90,"weight_kg":28,"notes":null},
@@ -102,7 +102,7 @@ SELECT
       {"exercise_key":"overhead_triceps_extension","name":"Overhead Triceps Extension","series":3,"reps":12,"rest_time_sec":90,"weight_kg":7.5,"notes":null},
       {"exercise_key":"face_pull","name":"Face Pull","series":3,"reps":12,"rest_time_sec":90,"weight_kg":7.5,"notes":null}
     ]},
-    {"day_index":5,"type":"swimming","notes":"Endurance swim: 2000 m.","exercises":[]},
+    {"day_index":5,"type":"activity","notes":"Endurance swim: 2000 m.","exercises":[]},
     {"day_index":6,"type":"leg_day","notes":null,"exercises":[
       {"exercise_key":"squat","name":"Squat","series":4,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},
       {"exercise_key":"deadlift","name":"Deadlift","series":4,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},
@@ -160,7 +160,7 @@ SELECT
       {"exercise_key":"leg_extension","name":"Leg Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":30,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30}]},
       {"exercise_key":"leg_curl","name":"Leg Curl","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":30,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30}]}
     ]},
-    {"day_index":3,"date":"2026-07-22","type":"swimming","notes":"Technique swim and pyramid: 50 m / 100 m / 150 m / 300 m / 150 m / 100 m / 50 m.","completed":false,"completed_at":null,"exercises":[]},
+    {"day_index":3,"date":"2026-07-22","type":"activity","notes":"Technique swim and pyramid: 50 m / 100 m / 150 m / 300 m / 150 m / 100 m / 50 m.","completed":false,"completed_at":null,"exercises":[]},
     {"day_index":4,"date":"2026-07-23","type":"upper_body","notes":"Extra cardio: 20 minutes on the stairs.","completed":false,"completed_at":null,"exercises":[
       {"exercise_key":"pull_ups","name":"Pull-Ups","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":6,"rest_time_sec":90,"weight_kg":null,"notes":"Use a resistance band."},"sets":[]},
       {"exercise_key":"45_degree_row","name":"45-Degree Row","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":10,"rest_time_sec":90,"weight_kg":26,"notes":null},"sets":[]},
@@ -169,7 +169,7 @@ SELECT
       {"exercise_key":"overhead_triceps_extension","name":"Overhead Triceps Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":8.5,"notes":null},"sets":[]},
       {"exercise_key":"face_pull","name":"Face Pull","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":8.5,"notes":null},"sets":[]}
     ]},
-    {"day_index":5,"date":"2026-07-24","type":"swimming","notes":"Endurance swim: 2000 m.","completed":false,"completed_at":null,"exercises":[]},
+    {"day_index":5,"date":"2026-07-24","type":"activity","notes":"Endurance swim: 2000 m.","completed":false,"completed_at":null,"exercises":[]},
     {"day_index":6,"date":"2026-07-25","type":"leg_day","notes":null,"completed":false,"completed_at":null,"exercises":[
       {"exercise_key":"squat","name":"Squat","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_kg":46,"notes":null},"sets":[]},
       {"exercise_key":"deadlift","name":"Deadlift","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},"sets":[]},

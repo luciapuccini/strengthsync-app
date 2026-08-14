@@ -9,14 +9,14 @@ type HistoryDaySectionProps = {
 };
 
 export function HistoryDaySection({ day, sn }: HistoryDaySectionProps): JSX.Element {
-  if (day.day_type === 'rest' || day.day_type === 'swimming') {
+  if (day.day_type === 'rest' || day.day_type === 'activity') {
     return (
       <div>
         <h2 className="text-sm font-semibold">Day {day.day_index}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {day.day_type === 'rest'
             ? 'Rest day. No strength exercises.'
-            : 'Swimming day. No strength exercises.'}
+            : 'Activity day. No strength exercises.'}
         </p>
       </div>
     );

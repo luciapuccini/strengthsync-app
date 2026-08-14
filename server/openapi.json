@@ -217,7 +217,7 @@
             ],
             "additionalProperties": {}
           },
-          "swimming": {
+          "activities": {
             "type": [
               "object",
               "null"
@@ -253,7 +253,7 @@
           "body_composition",
           "strength_loads",
           "nutrition",
-          "swimming",
+          "activities",
           "schedule_preferences",
           "notes",
           "updated_at"
@@ -305,7 +305,7 @@
             ],
             "additionalProperties": {}
           },
-          "swimming": {
+          "activities": {
             "type": [
               "object",
               "null"
@@ -335,7 +335,7 @@
           "body_composition",
           "strength_loads",
           "nutrition",
-          "swimming",
+          "activities",
           "schedule_preferences",
           "notes"
         ]
@@ -455,8 +455,9 @@
         "enum": [
           "upper_body",
           "leg_day",
+          "full_body",
           "rest",
-          "swimming",
+          "activity",
           "cardio"
         ]
       },

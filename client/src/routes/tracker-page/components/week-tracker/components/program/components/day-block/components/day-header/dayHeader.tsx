@@ -10,7 +10,8 @@ import { Spinner } from '@/shadcn/ui/spinner';
 const DAY_TYPE_LABELS: Record<WeekDay['type'], string> = {
   upper_body: 'Upper body',
   leg_day: 'Leg day',
-  swimming: 'Swimming',
+  full_body: 'Full body',
+  activity: 'Activity',
   cardio: 'Cardio',
   rest: 'Rest',
 };

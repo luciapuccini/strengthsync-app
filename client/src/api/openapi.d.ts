@@ -838,7 +838,7 @@ export interface components {
             nutrition: {
                 [key: string]: unknown;
             } | null;
-            swimming: {
+            activities: {
                 [key: string]: unknown;
             } | null;
             schedule_preferences: {
@@ -866,7 +866,7 @@ export interface components {
             nutrition: {
                 [key: string]: unknown;
             } | null;
-            swimming: {
+            activities: {
                 [key: string]: unknown;
             } | null;
             schedule_preferences: {
@@ -902,7 +902,7 @@ export interface components {
             exercises: components["schemas"]["PlannedExercise"][];
         };
         /** @enum {string} */
-        DayType: "upper_body" | "leg_day" | "rest" | "swimming" | "cardio";
+        DayType: "upper_body" | "leg_day" | "full_body" | "rest" | "activity" | "cardio";
         PlannedExercise: {
             exercise_key: string;
             name: string;

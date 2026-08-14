@@ -49,7 +49,7 @@ const profileInput = {
   body_composition: { weight_kg: 62 },
   strength_loads: { press_banca: 60 },
   nutrition: { calories: 2100 },
-  swimming: null,
+  activities: null,
   schedule_preferences: { days_per_week: 4 },
   notes: null,
 };

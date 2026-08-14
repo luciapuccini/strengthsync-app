@@ -163,10 +163,15 @@ describe('ClientProfileSchema', () => {
         cheat_meal_examples: ['pizza', 'burger'],
         supplements: { pre_workout: true },
       },
-      swimming: {
-        session_types: { endurance: '30 min' },
-        benchmarks_achieved: { distance_m: 1000 },
-        targets: { distance_m: 1500 },
+      activities: {
+        items: [
+          {
+            name: 'swimming',
+            sessions_per_week: 2,
+            days: ['wednesday', 'friday'],
+            note: 'Endurance session, 30 min.',
+          },
+        ],
       },
       schedule_preferences: {
         weekly_schedule: { monday: 'upper_body', wednesday: 'lower_body' },
