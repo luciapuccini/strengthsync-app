@@ -19,6 +19,13 @@ export const ONBOARDING_MAIN_LIFTS = [
   'deadlift',
   'overhead_press',
 ] as const;
+export const ONBOARDING_DAILY_ACTIVITY_LEVELS = [
+  'sedentary',
+  'lightly_active',
+  'moderately_active',
+  'very_active',
+] as const;
+export const ONBOARDING_EATING_PHASES = ['deficit', 'maintenance', 'surplus'] as const;
 export const ONBOARDING_WEEKDAYS = [
   { day_index: 1, label: 'Monday' },
   { day_index: 2, label: 'Tuesday' },
@@ -72,9 +79,25 @@ export const TrainingStepSchema = z.object({
 });
 export type TrainingStepAnswers = z.infer<typeof TrainingStepSchema>;
 
-export const OnboardingAnswersSchema = PersonalStepSchema.extend(GoalStepSchema.shape).extend(
-  TrainingStepSchema.shape,
-);
+export const OnboardingActivitySchema = z.object({
+  name: z.string().min(1).max(100),
+  sessions_per_week: z.number().int().min(1).max(7),
+  note: z.string().min(1).max(500).optional(),
+});
+export type OnboardingActivity = z.infer<typeof OnboardingActivitySchema>;
+
+export const LifeStepSchema = z.object({
+  activities: z.array(OnboardingActivitySchema).max(10).optional(),
+  daily_activity_level: z.enum(ONBOARDING_DAILY_ACTIVITY_LEVELS).optional(),
+  eating_phase: z.enum(ONBOARDING_EATING_PHASES).optional(),
+  protein_target_g: z.number().int().positive().max(400).optional(),
+  injury_note: z.string().min(1).max(1000).optional(),
+});
+export type LifeStepAnswers = z.infer<typeof LifeStepSchema>;
+
+export const OnboardingAnswersSchema = PersonalStepSchema.extend(GoalStepSchema.shape)
+  .extend(TrainingStepSchema.shape)
+  .extend(LifeStepSchema.shape);
 /** The full, validated questionnaire payload — same shape as the wire contract. */
 export type OnboardingAnswers = z.infer<typeof OnboardingAnswersSchema>;
 

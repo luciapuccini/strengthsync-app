@@ -1016,6 +1016,17 @@ export interface components {
             overhead_press_kg?: number;
             days_per_week: number;
             rest_day: number;
+            activities?: {
+                name: string;
+                sessions_per_week: number;
+                note?: string;
+            }[];
+            /** @enum {string} */
+            daily_activity_level?: "sedentary" | "lightly_active" | "moderately_active" | "very_active";
+            /** @enum {string} */
+            eating_phase?: "deficit" | "maintenance" | "surplus";
+            protein_target_g?: number;
+            injury_note?: string;
         };
         PlanResponse: {
             plan: components["schemas"]["Plan"];

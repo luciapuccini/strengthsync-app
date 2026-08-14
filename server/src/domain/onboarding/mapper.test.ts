@@ -66,5 +66,69 @@ describe('mapAnswersToProfileWrite', () => {
     expect(write.nutrition).toBeNull();
     expect(write.activities).toBeNull();
     expect(write.notes).toBeNull();
+    expect(write.schedule_preferences).toEqual({ days_per_week: 4, rest_day: 7 });
+  });
+});
+
+describe('mapAnswersToProfileWrite: life step', () => {
+  it('places declared activities in the activities column as items', () => {
+    const write = mapAnswersToProfileWrite({
+      ...beginnerAnswers,
+      activities: [
+        { name: 'swimming', sessions_per_week: 2, note: 'pyramid and endurance sets' },
+        { name: 'pilates', sessions_per_week: 1 },
+      ],
+    });
+
+    expect(write.activities).toEqual({
+      items: [
+        { name: 'swimming', sessions_per_week: 2, note: 'pyramid and endurance sets' },
+        { name: 'pilates', sessions_per_week: 1 },
+      ],
+    });
+  });
+
+  it('an empty activities list maps to no activities, not an empty items array', () => {
+    const write = mapAnswersToProfileWrite({ ...beginnerAnswers, activities: [] });
+
+    expect(write.activities).toBeNull();
+  });
+
+  it('places daily activity level with the schedule preferences', () => {
+    const write = mapAnswersToProfileWrite({
+      ...beginnerAnswers,
+      daily_activity_level: 'sedentary',
+    });
+
+    expect(write.schedule_preferences).toEqual({
+      days_per_week: 4,
+      rest_day: 7,
+      daily_activity_level: 'sedentary',
+    });
+  });
+
+  it('places eating phase and protein target with nutrition', () => {
+    const write = mapAnswersToProfileWrite({
+      ...beginnerAnswers,
+      eating_phase: 'deficit',
+      protein_target_g: 130,
+    });
+
+    expect(write.nutrition).toEqual({ eating_phase: 'deficit', protein_target_g: 130 });
+  });
+
+  it('a protein target given without an eating phase is still stored', () => {
+    const write = mapAnswersToProfileWrite({ ...beginnerAnswers, protein_target_g: 130 });
+
+    expect(write.nutrition).toEqual({ protein_target_g: 130 });
+  });
+
+  it('places the injury free text in the profile notes', () => {
+    const write = mapAnswersToProfileWrite({
+      ...beginnerAnswers,
+      injury_note: 'left knee, avoid deep squats',
+    });
+
+    expect(write.notes).toBe('left knee, avoid deep squats');
   });
 });

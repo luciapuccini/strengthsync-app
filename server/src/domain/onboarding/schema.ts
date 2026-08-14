@@ -5,9 +5,9 @@ import { ISODateSchema } from '../model/index.ts';
 /**
  * The onboarding questionnaire's answer schema.
  *
- * Slices 002 and 004 live here: who the client is, their primary goal, and
- * how they train today. `issues/005-life-step.md` extends this schema with
- * life-step answers — this file grows, it does not get replaced.
+ * Slices 002, 004 and 005 live here: who the client is, their primary goal,
+ * how they train today, and everything around the training that changes what
+ * the training should be.
  */
 
 export const ONBOARDING_GOALS = ['lose_fat', 'build_muscle', 'get_stronger'] as const;
@@ -37,6 +37,32 @@ export type OnboardingMainLift = (typeof ONBOARDING_MAIN_LIFTS)[number];
 
 const liftWeightSchema = z.number().positive().max(500);
 
+export const ONBOARDING_DAILY_ACTIVITY_LEVELS = [
+  'sedentary',
+  'lightly_active',
+  'moderately_active',
+  'very_active',
+] as const;
+export const OnboardingDailyActivityLevelSchema = z.enum(ONBOARDING_DAILY_ACTIVITY_LEVELS);
+export type OnboardingDailyActivityLevel = z.infer<typeof OnboardingDailyActivityLevelSchema>;
+
+export const ONBOARDING_EATING_PHASES = ['deficit', 'maintenance', 'surplus'] as const;
+export const OnboardingEatingPhaseSchema = z.enum(ONBOARDING_EATING_PHASES);
+export type OnboardingEatingPhase = z.infer<typeof OnboardingEatingPhaseSchema>;
+
+/**
+ * One declared activity, e.g. two weekly swims. Matches the `activities`
+ * profile column's documented `{ items: [...] }` convention (see
+ * `domain/model/index.ts`), minus the convention's optional `days`: the
+ * client says how often, not which days — the model places the sessions.
+ */
+export const OnboardingActivitySchema = z.object({
+  name: z.string().min(1).max(100),
+  sessions_per_week: z.number().int().min(1).max(7),
+  note: z.string().min(1).max(500).optional(),
+});
+export type OnboardingActivity = z.infer<typeof OnboardingActivitySchema>;
+
 export const OnboardingAnswersSchema = z.object({
   sex: OnboardingSexSchema,
   age: z.number().int().min(13).max(100),
@@ -55,5 +81,10 @@ export const OnboardingAnswersSchema = z.object({
   days_per_week: z.number().int().min(1).max(7),
   // ISO week convention shared with `PlanDay.day_index`: 1 = Monday, 7 = Sunday.
   rest_day: z.number().int().min(1).max(7),
+  activities: z.array(OnboardingActivitySchema).max(10).optional(),
+  daily_activity_level: OnboardingDailyActivityLevelSchema.optional(),
+  eating_phase: OnboardingEatingPhaseSchema.optional(),
+  protein_target_g: z.number().int().positive().max(400).optional(),
+  injury_note: z.string().min(1).max(1000).optional(),
 });
 export type OnboardingAnswers = z.infer<typeof OnboardingAnswersSchema>;

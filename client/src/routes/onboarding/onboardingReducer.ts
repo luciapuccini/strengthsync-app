@@ -2,10 +2,9 @@ import type { OnboardingDraft } from '@/lib/onboarding-schema';
 
 /**
  * Step state for the onboarding wizard, local to the route — no store slice,
- * no draft persistence. `issues/005-life-step.md` adds a fourth step after
- * `training`.
+ * no draft persistence.
  */
-export const ONBOARDING_STEPS = ['personal', 'goal', 'training'] as const;
+export const ONBOARDING_STEPS = ['personal', 'goal', 'training', 'life'] as const;
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 
 export type OnboardingWizardState = {

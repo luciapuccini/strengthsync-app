@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { GoalStep } from './components/goal-step/goalStep';
+import { LifeStep } from './components/life-step/lifeStep';
 import { OnboardingProgress } from './components/onboarding-progress/onboardingProgress';
 import { PersonalStep } from './components/personal-step/personalStep';
 import { TrainingStep } from './components/training-step/trainingStep';
@@ -39,6 +40,14 @@ export function OnboardingPage(): JSX.Element {
 
       {state.step === 'training' && (
         <TrainingStep
+          defaults={state.answers}
+          onBack={() => dispatch({ type: 'back' })}
+          onNext={(answers) => dispatch({ type: 'advance', answers })}
+        />
+      )}
+
+      {state.step === 'life' && (
+        <LifeStep
           priorAnswers={state.answers}
           onBack={() => dispatch({ type: 'back' })}
           onSubmitted={() => void navigate('/track', { replace: true })}

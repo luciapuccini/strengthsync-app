@@ -80,6 +80,12 @@ pilates class. Free-form like its siblings, but the convention is
 note? }`. Coaching rules use it to plan around a client's other sport rather
 than stack training on top of it.
 
+`nutrition` is likewise free-form; onboarding writes `{ eating_phase?,
+protein_target_g? }` when the client answers those questions, though the
+column accepts richer data than that vocabulary allows (see the demo seed).
+`schedule_preferences` gains `daily_activity_level` from the same step,
+alongside `days_per_week` and `rest_day`.
+
 ## Plan
 
 One generated or imported training block. `week_template` replaces `BlockWeekTemplate`, `TemplateDay`, and `TemplateExercise` as separate records.
