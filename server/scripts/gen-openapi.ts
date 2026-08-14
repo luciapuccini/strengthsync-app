@@ -16,7 +16,7 @@ import type { Db } from '../src/db/index.ts';
  * imports carry explicit .ts extensions.
  */
 
-const app = createApp({ db: {} as Db, sessionSecret: '' });
+const app = createApp({ db: {} as Db, sessionSecret: '', inviteCode: '' });
 
 const document = app.getOpenAPI31Document({
   openapi: '3.1.0',

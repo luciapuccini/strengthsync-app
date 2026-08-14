@@ -61,11 +61,17 @@ Copy the example file and fill in values:
 
 | Copy from                                                | Copy to              | Used by                         |
 | -------------------------------------------------------- | -------------------- | ------------------------------- |
-| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars` | API Worker: `SESSION_JWT_SECRET`, `OPENAI_*` |
+| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars` | API Worker: `SESSION_JWT_SECRET`, `INVITE_CODE`, `OPENAI_*` |
 
 `SESSION_JWT_SECRET` signs the session cookie. Any value works locally; rotating
 it invalidates every session already issued. In production it is a Worker secret
 (`wrangler secret put SESSION_JWT_SECRET`), never a committed value.
+
+`INVITE_CODE` is the code sign-up accepts — one per invite batch, rotated
+between batches, and stored on each `clients` row so the cohorts stay
+distinguishable (`docs/mvp.md` §2). Also a Worker secret in production
+(`wrangler secret put INVITE_CODE`). Leaving it unset closes registration
+rather than opening it.
 
 ### Getting started
 

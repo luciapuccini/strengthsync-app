@@ -27,18 +27,30 @@ code.
 
 ## Acceptance criteria
 
-- [ ] Sign-up with a missing or wrong code fails with a distinct error code, and
-      creates no `client` row and no `credential` row
-- [ ] Sign-up with the current code succeeds, and the code used is persisted on
+- [x] Sign-up with a missing or wrong code fails with a distinct error code, and
+      creates no `client` row and no `credential` row — a wrong code is 403
+      `invalid_invite_code`; a missing one is the schema's 400 `invalid_input`,
+      whose message names `invite_code`
+- [x] Sign-up with the current code succeeds, and the code used is persisted on
       the client row
-- [ ] The valid code is read from a Worker secret and never committed; local dev
+- [x] The valid code is read from a Worker secret and never committed; local dev
       reads it from `.dev.vars`, and the `Env` type declares it
-- [ ] A drizzle migration exists under `server/db/drizzle/` and applies cleanly
-- [ ] `pnpm gen:openapi` is re-run and `git diff --exit-code` is clean, so CI
+- [x] A drizzle migration exists under `server/db/drizzle/` and applies cleanly
+- [x] `pnpm gen:openapi` is re-run and `git diff --exit-code` is clean, so CI
       passes
-- [ ] The sign-up screen has the field and shows the server's rejection rather
+- [x] The sign-up screen has the field and shows the server's rejection rather
       than a generic failure
-- [ ] Server tests cover both the accepted and the rejected path
+- [x] Server tests cover both the accepted and the rejected path
+
+## Implementation note
+
+`clients.invite_code` is deliberately **not** part of the domain `Client`, so it
+never enters the `Client` component in `openapi.json`. The code is a shared
+per-batch secret: returning it in the sign-up, sign-in and session responses
+would let any one invitee read it off their own session and pass it on, which
+defeats the gate. `getClient` therefore projects the `Client` columns explicitly
+instead of `select()`-ing the row. Cohort attribution is a SQL read against the
+column.
 
 ## Blocked by
 

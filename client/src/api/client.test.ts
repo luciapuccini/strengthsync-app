@@ -142,6 +142,7 @@ describe('auth', () => {
       display_name: 'Lucia',
       email: 'lucia@example.com',
       password: 'dev-password-123',
+      invite_code: 'spring-cohort',
     };
     mockPost.mockResolvedValue(okResponse({ client: sampleClient }));
     await expect(signUp(body)).resolves.toEqual(sampleClient);
@@ -155,7 +156,12 @@ describe('auth', () => {
       }),
     );
     await expect(
-      signUp({ display_name: 'Lucia', email: 'lucia@example.com', password: 'dev-password-123' }),
+      signUp({
+        display_name: 'Lucia',
+        email: 'lucia@example.com',
+        password: 'dev-password-123',
+        invite_code: 'spring-cohort',
+      }),
     ).rejects.toMatchObject({ kind: 'conflict', message: 'email already registered' });
   });
 

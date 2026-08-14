@@ -18,6 +18,12 @@ export type AppConfig = {
   db: Db;
   /** Signs session JWTs (`lib/session-token.ts`). */
   sessionSecret: string;
+  /**
+   * The invite code sign-up accepts, one per invite batch (`docs/mvp.md` §2).
+   * A Worker secret, threaded through here the same way the session secret is,
+   * so the handler never reads the environment itself.
+   */
+  inviteCode: string;
 };
 
 /** The document builder in `scripts/gen-openapi.ts` needs the OpenAPIHono type. */
@@ -45,7 +51,7 @@ export function createApp(config: AppConfig): OpenAPIHono {
 
   // Registration and sign-in, outside /api because they mint the cookie the
   // guard below checks.
-  app.route('/auth', authRoutes(config.db, config.sessionSecret));
+  app.route('/auth', authRoutes(config.db, config.sessionSecret, config.inviteCode));
 
   // The session cookie is the only way into the API, in every environment.
   // There is deliberately no development exemption: a guard that is off while

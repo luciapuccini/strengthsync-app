@@ -46,6 +46,7 @@ function useSignUpForm(): SignUpForm {
         display_name: String(form.get('display_name')),
         email: String(form.get('email')),
         password: String(form.get('password')),
+        invite_code: String(form.get('invite_code')),
       });
       markSignedIn(client);
       // Unlike sign-in, registration does not go through the root redirect:
@@ -107,6 +108,25 @@ export function SignUp(): JSX.Element {
             type="password"
             autoComplete="new-password"
             placeholder="••••••••"
+            required
+          />
+        </Field>
+
+        {/*
+          Registration is invite-only while the cohort is being run
+          (docs/mvp.md §2). Whether the code is the current one is a comparison
+          against a Worker secret, so this field only collects it — the
+          rejection arrives from the server and lands in the error region below,
+          like the password rule.
+        */}
+        <Field>
+          <FieldLabel htmlFor="sign-up-invite-code">Invite code</FieldLabel>
+          <Input
+            id="sign-up-invite-code"
+            name="invite_code"
+            type="text"
+            autoComplete="off"
+            placeholder="From your invitation email"
             required
           />
         </Field>
