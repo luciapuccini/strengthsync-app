@@ -87,4 +87,4 @@ later slices extend — the pattern gets reviewed before it spreads.
 
 ## STATUS
 
-TODO
+DONE

@@ -342,6 +342,73 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save the signed-in client's onboarding answers as their coaching profile */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OnboardingAnswers"];
+                };
+            };
+            responses: {
+                /** @description Profile saved */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ClientProfileResponse"];
+                    };
+                };
+                /** @description Invalid input */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Missing or invalid credentials */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/plans/active": {
         parameters: {
             query?: never;
@@ -873,6 +940,21 @@ export interface components {
                 [key: string]: unknown;
             } | null;
             notes: string | null;
+        };
+        OnboardingAnswers: {
+            /** @enum {string} */
+            sex: "male" | "female" | "other";
+            age: number;
+            height_cm: number;
+            weight_kg: number;
+            body_fat_percent?: number;
+            /** @enum {string} */
+            goal: "lose_fat" | "build_muscle" | "get_stronger";
+            /** Format: date */
+            target_date?: string;
+            target_weight_kg?: number;
+            note?: string;
+            days_per_week: number;
         };
         PlanResponse: {
             plan: components["schemas"]["Plan"];

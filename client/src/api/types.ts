@@ -7,6 +7,7 @@ export type DayExerciseLog = components['schemas']['DayExerciseLog'];
 export type DayType = components['schemas']['DayType'];
 export type ExerciseFeedback = components['schemas']['ExerciseFeedback'];
 export type ExerciseLog = components['schemas']['ExerciseLog'];
+export type OnboardingAnswers = components['schemas']['OnboardingAnswers'];
 export type PerformedSet = components['schemas']['PerformedSet'];
 export type Plan = components['schemas']['Plan'];
 export type PlanDay = components['schemas']['PlanDay'];

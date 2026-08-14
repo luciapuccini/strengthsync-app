@@ -5,6 +5,7 @@ import { ApiClientError, toApiError } from './errors';
 import type {
   Client,
   ClientProfile,
+  OnboardingAnswers,
   Plan,
   SaveDayLog,
   SignInInput,
@@ -113,6 +114,12 @@ export async function getProfile(): Promise<ClientProfile | null> {
 
 export async function updateProfile(input: UpdateClientProfile): Promise<ClientProfile> {
   const res = await call(() => api.PUT('/api/me/profile', { body: input }));
+  return res.profile;
+}
+
+/** Turns onboarding answers into the signed-in client's coaching profile. */
+export async function submitOnboarding(input: OnboardingAnswers): Promise<ClientProfile> {
+  const res = await call(() => api.POST('/api/me/onboarding', { body: input }));
   return res.profile;
 }
 

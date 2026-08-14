@@ -340,6 +340,74 @@
           "notes"
         ]
       },
+      "OnboardingAnswers": {
+        "type": "object",
+        "properties": {
+          "sex": {
+            "type": "string",
+            "enum": [
+              "male",
+              "female",
+              "other"
+            ]
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 13,
+            "maximum": 100
+          },
+          "height_cm": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 250
+          },
+          "weight_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 400
+          },
+          "body_fat_percent": {
+            "type": "number",
+            "minimum": 3,
+            "maximum": 60
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "lose_fat",
+              "build_muscle",
+              "get_stronger"
+            ]
+          },
+          "target_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "target_weight_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 400
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "days_per_week": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          }
+        },
+        "required": [
+          "sex",
+          "age",
+          "height_cm",
+          "weight_kg",
+          "goal",
+          "days_per_week"
+        ]
+      },
       "PlanResponse": {
         "type": "object",
         "properties": {
@@ -1060,6 +1128,62 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UpdateClientProfile"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientProfileResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/onboarding": {
+      "post": {
+        "summary": "Save the signed-in client's onboarding answers as their coaching profile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingAnswers"
               }
             }
           }
