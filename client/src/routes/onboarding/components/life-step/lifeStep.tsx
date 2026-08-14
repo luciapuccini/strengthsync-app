@@ -1,8 +1,7 @@
-import { useActionState, useState } from 'react';
+import { useActionState, useRef, useState } from 'react';
 import type { JSX } from 'react';
 
 import { generatePlan, submitOnboarding } from '@/api/client';
-import { ApiClientError } from '@/api/errors';
 import { invalidateCurrentWeek } from '@/api/weekResource';
 import {
   LifeStepSchema,
@@ -17,9 +16,9 @@ import {
   type StepFieldErrors,
 } from '@/lib/onboarding-schema';
 import { Button } from '@/shadcn/ui/button';
-import { Spinner } from '@/shadcn/ui/spinner';
 
 import { ActivitiesField } from './activitiesField';
+import { ComposingScreen } from '../composing-screen/composingScreen';
 import { LifeFields } from './lifeFields';
 
 type Props = {
@@ -28,9 +27,10 @@ type Props = {
   onSubmitted: () => void;
 };
 
-type SubmitState = { errors: StepFieldErrors; error: string | null };
+type SubmitPayload = { kind: 'submit'; form: FormData } | { kind: 'retry' };
+type SubmitState = { phase: 'form' | 'failed'; errors: StepFieldErrors };
 
-const initialState: SubmitState = { errors: {}, error: null };
+const initialState: SubmitState = { phase: 'form', errors: {} };
 
 type OptionalGoalFields = Pick<
   OnboardingAnswers,
@@ -135,67 +135,82 @@ function validateStep(
 }
 
 /**
+ * The write, then the one model call: saving the profile only ever happens
+ * once per visit to this step (`profileSaved`), so a retry after a
+ * generation failure re-runs generation only, per the parent PRD.
+ */
+async function composePlan(
+  answers: OnboardingAnswers,
+  profileSaved: { current: boolean },
+): Promise<void> {
+  if (!profileSaved.current) {
+    await submitOnboarding(toWirePayload(answers));
+    profileSaved.current = true;
+  }
+  await generatePlan();
+}
+
+/**
  * The wizard's fourth and final step and its submit: everything around the
  * training that changes what the training should be, then the answers
  * accumulated across every step become the coaching profile and, in the same
- * submit, its first generated plan.
+ * submit, its first generated plan. `pending` from `useActionState` is the
+ * one "in flight" signal — the composing screen consumes it rather than
+ * tracking a second one.
  */
 export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Element {
   const [activities, setActivities] = useState<OnboardingActivity[]>(priorAnswers.activities ?? []);
+  const validAnswers = useRef<OnboardingAnswers | null>(null);
+  const profileSaved = useRef(false);
 
-  const [state, formAction, pending] = useActionState<SubmitState, FormData>(
-    async (_previous, form) => {
-      const step = validateStep(form, activities);
-      if ('errors' in step) return { errors: step.errors, error: null };
+  const [state, dispatch, pending] = useActionState<SubmitState, SubmitPayload>(
+    async (_previous, payload) => {
+      if (payload.kind === 'submit') {
+        const step = validateStep(payload.form, activities);
+        if ('errors' in step) return { phase: 'form', errors: step.errors };
 
-      const full = OnboardingAnswersSchema.safeParse({ ...priorAnswers, ...step.data });
-      if (!full.success) {
-        // The prior steps already validated their part of this data; reaching
-        // here means a step was skipped, which the wizard's own UI never does.
-        return { errors: {}, error: 'Something went wrong. Please restart onboarding.' };
+        const full = OnboardingAnswersSchema.safeParse({ ...priorAnswers, ...step.data });
+        if (!full.success) return { phase: 'failed', errors: {} };
+        validAnswers.current = full.data;
       }
 
+      if (!validAnswers.current) return { phase: 'failed', errors: {} };
+
       try {
-        await submitOnboarding(toWirePayload(full.data));
-        await generatePlan();
+        await composePlan(validAnswers.current, profileSaved);
         invalidateCurrentWeek();
         onSubmitted();
         return initialState;
-      } catch (err) {
-        return {
-          errors: {},
-          error:
-            err instanceof ApiClientError ? err.message : 'Something went wrong. Please try again.',
-        };
+      } catch {
+        return { phase: 'failed', errors: {} };
       }
     },
     initialState,
   );
 
+  if (pending || state.phase === 'failed') {
+    return (
+      <ComposingScreen
+        status={pending ? 'pending' : 'failed'}
+        onRetry={() => dispatch({ kind: 'retry' })}
+      />
+    );
+  }
+
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={(form) => dispatch({ kind: 'submit', form })} className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold">Anything else that shapes your training?</h1>
 
       <ActivitiesField activities={activities} onChange={setActivities} />
 
       <LifeFields defaults={priorAnswers} errors={state.errors} />
 
-      {state.error && (
-        <p
-          role="alert"
-          className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-        >
-          {state.error}
-        </p>
-      )}
-
       <div className="flex gap-3">
-        <Button type="button" variant="outline" size="xl" onClick={onBack} disabled={pending}>
+        <Button type="button" variant="outline" size="xl" onClick={onBack}>
           Back
         </Button>
-        <Button type="submit" size="xl" className="flex-1" disabled={pending}>
-          {pending && <Spinner />}
-          {pending ? 'Building your plan…' : 'Finish'}
+        <Button type="submit" size="xl" className="flex-1">
+          Finish
         </Button>
       </div>
     </form>
