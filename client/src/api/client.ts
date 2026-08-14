@@ -141,6 +141,11 @@ export async function getPlan(planId: string): Promise<Plan> {
   return res.plan;
 }
 
+/** Generates and activates the signed-in client's first plan from their profile. */
+export async function generatePlan(): Promise<{ plan: Plan; first_week: Week }> {
+  return call(() => api.POST('/api/me/plans/generate', {}));
+}
+
 export async function getCurrentWeek(): Promise<Week | null> {
   return orNull(async () => {
     const res = await call(() => api.GET('/api/me/weeks/current'));

@@ -15,7 +15,8 @@ import { PlanDaySchema } from './model/index.ts';
 
 export const GeneratedPlanInputSchema = z.object({
   label: z.string().min(1),
-  total_weeks: z.number().int().positive(),
+  // A block is 4-8 weeks; applies to a first plan and to plan turnover alike.
+  total_weeks: z.number().int().min(4).max(8),
   week_template: z.array(PlanDaySchema),
   // Required key (nullable) so OpenAI structured-output JSON Schema accepts it.
   rationale: z.string().nullable(),

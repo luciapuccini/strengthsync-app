@@ -72,7 +72,7 @@ Cross-field rules (for example: a skipped exercise carries no performed sets) ar
 
 ## Public API
 
-Fourteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
+Sixteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
 schemas — and is always current by construction, so they are not restated here.
 
 The shape, which the document does not state in one place:
@@ -81,8 +81,14 @@ The shape, which the document does not state in one place:
 | --- | --- |
 | Liveness | `GET /health` |
 | Session | `POST /auth/sign-up`, `POST /auth/sign-in`, `POST /auth/sign-out`, `GET /auth/session` |
-| The signed-in athlete | `GET`/`PUT /api/me/profile`, `GET /api/me/plans/active`, `GET /api/me/plans/{planId}`, `GET /api/me/weeks`, `GET /api/me/weeks/current`, `POST /api/me/weeks/{weekId}/days/{dayIndex}/save`, `PATCH /api/me/weeks/{weekId}/days/{dayIndex}` |
+| The signed-in athlete | `GET`/`PUT /api/me/profile`, `POST /api/me/onboarding`, `GET /api/me/plans/active`, `GET /api/me/plans/{planId}`, `POST /api/me/plans/generate`, `GET /api/me/weeks`, `GET /api/me/weeks/current`, `POST /api/me/weeks/{weekId}/days/{dayIndex}/save`, `PATCH /api/me/weeks/{weekId}/days/{dayIndex}` |
 | Workflow start | `POST /wf/complete-week` |
+
+Plan creation is no longer workflow-only: `POST /api/me/plans/generate` builds a first plan from the
+caller's profile with one synchronous, structured-output model call and activates it through the same
+atomic command the weekly workflow uses, keyed by a deterministic `first-plan:{clientId}` value instead
+of a workflow instance id. It refuses with `409 plan_already_active` or `409 profile_required` before
+ever reaching the model.
 
 Workflow requests are asynchronous. `POST /wf/complete-week` validates its body (`clientId` must be a UUID) and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. [TODO]: the UI does not poll workflow status. It is also the one place a client id still crosses the wire in a request body, because the workflow is started for an athlete rather than by one.
 

@@ -14,4 +14,26 @@ describe('GeneratedPlanInputSchema', () => {
 
     expect(result.success).toBe(true);
   });
+
+  it('rejects a block shorter than four weeks', () => {
+    const result = GeneratedPlanInputSchema.safeParse({
+      label: 'Block 2',
+      total_weeks: 3,
+      week_template: [],
+      rationale: null,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a block longer than eight weeks', () => {
+    const result = GeneratedPlanInputSchema.safeParse({
+      label: 'Block 2',
+      total_weeks: 9,
+      week_template: [],
+      rationale: null,
+    });
+
+    expect(result.success).toBe(false);
+  });
 });

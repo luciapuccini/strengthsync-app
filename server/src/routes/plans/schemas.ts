@@ -2,7 +2,7 @@ import { z } from '@hono/zod-openapi';
 
 import { PlanDaySchema, PlanSchema, PlannedExerciseSchema } from '../../domain/model/index.ts';
 import { uuidParam } from '../shared.ts';
-import { DayTypeSchema } from '../weeks/schemas.ts';
+import { DayTypeSchema, Week } from '../weeks/schemas.ts';
 
 /**
  * HTTP shapes for the plans area. See `routes/clients/schemas.ts` on rebuilding.
@@ -20,6 +20,11 @@ const PlanDay = z
 const Plan = z.object({ ...PlanSchema.shape, week_template: z.array(PlanDay) }).openapi('Plan');
 
 export const PlanResponseSchema = z.object({ plan: Plan }).openapi('PlanResponse');
+
+/** A newly generated and activated plan, with its in-flight week one. */
+export const GeneratePlanResponseSchema = z
+  .object({ plan: Plan, first_week: Week })
+  .openapi('GeneratePlanResponse');
 
 /** The plan id alone: the athlete comes from the session, never from the path. */
 export const PlanIdParamSchema = z.object({ planId: uuidParam('planId') });

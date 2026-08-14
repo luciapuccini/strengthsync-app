@@ -528,6 +528,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/plans/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate and activate the signed-in client's first plan */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Plan generated and activated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["GeneratePlanResponse"];
+                    };
+                };
+                /** @description Missing or invalid credentials */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Conflicts with existing state */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/weeks/current": {
         parameters: {
             query?: never;
@@ -994,8 +1048,9 @@ export interface components {
             weight_kg: number | null;
             notes: string | null;
         };
-        WeekResponse: {
-            week: components["schemas"]["Week"];
+        GeneratePlanResponse: {
+            plan: components["schemas"]["Plan"];
+            first_week: components["schemas"]["Week"];
         };
         Week: {
             /** Format: uuid */
@@ -1047,6 +1102,9 @@ export interface components {
         PerformedSet: {
             performed_reps: number;
             performed_weight_kg: number | null;
+        };
+        WeekResponse: {
+            week: components["schemas"]["Week"];
         };
         WeekListResponse: {
             weeks: components["schemas"]["Week"][];

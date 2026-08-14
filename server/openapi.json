@@ -576,15 +576,19 @@
           "notes"
         ]
       },
-      "WeekResponse": {
+      "GeneratePlanResponse": {
         "type": "object",
         "properties": {
-          "week": {
+          "plan": {
+            "$ref": "#/components/schemas/Plan"
+          },
+          "first_week": {
             "$ref": "#/components/schemas/Week"
           }
         },
         "required": [
-          "week"
+          "plan",
+          "first_week"
         ]
       },
       "Week": {
@@ -799,6 +803,17 @@
         "required": [
           "performed_reps",
           "performed_weight_kg"
+        ]
+      },
+      "WeekResponse": {
+        "type": "object",
+        "properties": {
+          "week": {
+            "$ref": "#/components/schemas/Week"
+          }
+        },
+        "required": [
+          "week"
         ]
       },
       "WeekListResponse": {
@@ -1316,6 +1331,43 @@
           },
           "404": {
             "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/plans/generate": {
+      "post": {
+        "summary": "Generate and activate the signed-in client's first plan",
+        "responses": {
+          "200": {
+            "description": "Plan generated and activated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratePlanResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicts with existing state",
             "content": {
               "application/json": {
                 "schema": {

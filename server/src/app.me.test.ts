@@ -153,6 +153,34 @@ describe('GET /api/me/plans/{planId}', () => {
   });
 });
 
+describe('POST /api/me/plans/generate', () => {
+  it('refuses a client with no profile', async () => {
+    const { app, ana } = await twoClients();
+
+    const res = await app.request('/api/me/plans/generate', {
+      method: 'POST',
+      headers: ana.headers,
+    });
+
+    expect(res.status).toBe(409);
+    expect((await body<{ error: { code: string } }>(res)).error.code).toBe('profile_required');
+  });
+
+  it('refuses a client who already has an active plan', async () => {
+    const { db, app, ana } = await twoClients();
+    await upsertProfileViaApi(app, ana);
+    await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-generate-conflict');
+
+    const res = await app.request('/api/me/plans/generate', {
+      method: 'POST',
+      headers: ana.headers,
+    });
+
+    expect(res.status).toBe(409);
+    expect((await body<{ error: { code: string } }>(res)).error.code).toBe('plan_already_active');
+  });
+});
+
 describe('GET /api/me/weeks/current', () => {
   it('returns 404 before a plan exists', async () => {
     const { app, ana } = await twoClients();
@@ -284,6 +312,7 @@ describe('the session is what addresses these routes', () => {
       ['POST', '/api/me/onboarding'],
       ['GET', '/api/me/plans/active'],
       ['GET', '/api/me/plans/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d'],
+      ['POST', '/api/me/plans/generate'],
       ['GET', '/api/me/weeks/current'],
       ['GET', '/api/me/weeks'],
       ['POST', '/api/me/weeks/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/days/1/save'],

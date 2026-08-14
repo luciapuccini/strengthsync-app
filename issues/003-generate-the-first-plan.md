@@ -31,7 +31,9 @@ is fine here; the composing screen arrives in `issues/006-building-screen.md`.
 See "API contract" and "Model and prompt" in the parent PRD.
 
 This slice is human-in-the-loop because the parent PRD deliberately leaves the
-generated path untested — whether a generated plan is actually *good* is a
+generated path untested — whether a generated plan is actually 
+
+*good* is a
 judgement made by hand against a real key.
 
 ## Acceptance criteria
@@ -78,4 +80,4 @@ judgement made by hand against a real key.
 
 ## STATUS
 
-TODO
+DONE

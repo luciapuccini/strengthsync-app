@@ -1,8 +1,9 @@
 import { useActionState } from 'react';
 import type { JSX } from 'react';
 
-import { submitOnboarding } from '@/api/client';
+import { generatePlan, submitOnboarding } from '@/api/client';
 import { ApiClientError } from '@/api/errors';
+import { invalidateCurrentWeek } from '@/api/weekResource';
 import {
   OnboardingAnswersSchema,
   TrainingDaysStepSchema,
@@ -45,7 +46,8 @@ function toWirePayload(answers: OnboardingAnswers) {
 /**
  * The wizard's final step and its submit: how many days a week the client can
  * train, then the answers accumulated across every step become the coaching
- * profile. Its home moves in `issues/004-training-step.md`.
+ * profile and, in the same submit, its first generated plan. Its home moves
+ * in `issues/004-training-step.md`.
  */
 export function TrainingDaysStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Element {
   const [state, formAction, pending] = useActionState<SubmitState, FormData>(
@@ -66,6 +68,8 @@ export function TrainingDaysStep({ priorAnswers, onBack, onSubmitted }: Props): 
 
       try {
         await submitOnboarding(toWirePayload(full.data));
+        await generatePlan();
+        invalidateCurrentWeek();
         onSubmitted();
         return initialState;
       } catch (err) {
@@ -115,7 +119,7 @@ export function TrainingDaysStep({ priorAnswers, onBack, onSubmitted }: Props): 
         </Button>
         <Button type="submit" size="xl" className="flex-1" disabled={pending}>
           {pending && <Spinner />}
-          {pending ? 'Saving…' : 'Finish'}
+          {pending ? 'Building your plan…' : 'Finish'}
         </Button>
       </div>
     </form>
