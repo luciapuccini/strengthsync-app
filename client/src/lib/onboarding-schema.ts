@@ -11,6 +11,23 @@ import { z } from 'zod';
 
 export const ONBOARDING_SEXES = ['male', 'female', 'other'] as const;
 export const ONBOARDING_GOALS = ['lose_fat', 'build_muscle', 'get_stronger'] as const;
+export const ONBOARDING_EXPERIENCE_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
+export type OnboardingExperience = (typeof ONBOARDING_EXPERIENCE_LEVELS)[number];
+export const ONBOARDING_MAIN_LIFTS = [
+  'squat',
+  'bench_press',
+  'deadlift',
+  'overhead_press',
+] as const;
+export const ONBOARDING_WEEKDAYS = [
+  { day_index: 1, label: 'Monday' },
+  { day_index: 2, label: 'Tuesday' },
+  { day_index: 3, label: 'Wednesday' },
+  { day_index: 4, label: 'Thursday' },
+  { day_index: 5, label: 'Friday' },
+  { day_index: 6, label: 'Saturday' },
+  { day_index: 7, label: 'Sunday' },
+] as const;
 
 /** `FormData.get` returns `""` for an empty number input, not `null`. */
 export function optionalNumber(value: FormDataEntryValue | null): number | undefined {
@@ -42,13 +59,21 @@ export const GoalStepSchema = z.object({
 });
 export type GoalStepAnswers = z.infer<typeof GoalStepSchema>;
 
-export const TrainingDaysStepSchema = z.object({
+const liftWeightSchema = z.number().positive().max(500);
+
+export const TrainingStepSchema = z.object({
+  experience: z.enum(ONBOARDING_EXPERIENCE_LEVELS),
+  squat_kg: liftWeightSchema.optional(),
+  bench_press_kg: liftWeightSchema.optional(),
+  deadlift_kg: liftWeightSchema.optional(),
+  overhead_press_kg: liftWeightSchema.optional(),
   days_per_week: z.number().int().min(1).max(7),
+  rest_day: z.number().int().min(1).max(7),
 });
-export type TrainingDaysStepAnswers = z.infer<typeof TrainingDaysStepSchema>;
+export type TrainingStepAnswers = z.infer<typeof TrainingStepSchema>;
 
 export const OnboardingAnswersSchema = PersonalStepSchema.extend(GoalStepSchema.shape).extend(
-  TrainingDaysStepSchema.shape,
+  TrainingStepSchema.shape,
 );
 /** The full, validated questionnaire payload — same shape as the wire contract. */
 export type OnboardingAnswers = z.infer<typeof OnboardingAnswersSchema>;

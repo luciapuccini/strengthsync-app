@@ -89,7 +89,9 @@ describe('POST /api/me/onboarding', () => {
         height_cm: 170,
         weight_kg: 64,
         goal: 'build_muscle',
+        experience: 'beginner',
         days_per_week: 4,
+        rest_day: 7,
       }),
     });
 

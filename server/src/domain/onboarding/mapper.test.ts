@@ -9,7 +9,9 @@ const beginnerAnswers: OnboardingAnswers = {
   height_cm: 165,
   weight_kg: 62,
   goal: 'build_muscle',
+  experience: 'beginner',
   days_per_week: 4,
+  rest_day: 7,
 };
 
 describe('mapAnswersToProfileWrite', () => {
@@ -32,13 +34,28 @@ describe('mapAnswersToProfileWrite', () => {
       target_weight_kg: 58,
       note: 'wedding in December',
     });
-    expect(write.schedule_preferences).toEqual({ days_per_week: 4 });
+    expect(write.schedule_preferences).toEqual({ days_per_week: 4, rest_day: 7 });
   });
 
-  it('invents no strength loads: this slice collects none yet', () => {
+  it('a beginner invents no strength loads: experience is stored, lifts stay empty', () => {
     const write = mapAnswersToProfileWrite(beginnerAnswers);
 
-    expect(write.strength_loads).toEqual({});
+    expect(write.strength_loads).toEqual({ experience: 'beginner', lifts: {} });
+  });
+
+  it('an experienced client keeps only the lifts they gave a weight for', () => {
+    const write = mapAnswersToProfileWrite({
+      ...beginnerAnswers,
+      experience: 'advanced',
+      squat_kg: 100,
+      deadlift_kg: 140,
+      // bench_press_kg and overhead_press_kg skipped: those lifts are not trained.
+    });
+
+    expect(write.strength_loads).toEqual({
+      experience: 'advanced',
+      lifts: { squat: 100, deadlift: 140 },
+    });
   });
 
   it('skipped optional answers do not appear in the stored profile', () => {

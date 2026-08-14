@@ -6,10 +6,10 @@ import type { OnboardingAnswers } from './schema.ts';
  * Pure answers-to-profile mapping: the one place that knows which profile
  * column each onboarding answer belongs to. No I/O, no framework.
  *
- * `strength_loads`, `nutrition` and `activities` are placeholders here —
- * `issues/004-training-step.md` and `issues/005-life-step.md` extend this
- * mapper to fill them from the training and life steps. `snapshot_date` is
- * the caller's to set: this function stays free of the clock.
+ * `nutrition` and `activities` are placeholders here —
+ * `issues/005-life-step.md` extends this mapper to fill them from the life
+ * step. `snapshot_date` is the caller's to set: this function stays free of
+ * the clock.
  */
 export function mapAnswersToProfileWrite(
   answers: OnboardingAnswers,
@@ -32,10 +32,20 @@ export function mapAnswersToProfileWrite(
         ? { body_fat_percent: answers.body_fat_percent }
         : {}),
     },
-    strength_loads: {},
+    strength_loads: {
+      experience: answers.experience,
+      lifts: {
+        ...(answers.squat_kg !== undefined ? { squat: answers.squat_kg } : {}),
+        ...(answers.bench_press_kg !== undefined ? { bench_press: answers.bench_press_kg } : {}),
+        ...(answers.deadlift_kg !== undefined ? { deadlift: answers.deadlift_kg } : {}),
+        ...(answers.overhead_press_kg !== undefined
+          ? { overhead_press: answers.overhead_press_kg }
+          : {}),
+      },
+    },
     nutrition: null,
     activities: null,
-    schedule_preferences: { days_per_week: answers.days_per_week },
+    schedule_preferences: { days_per_week: answers.days_per_week, rest_day: answers.rest_day },
     notes: null,
   };
 }

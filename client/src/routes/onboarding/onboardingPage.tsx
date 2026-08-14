@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { GoalStep } from './components/goal-step/goalStep';
 import { OnboardingProgress } from './components/onboarding-progress/onboardingProgress';
 import { PersonalStep } from './components/personal-step/personalStep';
-import { TrainingDaysStep } from './components/training-days-step/trainingDaysStep';
+import { TrainingStep } from './components/training-step/trainingStep';
 import { ONBOARDING_STEPS, initialOnboardingState, onboardingReducer } from './onboardingReducer';
 
 /**
@@ -37,8 +37,8 @@ export function OnboardingPage(): JSX.Element {
         />
       )}
 
-      {state.step === 'training-days' && (
-        <TrainingDaysStep
+      {state.step === 'training' && (
+        <TrainingStep
           priorAnswers={state.answers}
           onBack={() => dispatch({ type: 'back' })}
           onSubmitted={() => void navigate('/track', { replace: true })}

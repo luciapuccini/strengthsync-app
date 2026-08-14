@@ -393,7 +393,40 @@
             "minLength": 1,
             "maxLength": 500
           },
+          "experience": {
+            "type": "string",
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced"
+            ]
+          },
+          "squat_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 500
+          },
+          "bench_press_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 500
+          },
+          "deadlift_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 500
+          },
+          "overhead_press_kg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 500
+          },
           "days_per_week": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "rest_day": {
             "type": "integer",
             "minimum": 1,
             "maximum": 7
@@ -405,7 +438,9 @@
           "height_cm",
           "weight_kg",
           "goal",
-          "days_per_week"
+          "experience",
+          "days_per_week",
+          "rest_day"
         ]
       },
       "PlanResponse": {

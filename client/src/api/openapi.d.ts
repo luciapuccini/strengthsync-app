@@ -1008,7 +1008,14 @@ export interface components {
             target_date?: string;
             target_weight_kg?: number;
             note?: string;
+            /** @enum {string} */
+            experience: "beginner" | "intermediate" | "advanced";
+            squat_kg?: number;
+            bench_press_kg?: number;
+            deadlift_kg?: number;
+            overhead_press_kg?: number;
             days_per_week: number;
+            rest_day: number;
         };
         PlanResponse: {
             plan: components["schemas"]["Plan"];
