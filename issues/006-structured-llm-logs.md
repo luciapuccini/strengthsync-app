@@ -38,16 +38,46 @@ input, the model, the latency and the cost.
 
 ## Acceptance criteria
 
-- [ ] Every model call emits exactly one structured line on success, including
+- [x] Every model call emits exactly one structured line on success, including
       prompt, output, model id, latency in ms and token usage
-- [ ] A failed call emits a line carrying the error, and a retried step emits one
+- [x] A failed call emits a line carrying the error, and a retried step emits one
       line per attempt
-- [ ] The lines are queryable in Workers Logs by call site, so
+- [x] The lines are queryable in Workers Logs by call site, so
       `analyze-week` can be read separately from `generate-plan`
-- [ ] No new table, no new dependency, no change to `docs/architecture/evals.md`'s
+- [x] No new table, no new dependency, no change to `docs/architecture/evals.md`'s
       target design
-- [ ] Server tests still pass; the change does not alter what `getAgentRuntime`
+- [x] Server tests still pass; the change does not alter what `getAgentRuntime`
       returns or throws
+
+## Implementation notes
+
+One `console.log(JSON.stringify(…))` per call, emitted from a `finally` in
+`getAgentRuntime`, so returning, a provider error, missing structured output and
+a schema rejection all produce exactly one line. Stringified rather than passed
+as an object because workerd's console formatter elides deep values — which is
+the prompt and the output.
+
+Fields: `event: "llm_call"`, `call_id`, `call_site`, `system_fingerprint`,
+`model`, `status`, `latency_ms`, `system`, `prompt`, `prompt_chars`, and on any
+call that reached the provider `output`, `usage`, `finish_reason`, `response_id`,
+`response_model_id`; `error` on failure.
+
+`call_site` is derived from the system prompt's first sentence rather than passed
+in, so none of the six callers changed. The six resolve to distinct labels —
+`strength-coach-analyzing-one-completed-training-week`,
+`strength-coach-generating-a-multi-week-training-plan`, and so on. `AgentConfig`
+takes an optional `callSite` that overrides the derived label, if the literal
+step names are wanted later. `system_fingerprint` is FNV-1a over the whole
+system prompt: an exact grouping key that moves when the prompt is edited.
+
+`call_id` is fresh per attempt, so a step that retries twice is three lines that
+differ there rather than one slow-looking call.
+
+Free-text fields are capped at 16k characters so an oversized prompt cannot cost
+the line its model id and token usage; `prompt_chars` carries the true length.
+
+Not verified against a deployed Worker — `wrangler deploy` plus one real call is
+what confirms the lines land in Workers Logs.
 
 ## Blocked by
 
