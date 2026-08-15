@@ -28,18 +28,23 @@ code.
 ## Acceptance criteria
 
 - [x] Sign-up with a missing or wrong code fails with a distinct error code, and
-      creates no `client` row and no `credential` row — a wrong code is 403
-      `invalid_invite_code`; a missing one is the schema's 400 `invalid_input`,
-      whose message names `invite_code`
+
+  creates no `client` row and no `credential` row — a wrong code is 403
+  `invalid_invite_code`; a missing one is the schema's 400 `invalid_input`,
+  whose message names `invite_code`
 - [x] Sign-up with the current code succeeds, and the code used is persisted on
-      the client row
+
+  the client row
 - [x] The valid code is read from a Worker secret and never committed; local dev
-      reads it from `.dev.vars`, and the `Env` type declares it
+
+  reads it from `.dev.vars`, and the `Env` type declares it
 - [x] A drizzle migration exists under `server/db/drizzle/` and applies cleanly
 - [x] `pnpm gen:openapi` is re-run and `git diff --exit-code` is clean, so CI
-      passes
+
+  passes
 - [x] The sign-up screen has the field and shows the server's rejection rather
-      than a generic failure
+
+  than a generic failure
 - [x] Server tests cover both the accepted and the rejected path
 
 ## Implementation note
@@ -62,4 +67,4 @@ None — can start immediately.
 
 ## STATUS
 
-TODO
+DONE
