@@ -21,8 +21,10 @@ Notes only — not designs. Pointers into existing docs where they already cover
   so an athlete who signs up on a Wednesday and said "I rest on Sundays" gets a
   rest day on Tuesday — and the offset chains forward through every later week.
   Accepted for the invited cohort: a rest day on the wrong weekday is a smaller
-  problem than a week whose first days are already in the past. Fixing it means
-  deciding whether `day_index` is "your Nth day" or "a weekday", then rotating
-  either the template or the onboarding question to match.
+  problem than a week whose first days are already in the past. Planned out in
+  [day-index-weekday-mapping.md](../kanban/day-index-weekday-mapping.md) —
+  `day_index` goes back to meaning an ISO weekday and the seven-day window is
+  rotated onto it. Cheapest before the first invite batch, since after that it
+  also needs a backfill of `weeks.schedule`.
 - captcha or any gate to prevent fake usrs?
 

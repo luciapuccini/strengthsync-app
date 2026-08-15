@@ -73,6 +73,10 @@ something to settle inside this issue. Recorded in
 `docs/future_state_after_mvp/todos.md`, and the now-false comment on
 `OnboardingAnswersSchema.rest_day` was corrected to point at it.
 
+Planned out separately in `docs/kanban/day-index-weekday-mapping.md`: the
+resolution is to keep `day_index` meaning an ISO weekday and rotate the
+seven-day window onto it, which preserves both properties.
+
 ## Blocked by
 
 None — can start immediately.
