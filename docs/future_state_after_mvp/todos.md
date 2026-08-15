@@ -13,8 +13,16 @@ Notes only — not designs. Pointers into existing docs where they already cover
 - feedback on initial plan generated 
 - **SSO / social sign-in** (Apple, Google, etc.). (Out of MVP auth scope in [stack.md](../architecture/stack.md).)
 - **Onboarding draft state:** progressive reducer + resume after refresh/later. Decide if Zustand helps. (See [onboarding-draft-state.md](./onboarding-draft-state.md).)
-- Possible bug, geerating a new plan mid week still generated the past days. ex on friday I create an account and the generated plan assumes we started that Monday -&gt; impossible. 
-  - should we ask the user in onboarding when to start?
-  - AI should at least start on the current day
+- **`day_index` no longer means a weekday.** Onboarding asks for the "usual rest
+  day" by name and stores it as `schedule_preferences.rest_day` on the ISO
+  convention `1 = Monday` (`server/src/domain/onboarding/schema.ts:82`,
+  `ONBOARDING_WEEKDAYS` in `client/src/lib/onboarding-schema.ts`). Since issue
+  003 anchored week 1 to the activation day, `day_index 1` is that day instead,
+  so an athlete who signs up on a Wednesday and said "I rest on Sundays" gets a
+  rest day on Tuesday — and the offset chains forward through every later week.
+  Accepted for the invited cohort: a rest day on the wrong weekday is a smaller
+  problem than a week whose first days are already in the past. Fixing it means
+  deciding whether `day_index` is "your Nth day" or "a weekday", then rotating
+  either the template or the onboarding question to match.
 - captcha or any gate to prevent fake usrs?
 

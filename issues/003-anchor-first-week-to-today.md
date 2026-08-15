@@ -30,13 +30,48 @@ See `docs/mvp.md` §3.
 
 ## Acceptance criteria
 
-- [ ] A plan activated on any weekday produces a first week whose `start_date` is
+- [x] A plan activated on any weekday produces a first week whose `start_date` is
       that day and whose `end_date` is that day + 6
-- [ ] `day_index` 1 of the generated template maps to the start date, and the
+- [x] `day_index` 1 of the generated template maps to the start date, and the
       remaining days follow sequentially
-- [ ] No day of the first week is ever in the past at activation time
-- [ ] Week 2 still starts the day after week 1 ends, for a non-Monday start
-- [ ] A repository test pins the behaviour for a mid-week activation
+- [x] No day of the first week is ever in the past at activation time
+- [x] Week 2 still starts the day after week 1 ends, for a non-Monday start
+- [x] A repository test pins the behaviour for a mid-week activation
+
+## Implementation note
+
+One line: `start` in `activateGeneratedPlan` is `todayIso()` instead of
+`startOfISOWeek(todayIso())`. `buildScheduleFromTemplate` already dates each day
+as `start + (day_index - 1)`, and `saveNextWeek` already chains off
+`previousWeek.end_date + 1`, so nothing else moved.
+
+`startOfISOWeek` had no other caller and was deleted from `server/src/db/dates.ts`
+along with its tests; the file's header no longer claims weeks run Monday–Sunday.
+
+The repository test freezes the clock (`vi.setSystemTime`, `toFake: ['Date']`) to
+a Wednesday. Without that it would assert nothing every Monday, which is the one
+day the old and new behaviour agree — worth the first fake timer in the server
+suite. Both new tests were confirmed to fail against the old anchor before the
+change was kept.
+
+### Known consequence: `day_index` stopped meaning a weekday
+
+Onboarding collects the "usual rest day" by name and stores it as
+`schedule_preferences.rest_day` on `1 = Monday` (`ONBOARDING_WEEKDAYS` in
+`client/src/lib/onboarding-schema.ts`). That value goes into the profile the
+first-plan prompt reads, and the model places `type: "rest"` at the matching
+`day_index`. With week 1 anchored to the activation day, `day_index 1` is that
+day rather than Monday, so someone signing up on a Wednesday who rests on
+Sundays now rests on a Tuesday — and the offset chains forward through every
+later week, because week 2's prompt dates `day_index 1` as
+`completedWeek.end_date + 1`.
+
+Left in place deliberately: a rest day on the wrong weekday is a smaller problem
+than a week whose first days are already spent, and fixing it is a product
+decision about whether `day_index` means "your Nth day" or "a weekday" — not
+something to settle inside this issue. Recorded in
+`docs/future_state_after_mvp/todos.md`, and the now-false comment on
+`OnboardingAnswersSchema.rest_day` was corrected to point at it.
 
 ## Blocked by
 
@@ -49,4 +84,4 @@ None — can start immediately.
 
 ## STATUS
 
-TODO
+DONE
