@@ -171,6 +171,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
         const weekAnalysis = await getAgentRuntime({
           apiKey: this.env.OPENAI_API_KEY,
           model: this.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
+          callSite: 'analyze-week',
           system: WEEK_ANALYSIS_SYSTEM,
           prompt: buildCompleteWeekCtx(currentPlan, userProfile, completedWeek, rules),
 
@@ -189,6 +190,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
         const nextWeek = await getAgentRuntime({
           apiKey: this.env.OPENAI_API_KEY,
           model: this.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
+          callSite: 'generate-next-week',
           system: NEXT_WEEK_SYSTEM,
           prompt: buildNextWeekPrompt({
             currentPlan,

@@ -112,6 +112,7 @@ export function planRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables; B
     const generated = await getAgentRuntime({
       apiKey: c.env.OPENAI_API_KEY,
       model: c.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
+      callSite: 'first-plan',
       system,
       prompt,
       outSchema: GeneratedPlanInputSchema,

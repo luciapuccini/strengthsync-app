@@ -45,39 +45,64 @@ input, the model, the latency and the cost.
 - [x] The lines are queryable in Workers Logs by call site, so
       `analyze-week` can be read separately from `generate-plan`
 - [x] No new table, no new dependency, no change to `docs/architecture/evals.md`'s
-      target design
+      target design (the integration interface used is already in `ai@7`)
 - [x] Server tests still pass; the change does not alter what `getAgentRuntime`
       returns or throws
 
 ## Implementation notes
 
-One `console.log(JSON.stringify(…))` per call, emitted from a `finally` in
-`getAgentRuntime`, so returning, a provider error, missing structured output and
-a schema rejection all produce exactly one line. Stringified rather than passed
-as an object because workerd's console formatter elides deep values — which is
-the prompt and the output.
+Built on the AI SDK's own telemetry lifecycle, not on plumbing wrapped around
+`generateText`. `ai@7` exposes `registerTelemetry(integration)` plus a per-call
+`telemetry: { functionId }`; `server/src/agent/telemetry.ts` implements one
+integration against that interface and `getAgentRuntime` registers it once per
+isolate. The sink is `console.log(JSON.stringify(…))` — stringified rather than
+passed as an object because workerd's console formatter elides deep values,
+which is the prompt and the output.
 
-Fields: `event: "llm_call"`, `call_id`, `call_site`, `system_fingerprint`,
-`model`, `status`, `latency_ms`, `system`, `prompt`, `prompt_chars`, and on any
-call that reached the provider `output`, `usage`, `finish_reason`, `response_id`,
+Registering through that interface is what keeps Braintrust a later sink swap
+rather than a rewrite: the six call sites would not change.
+
+Fields: `event: "llm_call"`, `call_id`, `call_site`, `provider`, `model`,
+`status`, `latency_ms`, `prompt`, `prompt_chars`, and on a call that reached the
+provider `output`, `output_chars`, `usage`, `finish_reason`, `response_id`,
 `response_model_id`; `error` on failure.
 
-`call_site` is derived from the system prompt's first sentence rather than passed
-in, so none of the six callers changed. The six resolve to distinct labels —
-`strength-coach-analyzing-one-completed-training-week`,
-`strength-coach-generating-a-multi-week-training-plan`, and so on. `AgentConfig`
-takes an optional `callSite` that overrides the derived label, if the literal
-step names are wanted later. `system_fingerprint` is FNV-1a over the whole
-system prompt: an exact grouping key that moves when the prompt is edited.
+`call_site` is the AI SDK's `functionId`, passed explicitly by each caller as
+`AgentConfig.callSite` — `analyze-week`, `generate-next-week`,
+`summarize-profile`, `summarize-history`, `generate-plan`, `first-plan`. Six
+one-line edits, and the label is the step name rather than something derived
+from prompt text.
 
-`call_id` is fresh per attempt, so a step that retries twice is three lines that
-differ there rather than one slow-looking call.
+`call_id` is the SDK's, unique per `generateText` call, so a step that retries
+twice is three lines that differ there rather than one slow-looking call.
 
-Free-text fields are capped at 16k characters so an oversized prompt cannot cost
-the line its model id and token usage; `prompt_chars` carries the true length.
+`prompt` is the SDK-normalised prompt (`instructions` + `messages`) — what
+actually went over the wire, rather than the two strings the caller passed in.
+
+Payloads are capped at 16k characters so an oversized prompt cannot cost the
+line its model id and token usage; `prompt_chars` carries the true length.
+
+Two behaviours worth knowing:
+
+- Structured output is parsed *after* the SDK's end event, so a schema rejection
+  produces two lines for one call: `status: "ok"` for the provider call, which
+  did succeed and whose `output` shows the malformed payload, then
+  `status: "error"` carrying the same `call_id` and prompt. A provider failure
+  is one `error` line, as before.
+- `getAgentRuntime` no longer re-validates with `outSchema.parse`;
+  `Output.object` already did, and `result.output` raises
+  `NoOutputGeneratedError` itself. Callers still see a rejection either way.
 
 Not verified against a deployed Worker — `wrangler deploy` plus one real call is
 what confirms the lines land in Workers Logs.
+
+### Rejected: OpenTelemetry
+
+The documented AI SDK → Braintrust path is `@vercel/otel` (Next.js) or `NodeSDK`
+(Node), neither of which runs on workerd. The community bridge,
+`@microlabs/otel-cf-workers`, is still `1.0.0-rc` and was last published in May
+2025. If Braintrust is wanted later, its own SDK ships a `workerd` export and an
+`initLogger` + `wrapAISDK` path that skips OTel entirely.
 
 ## Blocked by
 
@@ -91,4 +116,4 @@ None — can start immediately.
 
 ## STATUS
 
-TODO
+DONE
