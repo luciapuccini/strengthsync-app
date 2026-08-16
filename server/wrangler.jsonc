@@ -28,7 +28,7 @@
     // single-page-application turns a miss into index.html. /auth/* has to be
     // on the list or GET /auth/session returns the app shell instead of the
     // session — invisible locally, where vite proxies to the Worker directly.
-    "run_worker_first": ["/api/*", "/wf/*", "/auth/*", "/health"],
+    "run_worker_first": ["/api/*", "/auth/*", "/health"],
   },
   "d1_databases": [
     {

@@ -61,7 +61,7 @@ export function createApp(config: AppConfig): OpenAPIHono {
   app.route('/api', onboardingRoutes(config.db));
   app.route('/api', planRoutes(config.db));
   app.route('/api', weekRoutes(config.db));
-  app.route('/wf', cfWorkflowRoutes());
+  app.route('/api', cfWorkflowRoutes());
 
   return app;
 }

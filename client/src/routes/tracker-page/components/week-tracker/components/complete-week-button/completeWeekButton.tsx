@@ -5,16 +5,14 @@ import { toast } from 'sonner';
 import { startWeeklyProgression } from '@/api/workflows';
 import { Button } from '@/shadcn/ui/button';
 import { Spinner } from '@/shadcn/ui/spinner';
-import { useAppStore } from '@/store/useAppStore';
 
 export function CompleteWeekButton(): JSX.Element {
-  const clientId = useAppStore((s) => s.client?.id)!;
   const [isRunning, setIsRunning] = useState(false);
 
   async function completeWeek(): Promise<void> {
     // setIsRunning(true);
     try {
-      const { instanceId, details } = await startWeeklyProgression(clientId);
+      const { instanceId, details } = await startWeeklyProgression();
       console.log('started', instanceId, details);
       toast.success('Week complete triggered');
     } catch (error) {

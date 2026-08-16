@@ -1014,18 +1014,6 @@
           "instanceId",
           "details"
         ]
-      },
-      "CompleteWeekInput": {
-        "type": "object",
-        "properties": {
-          "clientId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "required": [
-          "clientId"
-        ]
       }
     },
     "parameters": {},
@@ -1740,19 +1728,9 @@
         }
       }
     },
-    "/wf/complete-week": {
+    "/api/wf/complete-week": {
       "post": {
-        "summary": "Complete a week for a client (starts the Cloudflare Workflow)",
-        "security": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CompleteWeekInput"
-              }
-            }
-          }
-        },
+        "summary": "Complete the signed-in client's week (starts the Cloudflare Workflow)",
         "responses": {
           "200": {
             "description": "Week completed workflow started",
@@ -1764,8 +1742,8 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid input",
+          "401": {
+            "description": "Missing or invalid credentials",
             "content": {
               "application/json": {
                 "schema": {

@@ -44,8 +44,7 @@ document catches them; the type check alone would not.
 - `GET /health` is unauthenticated.
 - `/auth/*` is unauthenticated by definition: sign-up and sign-in mint the cookie the guard checks, and sign-out expires it. `GET /auth/session` is the exception in spirit only — it reads a cookie and answers `401` itself rather than being guarded, because a cold page load has to be able to ask "am I signed in?" and get an answer rather than an error.
 - `/api/*` requires a valid session cookie, verified by `requireSession` in `server/src/lib/session.ts` and declared in the document as the `sessionCookie` scheme. **In every environment.** There is no development exemption — the guard that runs under `wrangler dev` is the one that runs in production.
-- `/wf/*` (Cloudflare Workflow start) is **not authenticated**. `app.ts` guards `/api/*` only, so `POST /wf/complete-week` will start a workflow instance for any caller that reaches the origin. Known and accepted for the MVP. Its `security` is declared empty and it declares no `401`, because nothing on that path could produce one.
-- No route accepts an athlete identifier in its path. The athlete is read from the verified cookie, so the only ids a caller can still name are a plan's and a week's — and the repository scopes both to the caller, which is why naming someone else's returns `404` rather than their data.
+- No route accepts an athlete identifier in its path or body. The athlete is read from the verified cookie, so the only ids a caller can still name are a plan's and a week's — and the repository scopes both to the caller, which is why naming someone else's returns `404` rather than their data.
 - JSON responses use `application/json`.
 - Invalid input returns `400`; missing records return `404`; a missing, expired or tampered session returns `401`.
 - Public route ids are UUIDs, enforced by the route's declared param schema.
@@ -82,7 +81,7 @@ The shape, which the document does not state in one place:
 | Liveness | `GET /health` |
 | Session | `POST /auth/sign-up`, `POST /auth/sign-in`, `POST /auth/sign-out`, `GET /auth/session` |
 | The signed-in athlete | `GET`/`PUT /api/me/profile`, `POST /api/me/onboarding`, `GET /api/me/plans/active`, `GET /api/me/plans/{planId}`, `POST /api/me/plans/generate`, `GET /api/me/weeks`, `GET /api/me/weeks/current`, `POST /api/me/weeks/{weekId}/days/{dayIndex}/save`, `PATCH /api/me/weeks/{weekId}/days/{dayIndex}` |
-| Workflow start | `POST /wf/complete-week` |
+| Workflow start | `POST /api/wf/complete-week` |
 
 Plan creation is no longer workflow-only: `POST /api/me/plans/generate` builds a first plan from the
 caller's profile with one synchronous, structured-output model call and activates it through the same
@@ -90,7 +89,7 @@ atomic command the weekly workflow uses, keyed by a deterministic `first-plan:{c
 of a workflow instance id. It refuses with `409 plan_already_active` or `409 profile_required` before
 ever reaching the model.
 
-Workflow requests are asynchronous. `POST /wf/complete-week` validates its body (`clientId` must be a UUID) and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. [TODO]: the UI does not poll workflow status. It is also the one place a client id still crosses the wire in a request body, because the workflow is started for an athlete rather than by one.
+Workflow requests are asynchronous. `POST /api/wf/complete-week` takes the athlete from the session, like every other `/api/*` route, and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. [TODO]: the UI does not poll workflow status.
 
 
 ## Endpoints current state

@@ -851,7 +851,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/wf/complete-week": {
+    "/api/wf/complete-week": {
         parameters: {
             query?: never;
             header?: never;
@@ -860,7 +860,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Complete a week for a client (starts the Cloudflare Workflow) */
+        /** Complete the signed-in client's week (starts the Cloudflare Workflow) */
         post: {
             parameters: {
                 query?: never;
@@ -868,11 +868,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody?: {
-                content: {
-                    "application/json": components["schemas"]["CompleteWeekInput"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description Week completed workflow started */
                 200: {
@@ -883,8 +879,8 @@ export interface paths {
                         "application/json": components["schemas"]["CompleteWeekStarted"];
                     };
                 };
-                /** @description Invalid input */
-                400: {
+                /** @description Missing or invalid credentials */
+                401: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1157,10 +1153,6 @@ export interface components {
             details: {
                 [key: string]: unknown;
             };
-        };
-        CompleteWeekInput: {
-            /** Format: uuid */
-            clientId: string;
         };
     };
     responses: never;

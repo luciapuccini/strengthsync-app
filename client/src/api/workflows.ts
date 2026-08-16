@@ -4,13 +4,11 @@ import { ApiClientError, toApiError } from './errors';
 import { api } from './client';
 
 export type CompleteWeekStarted =
-  paths['/wf/complete-week']['post']['responses'][200]['content']['application/json'];
+  paths['/api/wf/complete-week']['post']['responses'][200]['content']['application/json'];
 
-export async function startWeeklyProgression(clientId: string): Promise<CompleteWeekStarted> {
+export async function startWeeklyProgression(): Promise<CompleteWeekStarted> {
   try {
-    const { data, error, response } = await api.POST('/wf/complete-week', {
-      body: { clientId },
-    });
+    const { data, error, response } = await api.POST('/api/wf/complete-week', {});
     if (!response.ok || data === undefined) {
       throw toApiError(response.status, error);
     }
