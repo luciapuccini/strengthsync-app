@@ -30,11 +30,11 @@ human call.
 
 ## Acceptance criteria
 
-- [ ] Sign-up links to the privacy policy and the terms, and both resolve
-- [ ] The privacy policy names OpenAI as a processor of health-adjacent data and
+- [x] Sign-up links to the privacy policy and the terms, and both resolve
+- [x] The privacy policy names OpenAI as a processor of health-adjacent data and
       gives a deletion route
-- [ ] No consent banner is added
-- [ ] The links survive the sign-up screen changes from issue 002
+- [x] No consent banner is added
+- [x] The links survive the sign-up screen changes from issue 002
 
 ## Blocked by
 
@@ -50,4 +50,4 @@ human call.
 
 ## STATUS
 
-TODO
+DONE
