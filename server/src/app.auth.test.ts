@@ -291,28 +291,29 @@ describe('the seeded demo athlete', () => {
   });
 });
 
+// The attributes are the same everywhere now, so there is no NODE_ENV to set:
+// `Secure` was the last thing in the auth path reading it, and it read a value
+// wrangler substitutes at build time rather than one the runtime knows.
 describe('session cookie attributes', () => {
-  it('is HttpOnly, SameSite=Lax and path-wide, and not Secure outside production', async () => {
-    const prev = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
-    try {
-      const header = (await signUp(createTestApp())).headers.get('set-cookie');
-      expect(header).toContain('HttpOnly');
-      expect(header).toContain('SameSite=Lax');
-      expect(header).toContain('Path=/');
-      expect(header).not.toContain('Secure');
-    } finally {
-      process.env.NODE_ENV = prev;
-    }
+  it('is Secure, HttpOnly, SameSite=Lax and path-wide', async () => {
+    const header = (await signUp(createTestApp())).headers.get('set-cookie');
+    expect(header).toContain('Secure');
+    expect(header).toContain('HttpOnly');
+    expect(header).toContain('SameSite=Lax');
+    expect(header).toContain('Path=/');
   });
 
-  it('is Secure in production', async () => {
-    const prev = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
-    try {
-      expect((await signUp(createTestApp())).headers.get('set-cookie')).toContain('Secure');
-    } finally {
-      process.env.NODE_ENV = prev;
-    }
+  // Host-only, so the cookie stays on app.strengthsync.ai and never reaches the
+  // apex, where the marketing site is served from another repository.
+  it('sets no Domain, on either the issued or the cleared cookie', async () => {
+    const app = createTestApp();
+    const issued = await signUp(app);
+    expect(issued.headers.get('set-cookie')).not.toContain('Domain');
+
+    const cleared = await app.request('/auth/sign-out', {
+      method: 'POST',
+      headers: { cookie: `session=${sessionCookie(issued)}` },
+    });
+    expect(cleared.headers.get('set-cookie')).not.toContain('Domain');
   });
 });

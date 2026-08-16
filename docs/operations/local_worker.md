@@ -11,7 +11,7 @@ The workflow ships with `server`:
 
 Deploy order matters: apply D1 schema migrations before deploying a workflow version that depends on them.
 
-**MVP todo:** production host should be `app.strengthsync.ai` (align with the product domain).
+The deployed host is `app.strengthsync.ai` — a Workers custom domain, so the workflow bindings live on the same Worker as the API.
 
 ## Starting and observing runs
 

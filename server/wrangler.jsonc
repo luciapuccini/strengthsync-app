@@ -2,6 +2,17 @@
   "name": "strengthsync-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-21",
+  // custom_domain, not a route pattern: strengthsync.ai is already on Cloudflare
+  // nameservers, so deploy creates the app record and its certificate itself.
+  // The apex is left alone — the marketing site in the other repository serves
+  // it, and a hostname of our own is what keeps the session cookie (host-only,
+  // no domain attribute) from ever reaching it.
+  "routes": [
+    {
+      "pattern": "app.strengthsync.ai",
+      "custom_domain": true,
+    },
+  ],
   // Without this, console.* from the Worker never reaches Workers Logs.
   "observability": {
     "enabled": true,
@@ -23,9 +34,10 @@
     {
       "binding": "DB",
       "database_name": "strengthsync",
-      // Placeholder for local dev. Before deploying, run
-      // `wrangler d1 create strengthsync` and paste the real database_id,
-      // then apply migrations + seed (see package.json scripts).
+      // The production database (`wrangler d1 info strengthsync`), migrated on
+      // every deploy by `db:migrate:remote`. Local dev never reads this id — it
+      // keys a miniflare sqlite file off database_name — so nothing local tells
+      // you whether it is right; `wrangler d1 info` does.
       "database_id": "3d9980fa-e3f2-4a19-9dac-1c63db6132a6",
       "migrations_dir": "./db/drizzle",
     },

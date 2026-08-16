@@ -112,7 +112,7 @@ GitHub Actions is the MVP pipeline:
 2. Main: build and deploy `server` — including the `StrengthsyncWorkflow` entrypoint — and run schema migrations through the API/Worker deployment path.
 3. Workflow orchestration tests are deferred: the Cloudflare Workflow runtime is not exercised in the test suite.
 
-**MVP todo:** align production with the product domain — deploy at `app.strengthsync.ai`.
+Production serves from `app.strengthsync.ai`, declared as a Workers custom domain in `server/wrangler.jsonc`; Cloudflare creates the record and its certificate on deploy. The apex belongs to the marketing site in the `strengthsync` repository.
 
 ## LLM: OpenAI API
 
@@ -126,6 +126,5 @@ Do not opt into data-sharing token programs for client health/training context w
 
 Short notes only — not a design write-up:
 
-- Deploy production on `app.strengthsync.ai` (match the StrengthSync domain).
 - Product metrics via PostHog.
 - Onboarding that generates the athlete’s initial plan.

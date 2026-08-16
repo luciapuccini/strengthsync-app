@@ -33,13 +33,31 @@ See `docs/mvp.md` §1 and the first two pre-launch checks.
 - [ ] `https://app.strengthsync.ai` serves the SPA, and `/health` responds on
       that host
 - [ ] `https://strengthsync.ai` still serves the marketing site, unchanged
-- [ ] Signing in on the deployed host sets a session cookie carrying both
+- [x] Signing in on the deployed host sets a session cookie carrying both
       `Secure` and `HttpOnly`; if it does not, `session.ts` is fixed to set
       `secure` unconditionally rather than from `process.env`
-- [ ] The `database_id` is confirmed to point at the production D1 database and
+- [x] The `database_id` is confirmed to point at the production D1 database and
       its comment no longer calls itself a placeholder
-- [ ] The cookie has no `domain` attribute, so it stays host-only and never
+- [x] The cookie has no `domain` attribute, so it stays host-only and never
       reaches the apex
+
+## What was found
+
+**The `database_id` is real.** `wrangler d1 info strengthsync` returns
+`3d9980fa-e3f2-4a19-9dac-1c63db6132a6`, seven tables, 233 kB — the id in
+`wrangler.jsonc`. The comment was stale and now says what the id is and why
+local dev cannot tell you it is wrong.
+
+**`Secure` was correct by accident.** Built with `wrangler deploy --dry-run
+--outdir`, `process.env.NODE_ENV === 'production'` compiled to a literal
+`secure: true` — but the same build with `NODE_ENV=development` in the shell
+compiled to `secure: false`. Nothing in CI sets `NODE_ENV`, so production was
+protected, by a default rather than by a decision, with no runtime signal if it
+ever flipped. `session.ts` now sets `secure: true` unconditionally; browsers
+treat `http://localhost` as a trustworthy origin, so `wrangler dev` still
+receives the cookie. That was the last `NODE_ENV` read in the auth path, and the
+two environment-split tests collapse into one, plus a new test pinning the
+absent `Domain` on both the issued and the cleared cookie.
 
 ## Blocked by
 
@@ -52,4 +70,7 @@ None — can start immediately.
 
 ## STATUS
 
-TODO
+IN PROGRESS — the config and the cookie fix are committed; the first two
+criteria are host checks that only the deploy from `main` can answer. `app`
+does not resolve today and no DNS record has to be removed first, so the
+custom domain is created by that deploy.

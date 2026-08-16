@@ -56,7 +56,7 @@ sits inside Workers Logs retention, which the LLM monitoring below depends on.
 `strengthsync.ai` already runs on Cloudflare nameservers, so this is a `routes`
 entry with `custom_domain: true` — no DNS migration and no registrar work.
 
-The session cookie sets no `domain` attribute (`server/src/lib/session.ts:24`),
+The session cookie sets no `domain` attribute (`server/src/lib/session.ts:31`),
 so it stays host-only to `app.strengthsync.ai` and never reaches the apex where
 the marketing site lives. That is the behaviour we want; nothing to change.
 
@@ -177,14 +177,13 @@ out.
 - **Log a set on a real phone.** The metric depends on it. The tracker looks
   mobile-first (`exerciseRow.tsx` is flex with `min-w-0`, and the only `<table>`
   is in history, off the critical path), but it has not been driven on a device.
-- **Confirm the session cookie is `Secure` in production.**
-  `server/src/lib/session.ts:29` reads `process.env.NODE_ENV`, which relies on
-  wrangler substituting it at build time. Worth verifying against the deployed
-  Worker rather than assuming.
-- **Confirm the production D1 binding.** The `database_id` comment in
-  `wrangler.jsonc` still calls itself a local-dev placeholder. Deploys run
-  `db:migrate:remote` and have been succeeding, so the id is almost certainly
-  real and the comment is stale — but check, and fix the comment.
+
+Two checks that were here are answered, in `issues/001-serve-app-subdomain.md`:
+the session cookie no longer derives `Secure` from `NODE_ENV` — a build-time
+substitution that decided a production security flag from the deploying shell —
+and sets it unconditionally; and the `database_id` was confirmed against
+`wrangler d1 info strengthsync` to be the production database, not the
+placeholder its comment claimed.
 
 ## Out of scope
 

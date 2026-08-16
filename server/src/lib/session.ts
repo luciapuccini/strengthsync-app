@@ -10,10 +10,17 @@ import { LIFETIME_SECONDS, issue, read } from './session-token.ts';
  * lifetime live in `session-token.ts`, and this module only decides how that
  * token travels.
  *
- * `Secure` is set from `NODE_ENV`: wrangler dev sets development, deploy/build
- * set production. Without that split the cookie would be dropped over plain
- * http in local development. Note this is the only environment split left in
- * the auth path — the guard itself runs everywhere.
+ * `Secure` is unconditional. It used to read `process.env.NODE_ENV`, which is
+ * not a Workers runtime value — wrangler substitutes it into the bundle at
+ * build time, so whichever `NODE_ENV` the deploying shell happened to carry
+ * decided whether the production cookie was protected, and nothing at runtime
+ * would notice a wrong answer. Browsers treat `http://localhost` as a
+ * trustworthy origin, so `wrangler dev` still gets the cookie.
+ *
+ * No `domain` attribute, deliberately: that keeps the cookie host-only to
+ * app.strengthsync.ai, so it never travels to the apex where the marketing site
+ * lives. With `Secure` fixed there is no environment split left in the auth
+ * path at all — the cookie and the guard behave the same everywhere.
  */
 
 const COOKIE_NAME = 'session';
@@ -26,7 +33,7 @@ function cookieOptions() {
     httpOnly: true,
     sameSite: 'Lax',
     path: '/',
-    secure: process.env.NODE_ENV === 'production',
+    secure: true,
   } as const;
 }
 
