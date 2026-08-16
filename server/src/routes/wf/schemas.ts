@@ -1,10 +1,6 @@
 import { z } from '@hono/zod-openapi';
 
-/** Workflow trigger shapes. See `routes/clients/schemas.ts` on rebuilding. */
-
-export const CompleteWeekInputSchema = z
-  .object({ clientId: z.uuid() })
-  .openapi('CompleteWeekInput');
+/** Workflow trigger shape. See `routes/clients/schemas.ts` on rebuilding. */
 
 export const CompleteWeekStartedSchema = z
   .object({

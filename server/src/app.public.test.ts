@@ -240,42 +240,47 @@ describe('day log writes', () => {
 });
 
 describe('workflow trigger', () => {
-  const stubEnv = {
-    STRENGTHSYNC_WORKFLOW: {
-      create: async ({ params }: { params: { clientId: string } }) => ({
-        id: `instance-for-${params.clientId}`,
-        status: async () => ({ status: 'queued' }),
-      }),
-    },
-  };
-
-  // No cookie: /wf/* is outside the guard, as it was outside the Basic gate.
-  // The requests used to carry a Basic header that nothing checked.
-  const post = (body: unknown) =>
-    createTestApp().request(
-      '/wf/complete-week',
-      {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(body),
+  // Tracks which clientId(s) actually reached the workflow binding, so a 401
+  // can be shown to have started nothing rather than just returned the right
+  // status.
+  function stubEnv(): { env: object; calls: string[] } {
+    const calls: string[] = [];
+    return {
+      calls,
+      env: {
+        STRENGTHSYNC_WORKFLOW: {
+          create: async ({ params }: { params: { clientId: string } }) => {
+            calls.push(params.clientId);
+            return {
+              id: `instance-for-${params.clientId}`,
+              status: async () => ({ status: 'queued' }),
+            };
+          },
+        },
       },
-      stubEnv,
-    );
+    };
+  }
 
-  it('starts a workflow instance for a valid clientId', async () => {
-    const res = await post({ clientId: NO_SUCH_UUID });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { instanceId: string };
-    expect(body.instanceId).toBe(`instance-for-${NO_SUCH_UUID}`);
+  it('rejects /api/wf/complete-week without a cookie and starts no workflow', async () => {
+    const { env, calls } = stubEnv();
+    const res = await createTestApp().request('/api/wf/complete-week', { method: 'POST' }, env);
+    expect(res.status).toBe(401);
+    expect(calls).toEqual([]);
   });
 
-  it('rejects a missing or non-uuid clientId with 400', async () => {
-    // Previously a bare req.json<{clientId: string}>() cast: both of these
-    // reached the workflow binding unchecked.
-    for (const body of [{}, { clientId: 'not-a-uuid' }]) {
-      const res = await post(body);
-      expect(res.status, JSON.stringify(body)).toBe(400);
-      expect(((await res.json()) as { error: { code: string } }).error.code).toBe('invalid_input');
-    }
+  it('starts a workflow instance for the signed-in client, from the session', async () => {
+    const app = createTestApp();
+    const client = await signUpViaApi(app);
+    const { env, calls } = stubEnv();
+
+    const res = await app.request(
+      '/api/wf/complete-week',
+      { method: 'POST', headers: client.headers },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { instanceId: string };
+    expect(body.instanceId).toBe(`instance-for-${client.id}`);
+    expect(calls).toEqual([client.id]);
   });
 });

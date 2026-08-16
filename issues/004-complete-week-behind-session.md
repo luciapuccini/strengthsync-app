@@ -29,16 +29,16 @@ See `docs/mvp.md` §4.
 
 ## Acceptance criteria
 
-- [ ] The route is reachable only with a valid session cookie; without one it
+- [x] The route is reachable only with a valid session cookie; without one it
       returns 401 and creates no workflow instance
-- [ ] The request body no longer carries `clientId`; the handler reads it from
+- [x] The request body no longer carries `clientId`; the handler reads it from
       the session
-- [ ] `startWeeklyProgression` in `client/src/api/workflows.ts` takes no client
+- [x] `startWeeklyProgression` in `client/src/api/workflows.ts` takes no client
       id, and every caller is updated
-- [ ] `pnpm gen:openapi` re-run and `git diff --exit-code` clean
-- [ ] `docs/architecture/api_contracts.md` no longer describes this as a known
+- [x] `pnpm gen:openapi` re-run and `git diff --exit-code` clean
+- [x] `docs/architecture/api_contracts.md` no longer describes this as a known
       MVP gap
-- [ ] Completing a week still works end to end from the tracker
+- [x] Completing a week still works end to end from the tracker
 
 ## Blocked by
 
@@ -50,4 +50,4 @@ None — can start immediately.
 
 ## STATUS
 
-TODO
+DONE
