@@ -30,9 +30,9 @@ See `docs/mvp.md` §1 and the first two pre-launch checks.
 
 ## Acceptance criteria
 
-- [ ] `https://app.strengthsync.ai` serves the SPA, and `/health` responds on
+- [x] `https://app.strengthsync.ai` serves the SPA, and `/health` responds on
       that host
-- [ ] `https://strengthsync.ai` still serves the marketing site, unchanged
+- [x] `https://strengthsync.ai` still serves the marketing site, unchanged
 - [x] Signing in on the deployed host sets a session cookie carrying both
       `Secure` and `HttpOnly`; if it does not, `session.ts` is fixed to set
       `secure` unconditionally rather than from `process.env`
@@ -59,6 +59,21 @@ receives the cookie. That was the last `NODE_ENV` read in the auth path, and the
 two environment-split tests collapse into one, plus a new test pinning the
 absent `Domain` on both the issued and the cleared cookie.
 
+## Verified on the deployed host
+
+- `GET https://app.strengthsync.ai/` → 200 `text/html`, the StrengthSync shell;
+  `/sign-in` → 200 `text/html` too, so the SPA fallback is answering client
+  routes rather than 404ing them.
+- `GET /health` → 200 `{"ok":true}`, so `run_worker_first` still reaches the
+  Worker on the new hostname and not the asset directory.
+- The apex is untouched: 200 with `x-opennext: 1` and `x-powered-by: Next.js`,
+  and `https://strengthsync.ai/health` is a 404 — the Worker is not catching
+  apex traffic.
+- Cookie attributes read off production without creating an account: `POST
+  /auth/sign-out` is public and clears the cookie through the same
+  `cookieOptions()`, and returns `session=; Max-Age=0; Path=/; HttpOnly; Secure;
+  SameSite=Lax` — `Secure` present, no `Domain`.
+
 ## Blocked by
 
 None — can start immediately.
@@ -70,7 +85,4 @@ None — can start immediately.
 
 ## STATUS
 
-IN PROGRESS — the config and the cookie fix are committed; the first two
-criteria are host checks that only the deploy from `main` can answer. `app`
-does not resolve today and no DNS record has to be removed first, so the
-custom domain is created by that deploy.
+DONE
