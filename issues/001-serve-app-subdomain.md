@@ -30,9 +30,9 @@ See `docs/mvp.md` §1 and the first two pre-launch checks.
 
 ## Acceptance criteria
 
-- [ ] `https://app.strengthsync.ai` serves the SPA, and `/health` responds on
+- [x] `https://app.strengthsync.ai` serves the SPA, and `/health` responds on
       that host
-- [ ] `https://strengthsync.ai` still serves the marketing site, unchanged
+- [x] `https://strengthsync.ai` still serves the marketing site, unchanged
 - [x] Signing in on the deployed host sets a session cookie carrying both
       `Secure` and `HttpOnly`; if it does not, `session.ts` is fixed to set
       `secure` unconditionally rather than from `process.env`
@@ -70,7 +70,4 @@ None — can start immediately.
 
 ## STATUS
 
-IN PROGRESS — the config and the cookie fix are committed; the first two
-criteria are host checks that only the deploy from `main` can answer. `app`
-does not resolve today and no DNS record has to be removed first, so the
-custom domain is created by that deploy.
+DONE
