@@ -17,7 +17,7 @@ import {
 } from '../../lib/session.ts';
 import { defaultHook } from '../../lib/validation-error.ts';
 import { ClientResponseSchema } from '../clients/schemas.ts';
-import { conflict, invalidInput, json, unauthorized } from '../shared.ts';
+import { conflict, forbidden, invalidInput, json, unauthorized } from '../shared.ts';
 
 import { SignInInputSchema, SignUpInputSchema, SignedOutResponseSchema } from './schemas.ts';
 
@@ -34,6 +34,7 @@ const signUpRoute = createRoute({
   responses: {
     201: json('Client registered and signed in', ClientResponseSchema),
     400: invalidInput,
+    403: forbidden,
     409: conflict,
   },
 });
@@ -81,13 +82,25 @@ const sessionRoute = createRoute({
 export function authRoutes(
   db: Db,
   sessionSecret: string,
+  inviteCode: string,
 ): OpenAPIHono<{ Variables: SessionVariables }> {
   const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook });
 
   app.use('/session', requireSession(sessionSecret));
 
   app.openapi(signUpRoute, async (c) => {
-    const { display_name, email, password } = c.req.valid('json');
+    const { display_name, email, password, invite_code } = c.req.valid('json');
+    // First, before the email lookup and before any write: a rejected code must
+    // leave no client row, no credential row, and must not reach the plan
+    // generation that every sign-up eventually pays a model call for
+    // (`docs/mvp.md` §2). An unset secret matches nothing, so a misconfigured
+    // Worker closes the gate rather than opening it.
+    if (inviteCode === '' || invite_code.trim() !== inviteCode) {
+      return c.json(
+        { error: { code: 'invalid_invite_code', message: 'that invite code is not valid' } },
+        403,
+      );
+    }
     if (await getCredentialByEmail(db, email)) {
       return c.json(
         { error: { code: 'email_already_registered', message: 'email already registered' } },
@@ -99,7 +112,10 @@ export function authRoutes(
     // re-checks and raises a conflict (409 via app.ts's onError) if two
     // registrations for one email interleave, leaving a client row nothing can
     // reach, since reaching one requires a credential.
-    const client = await createClient(db, { display_name });
+    //
+    // The accepted code rides onto the row: rotating the secret per invite
+    // batch then tells the cohorts apart with no second table.
+    const client = await createClient(db, { display_name, invite_code: invite_code.trim() });
     await createCredential(db, {
       client_id: client.id,
       email,

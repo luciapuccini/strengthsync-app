@@ -81,6 +81,15 @@ export interface paths {
                         "application/json": components["schemas"]["ApiError"];
                     };
                 };
+                /** @description Understood, but not allowed */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
                 /** @description Conflicts with existing state */
                 409: {
                     headers: {
@@ -925,6 +934,7 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+            invite_code: string;
         };
         SignInInput: {
             /** Format: email */

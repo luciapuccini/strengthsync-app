@@ -2,6 +2,11 @@
 # invalidates every issued session.
 SESSION_JWT_SECRET=change-me
 
+# The invite code sign-up accepts (docs/mvp.md §2). One per invite batch,
+# rotated between batches; in production it is a Worker secret
+# (`wrangler secret put INVITE_CODE`), never a value committed here.
+INVITE_CODE=change-me
+
 # OpenAI model used by the in-Worker Cloudflare Workflow.
 OPENAI_API_KEY=sk-...
 OPENAI_MODEL=gpt-4.1-mini

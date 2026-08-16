@@ -18,6 +18,13 @@ export const SignUpInputSchema = z
     display_name: z.string().min(1),
     email: z.email(),
     password: z.string().min(8),
+    /**
+     * The invite code from the invitation email (`docs/mvp.md` §2). Only its
+     * presence is checked here — whether it is the *current* code is a
+     * comparison against a Worker secret, which a request schema cannot see, so
+     * the handler answers 403 `invalid_invite_code` for a wrong one.
+     */
+    invite_code: z.string().min(1),
   })
   .openapi('SignUpInput');
 

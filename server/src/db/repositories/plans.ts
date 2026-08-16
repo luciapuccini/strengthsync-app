@@ -3,7 +3,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { ActivateGeneratedPlanCommand } from '../../domain/workflow.ts';
 import type { Plan, Week } from '../../domain/model/index.ts';
 
-import { addDays, nowIso, startOfISOWeek, todayIso } from '../dates.ts';
+import { addDays, nowIso, todayIso } from '../dates.ts';
 import type { Db } from '../db.ts';
 import { plans, weeks } from '../schema.ts';
 import { buildScheduleFromTemplate, findExistingActivation } from './internal-helpers.ts';
@@ -77,7 +77,12 @@ export async function activateGeneratedPlan(
   if (existing) return existing;
 
   const now = nowIso();
-  const start = startOfISOWeek(todayIso());
+  // Week 1 runs from the day the athlete activates, not from the Monday of the
+  // ISO week containing it: anchoring to Monday put days the athlete never
+  // trained and cannot log in the past for the five-in-seven who sign up
+  // mid-week. Week 2 onward chains off `end_date + 1` in `saveNextWeek`, so the
+  // offset holds for that athlete from here on.
+  const start = todayIso();
   const planRow = {
     id: crypto.randomUUID(),
     client_id: clientId,

@@ -7,6 +7,8 @@ import type { PlanDay, Week } from './domain/model/index.ts';
 import { createApp, type AppConfig } from './app.ts';
 
 export const SESSION_SECRET = 'test-session-secret';
+/** The code `createTestApp` gates sign-up on; the real one is a Worker secret. */
+export const INVITE_CODE = 'test-invite-code';
 
 /**
  * A registered athlete and the cookie that speaks for them. Every /api/* request
@@ -25,6 +27,7 @@ export function createTestApp(overrides: Partial<AppConfig> = {}): OpenAPIHono {
   return createApp({
     db: createTestDb(),
     sessionSecret: SESSION_SECRET,
+    inviteCode: INVITE_CODE,
     ...overrides,
   });
 }
@@ -42,6 +45,7 @@ export async function signUpViaApi(app: OpenAPIHono, displayName = 'Ana'): Promi
       display_name: displayName,
       email: `${displayName.toLowerCase()}@example.com`,
       password: 'dev-password-123',
+      invite_code: INVITE_CODE,
     }),
   });
   const token = res.headers.get('set-cookie')?.match(/session=([^;]*)/)?.[1];

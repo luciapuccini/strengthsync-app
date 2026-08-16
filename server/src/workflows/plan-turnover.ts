@@ -30,6 +30,7 @@ export async function summarizeProfile(
       getAgentRuntime({
         apiKey: env.OPENAI_API_KEY,
         model: env.OPENAI_MODEL ?? 'gpt-4.1-mini',
+        callSite: 'summarize-profile',
         system: [
           'You are a strength coach summarizing a client profile for plan generation.',
           'Return only the facts that affect training design: goals, loads, body composition,',
@@ -63,6 +64,7 @@ export async function summarizeHistory(
       getAgentRuntime({
         apiKey: env.OPENAI_API_KEY,
         model: env.OPENAI_MODEL ?? 'gpt-4.1-mini',
+        callSite: 'summarize-history',
         system: [
           'You are a strength coach summarizing a completed training block.',
           'Cover adherence, progression, skipped sessions, and easy/hard/heavy/light feedback patterns.',
@@ -101,6 +103,7 @@ export async function generatePlan(
       getAgentRuntime({
         apiKey: env.OPENAI_API_KEY,
         model: env.OPENAI_MODEL ?? 'gpt-4.1-mini',
+        callSite: 'generate-plan',
         system: [
           'You are a strength coach generating a multi-week training plan.',
           'Produce a canonical week_template for days 1–7 with exercise_key, series, reps, rest, and optional weight.',

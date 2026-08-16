@@ -2,12 +2,17 @@ import { sign } from 'hono/jwt';
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { describe, expect, it } from 'vitest';
 
-import { coaches } from './db/schema.ts';
+import { clientCredentials, clients, coaches } from './db/schema.ts';
 import { createDemoSeededDb, createTestDb } from './db/testing/index.ts';
 
-import { SESSION_SECRET, createTestApp } from './testkit.ts';
+import { INVITE_CODE, SESSION_SECRET, createTestApp } from './testkit.ts';
 
-const CREDENTIALS = { display_name: 'Ana', email: 'ana@example.com', password: 'dev-password-123' };
+const CREDENTIALS = {
+  display_name: 'Ana',
+  email: 'ana@example.com',
+  password: 'dev-password-123',
+  invite_code: INVITE_CODE,
+};
 
 // `app.request` is typed `Response | Promise<Response>`; awaiting inside these
 // async helpers narrows it once here rather than at every call site.
@@ -85,6 +90,68 @@ describe('sign-up', () => {
     const app = createTestApp();
     const res = await signUp(app, { ...CREDENTIALS, password: 'short7c' });
     expect(res.status).toBe(400);
+  });
+});
+
+// docs/mvp.md §2: the cohort is exactly the people who were invited, and the
+// gate is what makes the model spend bounded — so the rejection has to happen
+// before anything is written, not be cleaned up afterwards.
+describe('the invite code gate', () => {
+  it('rejects a wrong code with 403 invalid_invite_code, writing nothing', async () => {
+    const db = createTestDb();
+    const app = createTestApp({ db });
+
+    const res = await signUp(app, { ...CREDENTIALS, invite_code: 'not-the-code' });
+
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe(
+      'invalid_invite_code',
+    );
+    expect(sessionCookie(res)).toBeUndefined();
+    expect(await db.select().from(clients)).toEqual([]);
+    expect(await db.select().from(clientCredentials)).toEqual([]);
+  });
+
+  it('rejects a missing code before any write', async () => {
+    const db = createTestDb();
+    const app = createTestApp({ db });
+    const { invite_code: _omitted, ...withoutCode } = CREDENTIALS;
+
+    const res = await signUp(app, withoutCode);
+
+    expect(res.status).toBe(400);
+    expect(await db.select().from(clients)).toEqual([]);
+    expect(await db.select().from(clientCredentials)).toEqual([]);
+  });
+
+  // Fail closed: a Worker deployed without the secret set must not register
+  // everyone who guesses an empty string, and a whitespace-only submission
+  // trims to that same empty string.
+  it('registers nobody when the secret is unset', async () => {
+    const app = createTestApp({ inviteCode: '' });
+
+    expect((await signUp(app, { ...CREDENTIALS, invite_code: ' ' })).status).toBe(403);
+    expect((await signUp(app)).status).toBe(403);
+  });
+
+  it('accepts the current code and records it on the client row', async () => {
+    const db = createTestDb();
+    const app = createTestApp({ db });
+
+    const res = await signUp(app);
+    expect(res.status).toBe(201);
+
+    const [row] = await db.select().from(clients);
+    expect(row?.invite_code).toBe(INVITE_CODE);
+  });
+
+  // The code is a shared per-batch secret: echoing it back would let one
+  // invitee read it off their own session and pass it on.
+  it('never returns the code it accepted', async () => {
+    const app = createTestApp();
+    const body = (await (await signUp(app)).json()) as { client: Record<string, unknown> };
+
+    expect(body.client).not.toHaveProperty('invite_code');
   });
 });
 
@@ -224,28 +291,29 @@ describe('the seeded demo athlete', () => {
   });
 });
 
+// The attributes are the same everywhere now, so there is no NODE_ENV to set:
+// `Secure` was the last thing in the auth path reading it, and it read a value
+// wrangler substitutes at build time rather than one the runtime knows.
 describe('session cookie attributes', () => {
-  it('is HttpOnly, SameSite=Lax and path-wide, and not Secure outside production', async () => {
-    const prev = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
-    try {
-      const header = (await signUp(createTestApp())).headers.get('set-cookie');
-      expect(header).toContain('HttpOnly');
-      expect(header).toContain('SameSite=Lax');
-      expect(header).toContain('Path=/');
-      expect(header).not.toContain('Secure');
-    } finally {
-      process.env.NODE_ENV = prev;
-    }
+  it('is Secure, HttpOnly, SameSite=Lax and path-wide', async () => {
+    const header = (await signUp(createTestApp())).headers.get('set-cookie');
+    expect(header).toContain('Secure');
+    expect(header).toContain('HttpOnly');
+    expect(header).toContain('SameSite=Lax');
+    expect(header).toContain('Path=/');
   });
 
-  it('is Secure in production', async () => {
-    const prev = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
-    try {
-      expect((await signUp(createTestApp())).headers.get('set-cookie')).toContain('Secure');
-    } finally {
-      process.env.NODE_ENV = prev;
-    }
+  // Host-only, so the cookie stays on app.strengthsync.ai and never reaches the
+  // apex, where the marketing site is served from another repository.
+  it('sets no Domain, on either the issued or the cleared cookie', async () => {
+    const app = createTestApp();
+    const issued = await signUp(app);
+    expect(issued.headers.get('set-cookie')).not.toContain('Domain');
+
+    const cleared = await app.request('/auth/sign-out', {
+      method: 'POST',
+      headers: { cookie: `session=${sessionCookie(issued)}` },
+    });
+    expect(cleared.headers.get('set-cookie')).not.toContain('Domain');
   });
 });

@@ -117,12 +117,17 @@
           "password": {
             "type": "string",
             "minLength": 8
+          },
+          "invite_code": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
           "display_name",
           "email",
-          "password"
+          "password",
+          "invite_code"
         ]
       },
       "SignInInput": {
@@ -1077,6 +1082,16 @@
           },
           "400": {
             "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Understood, but not allowed",
             "content": {
               "application/json": {
                 "schema": {

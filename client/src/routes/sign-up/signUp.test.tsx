@@ -33,6 +33,7 @@ function fillAndSubmit(): void {
   fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Lucia' } });
   fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'lucia@example.com' } });
   fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'dev-password-123' } });
+  fireEvent.change(screen.getByLabelText('Invite code'), { target: { value: 'spring-cohort' } });
   fireEvent.click(submitButton());
 }
 
@@ -64,6 +65,7 @@ describe('sign-up form', () => {
       display_name: 'Lucia',
       email: 'lucia@example.com',
       password: 'dev-password-123',
+      invite_code: 'spring-cohort',
     });
     await waitFor(() => expect(useAppStore.getState().sessionStatus).toBe('signed-in'));
     expect(useAppStore.getState().sessionClient).toEqual(client);
@@ -105,6 +107,17 @@ describe('sign-up form', () => {
 
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'other@example.com' } });
     expect(screen.getByRole('alert')).toHaveTextContent('email already registered');
+  });
+
+  // docs/mvp.md §2: registration is invite-only, and a rejected code has to read
+  // as a rejected code — not as "something went wrong".
+  it('shows the server rejection of a wrong invite code, not a generic failure', async () => {
+    signUp.mockRejectedValue(
+      new ApiClientError('unknown', 403, 'invalid_invite_code', 'that invite code is not valid'),
+    );
+    fillAndSubmit();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('that invite code is not valid');
   });
 
   it('reports a too-short password from the server rather than restating the rule', async () => {

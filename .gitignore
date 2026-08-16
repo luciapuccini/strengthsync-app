@@ -8,6 +8,7 @@ coverage/
 
 # secrets
 .dev.vars
+.dev.vars.old
 .env
 .env.local
 .env.workflows

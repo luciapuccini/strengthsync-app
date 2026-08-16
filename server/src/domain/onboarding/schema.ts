@@ -79,7 +79,9 @@ export const OnboardingAnswersSchema = z.object({
   deadlift_kg: liftWeightSchema.optional(),
   overhead_press_kg: liftWeightSchema.optional(),
   days_per_week: z.number().int().min(1).max(7),
-  // ISO week convention shared with `PlanDay.day_index`: 1 = Monday, 7 = Sunday.
+  // Weekday the athlete picked, 1 = Monday, 7 = Sunday. This is *not*
+  // `PlanDay.day_index`, which counts from the day the plan was activated —
+  // see the `day_index` note in `docs/future_state_after_mvp/todos.md`.
   rest_day: z.number().int().min(1).max(7),
   activities: z.array(OnboardingActivitySchema).max(10).optional(),
   daily_activity_level: OnboardingDailyActivityLevelSchema.optional(),

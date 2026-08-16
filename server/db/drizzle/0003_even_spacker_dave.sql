@@ -1,0 +1,1 @@
+ALTER TABLE `clients` ADD `invite_code` text;

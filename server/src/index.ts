@@ -14,6 +14,7 @@ export default {
     const app = createApp({
       db: createDb(env.DB),
       sessionSecret: env.SESSION_JWT_SECRET,
+      inviteCode: env.INVITE_CODE,
     });
     return app.fetch(request, env, ctx);
   },

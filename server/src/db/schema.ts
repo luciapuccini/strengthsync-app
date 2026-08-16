@@ -37,6 +37,15 @@ export const clients = sqliteTable(
       .references(() => coaches.id),
     display_name: text('display_name').notNull(),
     status: text('status', { enum: CLIENT_STATUSES }).notNull(),
+    /**
+     * The invite code this account registered with (`docs/mvp.md` §2). The code
+     * is a Worker secret rotated per invite batch, so recording the one that was
+     * used is cohort attribution without a second table. Nullable because the
+     * seeded demo athletes predate the gate, and deliberately absent from the
+     * domain `Client`: it is a shared per-batch secret, so echoing it back in
+     * the sign-up/session response would let any one invitee redistribute it.
+     */
+    invite_code: text('invite_code'),
     created_at: text('created_at').notNull(),
     updated_at: text('updated_at').notNull(),
   },
