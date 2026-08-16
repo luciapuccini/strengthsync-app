@@ -57,6 +57,23 @@ afterEach(() => {
 });
 
 describe('sign-up form', () => {
+  // issues/007-privacy-terms-links.md: an athlete has to be able to see what
+  // they're agreeing to before they hand over health-adjacent data later in
+  // onboarding, so both links are absolute (this SPA has no /terms or
+  // /privacy route) and open in a new tab rather than navigating away from
+  // the form.
+  it('links to the terms and privacy policy on the marketing site, opened in a new tab', () => {
+    const terms = screen.getByRole('link', { name: 'Terms' });
+    expect(terms).toHaveAttribute('href', 'https://strengthsync.ai/terms');
+    expect(terms).toHaveAttribute('target', '_blank');
+    expect(terms).toHaveAttribute('rel', 'noopener noreferrer');
+
+    const privacy = screen.getByRole('link', { name: 'Privacy Policy' });
+    expect(privacy).toHaveAttribute('href', 'https://strengthsync.ai/privacy');
+    expect(privacy).toHaveAttribute('target', '_blank');
+    expect(privacy).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
   it('registers and leaves the athlete signed in, with no second credential entry', async () => {
     signUp.mockResolvedValue(client);
     fillAndSubmit();

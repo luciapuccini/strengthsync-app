@@ -65,6 +65,37 @@ function useSignUpForm(): SignUpForm {
   return { pending, error, handleSubmit: (event) => void submit(event) };
 }
 
+// Ahead of the submit button, not after: this is what the athlete is
+// agreeing to before they hand over health-adjacent data in onboarding, so
+// it has to be seen before "Create account" is pressed, not scrolled to
+// afterwards. Absolute URLs opened in a new tab — this SPA is served from
+// app.strengthsync.ai and has no /terms or /privacy route of its own.
+function SignUpLegalLinks(): JSX.Element {
+  return (
+    <p className="text-center text-xs text-muted-foreground">
+      By creating an account, you agree to our{' '}
+      <a
+        href="https://strengthsync.ai/terms"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-foreground hover:underline"
+      >
+        Terms
+      </a>{' '}
+      and{' '}
+      <a
+        href="https://strengthsync.ai/privacy"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-foreground hover:underline"
+      >
+        Privacy Policy
+      </a>
+      .
+    </p>
+  );
+}
+
 export function SignUp(): JSX.Element {
   const { pending, error, handleSubmit } = useSignUpForm();
 
@@ -140,24 +171,14 @@ export function SignUp(): JSX.Element {
           </p>
         )}
 
+        <SignUpLegalLinks />
+
         <Button type="submit" size="xl" className="w-full" disabled={pending}>
           {pending && <Spinner />}
           {pending ? 'Creating account…' : 'Create account'}
         </Button>
 
         <SocialAuthButtons />
-
-        <p className="text-center text-xs text-muted-foreground">
-          By creating an account, you agree to our{' '}
-          <a href="#" className="font-medium text-foreground hover:underline">
-            Terms
-          </a>{' '}
-          and{' '}
-          <a href="#" className="font-medium text-foreground hover:underline">
-            Privacy Policy
-          </a>
-          .
-        </p>
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
