@@ -70,9 +70,14 @@ jobs:
         run: .github/workflows/resolve-turbo-base.sh
         env:
           BEFORE_SHA: ${{ github.event.before }}
+      # VITE_* are inlined into the client bundle by `vite build`, so the key
+      # has to be here, in the environment of the build itself. Setting it as a
+      # Worker secret does nothing: that is a runtime value the browser never
+      # sees, and it cannot change a bundle that is already built.
       - run: pnpm build:affected
         env:
           TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       - run: pnpm deploy:affected

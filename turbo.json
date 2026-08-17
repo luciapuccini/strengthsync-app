@@ -22,6 +22,15 @@
       "dependsOn": ["^typecheck", "^build"],
       "outputs": ["dist/**"]
     },
+    "@strengthsync/client#build": {
+      "dependsOn": ["^typecheck", "^build"],
+      "outputs": ["dist/**"],
+      // Inlined into the bundle, so it is part of what the output depends on.
+      // Turbo infers VITE_* from the framework, but naming it keeps the
+      // guarantee visible: leave it out and a cached bundle built before the
+      // key existed is still a legal answer for a build that has it.
+      "env": ["VITE_POSTHOG_KEY"]
+    },
     "@strengthsync/server#build": {
       "dependsOn": ["^typecheck", "^build", "@strengthsync/client#build"],
       "outputs": []
