@@ -89,4 +89,4 @@ None — can start immediately.
 
 ## STATUS
 
-TODO (code complete; blocked on HITL PostHog project/key + dashboard verification)
+DONE
