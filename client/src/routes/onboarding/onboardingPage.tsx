@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import { activePlanResource } from '@/api/activePlanResource';
+import { trackOnboardingStepCompleted } from '@/lib/analytics';
 
 import { GoalStep } from './components/goal-step/goalStep';
 import { LifeStep } from './components/life-step/lifeStep';
@@ -37,7 +38,10 @@ export function OnboardingPage(): JSX.Element {
       {state.step === 'personal' && (
         <PersonalStep
           defaults={state.answers}
-          onNext={(answers) => dispatch({ type: 'advance', answers })}
+          onNext={(answers) => {
+            trackOnboardingStepCompleted('personal');
+            dispatch({ type: 'advance', answers });
+          }}
         />
       )}
 
@@ -45,7 +49,10 @@ export function OnboardingPage(): JSX.Element {
         <GoalStep
           defaults={state.answers}
           onBack={() => dispatch({ type: 'back' })}
-          onNext={(answers) => dispatch({ type: 'advance', answers })}
+          onNext={(answers) => {
+            trackOnboardingStepCompleted('goal');
+            dispatch({ type: 'advance', answers });
+          }}
         />
       )}
 
@@ -53,7 +60,10 @@ export function OnboardingPage(): JSX.Element {
         <TrainingStep
           defaults={state.answers}
           onBack={() => dispatch({ type: 'back' })}
-          onNext={(answers) => dispatch({ type: 'advance', answers })}
+          onNext={(answers) => {
+            trackOnboardingStepCompleted('training');
+            dispatch({ type: 'advance', answers });
+          }}
         />
       )}
 
@@ -61,7 +71,10 @@ export function OnboardingPage(): JSX.Element {
         <LifeStep
           priorAnswers={state.answers}
           onBack={() => dispatch({ type: 'back' })}
-          onSubmitted={() => void navigate('/track', { replace: true })}
+          onSubmitted={() => {
+            trackOnboardingStepCompleted('life');
+            void navigate('/track', { replace: true });
+          }}
         />
       )}
     </div>

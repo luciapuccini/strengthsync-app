@@ -31,6 +31,7 @@ catalogMode: strict
 allowBuilds:
   '@swc/core': set this to true or false
   better-sqlite3: true
+  core-js: false
   esbuild: true
   lefthook: true
   sharp: true

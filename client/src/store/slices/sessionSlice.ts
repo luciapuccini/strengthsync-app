@@ -3,6 +3,7 @@ import type { StateCreator } from 'zustand';
 import type { Client } from '@/api/types';
 
 import { getSession } from '@/api/client';
+import { identifyClient } from '@/lib/analytics';
 
 import type { AppStore } from '../useAppStore';
 
@@ -40,14 +41,17 @@ export const createSessionSlice: StateCreator<
   bootstrapSession: async () => {
     try {
       const client = await getSession();
+      identifyClient(client.id);
       set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'bootstrapSession/in');
     } catch {
       set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'bootstrapSession/out');
     }
   },
 
-  markSignedIn: (client) =>
-    set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'markSignedIn'),
+  markSignedIn: (client) => {
+    identifyClient(client.id);
+    set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'markSignedIn');
+  },
 
   signOutSession: () =>
     set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'signOutSession'),

@@ -3,6 +3,7 @@ import type { JSX } from 'react';
 import { toast } from 'sonner';
 
 import { startWeeklyProgression } from '@/api/workflows';
+import { trackWeekCompleted } from '@/lib/analytics';
 import { Button } from '@/shadcn/ui/button';
 import { Spinner } from '@/shadcn/ui/spinner';
 
@@ -13,6 +14,7 @@ export function CompleteWeekButton(): JSX.Element {
     // setIsRunning(true);
     try {
       const { instanceId, details } = await startWeeklyProgression();
+      trackWeekCompleted();
       console.log('started', instanceId, details);
       toast.success('Week complete triggered');
     } catch (error) {

@@ -62,6 +62,7 @@ Copy the example file and fill in values:
 | Copy from                                                | Copy to              | Used by                         |
 | -------------------------------------------------------- | -------------------- | ------------------------------- |
 | [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars` | API Worker: `SESSION_JWT_SECRET`, `INVITE_CODE`, `OPENAI_*` |
+| [client/.env.example](client/.env.example) | `client/.env.local` | Client: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` |
 
 `SESSION_JWT_SECRET` signs the session cookie. Any value works locally; rotating
 it invalidates every session already issued. In production it is a Worker secret
@@ -72,6 +73,10 @@ between batches, and stored on each `clients` row so the cohorts stay
 distinguishable (`docs/mvp.md` §2). Also a Worker secret in production
 (`wrangler secret put INVITE_CODE`). Leaving it unset closes registration
 rather than opening it.
+
+`VITE_POSTHOG_KEY` is the PostHog project key for the funnel events in
+`docs/mvp.md` §5 (`client/src/lib/analytics.ts`). Leaving it unset makes
+analytics no-op rather than erroring, so it is optional for local dev.
 
 ### Getting started
 

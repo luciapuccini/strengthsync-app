@@ -6,6 +6,7 @@ import { saveDayLog } from '@/api/client';
 import { toSaveDayLog } from '@/api/dayLog';
 import type { TrackerData } from '@/api/weekResource';
 import { invalidateCurrentWeek } from '@/api/weekResource';
+import { trackDaySaved } from '@/lib/analytics';
 import {
   setFeedback as applySetFeedback,
   toggleSet as applyToggleSet,
@@ -87,6 +88,7 @@ export const createTrackerSlice: StateCreator<
       throw new Error('Cannot save a day before the tracker is hydrated.');
     }
     const savedWeek = await saveDayLog(week.id, day.day_index, toSaveDayLog(day));
+    trackDaySaved();
     invalidateCurrentWeek();
     set({ week: mergeSavedDayIntoDraft(savedWeek, client.id, day.day_index) }, false, 'saveDay');
   },

@@ -40,15 +40,43 @@ required for a mobile cohort — the default is not to.
 
 ## Acceptance criteria
 
-- [ ] PostHog initialised with `autocapture: false`, key from an env var, not
+- [x] PostHog initialised with `autocapture: false`, key from an env var, not
       committed
-- [ ] `identify(clientId)` fires on session bootstrap
-- [ ] All seven events above fire from the client at the right moments
-- [ ] Plan generation success and failure both carry a latency property
+- [x] `identify(clientId)` fires on session bootstrap
+- [x] All seven events above fire from the client at the right moments
+- [x] Plan generation success and failure both carry a latency property
 - [ ] The events are confirmed arriving in the PostHog project, and a funnel from
       sign-up to first day saved can be built from them
-- [ ] Nothing is captured before a session exists beyond the sign-up funnel steps
+- [x] Nothing is captured before a session exists beyond the sign-up funnel steps
       themselves
+
+## Implementation notes
+
+`client/src/lib/analytics.ts` wraps `posthog-js`. Init is lazy (first call to
+any tracking function), no-ops with no `VITE_POSTHOG_KEY` configured, and sets
+`autocapture: false`, `capture_pageview: false`, `disable_session_recording:
+true`, `person_profiles: 'identified_only'`. No Worker proxy — direct to
+PostHog Cloud, per the "default is not to" in this issue.
+
+Event → call site:
+
+- `onboarding step completed` — `onboardingPage.tsx`, wrapping each step's
+  `onNext`/`onSubmitted`
+- `plan generation started/succeeded/failed` (latency via `performance.now()`)
+  — `lifeStep.tsx`'s `composePlan`, the only call site of `generatePlan()`
+- `first set logged` — `setControls.tsx`, gated to fire once per client ever
+  (localStorage flag, dedup logic covered by `analytics.test.ts`)
+- `day saved` — `trackerSlice.ts`'s `saveDay`, after `saveDayLog` resolves
+- `week completed` — `completeWeekButton.tsx`, after `startWeeklyProgression`
+  resolves (fires on trigger, not on the workflow's eventual completion)
+
+`identify(clientId)` fires from both `sessionSlice.ts` paths: `bootstrapSession`
+(cold load) and `markSignedIn` (sign-up/sign-in).
+
+**Still open (HITL):** create the PostHog project, set `VITE_POSTHOG_KEY` (see
+`client/.env.example`), run the funnel end to end, and confirm all seven events
+land and a sign-up → first day saved funnel can be built. Flip the last
+checkbox and STATUS once that's verified.
 
 ## Blocked by
 
@@ -61,4 +89,4 @@ None — can start immediately.
 
 ## STATUS
 
-TODO
+TODO (code complete; blocked on HITL PostHog project/key + dashboard verification)

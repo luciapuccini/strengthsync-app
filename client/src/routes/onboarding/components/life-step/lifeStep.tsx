@@ -5,6 +5,11 @@ import { generatePlan, submitOnboarding } from '@/api/client';
 import { invalidateActivePlan } from '@/api/activePlanResource';
 import { invalidateCurrentWeek } from '@/api/weekResource';
 import {
+  trackPlanGenerationFailed,
+  trackPlanGenerationStarted,
+  trackPlanGenerationSucceeded,
+} from '@/lib/analytics';
+import {
   LifeStepSchema,
   OnboardingAnswersSchema,
   fieldErrors,
@@ -148,7 +153,15 @@ async function composePlan(
     await submitOnboarding(toWirePayload(answers));
     profileSaved.current = true;
   }
-  await generatePlan();
+  trackPlanGenerationStarted();
+  const startedAt = performance.now();
+  try {
+    await generatePlan();
+    trackPlanGenerationSucceeded(performance.now() - startedAt);
+  } catch (error) {
+    trackPlanGenerationFailed(performance.now() - startedAt);
+    throw error;
+  }
 }
 
 /**

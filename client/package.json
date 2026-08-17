@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.24.0",
     "openapi-fetch": "^0.15.2",
+    "posthog-js": "^1.417.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
