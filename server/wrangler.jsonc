@@ -28,7 +28,9 @@
     // single-page-application turns a miss into index.html. /auth/* has to be
     // on the list or GET /auth/session returns the app shell instead of the
     // session — invisible locally, where vite proxies to the Worker directly.
-    "run_worker_first": ["/api/*", "/auth/*", "/health"],
+    // /ingest/* is the same trap and worse: posthog-js treats the 200 carrying
+    // index.html as a delivered event, so captures would fail silently.
+    "run_worker_first": ["/api/*", "/auth/*", "/health", "/ingest/*"],
   },
   "d1_databases": [
     {

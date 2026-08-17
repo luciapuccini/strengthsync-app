@@ -21,6 +21,10 @@ export default defineConfig({
       '/api': 'http://localhost:8787',
       '/auth': 'http://localhost:8787',
       '/health': 'http://localhost:8787',
+      // Analytics takes the same path in dev as in production, through the
+      // Worker's PostHog proxy (server/src/routes/ingest.ts). Without this the
+      // dev server answers the capture itself with index.html.
+      '/ingest': 'http://localhost:8787',
     },
   },
 });

@@ -1,7 +1,16 @@
 import posthog from 'posthog-js';
 
 const POSTHOG_KEY: string | undefined = import.meta.env.VITE_POSTHOG_KEY;
-const POSTHOG_HOST: string = import.meta.env.VITE_POSTHOG_HOST ?? 'https://us.i.posthog.com';
+
+/**
+ * Same-origin by default, proxied to PostHog by the Worker
+ * (`server/src/routes/ingest.ts`). A capture aimed straight at
+ * us.i.posthog.com is dropped by every mainstream content blocker, and the
+ * loss is invisible: a blocked athlete is indistinguishable from one who
+ * never reached the step, which biases the very drop-off rates the funnel
+ * exists to measure.
+ */
+const POSTHOG_HOST: string = import.meta.env.VITE_POSTHOG_HOST ?? '/ingest';
 
 const FIRST_SET_LOGGED_KEY_PREFIX = 'strengthsync:analytics:first-set-logged:';
 
@@ -18,6 +27,10 @@ function ensureInit(): boolean {
   if (!POSTHOG_KEY) return false;
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
+    // Where the toolbar and the "view in PostHog" links point. Only needed
+    // because api_host is our own origin, which PostHog would otherwise take
+    // for a self-hosted instance.
+    ui_host: 'https://us.posthog.com',
     autocapture: false,
     capture_pageview: false,
     disable_session_recording: true,

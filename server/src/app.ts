@@ -9,6 +9,7 @@ import { defaultHook } from './lib/validation-error.ts';
 import { authRoutes } from './routes/auth/endpoints.ts';
 import { clientRoutes } from './routes/clients/endpoints.ts';
 import { healthRoutes } from './routes/health.ts';
+import { ingestRoutes } from './routes/ingest.ts';
 import { onboardingRoutes } from './routes/onboarding/endpoints.ts';
 import { planRoutes } from './routes/plans/endpoints.ts';
 import { weekRoutes } from './routes/weeks/endpoints.ts';
@@ -24,6 +25,11 @@ export type AppConfig = {
    * so the handler never reads the environment itself.
    */
   inviteCode: string;
+  /**
+   * What `/ingest/*` forwards with. Only tests pass this; in the Worker the
+   * global `fetch` is the right answer and the proxy has no other dependency.
+   */
+  ingestFetch?: typeof fetch;
 };
 
 /** The document builder in `scripts/gen-openapi.ts` needs the OpenAPIHono type. */
@@ -48,6 +54,11 @@ export function createApp(config: AppConfig): OpenAPIHono {
 
   // Unauthenticated liveness (docs/architecture/api_contracts.md).
   app.route('/', healthRoutes());
+
+  // A transparent pipe to PostHog, deliberately not an API route: it is
+  // mounted as a plain hono app so it stays out of the generated OpenAPI
+  // document, which describes the contract the client is typed against.
+  app.route('/', ingestRoutes(config.ingestFetch));
 
   // Registration and sign-in, outside /api because they mint the cookie the
   // guard below checks.

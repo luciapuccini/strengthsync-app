@@ -284,3 +284,82 @@ describe('workflow trigger', () => {
     expect(calls).toEqual([client.id]);
   });
 });
+
+/**
+ * The PostHog proxy (`routes/ingest.ts`). It exists so captures leave the
+ * browser same-origin and survive content blockers; these pin the two things
+ * that quietly break when they are wrong — where a request lands, and what
+ * rides along with it.
+ */
+describe('/ingest', () => {
+  /** `forwarded()` is what the proxy sent upstream, and fails if it sent nothing. */
+  function stubFetch(): { fetcher: typeof fetch; forwarded: () => Request } {
+    const calls: Request[] = [];
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push(new Request(input as RequestInfo, init));
+      return new Response('1', { status: 200 });
+    }) as typeof fetch;
+    return {
+      fetcher,
+      forwarded: () => {
+        const [first, ...rest] = calls;
+        expect(rest).toEqual([]);
+        if (first === undefined) throw new Error('the proxy forwarded nothing upstream');
+        return first;
+      },
+    };
+  }
+
+  it('forwards captures to the PostHog ingestion host, path and query intact', async () => {
+    const { fetcher, forwarded } = stubFetch();
+    const app = createTestApp({ ingestFetch: fetcher });
+
+    const res = await app.request('/ingest/i/v0/e/?compression=gzip-js&ver=1.417.1', {
+      method: 'POST',
+      body: '{"event":"day saved"}',
+    });
+
+    expect(res.status).toBe(200);
+    const upstream = forwarded();
+    expect(upstream.url).toBe('https://us.i.posthog.com/i/v0/e/?compression=gzip-js&ver=1.417.1');
+    expect(await upstream.text()).toBe('{"event":"day saved"}');
+  });
+
+  // posthog-js loads its optional bundles from a different host than it
+  // captures to, so one rewrite cannot serve both.
+  it('forwards /ingest/static to the assets host', async () => {
+    const { fetcher, forwarded } = stubFetch();
+    const app = createTestApp({ ingestFetch: fetcher });
+
+    await app.request('/ingest/static/array.js');
+
+    expect(forwarded().url).toBe('https://us-assets.i.posthog.com/static/array.js');
+  });
+
+  // Same-origin means the browser attaches the session cookie unprompted.
+  // Forwarding it would hand PostHog a token that speaks for the athlete.
+  it('never forwards the session cookie upstream', async () => {
+    const { fetcher, forwarded } = stubFetch();
+    const app = createTestApp({ ingestFetch: fetcher });
+    const client = await signUpViaApi(app);
+
+    await app.request('/ingest/i/v0/e/', {
+      method: 'POST',
+      headers: { ...client.headers, 'content-type': 'text/plain' },
+      body: '{}',
+    });
+
+    const upstream = forwarded();
+    expect(upstream.headers.get('cookie')).toBeNull();
+    expect(upstream.headers.get('content-type')).toBe('text/plain');
+  });
+
+  it('is reachable without a session', async () => {
+    const { fetcher } = stubFetch();
+    const res = await createTestApp({ ingestFetch: fetcher }).request('/ingest/i/v0/e/', {
+      method: 'POST',
+      body: '{}',
+    });
+    expect(res.status).toBe(200);
+  });
+});

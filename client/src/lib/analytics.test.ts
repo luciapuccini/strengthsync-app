@@ -35,7 +35,7 @@ describe('analytics', () => {
     expect(capture).not.toHaveBeenCalled();
   });
 
-  it('initializes once, with autocapture and session recording off', async () => {
+  it('initializes once, same-origin, with autocapture and session recording off', async () => {
     const { trackDaySaved, trackWeekCompleted } = await import('./analytics');
 
     trackDaySaved();
@@ -45,6 +45,9 @@ describe('analytics', () => {
     expect(init).toHaveBeenCalledWith(
       'phc_test',
       expect.objectContaining({
+        // Not us.i.posthog.com: captures go through the Worker's proxy, or
+        // content blockers eat them and the funnel silently under-reports.
+        api_host: '/ingest',
         autocapture: false,
         capture_pageview: false,
         disable_session_recording: true,
