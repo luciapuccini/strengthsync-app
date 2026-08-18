@@ -28,11 +28,11 @@ decide whether it blocks the invite.
 
 ## Acceptance criteria
 
-- [ ] A monthly spend limit is set in the OpenAI console and the amount is
+- [x] A monthly spend limit is set in the OpenAI console and the amount is
       written down here
 - [ ] A complete training day has been logged on a real phone against
       `app.strengthsync.ai`, through a real generated plan
-- [ ] The batch-one invite code is set as a Worker secret in production
+- [x] The batch-one invite code is set as a Worker secret in production
 - [ ] Any defect found on the phone run is recorded — either fixed, or written
       into `docs/future_state_after_mvp/todos.md` with a note that it was seen
       and accepted
