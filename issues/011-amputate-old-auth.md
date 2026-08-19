@@ -1,0 +1,85 @@
+# 011 — Amputate the old auth system
+
+## Parent PRD
+
+`issues/auth0-migration/prd.md`
+
+## What to build
+
+Remove the hand-rolled authentication system entirely, in one commit, leaving
+`/api/*` guarded by a middleware that rejects everything. Nothing replaces it
+here — issue 012 does that. The point of doing the removal first is that every
+issue after it works against one system instead of keeping two of them green.
+
+**Server.** Delete `lib/password.ts`, `lib/session-token.ts`, `lib/session.ts`,
+`routes/auth/`, and `db/repositories/credentials.ts`, along with their tests
+(`password.test.ts`, `session-token.test.ts`, `credentials.test.ts`,
+`app.auth.test.ts`). `AppConfig` loses `sessionSecret` and `inviteCode`, so
+`SESSION_JWT_SECRET` and the batch invite code can be deleted as Worker secrets.
+
+**The guard becomes a stub, not a hole.** `requireAuth` replaces
+`requireSession` on `/api/*` with the same middleware signature and the same
+`clientId` context variable, and rejects every request with the same 401 shape.
+It exists in this issue solely so that no route handler is touched: the handlers
+read `clientId` off the context, and removing the middleware that declares it
+would break typecheck across every route. Issue 012 fills it in.
+
+**Schema.** A migration drops `client_credentials` and `clients.invite_code`.
+The demo-credentials seed (`server/db/seeds/003_demo_credentials.sql`) goes with
+them. `coaches.auth_subject_id` stays as it is — unused, and coaches do not
+authenticate.
+
+**Tests.** `app.me.test.ts` and the session-dependent half of
+`app.public.test.ts` are deleted rather than adapted, and rewritten in 012.
+`app.public.test.ts` keeps only the cases that never touched a session — the
+`/health` liveness case and the four `/ingest` proxy cases — because those have
+nothing to do with authentication and deleting them would lose coverage for no
+reason.
+
+**This leaves the API's ownership isolation uncovered until 012 lands.** That is
+the accepted cost of the sequencing, and the mitigation is that issue 012
+carries the full inventory of deleted cases as acceptance criteria. That
+inventory must be verified as complete before this issue merges.
+
+**Client.** Deleting `/auth/*` regenerates `openapi.d.ts` without `SignInInput`
+and `SignUpInput`, so `client/src/api/client.ts` fails typecheck immediately —
+the client half of this change is coupled through the generated contract and
+cannot be split into its own issue. Remove the sign-in and sign-up screens,
+their tests and their routes in `App.tsx`; remove `signIn`, `signUp`,
+`getSession` and `signOut` from the API client; keep `SessionSlice`'s three
+states so `RequireAuth` and `RootRedirect` do not change, with
+`bootstrapSession` resolving to `signed-out` until 013 re-sources it from the
+SDK. The sign-out button clears local state only.
+
+After this merges the app compiles, passes and deploys, but nobody can sign in
+and every `/api/*` request answers 401. That is expected. There are no
+production users, and launch is still gated on `issues/008-launch-readiness.md`.
+
+## Acceptance criteria
+
+- [ ] `lib/password.ts`, `lib/session.ts`, `lib/session-token.ts`,
+      `routes/auth/`, the credentials repository and their four test files are
+      deleted
+- [ ] A migration drops `client_credentials` and `clients.invite_code`; the
+      demo-credentials seed is removed
+- [ ] `AppConfig` no longer carries `sessionSecret` or `inviteCode`
+- [ ] `requireAuth` is mounted on `/api/*`, sets no `clientId`, and answers 401
+      with the existing error envelope — no route handler is modified
+- [ ] The client's sign-in and sign-up screens, routes, tests and API functions
+      are removed, and `openapi.d.ts` regenerates with no `/auth` paths
+- [ ] `app.public.test.ts` retains exactly the `/health` and `/ingest` cases
+- [ ] The inventory of deleted API test cases is present in
+      `issues/012-token-verification-and-provisioning.md` before this merges
+- [ ] `pnpm typecheck`, `pnpm lint` and `pnpm test` pass
+
+## Blocked by
+
+None - can start immediately.
+
+## User stories addressed
+
+- User stories 8, 12, 25, 34, 35
+
+## STATUS
+
+TODO
