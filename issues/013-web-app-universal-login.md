@@ -87,17 +87,29 @@ and it is an acceptance criterion here that it does not change. An athlete
 opening `/history` while signed out lands on `/track` afterwards. At three
 screens that is not worth a guard rewrite.
 
-**The reload shows a consent screen, and the cause is not settled.** A cold
+**The reload cannot be verified on localhost, and this is structural.** A cold
 reload has no refresh token in memory, so the SDK falls back to silent
-authentication in a hidden iframe with `prompt=none`. That request fails and the
-athlete goes through a full redirect and an "Authorize App" dialog before landing
-back, signed in. The API's *Allow Skipping User Consent* is confirmed on, which
-leaves Auth0's rule that a `localhost` callback is not a verifiable first-party
-client — consent cannot be skipped there, so `prompt=none` can never succeed
-locally. If that is the whole story it disappears on `app.strengthsync.ai`. Read
-the `error=` on the `prompt=none` request to be sure: `consent_required` confirms
-it, `login_required` would mean the iframe never saw the session cookie, which is
-a different and worse problem.
+authentication in a hidden iframe with `prompt=none`. From `localhost:5173` that
+iframe request is `sec-fetch-site: cross-site`, because localhost and
+`strengthsync.ai` are different registrable domains — so the Auth0 session cookie
+is third-party. Chrome dropped it entirely on two of five observed attempts. The
+`prompt=none` request fails, and the athlete goes through a full redirect and an
+"Authorize App" dialog before landing back, signed in.
+
+Consent is probably a second, independent cause: Auth0 does not treat a
+`localhost` callback as a verifiable first-party client, so consent cannot be
+skipped there even though *Allow Skipping User Consent* is confirmed on for the
+API. Either way both conditions are properties of localhost.
+
+Neither exists on `app.strengthsync.ai`, where the iframe request is *same-site*
+and the cookie is sent. That is precisely the property the custom domain was
+bought for. It also means this criterion is not merely unverified locally but
+unverifiable locally — it has to be run against the deployed origin.
+
+Do not go hunting for an `error=` parameter. The silent request uses
+`response_mode=web_message`, so Auth0 answers with an HTML page that posts the
+result to the parent window; the error is in a `postMessage` payload and never
+appears in a URL.
 
 Not a fix: `cacheLocation: 'localstorage'` would persist the refresh token and
 make reloads silent regardless. It would also put a long-lived credential in
@@ -127,7 +139,10 @@ overwrites it — worth confirming onboarding actually does.
 ## Acceptance criteria
 
 - [ ] Signing in on the hosted page returns to the app authenticated, and a
-      cold reload stays signed in
+      cold reload stays signed in — sign-in verified 2026-08-19; the reload does
+      stay signed in but goes through a full redirect rather than silently, which
+      localhost cannot distinguish from the deployed behaviour. **Deferred to the
+      first run against `app.strengthsync.ai`**, for the reason recorded above
 - [x] The access token is never written to `localStorage` or `sessionStorage` —
       verified in DevTools on 2026-08-19; the only `strengthsync:` keys are the
       week draft and the first-set-logged flag
@@ -164,6 +179,6 @@ overwrites it — worth confirming onboarding actually does.
 ## STATUS
 
 IN PROGRESS — sign-in, provisioning, token storage and the first-time landing
-are verified against the real tenant. Outstanding: whether the reload's consent
-screen is a localhost artifact, the PostHog identify, sign-out, password reset,
-Apple, Google, and the phone-viewport run.
+are verified against the real tenant. Outstanding: the silent reload, which is
+unverifiable on localhost and needs the deployed origin; the PostHog identify;
+sign-out; password reset; Apple; Google; and the phone-viewport run.
