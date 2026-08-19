@@ -20,12 +20,14 @@ vi.mock('openapi-fetch', () => ({
 }));
 
 import {
+  authorizedFetch,
   getActivePlan,
   getMe,
   getPlan,
   getProfile,
   listCompletedWeeks,
   saveDayLog,
+  setAccessTokenProvider,
   setUnauthorizedHandler,
   updateDayLog,
   updateProfile,
@@ -73,8 +75,58 @@ function errorResponse(status: number, error: unknown) {
 
 afterEach(() => {
   vi.clearAllMocks();
-  // The handler is module state, so it outlives the test that registered it.
+  vi.unstubAllGlobals();
+  // Both of these are module state, so they outlive the test that registered
+  // them.
   setUnauthorizedHandler(() => {});
+  setAccessTokenProvider(async () => null);
+});
+
+/**
+ * The credential, which is the one thing every call above has in common. These
+ * exercise `authorizedFetch` directly rather than through `openapi-fetch`, which
+ * this file mocks out wholesale — the wrapper is what is under test, not the
+ * plumbing that hands it a `Request`.
+ */
+describe('the bearer wrapper', () => {
+  const sentTo = (fetchMock: ReturnType<typeof vi.fn>): Request =>
+    fetchMock.mock.calls[0]?.[0] as Request;
+
+  function stubFetch() {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  it('carries the token from the registered provider', async () => {
+    const fetchMock = stubFetch();
+    setAccessTokenProvider(async () => 'a-token');
+
+    await authorizedFetch(new Request('https://api.test/api/me'));
+
+    expect(sentTo(fetchMock).headers.get('Authorization')).toBe('Bearer a-token');
+  });
+
+  // Not an error, and deliberately not a thrown one: the athlete is signed out,
+  // or the SDK has not registered a provider yet, and the honest thing to do is
+  // send the request without a credential and let the server answer 401 — which
+  // is what signs them out everywhere else in this file.
+  it('sends no header when there is no token to send', async () => {
+    const fetchMock = stubFetch();
+    setAccessTokenProvider(async () => null);
+
+    await authorizedFetch(new Request('https://api.test/api/me'));
+
+    expect(sentTo(fetchMock).headers.has('Authorization')).toBe(false);
+  });
+
+  it('sends no header before any provider is registered', async () => {
+    const fetchMock = stubFetch();
+
+    await authorizedFetch(new Request('https://api.test/api/me'));
+
+    expect(sentTo(fetchMock).headers.has('Authorization')).toBe(false);
+  });
 });
 
 describe('api client', () => {

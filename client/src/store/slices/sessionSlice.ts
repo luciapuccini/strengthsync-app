@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 
 import type { Client } from '@/api/types';
 
+import { getMe } from '@/api/client';
 import { identifyClient } from '@/lib/analytics';
 
 import type { AppStore } from '../useAppStore';
@@ -11,23 +12,28 @@ import type { AppStore } from '../useAppStore';
  * cache because it is shared app state, and the store is the single source of
  * truth for that.
  *
- * `loading` is the state before the bootstrap answers, and it is the initial
+ * `loading` is the state before the provider answers, and it is the initial
  * one: on a cold load nobody knows yet whether the athlete is signed in, and the
  * guard must not redirect while that is still open. That reason survives the
  * migration intact, which is why all three states are still here — see
  * `issues/011-amputate-old-auth.md`.
  *
- * Only the *source* of the state changed, and right now there isn't one. The
- * route that answered "who is signed in" is deleted and the Auth0 SDK is not
- * wired in until `issues/013-web-app-universal-login.md`, so the bootstrap
- * resolves straight to signed-out and nobody can get past `RequireAuth`.
+ * Only the *source* of the state changed. It used to be `GET /auth/session`;
+ * it is now the Auth0 SDK's own two flags, plus one call to `GET /api/me` for
+ * the internal athlete id that the provider does not know about.
  */
 export type SessionStatus = 'loading' | 'signed-in' | 'signed-out';
+
+/** The two flags `useAuth0()` exposes, and the whole of what this slice reads. */
+export type ProviderSession = {
+  isLoading: boolean;
+  isAuthenticated: boolean;
+};
 
 export type SessionSlice = {
   sessionStatus: SessionStatus;
   sessionClient: Client | null;
-  bootstrapSession: () => Promise<void>;
+  resolveSession: (provider: ProviderSession) => Promise<void>;
   markSignedIn: (client: Client) => void;
   signOutSession: () => void;
 };
@@ -37,29 +43,52 @@ export const createSessionSlice: StateCreator<
   [['zustand/devtools', never]],
   [],
   SessionSlice
-> = (set) => ({
+> = (set, get) => ({
   sessionStatus: 'loading',
   sessionClient: null,
 
-  // Nothing to ask yet, so resolve the way a rejected credential always did:
-  // without a verified identity there is nothing to show. Kept async, and kept
-  // being awaited by the bootstrap effect in App.tsx, so issue 013 changes what
-  // happens inside it and not a single caller.
-  bootstrapSession: async () => {
-    await Promise.resolve();
-    set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'bootstrapSession/out');
+  /**
+   * Called from `App` whenever the SDK's flags change, which is the only thing
+   * that drives this state machine. The mapping lives here rather than in the
+   * effect that calls it so that it can be exercised without a browser, a
+   * provider or a redirect.
+   *
+   * Being authenticated is not the same as being resolved: the provider knows
+   * the athlete's `sub` and nothing else, so the internal id still has to be
+   * read. Until it is, the status stays `loading` rather than flipping to
+   * `signed-in` with a null client — a state every consumer would then have to
+   * defend against.
+   */
+  resolveSession: async ({ isLoading, isAuthenticated }) => {
+    if (isLoading) {
+      set({ sessionStatus: 'loading' }, false, 'resolveSession/loading');
+      return;
+    }
+    if (!isAuthenticated) {
+      set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'resolveSession/out');
+      return;
+    }
+    try {
+      get().markSignedIn(await getMe());
+    } catch {
+      // A verified token that cannot be resolved to an athlete is not a signed-in
+      // athlete, whether the cause is a rejected credential or an API that is
+      // simply down. Both settle here, and `signInRoute` is what keeps the second
+      // one from turning into a redirect loop.
+      set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'resolveSession/failed');
+    }
   },
 
-  // No caller until issue 013: the two screens that used to call this after a
-  // successful sign-in are deleted, and the SDK's authenticated flag replaces
-  // them. Kept because the transition into `signed-in` has to exist somewhere,
-  // and identifying the athlete to PostHog on the way through is the behaviour
-  // issue 013's cold-load path needs.
+  // Identifying the athlete to PostHog on the way through is what keeps the MVP
+  // funnel readable across the migration: every later event is tied to the
+  // internal id, which is the id the server's data is keyed by.
   markSignedIn: (client) => {
     identifyClient(client.id);
     set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'markSignedIn');
   },
 
+  // Local state only. Ending the session at Auth0 is `signOutButton`'s job, and
+  // it is a redirect rather than a state change.
   signOutSession: () =>
     set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'signOutSession'),
 });

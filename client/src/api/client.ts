@@ -13,8 +13,37 @@ import type {
   Week,
 } from './types';
 
+/**
+ * The bearer token for every call below, sourced from the Auth0 SDK. Registered
+ * from a component the way `setUnauthorizedHandler` is, and for the same reason:
+ * the token lives in React context, this module is not a component, and
+ * importing the SDK here would put a provider requirement on every test that
+ * touches the API client.
+ *
+ * The default is what an unauthenticated app does — send nothing and let the
+ * server answer 401. That is also the honest behaviour before the provider is
+ * registered, which is a real window on a cold load.
+ */
+let getAccessToken: () => Promise<string | null> = async () => null;
+
+export function setAccessTokenProvider(provider: () => Promise<string | null>): void {
+  getAccessToken = provider;
+}
+
+/**
+ * The one place a credential is attached. Every call in this file goes through
+ * `api`, and `api` goes through here, so there is no route that can be added
+ * without one.
+ */
+export async function authorizedFetch(request: Request): Promise<Response> {
+  const token = await getAccessToken();
+  if (token) request.headers.set('Authorization', `Bearer ${token}`);
+  return fetch(request);
+}
+
 const api = createOpenApiClient<paths>({
   baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+  fetch: authorizedFetch,
 });
 
 /** Run a read that treats a 404 as an expected "no record yet" (returns null). */
@@ -73,9 +102,9 @@ async function call<T>(
  * of ours. `GET /api/me` below is what replaced the session read, and it is not
  * a session check — it answers with the athlete, or 401s like everything else.
  *
- * Nothing here attaches a credential yet, so every call still answers 401 until
- * `issues/013-web-app-universal-login.md` wires the SDK in and adds the wrapper
- * that carries the bearer token.
+ * The credential is a bearer token from Auth0, attached by `authorizedFetch`
+ * above — one wrapper for every call, rather than a header threaded through
+ * each of them.
  *
  * Everything below addresses `/api/me`, which takes the athlete from the
  * verified credential. None of these accepts an athlete id, so the browser

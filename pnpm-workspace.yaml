@@ -23,6 +23,7 @@ catalog:
   'thinking-orbs': ^0.3.1
   prettier: 3.9.6
   prettier-plugin-tailwindcss: 0.8.1
+  '@auth0/auth0-react': ^2.24.1
 
 # strict: `pnpm add` rejects a version outside the catalog for any
 # dependency already governed by it, instead of silently drifting.
@@ -31,6 +32,8 @@ catalogMode: strict
 allowBuilds:
   '@swc/core': set this to true or false
   better-sqlite3: true
+  # Its only build script prints a thank-you message from the maintainers.
+  browser-tabs-lock: false
   core-js: false
   esbuild: true
   lefthook: true

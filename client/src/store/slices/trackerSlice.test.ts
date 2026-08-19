@@ -14,7 +14,9 @@ const { invalidateCurrentWeek } = vi.hoisted(() => ({
   invalidateCurrentWeek: vi.fn(),
 }));
 
-vi.mock('@/api/client', () => ({ saveDayLog }));
+// `getMe` is here for the session slice, which the store composes alongside
+// this one — a factory that omitted it would fail at import.
+vi.mock('@/api/client', () => ({ saveDayLog, getMe: vi.fn() }));
 vi.mock('@/api/weekResource', () => ({ invalidateCurrentWeek }));
 
 import { useAppStore } from '../useAppStore';
