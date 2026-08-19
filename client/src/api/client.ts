@@ -3,6 +3,7 @@ import type { paths } from './openapi';
 
 import { ApiClientError, toApiError } from './errors';
 import type {
+  Client,
   ClientProfile,
   OnboardingAnswers,
   Plan,
@@ -43,8 +44,10 @@ function throwOnError<T>(response: { data?: T; error?: unknown; response: Respon
     return response.data;
   }
   const error = toApiError(response.response.status, response.error);
-  // Every 401 lands here, including the blanket one the guard currently answers
-  // with. Signing out an athlete who is already signed out changes nothing, and
+  // Every 401 lands here. The server answers one indistinguishable rejection for
+  // a missing, malformed, expired or unknown credential, so there is nothing to
+  // branch on and nothing worth branching on: all four mean sign in again.
+  // Signing out an athlete who is already signed out changes nothing, and
   // exempting any call would mean threading an opt-out through every wrapper for
   // no gain.
   if (error.kind === 'unauthorized') onUnauthorized();
@@ -67,14 +70,31 @@ async function call<T>(
 /**
  * There are no sign-in, sign-up, sign-out or session calls here any more. Auth0
  * owns all four: authorization happens on its hosted page, not against a route
- * of ours, and `issues/013-web-app-universal-login.md` wires the SDK in. Until
- * then nothing can authenticate and every call below answers 401.
+ * of ours. `GET /api/me` below is what replaced the session read, and it is not
+ * a session check — it answers with the athlete, or 401s like everything else.
+ *
+ * Nothing here attaches a credential yet, so every call still answers 401 until
+ * `issues/013-web-app-universal-login.md` wires the SDK in and adds the wrapper
+ * that carries the bearer token.
  *
  * Everything below addresses `/api/me`, which takes the athlete from the
  * verified credential. None of these accepts an athlete id, so the browser
  * cannot ask for anyone else's data — and no caller has to know whose data it is
  * asking for.
  */
+
+/**
+ * The signed-in athlete, replacing the deleted `/auth/session`.
+ *
+ * Not a session check — by the time this answers, the credential has already
+ * been accepted or the call has already 401ed. What it is for is the internal
+ * athlete id, which the browser needs on a cold load to identify the person to
+ * product analytics and to key the local week draft.
+ */
+export async function getMe(): Promise<Client> {
+  const res = await call(() => api.GET('/api/me'));
+  return res.client;
+}
 
 export async function getProfile(): Promise<ClientProfile | null> {
   return orNull(async () => {

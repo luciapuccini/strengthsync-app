@@ -65,7 +65,7 @@ export const createTrackerSlice: StateCreator<
       {
         client: data.client,
         plan: data.plan,
-        week: reconcileWeekDraft(data.week, data.client?.id ?? null),
+        week: reconcileWeekDraft(data.week, data.client.id),
       },
       false,
       'hydrateTracker',

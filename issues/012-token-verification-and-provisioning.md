@@ -67,7 +67,11 @@ restored tests read the way they did.
       runs with no network access
 - [x] `GET /api/me` returns the internal athlete id for a valid token
 - [ ] A token minted by the real tenant reaches `GET /api/me` and provisions a
-      first-time athlete
+      first-time athlete — **the one step the suite cannot take.** Everything
+      above runs against an injected verifier, so the issuer, audience and JWKS
+      URL are unproven until a real token is presented against a deployed Worker.
+      That is deliberate (see *Token verification is injected*), and it is why
+      this is the last criterion rather than an incidental one.
 
 ### Restored test coverage
 
@@ -130,23 +134,28 @@ tokens, or explicitly struck through here with a reason.
 Three things 011 left deliberately degraded rather than half-solved. Each is
 undone here, and each will fail loudly if it is not.
 
-- [ ] **`client/src/api/types.ts` stops hand-declaring `Client`.** The schema left
+- [x] **`client/src/api/types.ts` stops hand-declaring `Client`.** The schema left
       `openapi.json` entirely when the last route returning one was deleted, so the
       client carries a hand-written copy in the interim. `GET /api/me` puts it back
       in the contract; delete the local declaration and read it from
       `components['schemas']` again. Until that happens the project's rule — a
       payload shape is pinned by a Zod schema at the boundary, never hand-written
       on the client — is suspended in exactly one place.
-- [ ] **`client/src/api/weekResource.ts` sources the athlete from `GET /api/me`
+- [x] **`client/src/api/weekResource.ts` sources the athlete from `GET /api/me`
       again.** It currently resolves `client: null`, which silently degrades two
       things: `reconcileWeekDraft` keys the local week draft by athlete id, and
       `trackerSlice.saveDay` refuses to write without one. Neither is reachable
       while every `/api/*` call answers 401, so this is safe exactly until the
       guard starts letting people through — which is this issue.
-- [ ] **The guard's test widens.** `app.public.test.ts` keeps one case asserting a
+- [x] **The guard's test widens.** `app.public.test.ts` keeps one case asserting a
       blanket 401 inside the error envelope. It becomes the full assertion once
       tokens exist: missing, malformed, expired, wrong-audience and wrong-issuer
       all produce one indistinguishable rejection.
+
+All three are undone. `TrackerData.client` is also no longer `Client | null`:
+it was nullable only because of the compromise, and leaving the type saying
+"maybe" after the maybe is gone would make every consumer handle a case that
+cannot happen.
 
 ## Found while building this
 
@@ -170,4 +179,4 @@ recoverable and visible, rather than resurrect, which is neither.
 
 ## STATUS
 
-TODO
+IN PROGRESS — code complete; the deployed-token check is outstanding

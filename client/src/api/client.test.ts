@@ -21,6 +21,7 @@ vi.mock('openapi-fetch', () => ({
 
 import {
   getActivePlan,
+  getMe,
   getPlan,
   getProfile,
   listCompletedWeeks,
@@ -83,6 +84,13 @@ describe('api client', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/me/plans/active');
   });
 
+  it('reads the signed-in athlete from /api/me', async () => {
+    const client = { id: UUID, coach_id: UUID, display_name: 'Ana', status: 'active' as const };
+    mockGet.mockResolvedValue(okResponse({ client }));
+    await expect(getMe()).resolves.toEqual(client);
+    expect(mockGet).toHaveBeenCalledWith('/api/me');
+  });
+
   it('puts the body and parses the saved profile', async () => {
     const profile = { id: UUID, client_id: UUID, age: 34 };
     mockPut.mockResolvedValue(okResponse({ profile }));
@@ -127,7 +135,8 @@ describe('api client', () => {
 // route deleted by `issues/011-amputate-old-auth.md` — sign-up, sign-in,
 // sign-out and the session read — and none is restored here: Auth0's hosted page
 // replaces all four, so there is no API call left to test.
-// `issues/012-token-verification-and-provisioning.md` adds `GET /api/me`, and
+// `GET /api/me` is the nearest successor and is covered above, but it replaces
+// only what the session read did — report who this is — not what sign-in did.
 // `issues/013-web-app-universal-login.md` adds the bearer-attaching wrapper.
 
 describe('unauthorized handler', () => {
