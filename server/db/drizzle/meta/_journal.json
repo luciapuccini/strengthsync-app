@@ -29,6 +29,13 @@
       "when": 1786733335027,
       "tag": "0003_even_spacker_dave",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1787132563370,
+      "tag": "0004_sticky_barracuda",
+      "breakpoints": true
     }
   ]
 }

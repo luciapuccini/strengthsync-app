@@ -25,12 +25,13 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     // Anything not listed here is answered from ../client/dist first, and
-    // single-page-application turns a miss into index.html. /auth/* has to be
-    // on the list or GET /auth/session returns the app shell instead of the
-    // session — invisible locally, where vite proxies to the Worker directly.
-    // /ingest/* is the same trap and worse: posthog-js treats the 200 carrying
-    // index.html as a delivered event, so captures would fail silently.
-    "run_worker_first": ["/api/*", "/auth/*", "/health", "/ingest/*"],
+    // single-page-application turns a miss into index.html. Every path the
+    // Worker owns has to be on the list or it returns the app shell instead —
+    // invisible locally, where vite proxies to the Worker directly. /ingest/* is
+    // the same trap and worse: posthog-js treats the 200 carrying index.html as
+    // a delivered event, so captures would fail silently. /auth/* left the list
+    // with the routes that used it; Auth0 hosts login on its own domain now.
+    "run_worker_first": ["/api/*", "/health", "/ingest/*"],
   },
   "d1_databases": [
     {

@@ -11,11 +11,7 @@ export { StrengthsyncWorkflow } from './workflows/strengthsync-workflow.ts';
  */
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext): Response | Promise<Response> {
-    const app = createApp({
-      db: createDb(env.DB),
-      sessionSecret: env.SESSION_JWT_SECRET,
-      inviteCode: env.INVITE_CODE,
-    });
+    const app = createApp({ db: createDb(env.DB) });
     return app.fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

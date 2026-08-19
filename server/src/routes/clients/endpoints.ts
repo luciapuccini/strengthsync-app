@@ -2,7 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 
 import { findProfile, getClient, upsertProfile, type Db } from '../../db/index.ts';
 
-import type { SessionVariables } from '../../lib/session.ts';
+import type { AuthVariables } from '../../lib/auth.ts';
 import { defaultHook } from '../../lib/validation-error.ts';
 import { invalidInput, json, notFound, unauthorized } from '../shared.ts';
 
@@ -43,8 +43,8 @@ const putMyProfileRoute = createRoute({
  * the verified session, so no request can name anyone else. Reading someone
  * else's profile is not a request the API can express.
  */
-export function clientRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables }> {
-  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook });
+export function clientRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables }> {
+  const app = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook });
 
   // `findProfile`, not `getProfile`: having no profile yet is ordinary rather
   // than exceptional, so it is a 404 and not a thrown error.
@@ -58,8 +58,8 @@ export function clientRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables 
 
   app.openapi(putMyProfileRoute, async (c) => {
     const clientId = c.get('clientId');
-    // The session outlives the row it names by up to thirty days, so a deleted
-    // athlete can still present a valid cookie.
+    // A token outlives the row it names, so a deleted athlete can still
+    // present a valid one.
     if (!(await getClient(db, clientId))) {
       return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404);
     }

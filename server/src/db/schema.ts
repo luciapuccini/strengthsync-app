@@ -37,35 +37,11 @@ export const clients = sqliteTable(
       .references(() => coaches.id),
     display_name: text('display_name').notNull(),
     status: text('status', { enum: CLIENT_STATUSES }).notNull(),
-    /**
-     * The invite code this account registered with (`docs/mvp.md` §2). The code
-     * is a Worker secret rotated per invite batch, so recording the one that was
-     * used is cohort attribution without a second table. Nullable because the
-     * seeded demo athletes predate the gate, and deliberately absent from the
-     * domain `Client`: it is a shared per-batch secret, so echoing it back in
-     * the sign-up/session response would let any one invitee redistribute it.
-     */
-    invite_code: text('invite_code'),
     created_at: text('created_at').notNull(),
     updated_at: text('updated_at').notNull(),
   },
   (t) => [index('clients_coach_id_idx').on(t.coach_id)],
 );
-
-/**
- * Sign-in credentials, kept off the `clients` row so that no `SELECT *` over
- * `clients` — which is how every client read is written — can leak a password
- * hash to the browser. Keyed by the athlete's own id: one credential set per
- * athlete.
- */
-export const clientCredentials = sqliteTable('client_credentials', {
-  client_id: text('client_id')
-    .primaryKey()
-    .references(() => clients.id),
-  email: text('email').notNull().unique(),
-  password_hash: text('password_hash').notNull(),
-  created_at: text('created_at').notNull(),
-});
 
 // Factory, not a shared builder: drizzle column builders bind their column
 // name on first use, so each column needs its own call.

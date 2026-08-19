@@ -2,7 +2,6 @@ import type { StateCreator } from 'zustand';
 
 import type { Client } from '@/api/types';
 
-import { getSession } from '@/api/client';
 import { identifyClient } from '@/lib/analytics';
 
 import type { AppStore } from '../useAppStore';
@@ -12,9 +11,16 @@ import type { AppStore } from '../useAppStore';
  * cache because it is shared app state, and the store is the single source of
  * truth for that.
  *
- * `loading` is the state before the bootstrap call answers, and it is the
- * initial one: on a cold load nobody knows yet whether the cookie is good, and
- * the guard must not redirect to sign-in while that is still open.
+ * `loading` is the state before the bootstrap answers, and it is the initial
+ * one: on a cold load nobody knows yet whether the athlete is signed in, and the
+ * guard must not redirect while that is still open. That reason survives the
+ * migration intact, which is why all three states are still here — see
+ * `issues/011-amputate-old-auth.md`.
+ *
+ * Only the *source* of the state changed, and right now there isn't one. The
+ * route that answered "who is signed in" is deleted and the Auth0 SDK is not
+ * wired in until `issues/013-web-app-universal-login.md`, so the bootstrap
+ * resolves straight to signed-out and nobody can get past `RequireAuth`.
  */
 export type SessionStatus = 'loading' | 'signed-in' | 'signed-out';
 
@@ -35,19 +41,20 @@ export const createSessionSlice: StateCreator<
   sessionStatus: 'loading',
   sessionClient: null,
 
-  // Any failure means signed out, not just a 401: without a verified session
-  // there is nothing to show, and a network error resolves the same way a
-  // rejected cookie does.
+  // Nothing to ask yet, so resolve the way a rejected credential always did:
+  // without a verified identity there is nothing to show. Kept async, and kept
+  // being awaited by the bootstrap effect in App.tsx, so issue 013 changes what
+  // happens inside it and not a single caller.
   bootstrapSession: async () => {
-    try {
-      const client = await getSession();
-      identifyClient(client.id);
-      set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'bootstrapSession/in');
-    } catch {
-      set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'bootstrapSession/out');
-    }
+    await Promise.resolve();
+    set({ sessionStatus: 'signed-out', sessionClient: null }, false, 'bootstrapSession/out');
   },
 
+  // No caller until issue 013: the two screens that used to call this after a
+  // successful sign-in are deleted, and the SDK's authenticated flag replaces
+  // them. Kept because the transition into `signed-in` has to exist somewhere,
+  // and identifying the athlete to PostHog on the way through is the behaviour
+  // issue 013's cold-load path needs.
   markSignedIn: (client) => {
     identifyClient(client.id);
     set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'markSignedIn');

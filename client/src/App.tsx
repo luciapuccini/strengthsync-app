@@ -4,23 +4,22 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import { AppLayout } from '@/components/app-layout/appLayout';
 import { ErrorBoundary } from '@/components/error-boundary/errorBoundary';
-import { PublicLayout } from '@/components/public-layout/publicLayout';
 import { RequireAuth } from '@/components/require-auth/requireAuth';
 import { RootRedirect } from '@/components/root-redirect/rootRedirect';
 import { HistoryPage } from '@/routes/history/historyPage';
 import { NotFound } from '@/routes/not-found/notFound';
 import { ComposingScreenPreview } from '@/routes/onboarding/components/composing-screen/composingScreenPreview';
 import { OnboardingPage } from '@/routes/onboarding/onboardingPage';
-import { SignIn } from '@/routes/sign-in/signIn';
-import { SignUp } from '@/routes/sign-up/signUp';
 import { TrackerPage } from '@/routes/tracker-page/trackerPage';
 import { Spinner } from '@/shadcn/ui/spinner';
 import { useAppStore } from '@/store/useAppStore';
 
 /**
- * Ask the server who is signed in, exactly once per app mount. The ref guard is
- * what makes that "once" true under StrictMode, which mounts effects twice in
- * development — without it a cold load would fire two bootstrap requests.
+ * Settle who is signed in, exactly once per app mount. The ref guard is what
+ * makes that "once" true under StrictMode, which mounts effects twice in
+ * development — without it a cold load would fire two bootstraps. It answers
+ * signed-out unconditionally until `issues/013-web-app-universal-login.md`
+ * sources it from the Auth0 SDK, and this effect does not change when it does.
  */
 function useSessionBootstrap(): void {
   const bootstrapSession = useAppStore((state) => state.bootstrapSession);
@@ -41,11 +40,9 @@ export default function App(): JSX.Element {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
 
-        <Route element={<PublicLayout />}>
-          <Route path="/sign-in" element={<SignIn />} />
-          <Route path="/sign-up" element={<SignUp />} />
-        </Route>
-
+        {/* No /sign-in or /sign-up: authorization happens on Auth0's hosted
+            page, not on a route of ours. `RequireAuth` redirects there once
+            issue 013 wires the SDK in. */}
         <Route element={<RequireAuth />}>
           <Route element={<AppLayout />}>
             <Route

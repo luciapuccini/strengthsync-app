@@ -2,13 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Client } from '@/api/types';
 
-import { ApiClientError } from '@/api/errors';
-
-const { getSession } = vi.hoisted(() => ({ getSession: vi.fn() }));
-
-vi.mock('@/api/client', () => ({ getSession }));
-
 import { useAppStore } from '../useAppStore';
+
+/**
+ * The three states survive `issues/011-amputate-old-auth.md`; their source does
+ * not. `bootstrapSession` no longer asks anything — there is nothing to ask
+ * until `issues/013-web-app-universal-login.md` wires the Auth0 SDK in — so the
+ * cases that stubbed a session read are gone, and what is pinned here is the
+ * shape `RequireAuth` and `RootRedirect` depend on.
+ */
 
 const UUID = '00000000-0000-4000-8000-000000000001';
 const NOW = '2026-08-13T00:00:00.000Z';
@@ -36,39 +38,22 @@ describe('sessionSlice', () => {
     expect(useAppStore.getState().sessionClient).toBeNull();
   });
 
-  it('bootstraps to signed-in with the returned client', async () => {
-    getSession.mockResolvedValue(client);
-    await useAppStore.getState().bootstrapSession();
-
-    expect(useAppStore.getState().sessionStatus).toBe('signed-in');
-    expect(useAppStore.getState().sessionClient).toEqual(client);
-  });
-
-  it('bootstraps to signed-out when the session is rejected', async () => {
-    getSession.mockRejectedValue(
-      new ApiClientError('unauthorized', 401, 'unauthorized', 'sign in required'),
-    );
+  // The interim behaviour, pinned deliberately rather than left implicit: while
+  // there is no identity provider wired up, a cold load has to *settle* on
+  // signed-out. Leaving it on `loading` would hang the guard on a spinner
+  // forever, which is the one failure mode this state machine exists to prevent.
+  it('bootstraps to signed-out, because there is nothing to ask yet', async () => {
     await useAppStore.getState().bootstrapSession();
 
     expect(useAppStore.getState().sessionStatus).toBe('signed-out');
     expect(useAppStore.getState().sessionClient).toBeNull();
   });
 
-  it('bootstraps to signed-out when the server cannot be reached', async () => {
-    getSession.mockRejectedValue(
-      new ApiClientError('network', 0, 'network_error', 'could not reach the server'),
-    );
-    await useAppStore.getState().bootstrapSession();
-
-    expect(useAppStore.getState().sessionStatus).toBe('signed-out');
-  });
-
-  it('marks signed in without a bootstrap call, for the athlete who just registered', () => {
+  it('marks signed in, for the caller issue 013 adds', () => {
     useAppStore.getState().markSignedIn(client);
 
     expect(useAppStore.getState().sessionStatus).toBe('signed-in');
     expect(useAppStore.getState().sessionClient).toEqual(client);
-    expect(getSession).not.toHaveBeenCalled();
   });
 
   it('clears the client on sign-out', () => {

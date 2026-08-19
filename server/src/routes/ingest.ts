@@ -35,8 +35,10 @@ export function ingestRoutes(fetcher: typeof fetch = fetch): Hono {
 
     const headers = new Headers(c.req.raw.headers);
     // Same-origin is the point of this route, and its one hazard: the browser
-    // attaches our session cookie to every capture. PostHog neither needs it
-    // nor should ever hold a token that speaks for the athlete.
+    // attaches whatever speaks for the athlete to every capture. PostHog neither
+    // needs a credential nor should ever hold one. Both headers go by name, so
+    // this kept working unchanged when the transport moved from the cookie to a
+    // bearer token.
     headers.delete('cookie');
     headers.delete('authorization');
     // Belongs to app.strengthsync.ai; the upstream host comes from `upstream`.

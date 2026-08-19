@@ -3,13 +3,10 @@ import type { paths } from './openapi';
 
 import { ApiClientError, toApiError } from './errors';
 import type {
-  Client,
   ClientProfile,
   OnboardingAnswers,
   Plan,
   SaveDayLog,
-  SignInInput,
-  SignUpInput,
   UpdateClientProfile,
   UpdateDayLog,
   Week,
@@ -30,7 +27,7 @@ async function orNull<T>(fn: () => Promise<T>): Promise<T | null> {
 }
 
 /**
- * Invoked for every unauthorized response, so an expired session behaves the
+ * Invoked for every unauthorized response, so an expired credential behaves the
  * same no matter which screen was open. It is registered at startup rather than
  * imported, which keeps this module free of a store dependency and its tests
  * independent of the store.
@@ -46,10 +43,10 @@ function throwOnError<T>(response: { data?: T; error?: unknown; response: Respon
     return response.data;
   }
   const error = toApiError(response.response.status, response.error);
-  // The auth calls raise a 401 of their own — a bootstrap with no cookie, a
-  // wrong password — and this fires for those too. Signing out an athlete who
-  // is already signed out changes nothing, and exempting them would mean
-  // threading an opt-out through every wrapper for no gain.
+  // Every 401 lands here, including the blanket one the guard currently answers
+  // with. Signing out an athlete who is already signed out changes nothing, and
+  // exempting any call would mean threading an opt-out through every wrapper for
+  // no gain.
   if (error.kind === 'unauthorized') onUnauthorized();
   throw error;
 }
@@ -68,41 +65,15 @@ async function call<T>(
 }
 
 /**
- * Register and sign in in one call. The session cookie rides on the response;
- * it is HttpOnly, so nothing here reads or stores it — the browser attaches it
- * to later requests on its own, same-origin in both dev (through the vite
- * proxy) and production (the Worker serves the app).
- */
-export async function signUp(input: SignUpInput): Promise<Client> {
-  return (await call(() => api.POST('/auth/sign-up', { body: input }))).client;
-}
-
-/**
- * Exchange credentials for a session cookie. The server answers one 401 for a
- * wrong password and an unknown email alike, so the message this rejects with
- * is safe to show verbatim.
- */
-export async function signIn(input: SignInInput): Promise<Client> {
-  return (await call(() => api.POST('/auth/sign-in', { body: input }))).client;
-}
-
-/**
- * Clear the session cookie server-side. Safe to call with an expired cookie or
- * none at all — the route is deliberately outside the session guard.
- */
-export async function signOut(): Promise<void> {
-  await call(() => api.POST('/auth/sign-out', {}));
-}
-
-/** The signed-in client, or a 401 thrown as an unauthorized ApiClientError. */
-export async function getSession(): Promise<Client> {
-  return (await call(() => api.GET('/auth/session'))).client;
-}
-
-/**
- * Everything below addresses `/api/me`, which takes the athlete from the session
- * cookie. None of these accepts an athlete id, so the browser cannot ask for
- * anyone else's data — and no caller has to know whose data it is asking for.
+ * There are no sign-in, sign-up, sign-out or session calls here any more. Auth0
+ * owns all four: authorization happens on its hosted page, not against a route
+ * of ours, and `issues/013-web-app-universal-login.md` wires the SDK in. Until
+ * then nothing can authenticate and every call below answers 401.
+ *
+ * Everything below addresses `/api/me`, which takes the athlete from the
+ * verified credential. None of these accepts an athlete id, so the browser
+ * cannot ask for anyone else's data — and no caller has to know whose data it is
+ * asking for.
  */
 
 export async function getProfile(): Promise<ClientProfile | null> {

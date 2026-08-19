@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Client, UpdateClientProfile } from '@/api/types';
+import type { UpdateClientProfile } from '@/api/types';
 import { makeWeek } from '@/test/weekFixture';
 
 const { mockGet, mockPost, mockPut, mockPatch } = vi.hoisted(() => ({
@@ -23,13 +23,9 @@ import {
   getActivePlan,
   getPlan,
   getProfile,
-  getSession,
   listCompletedWeeks,
   saveDayLog,
   setUnauthorizedHandler,
-  signIn,
-  signOut,
-  signUp,
   updateDayLog,
   updateProfile,
 } from './client';
@@ -38,15 +34,6 @@ import { ApiClientError } from './errors';
 const UUID = '00000000-0000-4000-8000-000000000001';
 const PLAN = '00000000-0000-4000-8000-000000000002';
 const NOW = '2026-05-10T00:00:00.000Z';
-
-const sampleClient: Client = {
-  id: UUID,
-  coach_id: UUID,
-  display_name: 'Lucia',
-  status: 'active',
-  created_at: NOW,
-  updated_at: NOW,
-};
 
 const profileBody: UpdateClientProfile = {
   snapshot_date: '2026-07-01',
@@ -136,73 +123,12 @@ describe('api client', () => {
   });
 });
 
-describe('auth', () => {
-  it('posts the registration body and parses the created client', async () => {
-    const body = {
-      display_name: 'Lucia',
-      email: 'lucia@example.com',
-      password: 'dev-password-123',
-      invite_code: 'spring-cohort',
-    };
-    mockPost.mockResolvedValue(okResponse({ client: sampleClient }));
-    await expect(signUp(body)).resolves.toEqual(sampleClient);
-    expect(mockPost).toHaveBeenCalledWith('/auth/sign-up', { body });
-  });
-
-  it('surfaces a duplicate email as a conflict error', async () => {
-    mockPost.mockResolvedValue(
-      errorResponse(409, {
-        error: { code: 'email_already_registered', message: 'email already registered' },
-      }),
-    );
-    await expect(
-      signUp({
-        display_name: 'Lucia',
-        email: 'lucia@example.com',
-        password: 'dev-password-123',
-        invite_code: 'spring-cohort',
-      }),
-    ).rejects.toMatchObject({ kind: 'conflict', message: 'email already registered' });
-  });
-
-  it('reads the session back as the signed-in client', async () => {
-    mockGet.mockResolvedValue(okResponse({ client: sampleClient }));
-    await expect(getSession()).resolves.toEqual(sampleClient);
-    expect(mockGet).toHaveBeenCalledWith('/auth/session');
-  });
-
-  it('throws unauthorized when no session is present', async () => {
-    mockGet.mockResolvedValue(
-      errorResponse(401, { error: { code: 'unauthorized', message: 'sign in required' } }),
-    );
-    await expect(getSession()).rejects.toMatchObject({ kind: 'unauthorized', status: 401 });
-  });
-
-  it('posts the credentials and parses the signed-in client', async () => {
-    const body = { email: 'lucia@example.com', password: 'dev-password-123' };
-    mockPost.mockResolvedValue(okResponse({ client: sampleClient }));
-    await expect(signIn(body)).resolves.toEqual(sampleClient);
-    expect(mockPost).toHaveBeenCalledWith('/auth/sign-in', { body });
-  });
-
-  it('surfaces rejected credentials as an unauthorized error', async () => {
-    mockPost.mockResolvedValue(
-      errorResponse(401, {
-        error: { code: 'invalid_credentials', message: 'email or password is incorrect' },
-      }),
-    );
-    await expect(signIn({ email: 'lucia@example.com', password: 'wrong' })).rejects.toMatchObject({
-      kind: 'unauthorized',
-      message: 'email or password is incorrect',
-    });
-  });
-
-  it('posts to the sign-out route', async () => {
-    mockPost.mockResolvedValue(okResponse({ ok: true }));
-    await expect(signOut()).resolves.toBeUndefined();
-    expect(mockPost).toHaveBeenCalledWith('/auth/sign-out', {});
-  });
-});
+// There is no `describe('auth')` block any more. Every case in it addressed a
+// route deleted by `issues/011-amputate-old-auth.md` — sign-up, sign-in,
+// sign-out and the session read — and none is restored here: Auth0's hosted page
+// replaces all four, so there is no API call left to test.
+// `issues/012-token-verification-and-provisioning.md` adds `GET /api/me`, and
+// `issues/013-web-app-universal-login.md` adds the bearer-attaching wrapper.
 
 describe('unauthorized handler', () => {
   it('runs on an unauthorized response from any call, and still rejects', async () => {

@@ -108,8 +108,38 @@ tokens, or explicitly struck through here with a reason.
       sets
 - [ ] Workflow trigger — rejects `/api/wf/complete-week` without a token and
       starts no workflow; starts an instance for the authenticated athlete
-- [ ] `/ingest` never forwards the caller's credentials upstream — restated for
-      the `Authorization` header, since the cookie it used to pin is gone
+- [ ] ~~`/ingest` never forwards the caller's credentials upstream~~ — **already
+      restored in 011.** The proxy strips `cookie` and `authorization` by name and
+      never read either value, so the case was restated against a synthetic bearer
+      token rather than deleted. Coverage was continuous.
+- [ ] ~~Sign-up, sign-in and sign-out are reachable without a cookie~~ —
+      **struck, not restored.** All three routes are deleted for good, so there is
+      nothing left to prove open. The successor concern is the inverse and is
+      already listed above: the `/auth/*` paths must appear in the
+      removed-endpoints pin.
+
+### Interim compromises carried in from issue 011
+
+Three things 011 left deliberately degraded rather than half-solved. Each is
+undone here, and each will fail loudly if it is not.
+
+- [ ] **`client/src/api/types.ts` stops hand-declaring `Client`.** The schema left
+      `openapi.json` entirely when the last route returning one was deleted, so the
+      client carries a hand-written copy in the interim. `GET /api/me` puts it back
+      in the contract; delete the local declaration and read it from
+      `components['schemas']` again. Until that happens the project's rule — a
+      payload shape is pinned by a Zod schema at the boundary, never hand-written
+      on the client — is suspended in exactly one place.
+- [ ] **`client/src/api/weekResource.ts` sources the athlete from `GET /api/me`
+      again.** It currently resolves `client: null`, which silently degrades two
+      things: `reconcileWeekDraft` keys the local week draft by athlete id, and
+      `trackerSlice.saveDay` refuses to write without one. Neither is reachable
+      while every `/api/*` call answers 401, so this is safe exactly until the
+      guard starts letting people through — which is this issue.
+- [ ] **The guard's test widens.** `app.public.test.ts` keeps one case asserting a
+      blanket 401 inside the error envelope. It becomes the full assertion once
+      tokens exist: missing, malformed, expired, wrong-audience and wrong-issuer
+      all produce one indistinguishable rejection.
 
 ## Blocked by
 

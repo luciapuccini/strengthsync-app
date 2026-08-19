@@ -3,7 +3,7 @@
 Auth0 is the identity provider for both the web app and the iOS app. This
 supersedes the "Access: client accounts with signed session cookies" section of
 [stack.md](./stack.md), which describes what is in the code today and stops being
-true when `issues/011-migrate-auth-to-auth0.md` lands.
+true when `issues/011-amputate-old-auth.md` lands.
 
 ## Why this replaces the cookie session
 
@@ -181,8 +181,14 @@ sign-in isn't available, become real; and the `Forgot password?` button in
 Branding is the dashboard theme only. A full page template would carry
 `authHero.tsx`'s splash treatment across, but it is a second styling surface that
 Tailwind and shadcn do not reach and the pre-commit gate cannot check — not worth
-it for a page each athlete sees once. `authHero.tsx` itself survives; it is still
-the onboarding splash.
+it for a page each athlete sees once.
+
+`authHero.tsx` was expected to survive as the onboarding splash. It does not: its
+only importers were `signIn.tsx` and `signUp.tsx`, and nothing under
+`routes/onboarding/` ever imported it, so deleting those two screens left it dead.
+It went with them, along with `publicLayout.tsx`, whose only consumer was the
+route group that held them. The splash image itself (`/splash-athlete.png`) is
+untouched and still available to whichever screen wants it.
 
 Note that athletes see an Auth0-hosted page regardless: the set-password link for
 their pre-created account lands on one.
@@ -216,11 +222,23 @@ job, and is not worth building for twenty athletes.
 
 `lib/password.ts`, `lib/session-token.ts`, `lib/session.ts`,
 `db/repositories/credentials.ts` and their tests; `routes/auth/`;
-`app.auth.test.ts`; `scripts/hash-password.ts`; `db/seeds/003_demo_credentials.sql`;
+`app.auth.test.ts`; `app.me.test.ts`; `db/seeds.test.ts`, which tested only the
+deleted credentials seed and imported the deleted `verify`;
+`scripts/hash-password.ts`; `db/seeds/003_demo_credentials.sql`;
 `client/src/routes/sign-in/`, `client/src/routes/sign-up/`,
-`client/src/components/social-auth-buttons/`; the `SESSION_JWT_SECRET` and
-`INVITE_CODE` secrets; and `/auth/*` from `run_worker_first` in
-`server/wrangler.jsonc`.
+`client/src/components/social-auth-buttons/`, `client/src/components/auth-hero/`,
+`client/src/components/public-layout/`; the `ClientCredentialsSchema` in
+`domain/model/`; the `SESSION_JWT_SECRET` and `INVITE_CODE` secrets; `/auth/*`
+from `run_worker_first` in `server/wrangler.jsonc` and from the dev proxy in
+`client/vite.config.ts`; and the `hash-password` and `db:seed:credentials:local`
+scripts in `server/package.json`.
+
+The generated contract's security scheme changes with them: `gen-openapi.ts`
+declared an `apiKey`-in-cookie scheme named `sessionCookie`, and now declares
+`bearerAuth` as `http`/`bearer`/`JWT`. Deleting `/auth/*` also removed the
+`Client` schema from `openapi.json` altogether — those were the only routes that
+returned one — so `client/src/api/types.ts` hand-declares `Client` until
+`GET /api/me` restores it in issue 012.
 
 `GET /auth/session` becomes `GET /api/me`. It still has a job:
 `sessionSlice.bootstrapSession` needs the client id for `identifyClient()` in
