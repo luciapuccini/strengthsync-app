@@ -36,6 +36,13 @@
       "when": 1787132563370,
       "tag": "0004_sticky_barracuda",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1787169318012,
+      "tag": "0005_flaky_gamma_corps",
+      "breakpoints": true
     }
   ]
 }

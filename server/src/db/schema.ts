@@ -43,6 +43,40 @@ export const clients = sqliteTable(
   (t) => [index('clients_coach_id_idx').on(t.coach_id)],
 );
 
+/**
+ * Who an athlete is at the identity provider. See docs/architecture/auth.md.
+ *
+ * The subject is looked up, never used as a key. It is per-connection and opaque
+ * — the same person signing in with a password and with Apple is two subjects,
+ * and would be two athletes here, because account linking is deliberately off
+ * (`issues/auth0-migration/prd.md`). Internal ids never change, so every foreign
+ * key in the training data is indifferent to all of this. That separation is the
+ * whole reason this is its own table rather than a column on `clients`: it is
+ * where the provider's vocabulary stops.
+ *
+ * `client_id` is the primary key, so an athlete has exactly one identity — the
+ * current invariant, stated rather than merely observed. Enabling account
+ * linking later means a migration to a surrogate key, which is mechanical.
+ *
+ * The unique constraint on `subject` is load-bearing, not hygiene. D1 has no
+ * transaction spanning the two inserts that provision an athlete, so it is the
+ * only thing standing between two simultaneous first requests and two athletes
+ * for one person. `resolveClientId` in `lib/identity.ts` is written around it.
+ *
+ * `email` is a cache of what the Management API said at provisioning time, kept
+ * so the operator can find an athlete by the address they were invited at
+ * without an API round trip. Nothing authenticates against it.
+ */
+export const clientIdentities = sqliteTable('client_identities', {
+  client_id: text('client_id')
+    .primaryKey()
+    .references(() => clients.id),
+  subject: text('subject').notNull().unique(),
+  email: text('email').notNull(),
+  created_at: text('created_at').notNull(),
+  updated_at: text('updated_at').notNull(),
+});
+
 // Factory, not a shared builder: drizzle column builders bind their column
 // name on first use, so each column needs its own call.
 const jsonRecord = () => text({ mode: 'json' }).$type<Record<string, JsonValue>>();

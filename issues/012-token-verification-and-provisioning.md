@@ -54,11 +54,11 @@ restored tests read the way they did.
 
 ## Acceptance criteria
 
-- [ ] Migration creates `client_identities` with a unique constraint on the
+- [x] Migration creates `client_identities` with a unique constraint on the
       subject
-- [ ] Management API client hides M2M token acquisition and caching; its fetch
+- [x] Management API client hides M2M token acquisition and caching; its fetch
       is injectable
-- [ ] `resolveClientId` is tested for all three branches: subject already known,
+- [x] `resolveClientId` is tested for all three branches: subject already known,
       subject unknown so provision from a stubbed Management client, and two
       simultaneous first requests racing the unique constraint
 - [ ] `requireAuth` verifies against a cached key set and asserts issuer and

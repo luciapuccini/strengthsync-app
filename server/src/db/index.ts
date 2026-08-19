@@ -9,6 +9,11 @@ export * as schema from './schema.ts';
 export { addDays, todayIso } from './dates.ts';
 
 export { createClient, getClient } from './repositories/clients.ts';
+export {
+  claimSubject,
+  deleteUnboundClient,
+  findClientIdBySubject,
+} from './repositories/identities.ts';
 export { findProfile, getProfile, upsertProfile } from './repositories/profiles.ts';
 export {
   activateGeneratedPlan,
