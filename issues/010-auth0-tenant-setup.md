@@ -154,8 +154,13 @@ the acceptance criterion is explicit about this:
 ```sh
 curl -i -X POST https://auth.strengthsync.ai/dbconnections/signup \
   -H 'content-type: application/json' \
-  -d '{"client_id":"<SPA_CLIENT_ID>","email":"probe@example.com","password":"Sup3rSecret!x","connection":"Username-Password-Authentication"}'
+  -d '{"client_id":"<SPA_CLIENT_ID>","email":"probe@example.com","password":"Sup3rSecretProbe!x9","connection":"Username-Password-Authentication"}'
 ```
+
+The password there is 20 characters on purpose: this connection requires at
+least 15 (step 10), and a shorter one would fail on length before the endpoint
+ever got to the signup-disabled check — a passing-looking failure for the wrong
+reason.
 
 Expect **`HTTP 400`** with the body `{"error":"public signup is disabled"}`.
 Confirmed against the real tenant on 2026-08-19 — the status is 400, not the 403
@@ -253,8 +258,24 @@ custom domain — the Management API audience is not customisable.
 
 Create the athlete with a throwaway password they never learn. **In the
 Dashboard** — User Management → Users → Create User, connection
-`Username-Password-Authentication`, any random password, which they never learn
-because the next step replaces it.
+`Username-Password-Authentication`.
+
+**The connection requires at least 15 characters.** Anything shorter is rejected
+as `PasswordStrengthError: Password is too weak`, which reads as a complexity
+problem and is not one — the log's `rules` array names the single failing rule,
+and it is `lengthAtLeast`. Generate one rather than inventing it; the athlete
+never learns this value, because the next step replaces it:
+
+```sh
+openssl rand -base64 24
+```
+
+That 15-character floor is worth a deliberate decision, because it is not just
+about this throwaway: **every athlete setting their own password through the
+set-password email faces the same rule**, on a phone keyboard. Fifteen is
+stricter than most consumer products ask for. If that is not what you want, it is
+Authentication → Database → `Username-Password-Authentication` → Password Policy,
+and now — with no accounts yet — is the cheap time to change it.
 
 The API equivalent is shown only so the failure is recognisable, since it is what
 this runbook first told you to run:
