@@ -55,8 +55,10 @@ there.
 
 ### 1. Tenant
 
-Create the tenant if there isn't one. Pick the **EU region** — the cohort is in
-Europe, and the region is fixed for the life of the tenant. Set the environment
+Create the tenant if there isn't one. Consider the **EU region** — the cohort is
+in Europe, the product holds body-composition data, and the region is fixed for
+the life of the tenant. *(The tenant that was actually created is US; see the note
+under Recorded values.)* Set the environment
 tag to Production; it is the only tenant this project gets, so a Development tag
 would be a lie that costs nothing to avoid now and is not changeable later.
 
@@ -220,6 +222,24 @@ application without authorizing anything, so issue 012 puts them in
 This is the operator's real invite flow from here on, and the point of doing it
 now is to get it wrong while that is still cheap.
 
+> **Never paste a client secret or a Management API access token into this file.**
+> It is tracked in git. An access token is a bearer credential in its own right —
+> anyone holding it has the M2M app's authority until it expires, without needing
+> the secret. Keep them in the shell, or in `server/.dev.vars`, which is
+> gitignored. This is the acceptance criterion below about the secret appearing in
+> no file in this repository, and it covers tokens too.
+
+> **The M2M app cannot create users, deliberately.** Step 5c scopes it to
+> `read:users` and `delete:users` — what the *application* needs at runtime, in
+> issues 012 and 014. Creating an account is an *operator* action, not an
+> application capability, so `POST /api/v2/users` answers 403 with this token and
+> the account is silently never created: every later step then reports "User does
+> not exist." **Create the account in the Dashboard instead** — User Management →
+> Users → Create User — which needs no scope change and keeps the app's standing
+> authority minimal. Do not add `create:users` to the M2M app to work around this;
+> that hands the Worker's credential the ability to mint accounts, which no code
+> asks for.
+
 Get a Management token:
 
 ```sh
@@ -231,15 +251,29 @@ curl -s -X POST https://auth.strengthsync.ai/oauth/token \
 Note the audience is the **tenant** domain (`<tenant>.eu.auth0.com`), not the
 custom domain — the Management API audience is not customisable.
 
-Create the athlete with a throwaway password they never learn:
+Create the athlete with a throwaway password they never learn. **In the
+Dashboard** — User Management → Users → Create User, connection
+`Username-Password-Authentication`, any random password, which they never learn
+because the next step replaces it.
+
+The API equivalent is shown only so the failure is recognisable, since it is what
+this runbook first told you to run:
 
 ```sh
-curl -s -X POST https://<TENANT_DOMAIN>/api/v2/users \
+# 403 with the M2M app as scoped in 5c — kept as a worked example, not a step.
+curl -i -X POST https://<TENANT_DOMAIN>/api/v2/users \
   -H "authorization: Bearer <MGMT_TOKEN>" -H 'content-type: application/json' \
   -d '{"connection":"Username-Password-Authentication","email":"athlete@example.com","name":"Ana","password":"<random-32-chars>","email_verified":false}'
 ```
 
-Then have Auth0 email them a set-password link:
+Use `-i`, not `-s`. With `-s` and no `-i` a 403 prints a short JSON body that is
+easy to skim past as success, and the next two steps then fail in a way that
+points at email delivery rather than at the missing account. Watch the scheme
+too: `https://https://…` is a silent typo that fails the same way.
+
+Then have Auth0 email them a set-password link. This endpoint is public — client
+id only, no Management token, no scopes — which is why it answered 200 even when
+no account existed:
 
 ```sh
 curl -s -X POST https://auth.strengthsync.ai/dbconnections/change_password \
@@ -251,6 +285,18 @@ Follow that email through to a working sign-in. The email is Auth0-branded and
 rate-limited, which `auth.md` accepts at this volume — a real transactional
 provider is a post-MVP item, not a blocker here.
 
+Two things to get right before concluding anything from silence:
+
+- **Use a real mailbox you control, not a disposable one.** Auth0's built-in
+  sender is low-reputation by design, and throwaway-mail domains are exactly what
+  gets dropped. A non-delivery to a temp address tells you nothing about whether
+  the real invite will land.
+- **The 200 from `change_password` is not evidence.** It returns the same "We've
+  just sent you an email" string whether or not the address matches a user. The
+  authoritative check is Dashboard → Monitoring → Logs, filtered to the address:
+  type `fcpr` with `"description": "User does not exist."` means the account was
+  never created, and the mail was never the problem.
+
 Two things this proves that nothing else does: that sign-ups being disabled does
 **not** block operator-created accounts, and that the set-password email actually
 arrives. If it lands in spam, that is worth knowing before twenty of them go out.
@@ -261,13 +307,24 @@ Issues 012 and 013 consume these. Fill them in as you go.
 
 | Value | Consumed by | Recorded |
 | --- | --- | --- |
-| Tenant domain (`<tenant>.eu.auth0.com`) | 012 — Management API audience | |
+| Tenant domain | 012 — Management API audience | `dev-ky58kx02q7r2ukt6.us.auth0.com` |
 | Custom domain | 012 — issuer + JWKS; 013 — SDK `domain` | `auth.strengthsync.ai` |
 | API audience identifier | 012 — `aud` assertion; 013 — SDK `audience` | `https://api.strengthsync.ai` |
-| SPA client id | 013 — SDK `clientId` | |
-| Native client id | future iOS shell | |
-| M2M client id | 012 — Management client | |
-| M2M client secret | 012 — Worker secret, never recorded here | `wrangler secret` only |
+| SPA client id | 013 — SDK `clientId` | `Mq77c7idugaOidEbinlBecjwKuhJlLPZ` |
+| Native client id | future iOS shell | not created yet |
+| M2M client id | 012 — Management client | `aURi7aSf2Z1YHTZkUzgQURPHIbo8Xmb0` |
+| M2M client secret | 012 — Worker secret | **never here** — `wrangler secret` + `server/.dev.vars` |
+
+Everything in that table except the last row is a public identifier: it names an
+application without authorizing anything, which is why recording it is safe and
+useful. The last row is not, and neither is a Management API access token — see
+the warning at the top of step 10.
+
+**The tenant is in the US region** (`prod-us-5`), not the EU as step 1 suggests.
+That is fixed at creation and cannot be moved; changing it means a new tenant and
+redoing this issue. The cohort is in Spain and the product holds body-composition
+data, so if data residency matters this is the cheapest moment it will ever be to
+redo — before there are accounts. Recorded as a decision, not a defect.
 
 The issuer issue 012 asserts is `https://auth.strengthsync.ai/` — **with the
 trailing slash**. A token's `iss` carries it and a string comparison without it
@@ -288,8 +345,11 @@ when the suite cannot catch it.
       attempting one, not by reading the setting
 - [ ] The M2M client secret is set via `wrangler secret` and appears in no file
       in this repository
-- [ ] One account is created via the Management API, and its set-password email
-      leads to a successful sign-in
+- [ ] One account is created — **in the Dashboard, not via the Management API**,
+      which the M2M app is deliberately not scoped for — and its set-password
+      email leads to a successful sign-in, verified in a real mailbox
+- [ ] No client secret and no Management API access token appears anywhere in
+      this repository, including in this file
 - [ ] Domain, audience and the three client ids are recorded in this issue for
       issues 012 and 013 to consume
 
