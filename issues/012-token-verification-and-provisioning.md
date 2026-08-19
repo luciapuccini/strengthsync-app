@@ -159,35 +159,29 @@ cannot happen.
 
 ## Found while building this
 
-**Account deletion must delete the Auth0 user first, then the local rows** —
-never the other way round. `issues/014-account-deletion.md` inherits this as a
-settled constraint, not an open question.
+**Unconditional provisioning makes account deletion order-sensitive**, which
+`issues/014-account-deletion.md` now carries in full.
 
-The reason is that `resolveClientId` provisions unconditionally on a subject it
-has not seen. There is no eligibility check left to fail, because sign-ups are
-disabled at the tenant and every subject that reaches the guard was created by
-the operator.
+The finding itself: `resolveClientId` provisions on any subject it has not seen,
+with no eligibility check left to fail. So deleting the local `client_identities`
+row while the Auth0 user still exists does not lock that athlete out — the next
+request with their live token creates them again, as a new empty account, with
+no error anywhere. A deletion that silently reverses itself.
 
-So *local rows first* is the order that breaks. If the local delete succeeds and
-the Auth0 delete then fails — a partial failure, and the PRD already rules a
-retrying scheduled purge out of scope — the next request carrying that athlete's
-still-live token does not error. The subject is unknown locally, the Management
-API confirms the user exists, and the guard provisions them again: a brand new
-athlete with an empty account. The deletion silently undoes itself, and nothing
-anywhere reports a problem.
+Two details of this module that the deletion order has to be built around, and
+which are not obvious from outside it:
 
-*Provider first* fails in the opposite direction, which is the survivable one.
-Note what it does **not** do: it does not lock the athlete out immediately.
-`resolveClientId` short-circuits on a known subject and never consults Auth0, so
-an athlete whose provider user is gone keeps working until their access token
-expires. What it does guarantee is that the window is bounded and terminal —
-they cannot obtain a new token once the Auth0 user is gone, so at expiry they are
-locked out for good. The residue is local rows nobody can reach, which is
-recoverable, inspectable, and cleanable at leisure.
+- `resolveClientId` **short-circuits on a known subject** and never consults the
+  Management API. Deleting the Auth0 user therefore does not end an existing
+  session; it only prevents a new token being minted.
+- The foreign key from `client_identities.client_id` means the identity row must
+  be deleted before the `clients` row, but nothing forces it to be deleted
+  *late* — and deleting it early is what closes the window above.
 
-Bounded and cleanable beats unbounded and self-reversing. What is left for 014 to
-decide is only what to do about those lingering rows, not which end to start
-from.
+The ordering that follows from those two, and the reasoning, are written in
+issue 014 rather than repeated here. One home for a decision, because the first
+version of this note contradicted itself and nobody would have noticed until the
+cascade was already written.
 
 ## Blocked by
 
