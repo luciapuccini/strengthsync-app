@@ -23,6 +23,23 @@ out plan generation, log a full day, save it.
 **Mint the first batch code.** Generate the invite code for batch one and set it
 as the Worker secret, so the emails have something to carry.
 
+**Decide whether the invite email can go out from `auth0user.net`.** Found while
+completing `issues/010-auth0-tenant-setup.md`: Auth0's built-in email provider
+sends from `no-reply@auth0user.net` and that address is not configurable — only
+replacing the provider changes it. The concern is deliverability rather than
+branding. The sending domain has no SPF or DKIM alignment with
+`strengthsync.ai`, so the athlete's first contact with the product is an
+unrecognised sender asking them to set a password, which is also a fair
+description of a phishing email. Twenty invites is a small enough batch that spam
+placement is invisible in aggregate and fatal individually.
+
+Two ways out, both cheap relative to a silent 30% non-delivery: send a plain
+personal email ahead of the invite so the athlete is expecting it, or stand up a
+real provider (SendGrid, Mailgun, SES) with a verified `strengthsync.ai` sending
+domain. The PRD lists a transactional provider as out of scope for the migration;
+that decision was made on branding grounds, before the deliverability angle was
+visible, so it is worth re-taking here rather than inheriting.
+
 Anything this turns up is a finding, not necessarily a fix — record it, then
 decide whether it blocks the invite.
 
@@ -36,6 +53,11 @@ decide whether it blocks the invite.
 - [ ] Any defect found on the phone run is recorded — either fixed, or written
       into `docs/future_state_after_mvp/todos.md` with a note that it was seen
       and accepted
+- [ ] A decision is recorded on the invite email's sending domain — either a
+      provider is configured with a verified `strengthsync.ai` sender, or the
+      vendor sender is accepted in writing with the mitigation that was chosen
+- [ ] One invite email has been delivered to a real athlete-typical mailbox
+      (Gmail, iCloud) and checked for spam placement, not just for arrival
 
 ## Blocked by
 
