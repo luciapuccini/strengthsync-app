@@ -189,15 +189,31 @@ outside typecheck and outside the pre-commit gate.
 
 ### 9. The M2M secret
 
+Production:
+
 ```sh
 cd server && wrangler secret put AUTH0_M2M_CLIENT_SECRET
 ```
 
-Only the secret goes through `wrangler secret`. The domain, the audience and the
-three client ids are public identifiers — they identify an application, they do
-not authorize anything — so issue 012 puts them in `wrangler.jsonc` vars and
-issue 013 puts the web ones in the client bundle. Do not paste the secret into
-`.dev.vars` and commit it; `.dev.vars` is gitignored, but the habit is the risk.
+Local development: put the same value in `server/.dev.vars`, which is where the
+Worker reads secrets from under `wrangler dev`.
+
+```
+AUTH0_M2M_CLIENT_SECRET=<the M2M secret>
+```
+
+That file is gitignored (`.gitignore:10`, matching at any depth) and holds
+`OPENAI_API_KEY` already, so this is the established place for a real local
+secret — not an exception being made for this one. Re-run
+`pnpm --filter @strengthsync/server types` afterwards: `worker-configuration.d.ts`
+is generated from `wrangler.jsonc` plus `.dev.vars`, so the variable is not on the
+`Env` type until you do, and issue 012 reads it from there.
+
+What must never happen is the secret reaching a **tracked** file — `wrangler.jsonc`,
+the client bundle, or an issue file like this one. The domain, the audience and
+the three client ids are different: they are public identifiers that identify an
+application without authorizing anything, so issue 012 puts them in
+`wrangler.jsonc` vars and issue 013 puts the web ones in the client bundle.
 
 ### 10. Create one account by hand and follow it through
 
