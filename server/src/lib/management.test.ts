@@ -11,7 +11,11 @@ import { ManagementError, createManagementClient } from './management.ts';
 const ISSUER = 'auth.example.test';
 const TENANT = 'tenant.us.auth0.test';
 const TOKEN_URL = `https://${ISSUER}/oauth/token`;
-const USERS_URL = `https://${TENANT}/api/v2/users`;
+// The issuer, not the tenant. Auth0 refuses a token at a host that did not mint
+// it, so the audience being the tenant domain says nothing about where the call
+// goes. This pair used to disagree, every lookup came back 401, and these tests
+// passed throughout — they asserted the behaviour rather than the requirement.
+const USERS_URL = `https://${ISSUER}/api/v2/users`;
 
 const SUBJECT = 'auth0|68a1f3c0d2b4e5f6a7b8c9d0';
 
@@ -84,6 +88,19 @@ describe('management client', () => {
       grant_type: 'client_credentials',
     });
     expect(calls[1]?.authorization).toBe('Bearer token-1');
+  });
+
+  it('spends the token at the host that minted it', async () => {
+    const { client, calls } = setup(happyPath);
+
+    await client.getUser(SUBJECT);
+
+    // The one invariant the audience assertion above cannot express: a correct
+    // audience with the wrong host is a 401 that reads exactly like a bad
+    // secret. Both calls must leave for the same origin.
+    expect(new URL(calls[0]!.url).origin).toBe(new URL(calls[1]!.url).origin);
+    expect(new URL(calls[1]!.url).host).toBe(ISSUER);
+    expect(calls[1]?.url).not.toContain(TENANT);
   });
 
   it('reuses the token across calls rather than minting one per request', async () => {

@@ -28,14 +28,17 @@ export type ManagementClient = {
 
 export type ManagementConfig = {
   /**
-   * Where tokens are minted — the custom domain, so this call looks like every
-   * other one the tenant serves.
+   * The custom domain. Both the token mint *and* the Management API call go
+   * here, because Auth0 will not accept a token at a host that did not issue it
+   * — a custom-domain token presented to the tenant domain comes back 401, with
+   * nothing in the response to say why.
    */
   issuerDomain: string;
   /**
-   * Where the Management API lives, and its audience. The *tenant* domain, not
-   * the custom one: the Management API audience is not customisable, so this is
-   * the one place the vendor hostname is unavoidable.
+   * The *tenant* domain, and only ever the audience. The Management API
+   * audience is not customisable, so this is the one place the vendor hostname
+   * is unavoidable — which is precisely why it must not double as the host to
+   * call.
    */
   tenantDomain: string;
   clientId: string;
@@ -66,7 +69,10 @@ const EXPIRY_MARGIN_MS = 60_000;
 export function createManagementClient(config: ManagementConfig): ManagementClient {
   const doFetch = config.fetch ?? fetch;
   const now = config.now ?? Date.now;
-  const apiBase = `https://${config.tenantDomain}/api/v2`;
+  // Two different things that used to be one string. The audience names the API;
+  // the base names the host that serves it. They resolve to different domains.
+  const apiAudience = `https://${config.tenantDomain}/api/v2/`;
+  const apiBase = `https://${config.issuerDomain}/api/v2`;
 
   let cached: { token: string; expiresAt: number } | null = null;
   /**
@@ -83,7 +89,7 @@ export function createManagementClient(config: ManagementConfig): ManagementClie
       body: JSON.stringify({
         client_id: config.clientId,
         client_secret: config.clientSecret,
-        audience: `${apiBase}/`,
+        audience: apiAudience,
         grant_type: 'client_credentials',
       }),
     });

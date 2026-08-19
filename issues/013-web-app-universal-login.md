@@ -87,11 +87,50 @@ and it is an acceptance criterion here that it does not change. An athlete
 opening `/history` while signed out lands on `/track` afterwards. At three
 screens that is not worth a guard rewrite.
 
+**The reload shows a consent screen, and the cause is not settled.** A cold
+reload has no refresh token in memory, so the SDK falls back to silent
+authentication in a hidden iframe with `prompt=none`. That request fails and the
+athlete goes through a full redirect and an "Authorize App" dialog before landing
+back, signed in. The API's *Allow Skipping User Consent* is confirmed on, which
+leaves Auth0's rule that a `localhost` callback is not a verifiable first-party
+client — consent cannot be skipped there, so `prompt=none` can never succeed
+locally. If that is the whole story it disappears on `app.strengthsync.ai`. Read
+the `error=` on the `prompt=none` request to be sure: `consent_required` confirms
+it, `login_required` would mean the iframe never saw the session cookie, which is
+a different and worse problem.
+
+Not a fix: `cacheLocation: 'localstorage'` would persist the refresh token and
+make reloads silent regardless. It would also put a long-lived credential in
+`localStorage` and break the criterion directly above it.
+
+**The local database silently lagged the repo by two migrations.** `0004` and
+`0005` had never been applied to the miniflare D1, so `client_identities` did not
+exist and every provisioning attempt was a 500 out of `findClientIdBySubject`.
+`db:migrate:local` is not chained into `dev`, so a local database drifts behind
+the branch and only says so from inside a stack trace. Worth chaining, or worth a
+check on dev startup.
+
+**PostHog loads four extensions that `posthog.init` did not ask for** —
+`surveys.js`, `exception-autocapture.js`, `dead-clicks-autocapture.js` and
+`web-vitals.js`. `lib/analytics.ts` sets `autocapture: false`,
+`capture_pageview: false` and `disable_session_recording: true`, and says nothing
+implicit should leave the browser; these four are switched on by remote config in
+the PostHog project settings, where the local flags cannot reach them. In a
+signed-in health app that deserves a deliberate decision rather than a default.
+
+**A provisioned athlete's `display_name` is their email address.** Auth0 falls
+back to the email for `name` on a password-connection user created without one,
+and `getUser` mirrors that so the domain's `min(1)` constraint holds. It is the
+designed fallback, but it is also what the athlete reads until onboarding
+overwrites it — worth confirming onboarding actually does.
+
 ## Acceptance criteria
 
 - [ ] Signing in on the hosted page returns to the app authenticated, and a
       cold reload stays signed in
-- [ ] The access token is never written to `localStorage` or `sessionStorage`
+- [x] The access token is never written to `localStorage` or `sessionStorage` —
+      verified in DevTools on 2026-08-19; the only `strengthsync:` keys are the
+      week draft and the first-set-logged flag
 - [x] Every `/api/*` call carries the bearer header from one wrapper —
       `authorizedFetch` in `client/src/api/client.ts`, which every call reaches
       through the shared `openapi-fetch` client
@@ -101,7 +140,12 @@ screens that is not worth a guard rewrite.
 - [ ] Sign-out ends the session and a subsequent `/api/*` call answers 401
 - [ ] Password reset works end to end from the hosted page
 - [ ] Sign in with Apple and sign in with Google each complete once
-- [ ] A first-time athlete lands in onboarding with no dead screen in between
+- [x] A first-time athlete lands in onboarding with no dead screen in between —
+      strictly, one click short of onboarding: `RootRedirect` sends every
+      signed-in athlete to `/track`, and with no plan the tracker renders its
+      "You're all set up" invitation through to `/onboarding`. Unchanged by this
+      migration, and routing straight there would mean teaching `RootRedirect`
+      about profile state — which the criterion above forbids
 - [ ] The full path runs on a phone-sized viewport: sign in, onboard, generate a
       plan, log a day
 - [x] Domain, client id and audience are build-time config, and no secret is in
@@ -119,5 +163,7 @@ screens that is not worth a guard rewrite.
 
 ## STATUS
 
-IN PROGRESS — code complete; every athlete-facing criterion is a manual run
-against the real tenant and none of them has been done yet.
+IN PROGRESS — sign-in, provisioning, token storage and the first-time landing
+are verified against the real tenant. Outstanding: whether the reload's consent
+screen is a localhost artifact, the PostHog identify, sign-out, password reset,
+Apple, Google, and the phone-viewport run.

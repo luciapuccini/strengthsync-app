@@ -66,10 +66,15 @@ restored tests read the way they did.
 - [x] `AppConfig` carries an optional verifier supplied only by tests; the suite
       runs with no network access
 - [x] `GET /api/me` returns the internal athlete id for a valid token
-- [ ] A token minted by the real tenant reaches `GET /api/me` and provisions a
+- [x] A token minted by the real tenant reaches `GET /api/me` and provisions a
       first-time athlete — **the one step the suite cannot take.** Everything
       above runs against an injected verifier, so the issuer, audience and JWKS
-      URL are unproven until a real token is presented against a deployed Worker.
+      URL are unproven until a real token is presented. Verified 2026-08-19
+      against `wrangler dev` rather than a deployed Worker, which turns out to be
+      the same proof: the token is minted by the real tenant and the key set is
+      fetched from `auth.strengthsync.ai` either way. One identity row, one
+      athlete row, and a second `/api/me` in 32ms — the short-circuit past the
+      Management API — for subject `auth0|6a85f…`.
       That is deliberate (see *Token verification is injected*), and it is why
       this is the last criterion rather than an incidental one.
 
@@ -191,6 +196,24 @@ cascade was already written.
 
 - User stories 9, 20, 26, 29, 30, 31, 32, 33, 36, 37, 38
 
+## Found while verifying this
+
+**The Management client minted its token on one host and spent it on another.**
+`createManagementClient` used the tenant domain for both the audience *and* the
+API base, while minting against the custom domain — so every `getUser` presented
+an `auth.strengthsync.ai` token to `dev-…​.us.auth0.com/api/v2/`, which refuses a
+token it did not issue. It surfaces as a bare **401** on the user lookup, which
+reads exactly like a bad secret or a missing scope and is neither.
+
+The audience and the host are now separate values: the audience stays on the
+tenant domain because it genuinely is not customisable, and the call follows the
+mint to the custom domain.
+
+`management.test.ts` asserted this pairing rather than catching it — `TOKEN_URL`
+on the issuer, `USERS_URL` on the tenant — so the suite was green throughout. A
+stubbed fetch cannot know Auth0 would refuse the combination, so the new case
+pins the *invariant* instead: both calls leave for the same origin.
+
 ## STATUS
 
-IN PROGRESS — code complete; the deployed-token check is outstanding
+DONE — verified against the real tenant on 2026-08-19.

@@ -51,7 +51,7 @@
     // The tenant domain, not the custom one: the Management API audience is not
     // customisable, so this is the one place the vendor hostname is unavoidable.
     "AUTH0_TENANT_DOMAIN": "dev-ky58kx02q7r2ukt6.us.auth0.com",
-    "AUTH0_M2M_CLIENT_ID": "4amnaROizbljyXZOV5inS5qWB0khv6SN",
+    "AUTH0_M2M_CLIENT_ID": "aURi7aSf2Z1YHTZkUzgQURPHIbo8Xmb0",
   },
   "d1_databases": [
     {
