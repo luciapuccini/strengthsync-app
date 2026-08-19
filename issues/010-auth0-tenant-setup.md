@@ -155,9 +155,21 @@ curl -i -X POST https://auth.strengthsync.ai/dbconnections/signup \
   -d '{"client_id":"<SPA_CLIENT_ID>","email":"probe@example.com","password":"Sup3rSecret!x","connection":"Username-Password-Authentication"}'
 ```
 
-Expect a 403 `signup_disabled`. A 200 here means the cohort is not closed, and
-because Auth0's signup endpoint is publicly callable with only a client id, no
-screen in our own bundle would have stopped anyone.
+Expect **`HTTP 400`** with the body `{"error":"public signup is disabled"}`.
+Confirmed against the real tenant on 2026-08-19 — the status is 400, not the 403
+this runbook first claimed, and the body carries a prose `error` string rather
+than an error *code*, so do not grep for `signup_disabled`.
+
+A 200 here means the cohort is not closed, and because Auth0's signup endpoint is
+publicly callable with only a client id, no screen in our own bundle would have
+stopped anyone.
+
+Use the **real SPA client id** from step 5a, not a placeholder. A malformed one
+still produced the disabled-signup answer in practice, but it leaves the check
+ambiguous: you cannot tell from the response alone whether Auth0 evaluated the
+connection's setting or rejected the request earlier for another reason. Running
+it with the recorded id removes the doubt and double-checks the value you wrote
+into the table below.
 
 ### 7. Branding
 
