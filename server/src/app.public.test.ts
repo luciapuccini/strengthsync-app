@@ -3,18 +3,16 @@ import { describe, expect, it } from 'vitest';
 import { createTestApp } from './testkit.ts';
 
 /**
- * What is left of the public HTTP surface while the API has no way in.
+ * The HTTP surface that never knew who was asking: liveness and the analytics
+ * proxy.
  *
- * `issues/011-amputate-old-auth.md` deleted the hand-rolled session system, so
- * every case in this file that obtained an authenticated athlete went with it —
- * the error envelope, the removed-endpoint pins, the training reads, the day-log
- * validation and the workflow trigger. They are not adapted, they are restored
- * against bearer tokens by
- * `issues/012-token-verification-and-provisioning.md`, whose *Restored test
- * coverage* section carries the full inventory.
- *
- * What stays is what never knew who was asking: liveness, the guard's blanket
- * rejection, and the analytics proxy.
+ * Everything requiring an athlete moved to `app.me.test.ts` when
+ * `issues/012-token-verification-and-provisioning.md` restored it against bearer
+ * tokens. The guard's blanket rejection lived here for one commit, while the
+ * stub in `issues/011-amputate-old-auth.md` was the only guard there was; it now
+ * lives with the rest of the guard's cases, where it can say what it is really
+ * asserting — that missing, malformed, expired and unknown credentials are one
+ * indistinguishable refusal.
  */
 
 describe('health', () => {
@@ -23,23 +21,6 @@ describe('health', () => {
     const res = await app.request('/health');
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
-  });
-});
-
-describe('the guard', () => {
-  // The one case that survives the amputation without adaptation, because it
-  // never needed a session to begin with. It is also the only coverage the stub
-  // guard has, and the stub is the new code in this commit: issue 012 widens
-  // this to "a malformed or expired token is indistinguishable from a missing
-  // one", which is not expressible until there are tokens.
-  it('rejects /api/* with no credentials, inside the error envelope', async () => {
-    const app = createTestApp();
-    const res = await app.request('/api/me/profile');
-
-    expect(res.status).toBe(401);
-    expect(await res.json()).toEqual({
-      error: { code: 'unauthorized', message: 'sign in required' },
-    });
   });
 });
 

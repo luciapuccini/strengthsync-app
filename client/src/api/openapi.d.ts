@@ -40,6 +40,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the signed-in client */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The signed-in client */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ClientResponse"];
+                    };
+                };
+                /** @description Missing or invalid credentials */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description Not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/profile": {
         parameters: {
             query?: never;
@@ -697,6 +751,28 @@ export interface components {
         HealthResponse: {
             ok: boolean;
         };
+        ClientResponse: {
+            client: components["schemas"]["Client"];
+        };
+        Client: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            coach_id: string;
+            display_name: string;
+            /** @enum {string} */
+            status: "active" | "archived";
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        ApiError: {
+            error: {
+                code: string;
+                message: string;
+            };
+        };
         ClientProfileResponse: {
             profile: components["schemas"]["ClientProfile"];
         };
@@ -731,12 +807,6 @@ export interface components {
             notes: string | null;
             /** Format: date-time */
             updated_at: string;
-        };
-        ApiError: {
-            error: {
-                code: string;
-                message: string;
-            };
         };
         UpdateClientProfile: {
             /** Format: date */

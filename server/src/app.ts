@@ -3,8 +3,9 @@ import { HTTPException } from 'hono/http-exception';
 
 import { RepoError, type Db } from './db/index.ts';
 
-import { requireAuth } from './lib/auth.ts';
+import { requireAuth, type TokenVerifier } from './lib/auth.ts';
 import { errorResponse, repoErrorResponse } from './lib/errors.ts';
+import type { ManagementClient } from './lib/management.ts';
 import { defaultHook } from './lib/validation-error.ts';
 import { clientRoutes } from './routes/clients/endpoints.ts';
 import { healthRoutes } from './routes/health.ts';
@@ -16,6 +17,17 @@ import { cfWorkflowRoutes } from './routes/wf/endpoints.ts';
 
 export type AppConfig = {
   db: Db;
+  /**
+   * Turns a bearer token into a subject, or refuses it.
+   *
+   * Injected rather than built here, for the same reason `db` is: this module
+   * knows nothing about the environment, and reading an issuer or a JWKS URL out
+   * of it would be the first time it did. `index.ts` builds the real one;
+   * the suite passes a stub, which is what keeps it offline and fast.
+   */
+  verifyToken: TokenVerifier;
+  /** The Auth0 Management API. Built in `index.ts`, stubbed by the suite. */
+  management: ManagementClient;
   /**
    * What `/ingest/*` forwards with. Only tests pass this; in the Worker the
    * global `fetch` is the right answer and the proxy has no other dependency.
@@ -56,7 +68,14 @@ export function createApp(config: AppConfig): OpenAPIHono {
   // the code is being written is a guard nobody tests. Identity is minted by
   // Auth0 now, not here, so there are no unauthenticated routes left to mount
   // above this line.
-  app.use('/api/*', requireAuth());
+  app.use(
+    '/api/*',
+    requireAuth({
+      db: config.db,
+      verifyToken: config.verifyToken,
+      management: config.management,
+    }),
+  );
   app.route('/api', clientRoutes(config.db));
   app.route('/api', onboardingRoutes(config.db));
   app.route('/api', planRoutes(config.db));

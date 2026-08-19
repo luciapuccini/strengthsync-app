@@ -33,6 +33,26 @@
     // with the routes that used it; Auth0 hosts login on its own domain now.
     "run_worker_first": ["/api/*", "/health", "/ingest/*"],
   },
+  // Auth0 tenant configuration (issues/010-auth0-tenant-setup.md). These are
+  // `vars` and not secrets on purpose: every one of them is public — the issuer
+  // and JWKS URL are served unauthenticated, and the audience and client id
+  // travel in tokens and in the browser. Putting them here makes them
+  // reviewable and versioned; hiding them in `wrangler secret` would only make
+  // a misconfiguration invisible. The M2M *secret* is the one real secret and
+  // is set with `wrangler secret put AUTH0_M2M_CLIENT_SECRET`.
+  //
+  // AUTH0_ISSUER keeps its trailing slash: it is compared to the `iss` claim as
+  // a string, and Auth0 mints it that way.
+  "vars": {
+    "AUTH0_ISSUER": "https://auth.strengthsync.ai/",
+    "AUTH0_JWKS_URI": "https://auth.strengthsync.ai/.well-known/jwks.json",
+    "AUTH0_AUDIENCE": "https://api.strengthsync.ai",
+    "AUTH0_ISSUER_DOMAIN": "auth.strengthsync.ai",
+    // The tenant domain, not the custom one: the Management API audience is not
+    // customisable, so this is the one place the vendor hostname is unavoidable.
+    "AUTH0_TENANT_DOMAIN": "dev-ky58kx02q7r2ukt6.us.auth0.com",
+    "AUTH0_M2M_CLIENT_ID": "4amnaROizbljyXZOV5inS5qWB0khv6SN",
+  },
   "d1_databases": [
     {
       "binding": "DB",

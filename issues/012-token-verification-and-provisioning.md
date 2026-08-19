@@ -61,11 +61,11 @@ restored tests read the way they did.
 - [x] `resolveClientId` is tested for all three branches: subject already known,
       subject unknown so provision from a stubbed Management client, and two
       simultaneous first requests racing the unique constraint
-- [ ] `requireAuth` verifies against a cached key set and asserts issuer and
+- [x] `requireAuth` verifies against a cached key set and asserts issuer and
       audience; no route handler is modified
-- [ ] `AppConfig` carries an optional verifier supplied only by tests; the suite
+- [x] `AppConfig` carries an optional verifier supplied only by tests; the suite
       runs with no network access
-- [ ] `GET /api/me` returns the internal athlete id for a valid token
+- [x] `GET /api/me` returns the internal athlete id for a valid token
 - [ ] A token minted by the real tenant reaches `GET /api/me` and provisions a
       first-time athlete
 
@@ -74,45 +74,52 @@ restored tests read the way they did.
 The inventory deleted in issue 011. Each group must be restored against bearer
 tokens, or explicitly struck through here with a reason.
 
-- [ ] `GET /api/me/profile` — 404 before a profile exists; **returns the
+- [x] `GET /api/me/profile` — 404 before a profile exists; **returns the
       caller's own profile, never the other athlete's**
-- [ ] `PUT /api/me/profile` — creates against the session with no id in the
+- [x] `PUT /api/me/profile` — creates against the session with no id in the
       request; 400 on an invalid body
-- [ ] `POST /api/me/onboarding` — creates against the session with no id in the
+- [x] `POST /api/me/onboarding` — creates against the session with no id in the
       request; 400 on an invalid body
-- [ ] `GET /api/me/plans/active` — 404 before activation; returns the caller's
+- [x] `GET /api/me/plans/active` — 404 before activation; returns the caller's
       active plan
-- [ ] `GET /api/me/plans/{planId}` — returns the caller's plan by id;
+- [x] `GET /api/me/plans/{planId}` — returns the caller's plan by id;
       **404 for another athlete's plan id**
-- [ ] `POST /api/me/plans/generate` — refuses an athlete with no profile;
+- [x] `POST /api/me/plans/generate` — refuses an athlete with no profile;
       refuses one who already has an active plan
-- [ ] `GET /api/me/weeks/current` — 404 before a plan exists; returns the
+- [x] `GET /api/me/weeks/current` — 404 before a plan exists; returns the
       caller's in-flight week
-- [ ] `GET /api/me/weeks` — **lists only the caller's weeks**; filters by
+- [x] `GET /api/me/weeks` — **lists only the caller's weeks**; filters by
       `planId` and rejects an invalid status with 400
-- [ ] Day log writes — saves a day and marks it completed; patches a day;
+- [x] Day log writes — saves a day and marks it completed; patches a day;
       **refuses to write into another athlete's week**
-- [ ] The guard addresses these routes — 401 on every `/me` path without a
+- [x] The guard addresses these routes — 401 on every `/me` path without a
       token, and a malformed or expired token is indistinguishable from a
       missing one
-- [ ] Error envelope — 400 `invalid_id` for a malformed uuid in the path; 400
+- [x] Error envelope — 400 `invalid_id` for a malformed uuid in the path; 400
       `invalid_input` for an invalid body; a malformed JSON body stays inside
-      the envelope; 404 `client_not_found` when a valid token names a deleted
-      athlete
-- [ ] Removed endpoints stay unrouted, with the `/auth/*` paths added to the
+      the envelope; ~~404 `client_not_found` when a valid token names a deleted
+      athlete~~ — **struck: the state is no longer constructible.** The foreign
+      key from `client_identities.client_id` refuses to let an athlete be deleted
+      while an identity points at them, so a token that resolves at all resolves
+      to an athlete that exists. The branch stays in the four handlers, because
+      `getClient` returns `Client | null` and the alternative is a non-null
+      assertion; what is tested instead is the constraint that makes it dead, so
+      that relaxing the foreign key later fails loudly rather than quietly
+      widening what a token can reach.
+- [x] Removed endpoints stay unrouted, with the `/auth/*` paths added to the
       list this pins
-- [ ] Training reads — 404 when the in-flight week has not started yet
-- [ ] Week route parameters — 400 `invalid_input` for an out-of-range or
+- [x] Training reads — 404 when the in-flight week has not started yet
+- [x] Week route parameters — 400 `invalid_input` for an out-of-range or
       non-numeric `dayIndex`
-- [ ] Day log validation — 400 for a day patch whose skipped exercise carries
+- [x] Day log validation — 400 for a day patch whose skipped exercise carries
       sets
-- [ ] Workflow trigger — rejects `/api/wf/complete-week` without a token and
+- [x] Workflow trigger — rejects `/api/wf/complete-week` without a token and
       starts no workflow; starts an instance for the authenticated athlete
-- [ ] ~~`/ingest` never forwards the caller's credentials upstream~~ — **already
+- [x] ~~`/ingest` never forwards the caller's credentials upstream~~ — **already
       restored in 011.** The proxy strips `cookie` and `authorization` by name and
       never read either value, so the case was restated against a synthetic bearer
       token rather than deleted. Coverage was continuous.
-- [ ] ~~Sign-up, sign-in and sign-out are reachable without a cookie~~ —
+- [x] ~~Sign-up, sign-in and sign-out are reachable without a cookie~~ —
       **struck, not restored.** All three routes are deleted for good, so there is
       nothing left to prove open. The successor concern is the inverse and is
       already listed above: the `/auth/*` paths must appear in the
@@ -140,6 +147,18 @@ undone here, and each will fail loudly if it is not.
       blanket 401 inside the error envelope. It becomes the full assertion once
       tokens exist: missing, malformed, expired, wrong-audience and wrong-issuer
       all produce one indistinguishable rejection.
+
+## Found while building this
+
+**Local deletion and provider deletion have to happen in that order**, and
+`issues/014-account-deletion.md` is where that becomes load-bearing. The guard
+provisions unconditionally on a subject it has not seen. So if an account
+deletion removes the local rows but the Auth0 user survives — a partial failure,
+and the PRD already rules a retrying scheduled purge out of scope — the next
+request from that athlete's live token does not fail. It silently creates a new
+athlete, and the deletion appears to have been undone. Deleting the provider
+user first makes the same partial failure safe: the local rows linger, which is
+recoverable and visible, rather than resurrect, which is neither.
 
 ## Blocked by
 

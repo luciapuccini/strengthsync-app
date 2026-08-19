@@ -16,7 +16,12 @@ import type { Db } from '../src/db/index.ts';
  * imports carry explicit .ts extensions.
  */
 
-const app = createApp({ db: {} as Db });
+// Handlers never run, so the guard's collaborators only have to exist.
+const app = createApp({
+  db: {} as Db,
+  verifyToken: async () => null,
+  management: { getUser: async () => null, deleteUser: async () => {} },
+});
 
 const document = app.getOpenAPI31Document({
   openapi: '3.1.0',
