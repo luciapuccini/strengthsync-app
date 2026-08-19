@@ -129,8 +129,18 @@ two interleaved first requests safe.
 
 `@auth0/auth0-react`, Authorization Code + PKCE, `useRefreshTokens: true`, tokens
 held **in memory** — Auth0's recommendation, and `localStorage` is not an
-acceptable substitute. A page reload silently renews from the rotating refresh
-token.
+acceptable substitute.
+
+A page reload renews silently, but **not from the refresh token**, and the
+difference is a flag that has to be set. The memory cache holds the refresh
+token too, so a reload has none left to rotate; renewal falls back to silent
+authentication in a hidden iframe against the Auth0 session cookie, which
+`useRefreshTokensFallback` gates and which defaults to **false**. Left at its
+default, every reload signs the athlete out. It works at all only because
+`auth.strengthsync.ai` and `app.strengthsync.ai` are the same site — on a vendor
+domain that cookie is third-party and Safari's tracking prevention refuses it,
+which is one more thing the custom domain buys. The iOS client sets the same
+flag to `false` for the opposite reason, below.
 
 `client/src/api/client.ts` already takes a `baseUrl` and `openapi-fetch` takes a
 custom `fetch`, so `getAccessTokenSilently()` is wired in one place.
