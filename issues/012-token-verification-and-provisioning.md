@@ -159,15 +159,35 @@ cannot happen.
 
 ## Found while building this
 
-**Local deletion and provider deletion have to happen in that order**, and
-`issues/014-account-deletion.md` is where that becomes load-bearing. The guard
-provisions unconditionally on a subject it has not seen. So if an account
-deletion removes the local rows but the Auth0 user survives — a partial failure,
-and the PRD already rules a retrying scheduled purge out of scope — the next
-request from that athlete's live token does not fail. It silently creates a new
-athlete, and the deletion appears to have been undone. Deleting the provider
-user first makes the same partial failure safe: the local rows linger, which is
-recoverable and visible, rather than resurrect, which is neither.
+**Account deletion must delete the Auth0 user first, then the local rows** —
+never the other way round. `issues/014-account-deletion.md` inherits this as a
+settled constraint, not an open question.
+
+The reason is that `resolveClientId` provisions unconditionally on a subject it
+has not seen. There is no eligibility check left to fail, because sign-ups are
+disabled at the tenant and every subject that reaches the guard was created by
+the operator.
+
+So *local rows first* is the order that breaks. If the local delete succeeds and
+the Auth0 delete then fails — a partial failure, and the PRD already rules a
+retrying scheduled purge out of scope — the next request carrying that athlete's
+still-live token does not error. The subject is unknown locally, the Management
+API confirms the user exists, and the guard provisions them again: a brand new
+athlete with an empty account. The deletion silently undoes itself, and nothing
+anywhere reports a problem.
+
+*Provider first* fails in the opposite direction, which is the survivable one.
+Note what it does **not** do: it does not lock the athlete out immediately.
+`resolveClientId` short-circuits on a known subject and never consults Auth0, so
+an athlete whose provider user is gone keeps working until their access token
+expires. What it does guarantee is that the window is bounded and terminal —
+they cannot obtain a new token once the Auth0 user is gone, so at expiry they are
+locked out for good. The residue is local rows nobody can reach, which is
+recoverable, inspectable, and cleanable at leisure.
+
+Bounded and cleanable beats unbounded and self-reversing. What is left for 014 to
+decide is only what to do about those lingering rows, not which end to start
+from.
 
 ## Blocked by
 

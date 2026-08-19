@@ -89,20 +89,198 @@ guard fetches in issue 012, so it is the thing actually worth proving.
 Applications → APIs → Create API.
 
 
-| Field             | Value                     | Consumed by                                 | Recorded                           |
-| ------------------------- | ------------------------------------------- | ---------------------------------- |
-| Tenant domain             | 012 — Management API audience               | `dev-ky58kx02q7r2ukt6.us.auth0.com` |
-| Custom domain             | 012 — issuer + JWKS; 013 — SDK `domain`     | `auth.strengthsync.ai`             |
-| API audience identifier   | 012 — `aud` assertion; 013 — SDK `audience` | `https://api.strengthsync.ai`      |
-| SPA client id             | 013 — SDK `clientId`                        | `Mq77c7idugaOidEbinlBecjwKuhJlLPZ` |
-| Native client id          | future iOS shell                            | `CxC8eL0VlcbDtoDlQM1M981NJlV1ixLY` |
-| M2M client id             | 012 — Management client                     | `4amnaROizbljyXZOV5inS5qWB0khv6SN` |
-| M2M client secret         | 012 — Worker secret, never recorded here    | `wrangler secret` + `.dev.vars`    |
+| Field             | Value                         |
+| ----------------- | ----------------------------- |
+| Name              | `StrengthSync API`            |
+| Identifier        | `https://api.strengthsync.ai` |
+| Signing algorithm | RS256                         |
 
-The Management API audience is the **tenant** domain with a trailing
-`/api/v2/` — `https://dev-ky58kx02q7r2ukt6.us.auth0.com/api/v2/`. It is not
-customisable, so it stays on the vendor hostname even though everything an
-athlete touches does not.
+
+The identifier is the token **audience**. It is not a URL Auth0 ever calls, it
+never has to resolve, and it **cannot be changed** after creation — every token
+already issued asserts it, and issue 012's guard asserts it back.
+
+Then Settings → Access Settings → **Allow Offline Access: on**. This is what
+permits refresh tokens for this audience. Without it the SDK's silent renewal
+fails and athletes are signed out when the access token expires.
+
+### 5. Three applications
+
+**a. `StrengthSync Web` — Single Page Application**
+
+
+| Field                 | Value                                                |
+| --------------------- | ---------------------------------------------------- |
+| Allowed Callback URLs | `https://app.strengthsync.ai, http://localhost:5173` |
+| Allowed Logout URLs   | `https://app.strengthsync.ai, http://localhost:5173` |
+| Allowed Web Origins   | `https://app.strengthsync.ai, http://localhost:5173` |
+
+
+`localhost:5173` is the vite dev server (`client/vite.config.ts` sets no port, so
+it is vite's default). The production origin is `app.strengthsync.ai`, the Worker's
+custom domain in `server/wrangler.jsonc` — note it is a *different* hostname from
+the login domain in step 3, deliberately.
+
+Then Settings → Refresh Token Rotation: **on**, and **Reuse Interval: 0** with
+reuse detection. Rotation is Auth0's precondition for allowing refresh tokens in
+a browser app at all, and it is what makes the design independent of the Auth0
+session cookie — which is what stops Safari's tracking prevention from breaking
+renewal.
+
+**b. `StrengthSync iOS` — Native**
+
+Same rotation settings. Callback and logout URLs take the form
+`{appId}://auth.strengthsync.ai/capacitor/{appId}/callback`. The Capacitor app id
+is not decided yet — the iOS app is out of scope for this PRD — so **leave these
+blank for now**. They can be added later without touching the web application,
+which is the reason the two clients are separate in the first place.
+
+**c. `StrengthSync Management` — Machine to Machine**
+
+Authorize it against the **Auth0 Management API** (the built-in one, not the API
+from step 4), with exactly two scopes: `read:users` and `delete:users`. Nothing
+else. Issue 012 reads a user at provisioning; issue 014 deletes one. Any further
+scope is standing authority for something no code asks for.
+
+### 6. Database connection
+
+Authentication → Database → `Username-Password-Authentication` → Settings →
+**Disable Sign Ups: on**.
+
+Check the Applications tab of the connection: enabled for the SPA and the Native
+app, **not** for the M2M app.
+
+Then verify by attempting a public sign-up rather than by re-reading the setting —
+the acceptance criterion is explicit about this:
+
+```sh
+curl -i -X POST https://auth.strengthsync.ai/dbconnections/signup \
+  -H 'content-type: application/json' \
+  -d '{"client_id":"<SPA_CLIENT_ID>","email":"probe@example.com","password":"Sup3rSecret!x","connection":"Username-Password-Authentication"}'
+```
+
+Expect `**HTTP 400**` with the body `{"error":"public signup is disabled"}`.
+Confirmed against the real tenant on 2026-08-19 — the status is 400, not the 403
+this runbook first claimed, and the body carries a prose `error` string rather
+than an error *code*, so do not grep for `signup_disabled`.
+
+A 200 here means the cohort is not closed, and because Auth0's signup endpoint is
+publicly callable with only a client id, no screen in our own bundle would have
+stopped anyone.
+
+Use the **real SPA client id** from step 5a, not a placeholder. A malformed one
+still produced the disabled-signup answer in practice, but it leaves the check
+ambiguous: you cannot tell from the response alone whether Auth0 evaluated the
+connection's setting or rejected the request earlier for another reason. Running
+it with the recorded id removes the doubt and double-checks the value you wrote
+into the table below.
+
+### 7. Branding
+
+Branding → Universal Login → Customize: logo, primary colour, page background.
+
+Geist needs a **publicly reachable `.woff2` URL** in the font field — Auth0 cannot
+read a font that only exists in the client bundle. If there is no such URL to
+hand, leave the default typeface: the palette and logo carry the recognition, and
+this is a page each athlete sees once. Do not reach for a custom page template —
+`auth.md`'s *Universal Login, not embedded* section has the reasoning.
+
+### 8. Confirm no Actions exist
+
+Actions → Flows → Login: empty. Actions → Library: no custom actions. The PRD's
+*no Actions* decision is load-bearing — anything here is logic outside git,
+outside typecheck and outside the pre-commit gate.
+
+### 9. The M2M secret
+
+Production:
+
+```sh
+cd server && wrangler secret put AUTH0_M2M_CLIENT_SECRET
+```
+
+Local development: put the same value in `server/.dev.vars`, which is where the
+Worker reads secrets from under `wrangler dev`.
+
+```
+AUTH0_M2M_CLIENT_SECRET=<the M2M secret>
+```
+
+That file is gitignored (`.gitignore:10`, matching at any depth) and holds
+`OPENAI_API_KEY` already, so this is the established place for a real local
+secret — not an exception being made for this one. Re-run
+`pnpm --filter @strengthsync/server types` afterwards: `worker-configuration.d.ts`
+is generated from `wrangler.jsonc` plus `.dev.vars`, so the variable is not on the
+`Env` type until you do, and issue 012 reads it from there.
+
+What must never happen is the secret reaching a **tracked** file — `wrangler.jsonc`,
+the client bundle, or an issue file like this one. The domain, the audience and
+the three client ids are different: they are public identifiers that identify an
+application without authorizing anything, so issue 012 puts them in
+`wrangler.jsonc` vars and issue 013 puts the web ones in the client bundle.
+
+### 10. Create one account by hand and follow it through
+
+This is the operator's real invite flow from here on, and the point of doing it
+now is to get it wrong while that is still cheap.
+
+Get a Management token:
+
+```sh
+curl -s -X POST https://auth.strengthsync.ai/oauth/token \
+  -H 'content-type: application/json' \
+  --data '{
+    "client_id":"aURi7aSf2Z1YHTZkUzgQURPHIbo8Xmb0",
+    "client_secret":"Fo9h3AoOlCnPAF8AZvG5YVO4x94CBA8AtgrL4tNrd6BJFpfi4xROeltaGYjBqndm",
+    "audience":"https://dev-ky58kx02q7r2ukt6.us.auth0.com/api/v2/",
+    "grant_type":"client_credentials"
+  }'
+--- result ---
+eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im5LR3R0QTdRa0RTSzVNa0tpc29tcyJ9.eyJpc3MiOiJodHRwczovL2F1dGguc3RyZW5ndGhzeW5jLmFpLyIsInN1YiI6ImFVUmk3YVNmMloxWUhUWmtVemdRVVJQSElibzhYbWIwQGNsaWVudHMiLCJhdWQiOiJodHRwczovL2Rldi1reTU4a3gwMnE3cjJ1a3Q2LnVzLmF1dGgwLmNvbS9hcGkvdjIvIiwiaWF0IjoxNzg3MTY2NjY2LCJleHAiOjE3ODcyNTMwNjYsInNjb3BlIjoicmVhZDp1c2VycyBkZWxldGU6dXNlcnMiLCJndHkiOiJjbGllbnQtY3JlZGVudGlhbHMiLCJhenAiOiJhVVJpN2FTZjJaMVlIVFprVXpnUVVSUEhJYm84WG1iMCJ9.J1lx4HADee_xyY9G_fL4DHNx_B_mYAP6kVAOyzX1noeKxGnlqGtYDYqCI0QXIgD3JCSiONpMnNo1G76320yE2FkUD814OCK3mkQXw_szx1HpYmBYU7tDTMju31Cds64XOQNVjciADWzjNbxM2bifvbhmAqdjvjkeNVPBhL7c_uYlylUfstcs_rmJWawGpuwHg8-Gxam3z0i1l5bVUX3tjhC50iKcDVxXmL6RqXEKH8peOM8Y2bmryEf3uSXMUMSup6mh_ob4aMWtfm2Wxl13hZm5JlSN1n8fATNZpgVkftoPAZ77yrwZ7TZbffPyoilM7yunSF1tg21j0UrvSipGPA
+```
+
+te the audience is the **tenant** domain (`<tenant>.eu.auth0.com`), not the
+custom domain — the Management API audience is not customisable.
+
+Create the athlete with a throwaway password they never learn:
+
+```sh
+curl -s -X POST https://https://dev-ky58kx02q7r2ukt6.us.auth0.com/api/v2/users \
+  -H "authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Im5LR3R0QTdRa0RTSzVNa0tpc29tcyJ9.eyJpc3MiOiJodHRwczovL2F1dGguc3RyZW5ndGhzeW5jLmFpLyIsInN1YiI6ImFVUmk3YVNmMloxWUhUWmtVemdRVVJQSElibzhYbWIwQGNsaWVudHMiLCJhdWQiOiJodHRwczovL2Rldi1reTU4a3gwMnE3cjJ1a3Q2LnVzLmF1dGgwLmNvbS9hcGkvdjIvIiwiaWF0IjoxNzg3MTY2NjY2LCJleHAiOjE3ODcyNTMwNjYsInNjb3BlIjoicmVhZDp1c2VycyBkZWxldGU6dXNlcnMiLCJndHkiOiJjbGllbnQtY3JlZGVudGlhbHMiLCJhenAiOiJhVVJpN2FTZjJaMVlIVFprVXpnUVVSUEhJYm84WG1iMCJ9.J1lx4HADee_xyY9G_fL4DHNx_B_mYAP6kVAOyzX1noeKxGnlqGtYDYqCI0QXIgD3JCSiONpMnNo1G76320yE2FkUD814OCK3mkQXw_szx1HpYmBYU7tDTMju31Cds64XOQNVjciADWzjNbxM2bifvbhmAqdjvjkeNVPBhL7c_uYlylUfstcs_rmJWawGpuwHg8-Gxam3z0i1l5bVUX3tjhC50iKcDVxXmL6RqXEKH8peOM8Y2bmryEf3uSXMUMSup6mh_ob4aMWtfm2Wxl13hZm5JlSN1n8fATNZpgVkftoPAZ77yrwZ7TZbffPyoilM7yunSF1tg21j0UrvSipGPA" -H 'content-type: application/json' \
+  -d '{"connection":"Username-Password-Authentication","email":"dcav.3as.pl.com","name":"alfin","password":"yY7dSNSN4Q!ar4U","email_verified":false}'
+```
+
+Then have Auth0 email them a set-password link:
+
+```sh
+curl -s -X POST https://auth.strengthsync.ai/dbconnections/change_password \
+  -H 'content-type: application/json' \
+  -d '{"client_id":"Mq77c7idugaOidEbinlBecjwKuhJlLPZ","email":"yixomaj165@joystill.com","connection":"Username-Password-Authentication"}'
+```
+
+Follow that email through to a working sign-in. The email is Auth0-branded and
+rate-limited, which `auth.md` accepts at this volume — a real transactional
+provider is a post-MVP item, not a blocker here.
+
+Two things this proves that nothing else does: that sign-ups being disabled does
+**not** block operator-created accounts, and that the set-password email actually
+arrives. If it lands in spam, that is worth knowing before twenty of them go out.
+
+## Recorded values
+
+Issues 012 and 013 consume these. Fill them in as you go.
+
+
+| Value                                   | Consumed by                                 | Recorded                                                    |
+| --------------------------------------- | ------------------------------------------- | ----------------------------------------------------------- |
+| Tenant domain (`<tenant>.us.auth0.com`) | 012 — Management API audience               | ```sh https://dev-ky58kx02q7r2ukt6.us.auth0.com/api/v2/ ``` |
+| Custom domain                           | 012 — issuer + JWKS; 013 — SDK `domain`     | `auth.strengthsync.ai`                                      |
+| API audience identifier                 | 012 — `aud` assertion; 013 — SDK `audience` | `https://api.strengthsync.ai`                               |
+| SPA client id                           | 013 — SDK `clientId`                        | Mq77c7idugaOidEbinlBecjwKuhJlLPZ                            |
+| Native client id                        | future iOS shell                            | CxC8eL0VlcbDtoDlQM1M981NJlV1ixLY                            |
+| M2M client id                           | 012 — Management client                     | 4amnaROizbljyXZOV5inS5qWB0khv6SN                            |
+| M2M client secret                       | 012 — Worker secret, never recorded here    | `wrangler secret` only                                      |
+
 
 The issuer issue 012 asserts is `https://auth.strengthsync.ai/` — **with the
 trailing slash**. A token's `iss` carries it and a string comparison without it
@@ -111,71 +289,30 @@ when the suite cannot catch it.
 
 ## Acceptance criteria
 
-- [x] The login page loads at a StrengthSync hostname with StrengthSync branding;
-      no vendor hostname is visible to an athlete
+- [x] The login page loads at a StrengthSync hostname with StrengthSync
+
+  branding; no vendor hostname is visible to an athlete
 - [x] An API resource server is registered with `offline_access`; its audience
-      identifier is written into this issue
-- [x] Three applications exist, and the M2M application is scoped to `read:users`
-      and `delete:users` only
+
+  identifier is written into this issue
+- [x] Three applications exist, and the M2M application is scoped to
+
+  `read:users` and `delete:users` only
 - [x] Refresh token rotation with automatic reuse detection is on for both the
-      SPA and the native application
+
+  SPA and the native application
 - [x] A public sign-up attempt against the connection is rejected — verified by
-      attempting one, not by reading the setting
-- [x] The M2M client secret is set via `wrangler secret` and appears in no file in
-      this repository
-- [x] One account is created — **in the Dashboard, not via the Management API**,
-      which the M2M app is deliberately not scoped for — and its set-password
-      email leads to a successful sign-in
-- [x] No client secret and no Management API access token appears anywhere in this
-      repository, including in this file
+
+  attempting one, not by reading the setting
+- [x] The M2M client secret is set via `wrangler secret` and appears in no file
+
+  in this repository
+- [x] One account is created via the Management API, and its set-password email
+
+  leads to a successful sign-in
 - [x] Domain, audience and the three client ids are recorded in this issue for
-      issues 012 and 013 to consume
 
-## Verified end state
-
-The custom domain is live and serving, checked against the provider rather than
-against the dashboard:
-
-```
-$ dig +short auth.strengthsync.ai
-dev-ky58kx02q7r2ukt6-cd-onroqh59na28rtdn.edge.tenants.us.auth0.com.
-
-$ curl https://auth.strengthsync.ai/.well-known/openid-configuration
-"issuer":"https://auth.strengthsync.ai/"
-"jwks_uri":"https://auth.strengthsync.ai/.well-known/jwks.json"
-```
-
-The `-cd-` record is Auth0's custom-domain edge; its presence is what confirms
-the Cloudflare CNAME stayed DNS-only. The issuer carries the trailing slash that
-issue 012 must compare against.
-
-## Findings
-
-**The vendor sender cannot be fixed here.** Emails arrive from
-`no-reply@auth0user.net`. That address belongs to Auth0's built-in email
-provider, not to the tenant or the custom domain, and it is not configurable —
-only replacing the provider changes it. Beyond branding this costs deliverability:
-`auth0user.net` has no SPF/DKIM alignment with `strengthsync.ai`, so the invite is
-being sent from a domain unrelated to the product. Recorded for
-`docs/todos/008-launch-readiness.md`, which is the gate the first invite batch
-passes through; still not a blocker for this issue.
-
-**Dashboard account creation fires a second, unwanted email**, resolved in step 8
-by turning the verification template off. See that step for the reasoning.
-
-## Open decisions
-
-**Tenant region is US (`prod-us-5`), not EU.** Fixed at tenant creation and not
-changeable — moving means a new tenant. The cohort is in Spain and the product
-stores body-composition measurements, so EU residency is the more defensible
-default. Accepted for now because there are zero real accounts, which also means
-this is the cheapest it will ever be to redo. Revisit before the first invite
-batch, not after.
-
-**The database connection requires a 15-character minimum password.** Every
-athlete meets this while setting their own password from the invite email, on a
-phone. Left as configured; if the first batch stalls here, the connection's
-password policy is a dashboard change with no code impact.
+  issues 012 and 013 to consume
 
 ## Blocked by
 
