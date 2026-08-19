@@ -211,16 +211,26 @@ inside the app, and requires deletion rather than deactivation — so
 `server/openapi.json` today; this is the one hard App Store blocker in the
 current code.
 
-`DELETE /api/account` deletes the Auth0 user first, then cascades D1 in foreign
-key order: `weeks`, `plans`, `client_profiles`, `client_identities`, `clients`.
+`DELETE /api/account` deletes the Auth0 user first, then the `client_identities`
+row, then cascades the rest in foreign key order: `weeks`, `plans`,
+`client_profiles`, `clients`.
 
-That order is chosen for its failure mode. If the cascade fails halfway the
-athlete is already locked out — the identity is gone, so no token can ever be
-minted again — and what remains is unreachable rows that can be swept by hand.
-The reverse order fails worse: a failed Auth0 call leaves an athlete who can
-still sign in, and unconditional provisioning would hand them a fresh empty
-account, so a failed deletion would look like the app silently erased their
-training history.
+That order is chosen for its failure mode, and the failure it is chosen against
+is resurrection rather than data loss. Provisioning is unconditional, so if the
+local identity row goes while the Auth0 user survives, the next request carrying
+that athlete's token does not error — it creates them again, as a new empty
+account, and the deletion silently reverses itself into something that looks
+like the app erased their training history. Deleting at the provider first, and
+aborting locally if that call fails, is what makes that impossible.
+
+The identity row goes second and not last. Deleting the Auth0 user does **not**
+lock anyone out on its own: the guard short-circuits on a subject it has already
+mapped, so an access token minted a minute earlier keeps working against
+whatever rows remain, for the rest of its lifetime. With the identity row
+deleted last, that window spans the whole cascade — an athlete can be reading a
+half-erased account while it runs, or indefinitely if it wedges. Deleting it
+immediately after the provider shrinks the window to the gap between two
+adjacent statements. `issues/014-account-deletion.md` carries the full argument.
 
 Accepted trade-off: rows can outlive a deletion request, which is what 5.1.1(v)
 is about. At the MVP's scale that is a manual cleanup rather than a system. The
