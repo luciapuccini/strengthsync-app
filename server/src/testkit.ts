@@ -1,83 +1,105 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 
-import { activateGeneratedPlan, type Db } from './db/index.ts';
+import { activateGeneratedPlan, claimSubject, createClient, type Db } from './db/index.ts';
 import { createTestDb } from './db/testing/index.ts';
 import type { PlanDay, Week } from './domain/model/index.ts';
 
 import { createApp, type AppConfig } from './app.ts';
-
-export const SESSION_SECRET = 'test-session-secret';
-/** The code `createTestApp` gates sign-up on; the real one is a Worker secret. */
-export const INVITE_CODE = 'test-invite-code';
+import type { TokenVerifier } from './lib/auth.ts';
+import type { ManagementClient, ManagementUser } from './lib/management.ts';
 
 /**
- * A registered athlete and the cookie that speaks for them. Every /api/* request
- * needs one, so tests get the id and the headers together rather than assembling
- * a cookie at each call site.
+ * The kit the HTTP-level tests are built from.
+ *
+ * Rebuilt in `issues/012-token-verification-and-provisioning.md` on top of
+ * bearer tokens. What it replaced obtained an authenticated athlete by posting
+ * to a sign-up route and scraping a session cookie; there is no such route now,
+ * and identity arrives already minted.
+ *
+ * The `TestClient` shape — `id`, `headers`, `jsonHeaders` — is deliberately the
+ * one the deleted kit had, so the restored cases read the way they did and the
+ * diff is about authentication rather than about test style.
  */
-export type TestClient = {
-  id: string;
-  /** Cookie only, for reads. */
-  headers: Record<string, string>;
-  /** Cookie plus a JSON content type, for writes. */
-  jsonHeaders: Record<string, string>;
-};
-
-export function createTestApp(overrides: Partial<AppConfig> = {}): OpenAPIHono {
-  return createApp({
-    db: createTestDb(),
-    sessionSecret: SESSION_SECRET,
-    inviteCode: INVITE_CODE,
-    ...overrides,
-  });
-}
 
 /**
- * Register an athlete and keep their session. This replaced the athlete-creation
- * route as the way tests get a client: that route is now behind the guard, so
- * reaching it would need the very session this produces.
+ * A token is its own subject.
+ *
+ * The suite never verifies a signature. Real verification needs the tenant's
+ * key set, and the trade that keeps the gate offline and fast is recorded in
+ * `issues/auth0-migration/prd.md` — `createTokenVerifier` in `lib/auth.ts` is
+ * the code this stands in for, and it is the one piece of this migration the
+ * suite does not run.
+ *
+ * Rejecting anything that is not shaped like a subject is what lets the guard's
+ * own tests say "malformed" and "expired" without minting anything: from the
+ * guard's side every refusal by the verifier is the same refusal, which is
+ * precisely the property those cases exist to pin.
  */
-export async function signUpViaApi(app: OpenAPIHono, displayName = 'Ana'): Promise<TestClient> {
-  const res = await app.request('/auth/sign-up', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      display_name: displayName,
-      email: `${displayName.toLowerCase()}@example.com`,
-      password: 'dev-password-123',
-      invite_code: INVITE_CODE,
-    }),
-  });
-  const token = res.headers.get('set-cookie')?.match(/session=([^;]*)/)?.[1];
-  if (!token) throw new Error(`sign-up set no session cookie (status ${res.status})`);
+export const stubVerifier: TokenVerifier = async (token) =>
+  token.startsWith('auth0|') ? { sub: token } : null;
 
-  const { client } = (await res.json()) as { client: { id: string } };
-  const headers = { cookie: `session=${token}` };
+/** A Management API that knows about whoever the test has told it about. */
+export function stubManagement(users: Map<string, ManagementUser> = new Map()): ManagementClient {
   return {
-    id: client.id,
-    headers,
-    jsonHeaders: { ...headers, 'content-type': 'application/json' },
+    getUser: async (subject) => users.get(subject) ?? null,
+    deleteUser: async (subject) => {
+      users.delete(subject);
+    },
   };
 }
 
-export async function upsertProfileViaApi(app: OpenAPIHono, client: TestClient): Promise<void> {
-  await app.request('/api/me/profile', {
-    method: 'PUT',
-    headers: client.jsonHeaders,
-    body: JSON.stringify({
-      snapshot_date: '2026-07-01',
-      sex: 'female',
-      age: 34,
-      height_cm: 165,
-      goals: { primary: 'strength' },
-      body_composition: { weight_kg: 62 },
-      strength_loads: { press_banca: 60 },
-      nutrition: null,
-      activities: null,
-      schedule_preferences: null,
-      notes: null,
-    }),
+export type TestHarness = {
+  app: OpenAPIHono;
+  db: Db;
+  /** Users the stubbed provider knows about; add to it to allow provisioning. */
+  providerUsers: Map<string, ManagementUser>;
+};
+
+export function createTestHarness(overrides: Partial<AppConfig> = {}): TestHarness {
+  const db = createTestDb();
+  const providerUsers = new Map<string, ManagementUser>();
+  const app = createApp({
+    db,
+    verifyToken: stubVerifier,
+    management: stubManagement(providerUsers),
+    ...overrides,
   });
+  return { app, db, providerUsers };
+}
+
+export function createTestApp(overrides: Partial<AppConfig> = {}): OpenAPIHono {
+  return createTestHarness(overrides).app;
+}
+
+export type TestClient = {
+  id: string;
+  subject: string;
+  headers: Record<string, string>;
+  jsonHeaders: Record<string, string>;
+};
+
+function asTestClient(id: string, subject: string): TestClient {
+  const headers = { Authorization: `Bearer ${subject}` };
+  return { id, subject, headers, jsonHeaders: { ...headers, 'Content-Type': 'application/json' } };
+}
+
+/**
+ * An athlete who already exists, with a token that resolves to them.
+ *
+ * Seeded through the repositories rather than by letting the guard provision
+ * them, so that a test about reading a plan is not also a test of provisioning.
+ * The first-request path has its own cases, in `lib/identity.test.ts` and in the
+ * guard's own file.
+ */
+export async function seedClient(db: Db, displayName = 'Ana'): Promise<TestClient> {
+  const client = await createClient(db, { display_name: displayName });
+  const subject = `auth0|${client.id}`;
+  await claimSubject(db, {
+    client_id: client.id,
+    subject,
+    email: `${displayName.toLowerCase()}@example.test`,
+  });
+  return asTestClient(client.id, subject);
 }
 
 export const weekTemplate: PlanDay[] = [

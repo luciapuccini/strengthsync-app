@@ -64,9 +64,9 @@ export function createTestDb(): Db {
 }
 
 /**
- * Every committed seed, not just the coach: the demo athlete, their plan, weeks
- * and credential. Reads the same files a developer applies by hand, so a test
- * over this db is a test of what the repository actually ships.
+ * Every committed seed, not just the coach: the demo athlete, their plan and
+ * weeks. Reads the same files a developer applies by hand, so a test over this
+ * db is a test of what the repository actually ships.
  */
 export function createDemoSeededDb(): Db {
   const sqlite = createMigratedSqlite();

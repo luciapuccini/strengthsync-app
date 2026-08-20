@@ -1,327 +1,278 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
-import { describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import type { Db } from './db/index.ts';
-import { createTestDb } from './db/testing/index.ts';
-
-import {
-  activateGeneratedPlanViaRepository,
-  createTestApp,
-  signUpViaApi,
-  upsertProfileViaApi,
-  type TestClient,
-} from './testkit.ts';
+import { getClient, type Db } from './db/index.ts';
+import { clients } from './db/schema.ts';
+import type { ManagementUser } from './lib/management.ts';
+import { createTestHarness, seedClient, type TestClient } from './testkit.ts';
 
 /**
- * The session-addressed API — since `issues/auth/013`, the only API. No path
- * carries an athlete id, so the athlete comes from the verified cookie and no
- * request can name anyone else, which is what the second athlete in most of
- * these tests exists to demonstrate.
+ * Who the API thinks is calling, and what it does the first time it has never
+ * heard of them.
+ *
+ * The identity half of the inventory `issues/011-amputate-old-auth.md` deleted
+ * and `issues/012-token-verification-and-provisioning.md` promised back. The
+ * training half is in `app.training.test.ts`; they were one file until it
+ * outgrew the repository's `max-lines`, and the seam between them is the one the
+ * guard already draws — everything here is about the token, everything there is
+ * about what the athlete it names can reach.
+ *
+ * Two athletes exist in every case, because most of what is worth asserting
+ * about a per-athlete API is what one of them *cannot* see.
  */
 
-type Scene = { db: Db; app: OpenAPIHono; ana: TestClient; bea: TestClient };
+const UUID = '00000000-0000-4000-8000-000000000001';
 
-/** Two registered athletes on one app, so "mine" can be told from "theirs". */
-async function twoClients(): Promise<Scene> {
-  const db = createTestDb();
-  const app = createTestApp({ db });
-  return { db, app, ana: await signUpViaApi(app, 'Ana'), bea: await signUpViaApi(app, 'Bea') };
-}
+const onboardingAnswers = {
+  sex: 'female',
+  age: 34,
+  height_cm: 165,
+  weight_kg: 62,
+  goal: 'get_stronger',
+  experience: 'intermediate',
+  days_per_week: 4,
+  rest_day: 7,
+};
 
-async function body<T>(res: Response): Promise<T> {
-  return (await res.json()) as T;
-}
+const profileWrite = {
+  snapshot_date: '2026-07-01',
+  sex: 'female',
+  age: 34,
+  height_cm: 165,
+  goals: { primary: 'strength' },
+  body_composition: { weight_kg: 62 },
+  strength_loads: { press_banca: 60 },
+  nutrition: { calories: 2100 },
+  activities: null,
+  schedule_preferences: { days_per_week: 4 },
+  notes: null,
+};
+
+let app: OpenAPIHono;
+let db: Db;
+let ana: TestClient;
+let bruno: TestClient;
+
+const body = async (response: Response): Promise<Record<string, never>> =>
+  (await response.json()) as Record<string, never>;
+let providerUsers: Map<string, ManagementUser>;
+
+beforeEach(async () => {
+  ({ app, db, providerUsers } = createTestHarness());
+  ana = await seedClient(db, 'Ana');
+  bruno = await seedClient(db, 'Bruno');
+});
+
+describe('the guard', () => {
+  const guardedPaths: Array<[string, string]> = [
+    ['GET', '/api/me'],
+    ['GET', '/api/me/profile'],
+    ['PUT', '/api/me/profile'],
+    ['POST', '/api/me/onboarding'],
+    ['GET', '/api/me/plans/active'],
+    ['GET', `/api/me/plans/${UUID}`],
+    ['POST', '/api/me/plans/generate'],
+    ['GET', '/api/me/weeks/current'],
+    ['GET', '/api/me/weeks'],
+    ['POST', `/api/me/weeks/${UUID}/days/1/save`],
+    ['PATCH', `/api/me/weeks/${UUID}/days/1`],
+    ['POST', '/api/wf/complete-week'],
+  ];
+
+  it.each(guardedPaths)('rejects %s %s with no credentials', async (method, path) => {
+    const response = await app.request(path, { method });
+
+    expect(response.status).toBe(401);
+    expect(await body(response)).toEqual({
+      error: { code: 'unauthorized', message: 'sign in required' },
+    });
+  });
+
+  // The point of this case is the *sameness*. A caller learns that it needs
+  // credentials and never which part of what it sent was wrong, because the
+  // difference between "expired" and "forged" is information an attacker can
+  // use and a legitimate client has no way to act on.
+  const badCredentials: Array<[string, Record<string, string>]> = [
+    ['no header at all', {}],
+    ['an empty bearer', { Authorization: 'Bearer ' }],
+    ['the wrong scheme', { Authorization: `Basic ${btoa('ana:hunter2')}` }],
+    ['a malformed token', { Authorization: 'Bearer not-a-jwt' }],
+    ['a token the verifier refuses', { Authorization: 'Bearer expired.token.value' }],
+    ['a subject the provider has never heard of', { Authorization: 'Bearer auth0|nobody' }],
+  ];
+
+  it.each(badCredentials)('answers %s with one indistinguishable rejection', async (_, headers) => {
+    const response = await app.request('/api/me/profile', { headers });
+
+    expect(response.status).toBe(401);
+    expect(await body(response)).toEqual({
+      error: { code: 'unauthorized', message: 'sign in required' },
+    });
+  });
+});
+
+describe('provisioning on the first request', () => {
+  it('creates the athlete the first time a valid token arrives', async () => {
+    const subject = 'auth0|newcomer';
+    providerUsers.set(subject, { subject, email: 'nadia@example.test', name: 'Nadia' });
+
+    const response = await app.request('/api/me', {
+      headers: { Authorization: `Bearer ${subject}` },
+    });
+
+    expect(response.status).toBe(200);
+    const { client } = (await response.json()) as { client: { id: string; display_name: string } };
+    expect(client.display_name).toBe('Nadia');
+
+    // And the second request finds the same athlete rather than making another.
+    const again = await app.request('/api/me', {
+      headers: { Authorization: `Bearer ${subject}` },
+    });
+    expect(((await again.json()) as { client: { id: string } }).client.id).toBe(client.id);
+  });
+});
+
+describe('GET /api/me', () => {
+  it('returns the athlete the token resolves to', async () => {
+    const response = await app.request('/api/me', { headers: ana.headers });
+
+    expect(response.status).toBe(200);
+    expect(await body(response)).toMatchObject({
+      client: { id: ana.id, display_name: 'Ana', status: 'active' },
+    });
+  });
+});
+
+describe('the athlete/identity invariant', () => {
+  it('will not let an athlete be deleted out from under their identity', async () => {
+    // Four handlers answer 404 `client_not_found` when `getClient` returns null,
+    // and that branch is now unreachable rather than merely untested: the
+    // foreign key from `client_identities.client_id` makes the state it
+    // describes impossible to construct. A token that resolves at all resolves
+    // to an athlete that exists.
+    //
+    // The branch stays in those handlers because `getClient` returns
+    // `Client | null` and the alternative is a non-null assertion — a null check
+    // is the honest way to spend it. What is pinned here is the constraint that
+    // makes it dead, so that a migration relaxing the foreign key fails loudly
+    // here instead of quietly widening what a token can reach.
+    //
+    // `issues/014-account-deletion.md` inherits the live version of this
+    // question: it deletes at both ends, and if the local rows go while the
+    // Auth0 user survives, the guard does not reject that athlete — it
+    // provisions them again as somebody new.
+    await expect(db.delete(clients).where(eq(clients.id, ana.id))).rejects.toThrow();
+    await expect(getClient(db, ana.id)).resolves.not.toBeNull();
+  });
+});
 
 describe('GET /api/me/profile', () => {
-  it('returns 404 before a profile exists', async () => {
-    const { app, ana } = await twoClients();
-    const res = await app.request('/api/me/profile', { headers: ana.headers });
+  it('answers 404 before a profile exists', async () => {
+    const response = await app.request('/api/me/profile', { headers: ana.headers });
 
-    expect(res.status).toBe(404);
-    expect((await body<{ error: { code: string } }>(res)).error.code).toBe('profile_not_found');
+    expect(response.status).toBe(404);
+    expect(await body(response)).toMatchObject({ error: { code: 'profile_not_found' } });
   });
 
   it("returns the caller's own profile, never the other athlete's", async () => {
-    const { app, ana, bea } = await twoClients();
-    await upsertProfileViaApi(app, ana);
+    await app.request('/api/me/profile', {
+      method: 'PUT',
+      headers: ana.jsonHeaders,
+      body: JSON.stringify({ ...profileWrite, notes: 'ana' }),
+    });
+    await app.request('/api/me/profile', {
+      method: 'PUT',
+      headers: bruno.jsonHeaders,
+      body: JSON.stringify({ ...profileWrite, notes: 'bruno' }),
+    });
 
-    const mine = await app.request('/api/me/profile', { headers: ana.headers });
-    const theirs = await app.request('/api/me/profile', { headers: bea.headers });
+    const response = await app.request('/api/me/profile', { headers: ana.headers });
 
-    expect(mine.status).toBe(200);
-    expect((await body<{ profile: { client_id: string } }>(mine)).profile.client_id).toBe(ana.id);
-    expect(theirs.status).toBe(404);
+    expect(await body(response)).toMatchObject({
+      profile: { client_id: ana.id, notes: 'ana' },
+    });
   });
 });
 
 describe('PUT /api/me/profile', () => {
-  it('creates the profile against the session, with no id in the request', async () => {
-    const { app, ana } = await twoClients();
-    await upsertProfileViaApi(app, ana);
-
-    const res = await app.request('/api/me/profile', { headers: ana.headers });
-    const profile = (await body<{ profile: { age: number; client_id: string } }>(res)).profile;
-    expect(profile.client_id).toBe(ana.id);
-    expect(profile.age).toBe(34);
-  });
-
-  it('rejects an invalid body with 400', async () => {
-    const { app, ana } = await twoClients();
-    const res = await app.request('/api/me/profile', {
+  it('writes against the token, with no athlete id in the request', async () => {
+    const response = await app.request('/api/me/profile', {
       method: 'PUT',
       headers: ana.jsonHeaders,
-      body: JSON.stringify({ age: 'thirty' }),
+      body: JSON.stringify(profileWrite),
     });
-    expect(res.status).toBe(400);
+
+    expect(response.status).toBe(200);
+    expect(await body(response)).toMatchObject({ profile: { client_id: ana.id } });
+  });
+
+  it('answers 400 for an invalid body', async () => {
+    const response = await app.request('/api/me/profile', {
+      method: 'PUT',
+      headers: ana.jsonHeaders,
+      body: JSON.stringify({ ...profileWrite, age: 'thirty-four' }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await body(response)).toMatchObject({ error: { code: 'invalid_input' } });
   });
 });
 
 describe('POST /api/me/onboarding', () => {
-  it('creates the profile against the session, with no id in the request', async () => {
-    const { app, ana } = await twoClients();
-
-    const res = await app.request('/api/me/onboarding', {
+  it('writes a profile against the token, with no athlete id in the request', async () => {
+    const response = await app.request('/api/me/onboarding', {
       method: 'POST',
       headers: ana.jsonHeaders,
-      body: JSON.stringify({
-        sex: 'female',
-        age: 29,
-        height_cm: 170,
-        weight_kg: 64,
-        goal: 'build_muscle',
-        experience: 'beginner',
-        days_per_week: 4,
-        rest_day: 7,
-      }),
+      body: JSON.stringify(onboardingAnswers),
     });
 
-    expect(res.status).toBe(200);
-    const profile = (await body<{ profile: { client_id: string; age: number } }>(res)).profile;
-    expect(profile.client_id).toBe(ana.id);
-    expect(profile.age).toBe(29);
+    expect(response.status).toBe(200);
+    expect(await body(response)).toMatchObject({ profile: { client_id: ana.id } });
   });
 
-  it('rejects an invalid body with 400', async () => {
-    const { app, ana } = await twoClients();
-
-    const res = await app.request('/api/me/onboarding', {
+  it('answers 400 for an invalid body', async () => {
+    const response = await app.request('/api/me/onboarding', {
       method: 'POST',
       headers: ana.jsonHeaders,
-      body: JSON.stringify({ age: 'thirty' }),
+      body: JSON.stringify({ ...onboardingAnswers, days_per_week: 12 }),
     });
 
-    expect(res.status).toBe(400);
-  });
-});
-
-describe('GET /api/me/plans/active', () => {
-  it('returns 404 before a plan is activated', async () => {
-    const { app, ana } = await twoClients();
-    const res = await app.request('/api/me/plans/active', { headers: ana.headers });
-
-    expect(res.status).toBe(404);
-    expect((await body<{ error: { code: string } }>(res)).error.code).toBe('active_plan_not_found');
+    expect(response.status).toBe(400);
+    expect(await body(response)).toMatchObject({ error: { code: 'invalid_input' } });
   });
 
-  it("returns the caller's active plan", async () => {
-    const { db, app, ana, bea } = await twoClients();
-    const { plan } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-active');
-
-    const mine = await app.request('/api/me/plans/active', { headers: ana.headers });
-    const theirs = await app.request('/api/me/plans/active', { headers: bea.headers });
-
-    expect((await body<{ plan: { id: string } }>(mine)).plan.id).toBe(plan.id);
-    expect(theirs.status).toBe(404);
-  });
-});
-
-describe('GET /api/me/plans/{planId}', () => {
-  it("returns the caller's plan by id", async () => {
-    const { db, app, ana } = await twoClients();
-    const { plan } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-by-id');
-
-    const res = await app.request(`/api/me/plans/${plan.id}`, { headers: ana.headers });
-    expect((await body<{ plan: { id: string } }>(res)).plan.id).toBe(plan.id);
-  });
-
-  // The path carries a plan id, which is the one identifier a caller can still
-  // choose. Naming someone else's plan finds nothing rather than reading it.
-  it("returns 404 for another athlete's plan id", async () => {
-    const { db, app, ana, bea } = await twoClients();
-    const { plan } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-not-yours');
-
-    const res = await app.request(`/api/me/plans/${plan.id}`, { headers: bea.headers });
-    expect(res.status).toBe(404);
-  });
-});
-
-describe('POST /api/me/plans/generate', () => {
-  it('refuses a client with no profile', async () => {
-    const { app, ana } = await twoClients();
-
-    const res = await app.request('/api/me/plans/generate', {
-      method: 'POST',
-      headers: ana.headers,
-    });
-
-    expect(res.status).toBe(409);
-    expect((await body<{ error: { code: string } }>(res)).error.code).toBe('profile_required');
-  });
-
-  it('refuses a client who already has an active plan', async () => {
-    const { db, app, ana } = await twoClients();
-    await upsertProfileViaApi(app, ana);
-    await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-generate-conflict');
-
-    const res = await app.request('/api/me/plans/generate', {
-      method: 'POST',
-      headers: ana.headers,
-    });
-
-    expect(res.status).toBe(409);
-    expect((await body<{ error: { code: string } }>(res)).error.code).toBe('plan_already_active');
-  });
-});
-
-describe('GET /api/me/weeks/current', () => {
-  it('returns 404 before a plan exists', async () => {
-    const { app, ana } = await twoClients();
-    const res = await app.request('/api/me/weeks/current', { headers: ana.headers });
-
-    expect(res.status).toBe(404);
-    expect((await body<{ error: { code: string } }>(res)).error.code).toBe(
-      'current_week_not_found',
-    );
-  });
-
-  it("returns the caller's in-flight week", async () => {
-    const { db, app, ana, bea } = await twoClients();
-    const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-current');
-
-    const mine = await app.request('/api/me/weeks/current', { headers: ana.headers });
-    const theirs = await app.request('/api/me/weeks/current', { headers: bea.headers });
-
-    expect((await body<{ week: { id: string } }>(mine)).week.id).toBe(first_week.id);
-    expect(theirs.status).toBe(404);
-  });
-});
-
-describe('GET /api/me/weeks', () => {
-  it("lists only the caller's weeks", async () => {
-    const { db, app, ana, bea } = await twoClients();
-    await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-list');
-
-    const mine = await app.request('/api/me/weeks', { headers: ana.headers });
-    const theirs = await app.request('/api/me/weeks', { headers: bea.headers });
-
-    expect((await body<{ weeks: unknown[] }>(mine)).weeks.length).toBeGreaterThan(0);
-    expect((await body<{ weeks: unknown[] }>(theirs)).weeks).toHaveLength(0);
-  });
-
-  it('filters by planId and rejects an invalid status with 400', async () => {
-    const { db, app, ana } = await twoClients();
-    const { plan } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-filter');
-
-    const matching = await app.request(`/api/me/weeks?planId=${plan.id}`, { headers: ana.headers });
-    expect((await body<{ weeks: unknown[] }>(matching)).weeks.length).toBeGreaterThan(0);
-
-    const other = await app.request('/api/me/weeks?planId=1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', {
-      headers: ana.headers,
-    });
-    expect((await body<{ weeks: unknown[] }>(other)).weeks).toHaveLength(0);
-
-    const bogus = await app.request('/api/me/weeks?status=bogus', { headers: ana.headers });
-    expect(bogus.status).toBe(400);
-  });
-});
-
-describe('day log writes under /api/me', () => {
-  it('saves a day and marks it completed', async () => {
-    const { db, app, ana } = await twoClients();
-    const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-save');
-
-    const res = await app.request(`/api/me/weeks/${first_week.id}/days/1/save`, {
+  it('keeps a malformed JSON body inside the error envelope', async () => {
+    // hono rejects this before any validator runs, with a plain-text body, so
+    // app.ts has to catch it or the UI's error handling meets something it
+    // cannot parse.
+    const response = await app.request('/api/me/onboarding', {
       method: 'POST',
       headers: ana.jsonHeaders,
-      body: JSON.stringify({
-        exercises: [
-          {
-            exercise_key: 'press_banca',
-            skipped: false,
-            feedback: 'hard',
-            sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
-          },
-        ],
-      }),
+      body: '{ not json',
     });
 
-    expect(res.status).toBe(200);
-    const week = (
-      await body<{
-        week: {
-          schedule: Array<{ day_index: number; completed: boolean; completed_at: string | null }>;
-        };
-      }>(res)
-    ).week;
-    const day = week.schedule.find((d) => d.day_index === 1);
-    expect(day?.completed).toBe(true);
-    expect(day?.completed_at).not.toBeNull();
-  });
-
-  it('patches a day', async () => {
-    const { db, app, ana } = await twoClients();
-    const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-patch');
-
-    const res = await app.request(`/api/me/weeks/${first_week.id}/days/1`, {
-      method: 'PATCH',
-      headers: ana.jsonHeaders,
-      body: JSON.stringify({
-        completed: true,
-        exercises: [{ exercise_key: 'press_banca', skipped: true, feedback: null, sets: [] }],
-      }),
-    });
-
-    expect(res.status).toBe(200);
-    const week = (
-      await body<{ week: { schedule: Array<{ day_index: number; completed: boolean }> } }>(res)
-    ).week;
-    expect(week.schedule.find((d) => d.day_index === 1)?.completed).toBe(true);
-  });
-
-  // The week id is the caller's other free choice: it belongs to Ana, and Bea
-  // presenting it must not reach her data.
-  it("refuses to write into another athlete's week", async () => {
-    const { db, app, ana, bea } = await twoClients();
-    const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-me-cross');
-
-    const res = await app.request(`/api/me/weeks/${first_week.id}/days/1/save`, {
-      method: 'POST',
-      headers: bea.jsonHeaders,
-      body: JSON.stringify({ exercises: [] }),
-    });
-
-    expect(res.status).toBe(404);
+    expect(response.status).toBe(400);
+    expect(await body(response)).toMatchObject({ error: { code: 'invalid_input' } });
   });
 });
 
-describe('the session is what addresses these routes', () => {
-  it('answers 401 without a cookie, on every /me path', async () => {
-    const { app } = await twoClients();
+describe('removed endpoints stay unrouted', () => {
+  const gone: Array<[string, string]> = [
+    ['POST', '/auth/sign-up'],
+    ['POST', '/auth/sign-in'],
+    ['POST', '/auth/sign-out'],
+    ['GET', '/auth/session'],
+    ['GET', '/api/clients'],
+    ['GET', `/api/clients/${UUID}`],
+  ];
 
-    for (const [method, path] of [
-      ['GET', '/api/me/profile'],
-      ['PUT', '/api/me/profile'],
-      ['POST', '/api/me/onboarding'],
-      ['GET', '/api/me/plans/active'],
-      ['GET', '/api/me/plans/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d'],
-      ['POST', '/api/me/plans/generate'],
-      ['GET', '/api/me/weeks/current'],
-      ['GET', '/api/me/weeks'],
-      ['POST', '/api/me/weeks/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/days/1/save'],
-      ['PATCH', '/api/me/weeks/1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d/days/1'],
-    ] as const) {
-      const res = await app.request(path, { method });
-      expect(res.status, `${method} ${path}`).toBe(401);
-    }
+  // `/auth/*` is pinned here for the same reason the others are: a route that
+  // comes back by accident is a route nobody reviewed. These are deleted for
+  // good — Auth0 owns all four now.
+  it.each(gone)('%s %s is not routed', async (method, path) => {
+    const response = await app.request(path, { method, headers: ana.jsonHeaders });
+
+    expect(response.status).toBe(404);
   });
 });

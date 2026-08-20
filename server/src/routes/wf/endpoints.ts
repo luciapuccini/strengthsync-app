@@ -1,7 +1,7 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 
 import type { Env } from '../../env.ts';
-import type { SessionVariables } from '../../lib/session.ts';
+import type { AuthVariables } from '../../lib/auth.ts';
 import { defaultHook } from '../../lib/validation-error.ts';
 import { json, unauthorized } from '../shared.ts';
 
@@ -28,8 +28,8 @@ const completeWeekRoute = createRoute({
  * with `Env` in addition to the session `Variables` the guard in app.ts sets
  * before this router ever runs.
  */
-export function cfWorkflowRoutes(): OpenAPIHono<{ Bindings: Env; Variables: SessionVariables }> {
-  const app = new OpenAPIHono<{ Bindings: Env; Variables: SessionVariables }>({ defaultHook });
+export function cfWorkflowRoutes(): OpenAPIHono<{ Bindings: Env; Variables: AuthVariables }> {
+  const app = new OpenAPIHono<{ Bindings: Env; Variables: AuthVariables }>({ defaultHook });
 
   app.openapi(completeWeekRoute, async (c) => {
     const clientId = c.get('clientId');

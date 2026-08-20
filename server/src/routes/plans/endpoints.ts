@@ -12,7 +12,7 @@ import {
 } from '../../db/index.ts';
 
 import type { Env } from '../../env.ts';
-import type { SessionVariables } from '../../lib/session.ts';
+import type { AuthVariables } from '../../lib/auth.ts';
 import { defaultHook } from '../../lib/validation-error.ts';
 import { conflict, invalidInput, json, notFound, unauthorized } from '../shared.ts';
 
@@ -61,8 +61,8 @@ const postGeneratePlanRoute = createRoute({
  * All three take the athlete from the verified session — see the note in
  * `routes/clients/endpoints.ts`.
  */
-export function planRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables; Bindings: Env }> {
-  const app = new OpenAPIHono<{ Variables: SessionVariables; Bindings: Env }>({ defaultHook });
+export function planRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables; Bindings: Env }> {
+  const app = new OpenAPIHono<{ Variables: AuthVariables; Bindings: Env }>({ defaultHook });
 
   app.openapi(getMyActivePlanRoute, async (c) => {
     const plan = await getActivePlan(db, c.get('clientId'));

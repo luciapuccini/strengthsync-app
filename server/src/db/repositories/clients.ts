@@ -8,11 +8,12 @@ import { RepoError } from '../errors.ts';
 import { clients, coaches } from '../schema.ts';
 
 /**
- * The `Client` the API returns, column by column. The projection is deliberate,
- * not stylistic: `clients.invite_code` holds a shared per-batch secret, and a
- * `select()` over the table would carry it into the sign-up, sign-in and
- * session responses, where one invitee could read it and pass it on. Same
- * reasoning that keeps the password hash in its own table.
+ * The `Client` the API returns, column by column. The projection outlived the
+ * secret it was written for — `clients.invite_code` is gone with the invite gate
+ * — but it is kept rather than replaced by `select()`, because it pins the
+ * response to the domain `Client` shape: a column added to the table later
+ * cannot reach the browser without someone naming it here. Identity now lives
+ * in its own table for the same reason the password hash did.
  */
 const clientColumns = {
   id: clients.id,
@@ -25,7 +26,7 @@ const clientColumns = {
 
 // There is deliberately no `listClients`: it went with the route that used it
 // in `issues/auth/013`. Reading every client is not something this application
-// does — an athlete sees their own data, addressed by their session.
+// does — an athlete sees their own data, addressed by their verified token.
 export async function getClient(db: Db, clientId: string): Promise<Client | null> {
   const rows = await db
     .select(clientColumns)
@@ -39,16 +40,11 @@ export async function getClient(db: Db, clientId: string): Promise<Client | null
  * Create a client under the MVP's single shared coach. The coach row comes
  * from `seeds/000_default_coach.sql` (see docs/in_progress checkpoints).
  *
- * `invite_code` is the code the account registered with (`docs/mvp.md` §2),
- * persisted for cohort attribution and read back only by SQL. It is optional so
- * that callers with no gate in front of them — the tests below the HTTP
- * boundary — stay unchanged; the sign-up handler always passes the code it just
- * accepted.
+ * There is no eligibility argument left to pass. The cohort is created directly
+ * at the identity provider with sign-ups disabled, so every caller that gets
+ * this far was invited by construction — see docs/architecture/auth.md.
  */
-export async function createClient(
-  db: Db,
-  input: Pick<Client, 'display_name'> & { invite_code?: string },
-): Promise<Client> {
+export async function createClient(db: Db, input: Pick<Client, 'display_name'>): Promise<Client> {
   const coach = (await db.select().from(coaches).limit(1))[0];
   if (!coach) {
     throw new RepoError(
@@ -66,6 +62,6 @@ export async function createClient(
     created_at: now,
     updated_at: now,
   };
-  await db.insert(clients).values({ ...client, invite_code: input.invite_code ?? null });
+  await db.insert(clients).values(client);
   return client;
 }

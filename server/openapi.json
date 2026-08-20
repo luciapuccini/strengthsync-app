@@ -13,7 +13,7 @@
   ],
   "security": [
     {
-      "sessionCookie": []
+      "bearerAuth": []
     }
   ],
   "components": {
@@ -101,60 +101,6 @@
         },
         "required": [
           "error"
-        ]
-      },
-      "SignUpInput": {
-        "type": "object",
-        "properties": {
-          "display_name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 8
-          },
-          "invite_code": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "display_name",
-          "email",
-          "password",
-          "invite_code"
-        ]
-      },
-      "SignInInput": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "password": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ]
-      },
-      "SignedOutResponse": {
-        "type": "object",
-        "properties": {
-          "ok": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "ok"
         ]
       },
       "ClientProfileResponse": {
@@ -1018,10 +964,10 @@
     },
     "parameters": {},
     "securitySchemes": {
-      "sessionCookie": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "session"
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
   },
@@ -1044,134 +990,12 @@
         }
       }
     },
-    "/auth/sign-up": {
-      "post": {
-        "summary": "Register a client and start a session",
-        "security": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SignUpInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Client registered and signed in",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Understood, but not allowed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflicts with existing state",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/sign-in": {
-      "post": {
-        "summary": "Start a session for an existing client",
-        "security": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SignInInput"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Signed in",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid credentials",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/sign-out": {
-      "post": {
-        "summary": "End the current session",
-        "security": [],
-        "responses": {
-          "200": {
-            "description": "Signed out",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SignedOutResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/session": {
+    "/api/me": {
       "get": {
-        "summary": "Return the signed-in client",
+        "summary": "Get the signed-in client",
         "responses": {
           "200": {
-            "description": "Signed in",
+            "description": "The signed-in client",
             "content": {
               "application/json": {
                 "schema": {
@@ -1182,6 +1006,16 @@
           },
           "401": {
             "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Client, UpdateClientProfile } from '@/api/types';
+import type { UpdateClientProfile } from '@/api/types';
 import { makeWeek } from '@/test/weekFixture';
 
 const { mockGet, mockPost, mockPut, mockPatch } = vi.hoisted(() => ({
@@ -20,16 +20,15 @@ vi.mock('openapi-fetch', () => ({
 }));
 
 import {
+  authorizedFetch,
   getActivePlan,
+  getMe,
   getPlan,
   getProfile,
-  getSession,
   listCompletedWeeks,
   saveDayLog,
+  setAccessTokenProvider,
   setUnauthorizedHandler,
-  signIn,
-  signOut,
-  signUp,
   updateDayLog,
   updateProfile,
 } from './client';
@@ -38,15 +37,6 @@ import { ApiClientError } from './errors';
 const UUID = '00000000-0000-4000-8000-000000000001';
 const PLAN = '00000000-0000-4000-8000-000000000002';
 const NOW = '2026-05-10T00:00:00.000Z';
-
-const sampleClient: Client = {
-  id: UUID,
-  coach_id: UUID,
-  display_name: 'Lucia',
-  status: 'active',
-  created_at: NOW,
-  updated_at: NOW,
-};
 
 const profileBody: UpdateClientProfile = {
   snapshot_date: '2026-07-01',
@@ -85,8 +75,58 @@ function errorResponse(status: number, error: unknown) {
 
 afterEach(() => {
   vi.clearAllMocks();
-  // The handler is module state, so it outlives the test that registered it.
+  vi.unstubAllGlobals();
+  // Both of these are module state, so they outlive the test that registered
+  // them.
   setUnauthorizedHandler(() => {});
+  setAccessTokenProvider(async () => null);
+});
+
+/**
+ * The credential, which is the one thing every call above has in common. These
+ * exercise `authorizedFetch` directly rather than through `openapi-fetch`, which
+ * this file mocks out wholesale — the wrapper is what is under test, not the
+ * plumbing that hands it a `Request`.
+ */
+describe('the bearer wrapper', () => {
+  const sentTo = (fetchMock: ReturnType<typeof vi.fn>): Request =>
+    fetchMock.mock.calls[0]?.[0] as Request;
+
+  function stubFetch() {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  it('carries the token from the registered provider', async () => {
+    const fetchMock = stubFetch();
+    setAccessTokenProvider(async () => 'a-token');
+
+    await authorizedFetch(new Request('https://api.test/api/me'));
+
+    expect(sentTo(fetchMock).headers.get('Authorization')).toBe('Bearer a-token');
+  });
+
+  // Not an error, and deliberately not a thrown one: the athlete is signed out,
+  // or the SDK has not registered a provider yet, and the honest thing to do is
+  // send the request without a credential and let the server answer 401 — which
+  // is what signs them out everywhere else in this file.
+  it('sends no header when there is no token to send', async () => {
+    const fetchMock = stubFetch();
+    setAccessTokenProvider(async () => null);
+
+    await authorizedFetch(new Request('https://api.test/api/me'));
+
+    expect(sentTo(fetchMock).headers.has('Authorization')).toBe(false);
+  });
+
+  it('sends no header before any provider is registered', async () => {
+    const fetchMock = stubFetch();
+
+    await authorizedFetch(new Request('https://api.test/api/me'));
+
+    expect(sentTo(fetchMock).headers.has('Authorization')).toBe(false);
+  });
 });
 
 describe('api client', () => {
@@ -94,6 +134,13 @@ describe('api client', () => {
     mockGet.mockResolvedValue(okResponse({ plan: samplePlan }));
     await expect(getActivePlan()).resolves.toEqual(samplePlan);
     expect(mockGet).toHaveBeenCalledWith('/api/me/plans/active');
+  });
+
+  it('reads the signed-in athlete from /api/me', async () => {
+    const client = { id: UUID, coach_id: UUID, display_name: 'Ana', status: 'active' as const };
+    mockGet.mockResolvedValue(okResponse({ client }));
+    await expect(getMe()).resolves.toEqual(client);
+    expect(mockGet).toHaveBeenCalledWith('/api/me');
   });
 
   it('puts the body and parses the saved profile', async () => {
@@ -136,73 +183,13 @@ describe('api client', () => {
   });
 });
 
-describe('auth', () => {
-  it('posts the registration body and parses the created client', async () => {
-    const body = {
-      display_name: 'Lucia',
-      email: 'lucia@example.com',
-      password: 'dev-password-123',
-      invite_code: 'spring-cohort',
-    };
-    mockPost.mockResolvedValue(okResponse({ client: sampleClient }));
-    await expect(signUp(body)).resolves.toEqual(sampleClient);
-    expect(mockPost).toHaveBeenCalledWith('/auth/sign-up', { body });
-  });
-
-  it('surfaces a duplicate email as a conflict error', async () => {
-    mockPost.mockResolvedValue(
-      errorResponse(409, {
-        error: { code: 'email_already_registered', message: 'email already registered' },
-      }),
-    );
-    await expect(
-      signUp({
-        display_name: 'Lucia',
-        email: 'lucia@example.com',
-        password: 'dev-password-123',
-        invite_code: 'spring-cohort',
-      }),
-    ).rejects.toMatchObject({ kind: 'conflict', message: 'email already registered' });
-  });
-
-  it('reads the session back as the signed-in client', async () => {
-    mockGet.mockResolvedValue(okResponse({ client: sampleClient }));
-    await expect(getSession()).resolves.toEqual(sampleClient);
-    expect(mockGet).toHaveBeenCalledWith('/auth/session');
-  });
-
-  it('throws unauthorized when no session is present', async () => {
-    mockGet.mockResolvedValue(
-      errorResponse(401, { error: { code: 'unauthorized', message: 'sign in required' } }),
-    );
-    await expect(getSession()).rejects.toMatchObject({ kind: 'unauthorized', status: 401 });
-  });
-
-  it('posts the credentials and parses the signed-in client', async () => {
-    const body = { email: 'lucia@example.com', password: 'dev-password-123' };
-    mockPost.mockResolvedValue(okResponse({ client: sampleClient }));
-    await expect(signIn(body)).resolves.toEqual(sampleClient);
-    expect(mockPost).toHaveBeenCalledWith('/auth/sign-in', { body });
-  });
-
-  it('surfaces rejected credentials as an unauthorized error', async () => {
-    mockPost.mockResolvedValue(
-      errorResponse(401, {
-        error: { code: 'invalid_credentials', message: 'email or password is incorrect' },
-      }),
-    );
-    await expect(signIn({ email: 'lucia@example.com', password: 'wrong' })).rejects.toMatchObject({
-      kind: 'unauthorized',
-      message: 'email or password is incorrect',
-    });
-  });
-
-  it('posts to the sign-out route', async () => {
-    mockPost.mockResolvedValue(okResponse({ ok: true }));
-    await expect(signOut()).resolves.toBeUndefined();
-    expect(mockPost).toHaveBeenCalledWith('/auth/sign-out', {});
-  });
-});
+// There is no `describe('auth')` block any more. Every case in it addressed a
+// route deleted by `issues/011-amputate-old-auth.md` — sign-up, sign-in,
+// sign-out and the session read — and none is restored here: Auth0's hosted page
+// replaces all four, so there is no API call left to test.
+// `GET /api/me` is the nearest successor and is covered above, but it replaces
+// only what the session read did — report who this is — not what sign-in did.
+// `issues/013-web-app-universal-login.md` adds the bearer-attaching wrapper.
 
 describe('unauthorized handler', () => {
   it('runs on an unauthorized response from any call, and still rejects', async () => {

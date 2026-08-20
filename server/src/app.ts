@@ -3,10 +3,10 @@ import { HTTPException } from 'hono/http-exception';
 
 import { RepoError, type Db } from './db/index.ts';
 
+import { requireAuth, type TokenVerifier } from './lib/auth.ts';
 import { errorResponse, repoErrorResponse } from './lib/errors.ts';
-import { requireSession } from './lib/session.ts';
+import type { ManagementClient } from './lib/management.ts';
 import { defaultHook } from './lib/validation-error.ts';
-import { authRoutes } from './routes/auth/endpoints.ts';
 import { clientRoutes } from './routes/clients/endpoints.ts';
 import { healthRoutes } from './routes/health.ts';
 import { ingestRoutes } from './routes/ingest.ts';
@@ -17,14 +17,17 @@ import { cfWorkflowRoutes } from './routes/wf/endpoints.ts';
 
 export type AppConfig = {
   db: Db;
-  /** Signs session JWTs (`lib/session-token.ts`). */
-  sessionSecret: string;
   /**
-   * The invite code sign-up accepts, one per invite batch (`docs/mvp.md` §2).
-   * A Worker secret, threaded through here the same way the session secret is,
-   * so the handler never reads the environment itself.
+   * Turns a bearer token into a subject, or refuses it.
+   *
+   * Injected rather than built here, for the same reason `db` is: this module
+   * knows nothing about the environment, and reading an issuer or a JWKS URL out
+   * of it would be the first time it did. `index.ts` builds the real one;
+   * the suite passes a stub, which is what keeps it offline and fast.
    */
-  inviteCode: string;
+  verifyToken: TokenVerifier;
+  /** The Auth0 Management API. Built in `index.ts`, stubbed by the suite. */
+  management: ManagementClient;
   /**
    * What `/ingest/*` forwards with. Only tests pass this; in the Worker the
    * global `fetch` is the right answer and the proxy has no other dependency.
@@ -60,14 +63,19 @@ export function createApp(config: AppConfig): OpenAPIHono {
   // document, which describes the contract the client is typed against.
   app.route('/', ingestRoutes(config.ingestFetch));
 
-  // Registration and sign-in, outside /api because they mint the cookie the
-  // guard below checks.
-  app.route('/auth', authRoutes(config.db, config.sessionSecret, config.inviteCode));
-
-  // The session cookie is the only way into the API, in every environment.
+  // A verified bearer token is the only way into the API, in every environment.
   // There is deliberately no development exemption: a guard that is off while
-  // the code is being written is a guard nobody tests.
-  app.use('/api/*', requireSession(config.sessionSecret));
+  // the code is being written is a guard nobody tests. Identity is minted by
+  // Auth0 now, not here, so there are no unauthenticated routes left to mount
+  // above this line.
+  app.use(
+    '/api/*',
+    requireAuth({
+      db: config.db,
+      verifyToken: config.verifyToken,
+      management: config.management,
+    }),
+  );
   app.route('/api', clientRoutes(config.db));
   app.route('/api', onboardingRoutes(config.db));
   app.route('/api', planRoutes(config.db));

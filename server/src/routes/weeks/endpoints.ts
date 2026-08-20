@@ -10,7 +10,7 @@ import {
 } from '../../db/index.ts';
 import type { WeekStatus } from '../../domain/model/index.ts';
 
-import type { SessionVariables } from '../../lib/session.ts';
+import type { AuthVariables } from '../../lib/auth.ts';
 import { defaultHook } from '../../lib/validation-error.ts';
 import { invalidInput, json, notFound, unauthorized } from '../shared.ts';
 
@@ -89,8 +89,8 @@ const updateMyDayLogRoute = createRoute({
  * `routes/clients/endpoints.ts`. The week id in the write paths is the caller's
  * only free choice, and the repository scopes it to them.
  */
-export function weekRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables }> {
-  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook });
+export function weekRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables }> {
+  const app = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook });
 
   app.openapi(getMyCurrentWeekRoute, async (c) => {
     const week = await getCurrentWeek(db, c.get('clientId'));
@@ -105,8 +105,8 @@ export function weekRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables }>
 
   app.openapi(listMyWeeksRoute, async (c) => {
     const clientId = c.get('clientId');
-    // The session outlives the row it names by up to thirty days, so a deleted
-    // athlete can still present a valid cookie.
+    // A token outlives the row it names, so a deleted athlete can still
+    // present a valid one.
     if (!(await getClient(db, clientId))) {
       return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404);
     }

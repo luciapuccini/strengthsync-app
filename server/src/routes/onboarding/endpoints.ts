@@ -4,7 +4,7 @@ import { todayIso } from '../../db/dates.ts';
 import { getClient, upsertProfile, type Db } from '../../db/index.ts';
 import { mapAnswersToProfileWrite } from '../../domain/onboarding/index.ts';
 
-import type { SessionVariables } from '../../lib/session.ts';
+import type { AuthVariables } from '../../lib/auth.ts';
 import { defaultHook } from '../../lib/validation-error.ts';
 import { ClientProfileResponseSchema } from '../clients/schemas.ts';
 import { invalidInput, json, notFound, unauthorized } from '../shared.ts';
@@ -32,13 +32,13 @@ const postOnboardingRoute = createRoute({
  * directly, in the same shape as the clients and auth handlers — no
  * use-case layer.
  */
-export function onboardingRoutes(db: Db): OpenAPIHono<{ Variables: SessionVariables }> {
-  const app = new OpenAPIHono<{ Variables: SessionVariables }>({ defaultHook });
+export function onboardingRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables }> {
+  const app = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook });
 
   app.openapi(postOnboardingRoute, async (c) => {
     const clientId = c.get('clientId');
-    // The session outlives the row it names by up to thirty days, so a deleted
-    // athlete can still present a valid cookie.
+    // A token outlives the row it names, so a deleted athlete can still
+    // present a valid one.
     if (!(await getClient(db, clientId))) {
       return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404);
     }
