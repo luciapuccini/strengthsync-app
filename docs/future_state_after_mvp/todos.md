@@ -37,6 +37,13 @@ Notes only — not designs. Pointers into existing docs where they already cover
   `server/src/lib/account-deletion.ts` and
   [auth.md](../architecture/auth.md#account-deletion).
 
+- **A real transactional email provider.** Auth0's built-in sender is
+  rate-limited and sends from `no-reply@auth0user.net`, which is not
+  configurable. Tracked where it actually bites, in
+  [008-launch-readiness.md](../todos/008-launch-readiness.md) — it gates the
+  invite batch rather than being post-MVP. Loops.so cannot serve this role: it
+  is API-only with no SMTP relay.
+
 Four entries left this list with the Auth0 migration (`issues/015`), because the
 identity provider owns them rather than because they were built here: **password
 reset**, **SSO / social sign-in**, **show password in field** — all three are
