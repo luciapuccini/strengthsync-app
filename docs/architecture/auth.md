@@ -213,7 +213,16 @@ current code.
 
 `DELETE /api/account` deletes the Auth0 user first, then the `client_identities`
 row, then cascades the rest in foreign key order: `weeks`, `plans`,
-`client_profiles`, `clients`.
+`client_profiles`, `clients`. The sequence lives in
+`server/src/lib/account-deletion.ts`; the handler in `routes/account/endpoints.ts`
+is one call, and the route has its own area because it is the only one that needs
+the Management API.
+
+A refused Auth0 deletion answers **502**, not 500: nothing local was touched, the
+athlete still has a working account and the request is retryable, so `app.ts`
+maps `ManagementError` to `provider_unavailable` rather than letting it fall out
+as an internal error. The `/account` screen says so — "nothing was removed" — and
+stays put rather than signing anyone out of an account that still exists.
 
 That order is chosen for its failure mode, and the failure it is chosen against
 is resurrection rather than data loss. Provisioning is unconditional, so if the

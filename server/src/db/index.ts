@@ -8,21 +8,25 @@ export { RepoError, type RepoErrorKind } from './errors.ts';
 export * as schema from './schema.ts';
 export { addDays, todayIso } from './dates.ts';
 
-export { createClient, getClient } from './repositories/clients.ts';
+export { createClient, deleteClient, getClient } from './repositories/clients.ts';
 export {
   claimSubject,
+  deleteIdentity,
   deleteUnboundClient,
   findClientIdBySubject,
+  findSubjectByClientId,
 } from './repositories/identities.ts';
-export { findProfile, getProfile, upsertProfile } from './repositories/profiles.ts';
+export { deleteProfile, findProfile, getProfile, upsertProfile } from './repositories/profiles.ts';
 export {
   activateGeneratedPlan,
+  deletePlans,
   findPlanById,
   getActivePlan,
   getActivePlanOrThrow,
   listPlans,
 } from './repositories/plans.ts';
 export {
+  deleteWeeks,
   getCurrentWeek,
   getWeek,
   listWeeks,

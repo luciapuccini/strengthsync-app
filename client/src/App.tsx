@@ -8,6 +8,7 @@ import { AppLayout } from '@/components/app-layout/appLayout';
 import { ErrorBoundary } from '@/components/error-boundary/errorBoundary';
 import { RequireAuth } from '@/components/require-auth/requireAuth';
 import { RootRedirect } from '@/components/root-redirect/rootRedirect';
+import { AccountPage } from '@/routes/account/accountPage';
 import { HistoryPage } from '@/routes/history/historyPage';
 import { NotFound } from '@/routes/not-found/notFound';
 import { ComposingScreenPreview } from '@/routes/onboarding/components/composing-screen/composingScreenPreview';
@@ -97,6 +98,7 @@ export default function App(): JSX.Element {
                 </ErrorBoundary>
               }
             />
+            <Route path="/account" element={<AccountPage />} />
             <Route
               path="/history"
               element={

@@ -65,3 +65,17 @@ export async function createClient(db: Db, input: Pick<Client, 'display_name'>):
   await db.insert(clients).values(client);
   return client;
 }
+
+/**
+ * Remove the athlete row itself. The last statement of account deletion.
+ *
+ * Distinct from `deleteUnboundClient` in `identities.ts`, which looks identical
+ * and is not the same operation: that one takes back a row the calling request
+ * created moments earlier and that nothing has ever referenced. This one removes
+ * an athlete who has lived, so it is only safe once their identity, weeks, plans
+ * and profile are already gone — every one of those has a foreign key onto this
+ * row. The ordering that guarantees it lives in `lib/account-deletion.ts`.
+ */
+export async function deleteClient(db: Db, clientId: string): Promise<void> {
+  await db.delete(clients).where(eq(clients.id, clientId));
+}

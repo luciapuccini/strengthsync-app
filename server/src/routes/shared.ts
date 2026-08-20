@@ -29,6 +29,7 @@ export const forbidden = json('Understood, but not allowed', ApiErrorSchema);
 export const invalidInput = json('Invalid input', ApiErrorSchema);
 export const notFound = json('Not found', ApiErrorSchema);
 export const conflict = json('Conflicts with existing state', ApiErrorSchema);
+export const badGateway = json('An upstream provider refused or was unreachable', ApiErrorSchema);
 
 // No shared client-id param: no route takes one. The athlete is read from the
 // session, so the only ids left in a path are a week's and a plan's.

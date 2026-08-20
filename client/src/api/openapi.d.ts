@@ -40,6 +40,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete the signed-in athlete and all of their training data */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Account and training data deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Missing or invalid credentials */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+                /** @description An upstream provider refused or was unreachable */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiError"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me": {
         parameters: {
             query?: never;
@@ -751,6 +803,12 @@ export interface components {
         HealthResponse: {
             ok: boolean;
         };
+        ApiError: {
+            error: {
+                code: string;
+                message: string;
+            };
+        };
         ClientResponse: {
             client: components["schemas"]["Client"];
         };
@@ -766,12 +824,6 @@ export interface components {
             created_at: string;
             /** Format: date-time */
             updated_at: string;
-        };
-        ApiError: {
-            error: {
-                code: string;
-                message: string;
-            };
         };
         ClientProfileResponse: {
             profile: components["schemas"]["ClientProfile"];

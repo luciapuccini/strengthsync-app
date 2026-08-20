@@ -103,24 +103,214 @@ ordering is a decision about failure behaviour rather than something a test
 would catch. That makes one manual run against the real tenant the only
 verification there is, so it is not optional.
 
+## HITL runbook
+
+Run against the **real Auth0 tenant** with the **local** database: the tenant is
+what the check is about, and a local D1 is what makes the row counts readable in
+one command. Nothing here needs a deploy.
+
+Values come from `server/wrangler.jsonc` and issue 010. Every `wrangler` command
+runs from `server/`.
+
+### 0. Two terminals, and a database that is not behind
+
+```sh
+cd server && pnpm run db:migrate:local   # 013 found the local D1 two migrations behind
+cd server && pnpm dev                    # Worker on :8787
+cd client && pnpm dev                    # app on :5173
+```
+
+`.dev.vars` must carry `AUTH0_M2M_CLIENT_SECRET`. Without it every step below
+fails at the same place and says nothing useful about the ordering.
+
+### 1. Create a throwaway athlete — in the Dashboard, not by curl
+
+**The M2M application cannot create users, deliberately.** Step 5c of issue 010
+scopes it to `read:users` and `delete:users` and nothing else, on the grounds
+that any further scope is standing authority for something no code asks for.
+Provisioning reads a user; deletion deletes one; nothing in this repository
+creates one. A `POST /api/v2/users` with that token answers **403
+insufficient_scope** no matter how the URL is written.
+
+So: Dashboard → **User Management → Users → Create User**.
+
+| Field | Value |
+| --- | --- |
+| Email | a throwaway you control |
+| Password | 15+ characters — the connection policy rejects shorter |
+| Connection | `Username-Password-Authentication` |
+
+Creating a user here is not blocked by *Disable Sign Ups*, which only closes the
+public endpoint. That distinction is the whole point of issue 010's step 6.
+
+Open the created user and keep the **user_id** (`auth0|…`) from the URL or the
+Raw JSON tab. That is the `sub`, and it is what the identity row stores.
+
+Read-back, if you want one, does work over curl — this token has `read:users`.
+**Mint and spend it at the custom domain**: a token minted at
+`auth.strengthsync.ai` and presented to the tenant domain comes back 401 with
+nothing in the body to say why. Only the *audience* is the tenant domain,
+because the Management API audience is not customisable.
+
+```sh
+export M2M_SECRET='<from server/.dev.vars — never paste it into a tracked file>'
+export MGMT=$(curl -s -X POST https://auth.strengthsync.ai/oauth/token \
+  -H 'content-type: application/json' \
+  -d '{"client_id":"aURi7aSf2Z1YHTZkUzgQURPHIbo8Xmb0",
+       "client_secret":"'"$M2M_SECRET"'",
+       "audience":"https://dev-ky58kx02q7r2ukt6.us.auth0.com/api/v2/",
+       "grant_type":"client_credentials"}' | jq -r .access_token)
+```
+
+### 2. Give the athlete rows in all five tables
+
+Sign in at `http://localhost:5173` as that user, complete onboarding, generate a
+plan and log one day. Provisioning writes `clients` and `client_identities`,
+onboarding writes `client_profiles`, generation writes `plans` and `weeks`.
+Deleting an athlete who only has two rows proves almost nothing.
+
+Do this run on a phone-sized viewport and it also closes issue 013's last
+outstanding criterion.
+
+Record what you are about to delete:
+
+```sh
+wrangler d1 execute strengthsync --local --command \
+  "SELECT c.id, ci.subject, ci.email FROM clients c
+   JOIN client_identities ci ON ci.client_id = c.id
+   WHERE ci.email = 'delete-test@example.com';"
+```
+
+### 3. The abort check, first — because it leaves the account intact
+
+This is the case with no automated coverage at all, and it is cheap: break the
+M2M secret and confirm the deletion refuses to start.
+
+Put a wrong `AUTH0_M2M_CLIENT_SECRET` in `.dev.vars` and **restart `pnpm dev`** —
+the Management client caches its token for the life of the process, so without a
+restart a previously minted one is reused and the failure never happens.
+
+Then press *Delete account* on `/account`. Expect:
+
+- the screen stays put and says **"Nothing was removed — please try again."**
+- the request answers **502** `provider_unavailable`, not 500
+- every row from step 2 is still there
+- the athlete is still signed in and `/track` still works
+
+If the rows are gone here, the order has been inverted and the module is wrong.
+That is the whole point of running this one first.
+
+Restore the real secret and restart before continuing.
+
+### 4. Capture the still-live access token
+
+The token is held in memory and never written to storage, so DevTools is the
+only way to read it: Network tab → any `/api/*` request → Request Headers → copy
+the value of `authorization`.
+
+Do this immediately before step 5. Step 6 is meaningless with an expired token.
+
+```sh
+export ATHLETE_TOKEN='eyJ...'
+```
+
+### 5. Delete for real
+
+Press *Delete account*, type `delete my account`, confirm. Expect a redirect out
+to the hosted page and back to sign-in.
+
+### 6. The three checks that matter
+
+**The Auth0 user is gone.** 404 is the correct answer:
+
+```sh
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "https://auth.strengthsync.ai/api/v2/users/$(printf %s '<user_id>' | jq -sRr @uri)" \
+  -H "authorization: Bearer $MGMT"
+```
+
+Or Dashboard → User Management → Users, and search the email. Nothing.
+
+**No row survives in any of the five tables.** All five counts zero:
+
+```sh
+wrangler d1 execute strengthsync --local --command \
+  "SELECT 'clients' t, COUNT(*) n FROM clients WHERE id='<client_id>'
+   UNION ALL SELECT 'identities', COUNT(*) FROM client_identities WHERE client_id='<client_id>'
+   UNION ALL SELECT 'profiles',   COUNT(*) FROM client_profiles   WHERE client_id='<client_id>'
+   UNION ALL SELECT 'plans',      COUNT(*) FROM plans             WHERE client_id='<client_id>'
+   UNION ALL SELECT 'weeks',      COUNT(*) FROM weeks             WHERE client_id='<client_id>';"
+```
+
+**The resurrection check — the one nothing else catches.** Replay the captured
+token:
+
+```sh
+curl -i http://localhost:8787/api/me -H "authorization: Bearer $ATHLETE_TOKEN"
+```
+
+**401 is the pass.** A **200 carrying a fresh empty client** is the failure this
+whole module exists to prevent: it means provisioning re-created the athlete, the
+deletion silently reversed itself, and to the athlete it looks as though the app
+erased their training history and left them signed in.
+
+### 7. Signing in again fails at the provider
+
+Try the credentials from step 1 on the hosted page. Expect Auth0 to refuse —
+the user no longer exists, and sign-ups are disabled at the connection, so there
+is no path back in. Do not expect a StrengthSync error; this one never reaches
+our origin.
+
+### Three wrong things in issue 010's step 10
+
+Found while running this on 2026-08-20. All three are in
+`010-auth0-tenant-setup.md`'s *Create one account by hand* step:
+
+1. **It cannot work as written.** The `curl` creates a user with the M2M token,
+   which has no `create:users` scope — see step 1 above. 403, always.
+2. **The URL is malformed twice over**: `https://https://dev-…us.auth0.com/…`
+   duplicates the scheme, and it targets the tenant domain where a
+   custom-domain-minted token must be spent at the custom domain.
+3. **It pastes the live M2M client secret and a literal Management token into a
+   tracked file**, which contradicts issue 010's own acceptance criterion that
+   the secret "appears in no file". The token expires; the secret does not.
+   Rotate it and scrub the file.
+
 ## Acceptance criteria
 
-- [ ] An authenticated endpoint deletes the provider user first, then the
-      identity row, then cascades weeks, plans, profile and the athlete row
-- [ ] A failed Auth0 deletion deletes nothing locally and leaves a working
-      account
-- [ ] The ordering rationale is written in the module, not in a route handler —
-      including why the identity row goes second rather than last
-- [ ] A destructive control exists in the app behind an explicit confirmation
-      that says the data is not recoverable
-- [ ] Deleting an account, then attempting to sign in with the same credentials,
-      fails at the provider
-- [ ] Run once against the real tenant: the Auth0 user is gone and no row for
-      that athlete remains in any of the five tables
-- [ ] After that run, the athlete's still-live access token is presented to
+- [x] An authenticated endpoint deletes the provider user first, then the
+      identity row, then cascades weeks, plans, profile and the athlete row —
+      `DELETE /api/account`, mounted from `server/src/routes/account/endpoints.ts`
+- [x] A failed Auth0 deletion deletes nothing locally and leaves a working
+      account — `ManagementError` propagates out of `deleteAccount` before the
+      first local statement, and `app.ts` maps it to a 502 rather than letting it
+      fall out as a 500, so the UI can say "nothing was removed, try again"
+- [x] The ordering rationale is written in the module, not in a route handler —
+      including why the identity row goes second rather than last. The handler in
+      `routes/account/endpoints.ts` is one call and says so
+- [x] A destructive control exists in the app behind an explicit confirmation
+      that says the data is not recoverable — `/account`, reached from the header,
+      with a typed confirmation rather than a modal: the action is irreversible
+      and a modal is dismissed by the same reflex that opened it. It also avoids
+      adding a dialog primitive for the one screen that would need one
+- [x] Deleting an account, then attempting to sign in with the same credentials,
+      fails at the provider — follows from the user being gone at Auth0 with
+      sign-ups disabled at the connection, so there is no path back in. Not
+      exercised as a separate browser check; accepted on the operator's run
+- [x] Run once against the real tenant: the Auth0 user is gone and no row for
+      that athlete remains in any of the five tables — operator's run,
+      2026-08-20, against the real tenant with the local database
+- [x] After that run, the athlete's still-live access token is presented to
       `GET /api/me` and answers 401 — **not** 200 with a new empty account,
-      which is what a wrong ordering produces and what no other check catches
-- [ ] The partial-failure trade-off is recorded in
+      which is what a wrong ordering produces and what no other check catches.
+      Verified 2026-08-20 for `auth0|6a86ece029c739bd12268986`, a token with 23
+      hours left to run, against **both** `localhost:8787` and
+      `app.strengthsync.ai`: `401 unauthorized / sign in required` from each.
+      Confirmed to be the resurrection path rather than a rejected signature —
+      `SELECT COUNT(*) FROM client_identities WHERE subject = 'auth0|6a86…'`
+      returns 0, so the guard fell through to the Management API, found no user
+      and refused. A wrong ordering would have answered 200 with a fresh client
+- [x] The partial-failure trade-off is recorded in
       `docs/future_state_after_mvp/todos.md`, not fixed here
 
 ## Blocked by
@@ -133,4 +323,9 @@ verification there is, so it is not optional.
 
 ## STATUS
 
-TODO
+DONE — endpoint, module, cascade and `/account` screen shipped in `5925018`; the
+HITL runbook in `cf3e734`. Validated against the real tenant on 2026-08-20: the
+Auth0 user is gone, no row survives, and the deleted athlete's still-live access
+token answers 401 from both the local Worker and `app.strengthsync.ai` rather
+than 200 with a new empty account — the one failure this module exists to
+prevent, and the one no other check catches.

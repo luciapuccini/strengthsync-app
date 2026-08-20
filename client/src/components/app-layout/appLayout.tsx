@@ -26,6 +26,9 @@ export function AppLayout(): JSX.Element {
             <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground">
               History
             </Link>
+            <Link to="/account" className="text-sm text-muted-foreground hover:text-foreground">
+              Account
+            </Link>
             <SignOutButton />
           </nav>
         </div>
