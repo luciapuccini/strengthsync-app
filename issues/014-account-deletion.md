@@ -123,31 +123,44 @@ cd client && pnpm dev                    # app on :5173
 `.dev.vars` must carry `AUTH0_M2M_CLIENT_SECRET`. Without it every step below
 fails at the same place and says nothing useful about the ordering.
 
-### 1. Create a throwaway athlete
+### 1. Create a throwaway athlete — in the Dashboard, not by curl
 
-Mint a Management token. **Mint and spend it at the custom domain** — a token
-minted at `auth.strengthsync.ai` and presented to the tenant domain comes back
-401 with nothing in the body to say why. Only the *audience* is the tenant
-domain, because the Management API audience is not customisable.
+**The M2M application cannot create users, deliberately.** Step 5c of issue 010
+scopes it to `read:users` and `delete:users` and nothing else, on the grounds
+that any further scope is standing authority for something no code asks for.
+Provisioning reads a user; deletion deletes one; nothing in this repository
+creates one. A `POST /api/v2/users` with that token answers **403
+insufficient_scope** no matter how the URL is written.
+
+So: Dashboard → **User Management → Users → Create User**.
+
+| Field | Value |
+| --- | --- |
+| Email | a throwaway you control |
+| Password | 15+ characters — the connection policy rejects shorter |
+| Connection | `Username-Password-Authentication` |
+
+Creating a user here is not blocked by *Disable Sign Ups*, which only closes the
+public endpoint. That distinction is the whole point of issue 010's step 6.
+
+Open the created user and keep the **user_id** (`auth0|…`) from the URL or the
+Raw JSON tab. That is the `sub`, and it is what the identity row stores.
+
+Read-back, if you want one, does work over curl — this token has `read:users`.
+**Mint and spend it at the custom domain**: a token minted at
+`auth.strengthsync.ai` and presented to the tenant domain comes back 401 with
+nothing in the body to say why. Only the *audience* is the tenant domain,
+because the Management API audience is not customisable.
 
 ```sh
-export M2M_SECRET='<from server/.dev.vars>'
+export M2M_SECRET='<from server/.dev.vars — never paste it into a tracked file>'
 export MGMT=$(curl -s -X POST https://auth.strengthsync.ai/oauth/token \
   -H 'content-type: application/json' \
   -d '{"client_id":"aURi7aSf2Z1YHTZkUzgQURPHIbo8Xmb0",
        "client_secret":"'"$M2M_SECRET"'",
        "audience":"https://dev-ky58kx02q7r2ukt6.us.auth0.com/api/v2/",
        "grant_type":"client_credentials"}' | jq -r .access_token)
-
-curl -s -X POST https://auth.strengthsync.ai/api/v2/users \
-  -H "authorization: Bearer $MGMT" -H 'content-type: application/json' \
-  -d '{"connection":"Username-Password-Authentication",
-       "email":"delete-test@example.com",
-       "password":"<15+ characters — the connection policy rejects shorter>",
-       "email_verified":true}' | jq '{user_id, email}'
 ```
-
-Keep the `user_id`. That is the `sub`, and it is what the identity row stores.
 
 ### 2. Give the athlete rows in all five tables
 
@@ -248,14 +261,20 @@ the user no longer exists, and sign-ups are disabled at the connection, so there
 is no path back in. Do not expect a StrengthSync error; this one never reaches
 our origin.
 
-### Known wrong line in issue 010
+### Three wrong things in issue 010's step 10
 
-Step 8's `curl` in `010-auth0-tenant-setup.md` posts to
-`https://https://dev-ky58kx02q7r2ukt6.us.auth0.com/api/v2/users` — a duplicated
-scheme, and the tenant domain rather than the custom one. It also pastes a
-literal Management token, which is expired but should not have been committed.
-Use the form above instead; it is the one `lib/management.ts` actually
-implements.
+Found while running this on 2026-08-20. All three are in
+`010-auth0-tenant-setup.md`'s *Create one account by hand* step:
+
+1. **It cannot work as written.** The `curl` creates a user with the M2M token,
+   which has no `create:users` scope — see step 1 above. 403, always.
+2. **The URL is malformed twice over**: `https://https://dev-…us.auth0.com/…`
+   duplicates the scheme, and it targets the tenant domain where a
+   custom-domain-minted token must be spent at the custom domain.
+3. **It pastes the live M2M client secret and a literal Management token into a
+   tracked file**, which contradicts issue 010's own acceptance criterion that
+   the secret "appears in no file". The token expires; the secret does not.
+   Rotate it and scrub the file.
 
 ## Acceptance criteria
 
@@ -274,13 +293,23 @@ implements.
       with a typed confirmation rather than a modal: the action is irreversible
       and a modal is dismissed by the same reflex that opened it. It also avoids
       adding a dialog primitive for the one screen that would need one
-- [ ] Deleting an account, then attempting to sign in with the same credentials,
-      fails at the provider
-- [ ] Run once against the real tenant: the Auth0 user is gone and no row for
-      that athlete remains in any of the five tables
-- [ ] After that run, the athlete's still-live access token is presented to
+- [x] Deleting an account, then attempting to sign in with the same credentials,
+      fails at the provider — follows from the user being gone at Auth0 with
+      sign-ups disabled at the connection, so there is no path back in. Not
+      exercised as a separate browser check; accepted on the operator's run
+- [x] Run once against the real tenant: the Auth0 user is gone and no row for
+      that athlete remains in any of the five tables — operator's run,
+      2026-08-20, against the real tenant with the local database
+- [x] After that run, the athlete's still-live access token is presented to
       `GET /api/me` and answers 401 — **not** 200 with a new empty account,
-      which is what a wrong ordering produces and what no other check catches
+      which is what a wrong ordering produces and what no other check catches.
+      Verified 2026-08-20 for `auth0|6a86ece029c739bd12268986`, a token with 23
+      hours left to run, against **both** `localhost:8787` and
+      `app.strengthsync.ai`: `401 unauthorized / sign in required` from each.
+      Confirmed to be the resurrection path rather than a rejected signature —
+      `SELECT COUNT(*) FROM client_identities WHERE subject = 'auth0|6a86…'`
+      returns 0, so the guard fell through to the Management API, found no user
+      and refused. A wrong ordering would have answered 200 with a fresh client
 - [x] The partial-failure trade-off is recorded in
       `docs/future_state_after_mvp/todos.md`, not fixed here
 
@@ -294,9 +323,9 @@ implements.
 
 ## STATUS
 
-IN PROGRESS — the endpoint, the module, the cascade and the `/account` screen are
-built and the pre-commit gate is green. Outstanding is the HITL run, which is the
-only verification this module has and is therefore not optional: delete a real
-account against the real tenant, confirm the Auth0 user is gone and no row
-survives in any of the five tables, then present that athlete's still-live access
-token to `GET /api/me` and confirm 401 rather than 200 with a new empty account.
+DONE — endpoint, module, cascade and `/account` screen shipped in `5925018`; the
+HITL runbook in `cf3e734`. Validated against the real tenant on 2026-08-20: the
+Auth0 user is gone, no row survives, and the deleted athlete's still-live access
+token answers 401 from both the local Worker and `app.strengthsync.ai` rather
+than 200 with a new empty account — the one failure this module exists to
+prevent, and the one no other check catches.
