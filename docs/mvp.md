@@ -10,9 +10,9 @@ ending the MVP looks like. Decisions only — the implementation is sliced into
 owned by a different project: the `strengthsync` repository's waitlist and its
 ad spend measure demand. One objective per project.
 
-So the traffic here is not ad traffic. It is a small invited cohort, handed the
-URL and an invite code by email, whose job is to answer two questions the
-waitlist cannot: does an athlete who signs up actually train off the plan, and
+So the traffic here is not ad traffic. It is a small invited cohort, each of
+whom is handed the URL and an account created for them by hand, whose job is to
+answer two questions the waitlist cannot: does an athlete who signs up actually train off the plan, and
 is what the model produced any good.
 
 ## Success metric
@@ -43,12 +43,12 @@ sits inside Workers Logs retention, which the LLM monitoring below depends on.
 | # | Item | Where |
 | --- | --- | --- |
 | 1 | Serve the app from `app.strengthsync.ai` | `server/wrangler.jsonc` |
-| 2 | Invite code gate on sign-up | `server/src/routes/auth/`, one migration |
+| 2 | ~~Invite code gate on sign-up~~ → **superseded**: public sign-ups disabled at the identity provider | `issues/auth0-migration/` |
 | 3 | Anchor the first week to today, not to Monday | `server/src/db/repositories/plans.ts:80` |
 | 4 | Put `complete-week` behind the session guard | `server/src/routes/wf/endpoints.ts`, `client/src/api/workflows.ts` |
 | 5 | PostHog funnel events | `client` |
 | 6 | Structured LLM call logs | `server/src/agent/agent-core.ts` |
-| 7 | Privacy policy and terms, linked from sign-up | marketing repo + `client` |
+| 7 | Privacy policy and terms, linked from the hosted login page | marketing repo + Auth0 dashboard |
 | 8 | OpenAI monthly spend cap | OpenAI console, no code |
 
 ### 1. Domain
@@ -56,24 +56,33 @@ sits inside Workers Logs retention, which the LLM monitoring below depends on.
 `strengthsync.ai` already runs on Cloudflare nameservers, so this is a `routes`
 entry with `custom_domain: true` — no DNS migration and no registrar work.
 
-The session cookie sets no `domain` attribute (`server/src/lib/session.ts:31`),
-so it stays host-only to `app.strengthsync.ai` and never reaches the apex where
-the marketing site lives. That is the behaviour we want; nothing to change.
+There is no session cookie to keep off the apex any more — the API takes a
+bearer token, which is sent to exactly the host the client addresses and nowhere
+else. The separation this paragraph used to argue for is now a property of the
+credential rather than something to configure.
 
-### 2. Invite code gate
+### 2. Invite code gate — superseded, not delivered differently
 
-Sign-up requires a code, held as a Worker secret and rotated per invite batch.
-Which code an account used is stored on its `client` row, so rotating the code
-gives cohort attribution for free.
+**Deleted rather than adapted**, by `issues/011-amputate-old-auth.md`. Public
+sign-ups are switched off at the identity provider's database connection, and
+every account is created by hand through the dashboard. There is no gate to
+bypass when nothing self-serve exists to gate.
 
-This is the decision the rest of the security scope hangs off. Every sign-up
+The reasoning this section carried survives intact and is worth keeping, because
+it is what the rest of the security scope still hangs off. Every new athlete
 triggers a paid structured model call, and there is no rate limit anywhere in the
-repository. A gate makes spend bounded by construction, which is why **captcha,
-rate limiting and abuse handling are not in this MVP** — they are answers to a
-question the gate stops us from being asked.
+repository, so **captcha, rate limiting and abuse handling are not in this
+MVP** — they are answers to a question that cannot be asked.
 
-A leaked code means open sign-up until it is rotated. Accepted: rotation is a
-secret update, and the cohort is people who joined a waitlist.
+What changed is the strength of the answer. A code was a shared secret: leaked,
+it meant open sign-up until rotated, and a client-side gate would not have been
+one at all — the provider's signup endpoint is publicly callable with only a
+client id, so a screen in our own bundle stops nobody who looks. Disabled
+sign-ups have no secret to leak and nothing to rotate. Cohort attribution, which
+the code gave for free, now comes from the email address stored on
+`client_identities`.
+
+See [auth.md](./architecture/auth.md).
 
 ### 3. First week anchored to today
 
@@ -154,7 +163,9 @@ logs:
 
 ### 7. Privacy policy and terms
 
-Static pages on the marketing site, linked from the app's sign-up screen. They
+Static pages on the marketing site, linked from the hosted login page (Auth0
+dashboard → Branding, which is where the only remaining pre-sign-in screen
+lives). They
 have to name what is collected, that health-adjacent data (sex, age, body
 composition, injury notes) is sent to OpenAI, and how to request deletion.
 
@@ -165,8 +176,8 @@ this MVP exists to measure. Revisit before any open launch.
 ### 8. Spend cap
 
 A hard monthly limit in the OpenAI console. No code, and it is the real backstop
-regardless of what the application does — a retry loop does not respect the
-invite gate. Hitting the cap surfaces as API errors rather than graceful
+regardless of what the application does — a retry loop does not respect a closed
+sign-up. Hitting the cap surfaces as API errors rather than graceful
 degradation; at this cohort size that is the right trade.
 
 ## Pre-launch checks
@@ -196,16 +207,17 @@ Two changes to that list:
 
 - **The mid-week plan bug moves in** (scope item 3). It stopped being a nice-to-have
   when the success metric became "logged a training day".
-- **Captcha comes off entirely.** The invite gate answers it.
+- **Captcha comes off entirely.** Disabled public sign-ups answer it, more
+  completely than the invite gate would have.
 
 ## Accepted risks
 
 | Risk | Why it is accepted |
 | --- | --- |
-| No password reset — a user on a new device is locked out permanently | Post-MVP by decision. Escape hatch if someone emails: `server/scripts/hash-password.ts` plus one `wrangler d1 execute` against their credentials row |
+| ~~No password reset~~ | **Resolved.** Auth0 owns password reset; the recovery link on the hosted page is real. `hash-password.ts` and the credentials table no longer exist |
 | Workers Logs retention is days, so week-2 `analyze-week` traces may age out unread | The two-week window is sized around it; read the logs during the run, not after |
 | Prompts contain health data and will sit in logs | Small cohort, short retention, disclosed in the privacy policy |
-| A leaked invite code is open sign-up until rotated | Rotation is a secret update |
+| ~~A leaked invite code is open sign-up until rotated~~ | **Resolved.** There is no code. Public sign-ups are off at the connection, so there is no self-serve path to leak a way into |
 | Hitting the OpenAI cap fails user-visibly | Preferable to an uncapped bill at this stage |
 
 ## Dependency outside this repository

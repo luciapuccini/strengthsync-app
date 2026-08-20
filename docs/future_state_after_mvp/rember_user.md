@@ -1,6 +1,6 @@
 ---
 name: Remember Device Cookie
-overview: SUPERSEDED by the authentication phase (issues/auth). Proposed extending Basic Auth with a 30-day signed HttpOnly cookie, keeping Basic as the fallback login. What shipped keeps the cookie and retires Basic instead of layering on it.
+overview: SUPERSEDED TWICE, and kept only as history. Proposed extending Basic Auth with a 30-day signed HttpOnly cookie; the authentication phase (issues/auth) shipped the cookie and retired Basic instead of layering on it; the Auth0 migration (issues/010-016) then deleted the cookie, the password hashing and SESSION_JWT_SECRET as well. Nothing described below is current — see docs/architecture/auth.md.
 todos:
   - id: cookie-middleware
     content: Implement signed 30-day cookie middleware with Basic Auth fallback

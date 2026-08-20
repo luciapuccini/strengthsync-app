@@ -17,11 +17,17 @@ degradation; at twenty users that is the accepted trade (`docs/mvp.md` §8).
 day", and that path has never been driven on a device. The tracker looks
 mobile-first — `exerciseRow.tsx` is flex with `min-w-0`, and the only `<table>` is
 in history, off the critical path — but looking is not the same as doing. Run the
-whole path on the deployed host: sign up with a code, complete onboarding, wait
-out plan generation, log a full day, save it.
+whole path on the deployed host: sign in on the hosted page, complete
+onboarding, wait out plan generation, log a full day, save it.
 
-**Mint the first batch code.** Generate the invite code for batch one and set it
-as the Worker secret, so the emails have something to carry.
+**Create the batch-one accounts.** There is no code to mint any more. The Auth0
+migration switched public sign-ups off at the connection and made the cohort a
+list of accounts the operator creates by hand, which removes the invite code as
+a concept rather than relocating it — see
+[auth.md](../architecture/auth.md). Create each athlete in Dashboard → User
+Management → Users, then trigger the set-password email; the M2M application is
+deliberately scoped to `read:users` and `delete:users` and cannot create anyone.
+`issues/014-account-deletion.md`'s HITL runbook has the exact steps.
 
 **Decide whether the invite email can go out from `auth0user.net`.** Found while
 completing `issues/010-auth0-tenant-setup.md`: Auth0's built-in email provider
@@ -48,8 +54,14 @@ decide whether it blocks the invite.
 - [x] A monthly spend limit is set in the OpenAI console and the amount is
       written down here
 - [ ] A complete training day has been logged on a real phone against
-      `app.strengthsync.ai`, through a real generated plan
-- [x] The batch-one invite code is set as a Worker secret in production
+      `app.strengthsync.ai`, through a real generated plan — starting from a
+      hosted-page sign-in, not a sign-up. This is also issue 013's last
+      outstanding criterion; one run closes both
+- [x] ~~The batch-one invite code is set as a Worker secret in production~~ —
+      **moot.** The Auth0 migration deleted the invite gate rather than adapting
+      it (`issues/011-amputate-old-auth.md`), so `INVITE_CODE` no longer exists
+      as a secret or as a column. Struck rather than unticked: it was genuinely
+      done, and then the thing it was done to was removed
 - [ ] Any defect found on the phone run is recorded — either fixed, or written
       into `docs/future_state_after_mvp/todos.md` with a note that it was seen
       and accepted

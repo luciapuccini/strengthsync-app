@@ -31,11 +31,14 @@ version on purpose, so the app has a native reason to exist.
 **Where it lives: a third package in this monorepo,** beside `client` and
 `server`. Not a separate repository, which was the original instinct.
 
-**Authentication was the real blocker, and it is being removed.** The shell's
-web content runs from a local origin, which makes every API call cross-site; the
-`SameSite=Lax` session cookie is then refused and the app fails on every request
-while building and launching perfectly. Nothing about this surfaces until the
-app is on a device. `issues/auth0-migration/prd.md` exists because of this.
+**Authentication was the real blocker, and it has been removed.** The shell's
+web content runs from a local origin, which made every API call cross-site; the
+`SameSite=Lax` session cookie was then refused and the app failed on every
+request while building and launching perfectly — and nothing about it surfaced
+until the app was on a device. `issues/auth0-migration/prd.md` exists because of
+this, and it has shipped: the API takes a bearer token now, which is what a
+native shell can actually send. The remaining iOS work is additive rather than
+blocked.
 
 **Login goes through the system browser.** RFC 8252 forbids embedded web views
 for authorization, and a Capacitor shell *is* a web view — so an embedded form
@@ -70,9 +73,11 @@ shippable alone, and the web launch never waits on store review.
 - **App Review Guideline numbers were cited from memory** and should be checked
   against the current published guidelines: 5.1.1(v) in-app account deletion,
   4.8 Sign in with Apple, 4.2 minimum functionality, 5.1.3 HealthKit privacy.
-- **5.1.1(v) is already handled.** `issues/014-account-deletion.md` builds the
-  in-app deletion the guideline requires. It is the only store requirement the
-  auth work closes.
+- **5.1.1(v) is closed.** `issues/014-account-deletion.md` shipped the in-app
+  deletion the guideline requires — `DELETE /api/account` behind a typed
+  confirmation on `/account` — and was verified against the real tenant on
+  2026-08-20. It is the **only** store requirement the auth work closes; 4.8,
+  4.2 and 5.1.3 are all still open, and none of them is an identity problem.
 
 ## Open — the session's decision tree
 

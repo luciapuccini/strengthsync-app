@@ -8,10 +8,7 @@ Notes only — not designs. Pointers into existing docs where they already cover
 - **App Store?:** possibly a React Native client later.
 - **LLM cost budget:** project spend limit, model allowlist, per-workflow token cap. (See [stack.md](../architecture/stack.md).)
 - **Auto-trigger week workflow:** e.g. start complete-week when the last day of the week is saved. (See [workflows.md](../architecture/workflows.md).)
-- **Password reset.** (Out of MVP auth scope in [stack.md](../architecture/stack.md).)
-- show password in field 
 - feedback on initial plan generated 
-- **SSO / social sign-in** (Apple, Google, etc.). (Out of MVP auth scope in [stack.md](../architecture/stack.md).)
 - **Onboarding draft state:** progressive reducer + resume after refresh/later. Decide if Zustand helps. (See [onboarding-draft-state.md](./onboarding-draft-state.md).)
 - **`day_index` no longer means a weekday.** Onboarding asks for the "usual rest
   day" by name and stores it as `schedule_preferences.rest_day` on the ISO
@@ -39,5 +36,10 @@ Notes only — not designs. Pointers into existing docs where they already cover
   athletes — a manual sweep instead. Reasoning in
   `server/src/lib/account-deletion.ts` and
   [auth.md](../architecture/auth.md#account-deletion).
-- captcha or any gate to prevent fake usrs?
 
+Four entries left this list with the Auth0 migration (`issues/015`), because the
+identity provider owns them rather than because they were built here: **password
+reset**, **SSO / social sign-in**, **show password in field** — all three are
+properties of the hosted login page — and **captcha / a gate against fake
+users**, answered more completely by disabling public sign-ups than a gate would
+have been. See [auth.md](../architecture/auth.md).

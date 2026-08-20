@@ -6,7 +6,7 @@ Committed providers and platform choices for the MVP. This is intentionally a sm
 
 | Concern | MVP choice | Free-usage status | Decision |
 | --- | --- | --- | --- |
-| Product access | Client accounts: hashed passwords + a signed session cookie | No provider cost | Each athlete registers and signs in for themselves; the API Worker verifies the cookie on every `/api/*` request and reads the athlete's identity from it |
+| Product access | Auth0 — hosted login, bearer tokens | Free tier, 25k MAU against a cohort of 20 | Identity is the provider's; the API verifies a signed JWT on every `/api/*` request. See [auth.md](./auth.md) |
 | Public API + chat | Hono on Cloudflare Workers | Yes | Use the existing Worker direction |
 | SQL database | Cloudflare D1 + Drizzle ORM | Yes | Use D1 as the system of record and Drizzle as its typed data layer |
 | Workflow orchestration | Cloudflare Workflows (in-Worker) | Yes | One workflow (`StrengthsyncWorkflow`) runs weekly progression and plan turnover; no local worker or tunnel |
@@ -16,39 +16,51 @@ Committed providers and platform choices for the MVP. This is intentionally a sm
 | CI/CD | GitHub Actions | Yes | Build, test, and deploy from GitHub Actions |
 | LLM | OpenAI API | No guaranteed permanent free tier | Continue with the current provider; set a spending limit |
 
-## Access: client accounts with signed session cookies
+## Access: Auth0
 
-Every athlete has their own account. `/auth/sign-up` and `/auth/sign-in` mint a
-session cookie, `/auth/sign-out` expires it, and `/auth/session` answers who the
-cookie belongs to on a cold page load. `app.ts` mounts `requireSession` on
-`/api/*`, which verifies the cookie and puts the athlete's id on the request
-context — that context, not the URL, is what every handler reads.
+Superseded. **[auth.md](./auth.md) is the description of record** — the tenant
+objects, the token, the data model, the request path, both clients and account
+deletion. This row exists so the stack table has an entry, not to be a second
+account of the same design that can drift from the first.
 
-- **Passwords** are hashed with PBKDF2-SHA256 over WebCrypto (`server/src/lib/password.ts`): bcrypt and argon2 are not available on Workers, and WebCrypto is at the edge already, so no dependency is added. The iteration count is 30,000 — measured against the free plan's 10ms per-request CPU ceiling rather than copied from general guidance, which assumes no such ceiling. The stored value is self-describing, so that count can rise later without invalidating existing hashes.
-- **The hash lives in its own table**, `client_credentials`, keyed by the athlete's id rather than on the `clients` row — so that no `SELECT *` over a client, which is how every client read is written, can carry a password hash to the browser.
-- **The cookie** is `HttpOnly`, `SameSite=Lax`, path-wide, and `Secure` outside development. It carries an HS256 JWT whose payload is the athlete's id, issued-at and expiry, and nothing else. Thirty-day lifetime, defined once in `session-token.ts` and reused by the cookie so the two cannot drift.
-- **`SESSION_JWT_SECRET`** is a Worker secret, never in the browser bundle or the repository. Rotating it invalidates every session already issued.
-- **The guard runs in every environment.** There is deliberately no development exemption: a guard that is off while the code is being written is a guard nobody tests.
-- **Require HTTPS.** The cookie is bearer-equivalent — whoever holds it is that athlete until it expires. It is signed, not encrypted: it cannot be tampered with, but it is not a place to keep anything secret.
+One line of it, because the rest of this document assumes it: athletes
+authenticate on a hosted page at `auth.strengthsync.ai`, the browser sends a
+short-lived RS256 access token, and `requireAuth` in `server/src/lib/auth.ts`
+verifies it against the tenant's published key set and puts the internal athlete
+id on the request context. That context, not the URL, is what every handler
+reads.
+
+What used to be here described hand-rolled authentication: PBKDF2 over WebCrypto
+at 30,000 iterations, a `client_credentials` table, an HS256 `SameSite=Lax`
+cookie and a `SESSION_JWT_SECRET`. None of it exists — `issues/011-amputate-old-auth.md`
+deleted the lot in one commit and `issues/012-token-verification-and-provisioning.md`
+replaced it. The reasoning is kept in those issues rather than here, because a
+superseded design is history and history belongs where it happened.
+
+Two properties survive the change unaltered, and both are still load-bearing:
+
+- **The guard runs in every environment.** There is deliberately no development
+  exemption: a guard that is off while the code is being written is a guard
+  nobody tests.
+- **No route accepts an athlete identifier.** The athlete comes from the
+  verified credential, so the only ids a caller can name are a plan's and a
+  week's — and the repository scopes both to the caller. Reading someone else's
+  data is not a request the API can express.
+
+Two more that are new:
+
 - **Static SPA assets stay public**; they contain no athlete data.
-- **`/wf/*` is outside the guard.** `POST /wf/complete-week` starts a workflow instance for any caller that reaches the origin. Known and accepted for the MVP — see [api_contracts.md](./api_contracts.md).
+- **`/wf/*` is outside the guard.** `POST /wf/complete-week` starts a workflow
+  instance for any caller that reaches the origin. Known and accepted for the
+  MVP — see [api_contracts.md](./api_contracts.md).
 
-This **is** user identity, which the MVP's original decision here was not. That
-decision was a single shared coach credential over HTTP Basic, and this document
-carried a warning beside it: *not user identity — no per-user ownership, roles,
-invitation flow or reliable logout — and replacing it with real identity must
-happen before exposing client-facing accounts.* **That warning is addressed.**
-Each athlete owns their data, signing out actually ends the session, and no route
-accepts an athlete identifier in its path at all, so no request can name anyone
-else; reading another athlete's data is not something the API can express.
-
-Still absent, and deliberately out of scope for the MVP: roles, an invitation
-flow, password reset, email verification, and social sign-in — the Apple and
-Google buttons on the auth screens render disabled with a caption saying so.
-No external auth provider is needed for any of it yet.
-
-**Post-MVP auth notes:** password reset; SSO / social sign-in (Apple, Google, etc.).
-See [future_state_after_mvp/todos.md](../future_state_after_mvp/todos.md).
+Four things this bought that the previous design listed as absent: password
+reset, email verification, social sign-in (the Apple and Google buttons are real
+now, not disabled captions), and session revocation. They are the provider's
+job, so they left [future_state_after_mvp/todos.md](../future_state_after_mvp/todos.md)
+rather than shipping as work of ours. Roles and an invitation flow remain out of
+scope: public sign-ups are disabled at the connection and the cohort is created
+by hand, which removes the invite code as a concept rather than relocating it.
 
 ## Cloudflare Workers + Hono
 

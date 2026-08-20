@@ -36,6 +36,16 @@ describes password hashing or the session cookie as current.
 isolation coverage in issue 011 and restored it in 012. Confirm every case in
 012's inventory came back, and say plainly whether any was dropped.
 
+**Rotate the credentials, last.** Deliberately the final action of this issue,
+because it invalidates a working local setup and should land immediately before
+the manual end-to-end run with real athletes rather than days ahead of it.
+`issues/015-reconcile-docs-and-launch-checklist.md` records the full list; the
+one that matters is that the **live M2M client secret is committed** in issue
+010 and is in git history, so scrubbing the file is not enough. Rotate, re-set
+via `wrangler secret put` and in `server/.dev.vars`, scrub, then untick issue
+010's criterion that claims the secret appears in no file. Two dead Worker
+secrets — `SESSION_JWT_SECRET` and `INVITE_CODE` — go at the same time.
+
 **Suggested next steps.** Given what the sweep found, what should happen before
 the invite batch — and what the iOS work now needs, given that the PRD closed
 the auth blocker and left HealthKit scope, the Apple Developer Program account,
@@ -52,7 +62,16 @@ privacy nutrition labels, Guideline 5.1.3 disclosures and age rating open.
 - [ ] Issue 012's restored-coverage inventory is confirmed complete, or the gaps
       are named
 - [ ] The doc updates from issue 015 have actually been made
+- [ ] The M2M client secret is rotated, re-set as a Worker secret and in
+      `.dev.vars`, scrubbed from `010-auth0-tenant-setup.md`, and that issue's
+      "appears in no file" criterion is unticked until it is true
+- [ ] `SESSION_JWT_SECRET` and `INVITE_CODE` are deleted as Worker secrets
+- [ ] Issue 010's stale M2M client id and its unrunnable step-10 `curl` are
+      corrected — the M2M app cannot create users, so account creation is a
+      Dashboard action
 - [ ] Next steps are proposed, not decided
+- [ ] Rotation is the **last** thing done, so the manual end-to-end run happens
+      against the credentials that will actually be live
 
 ## Blocked by
 
