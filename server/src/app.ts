@@ -5,8 +5,9 @@ import { RepoError, type Db } from './db/index.ts';
 
 import { requireAuth, type TokenVerifier } from './lib/auth.ts';
 import { errorResponse, repoErrorResponse } from './lib/errors.ts';
-import type { ManagementClient } from './lib/management.ts';
+import { ManagementError, type ManagementClient } from './lib/management.ts';
 import { defaultHook } from './lib/validation-error.ts';
+import { accountRoutes } from './routes/account/endpoints.ts';
 import { clientRoutes } from './routes/clients/endpoints.ts';
 import { healthRoutes } from './routes/health.ts';
 import { ingestRoutes } from './routes/ingest.ts';
@@ -51,6 +52,15 @@ export function createApp(config: AppConfig): OpenAPIHono {
       return err.getResponse();
     }
     if (err instanceof RepoError) return repoErrorResponse(c, err);
+    // The Management API refused or was unreachable. Only account deletion lets
+    // one of these out — provisioning turns a missing user into a 401 at the
+    // guard — and there it means the athlete still has a working account and
+    // nothing local was touched, so the honest answer is "upstream said no, try
+    // again" rather than a 500 that reads as a bug in this application.
+    if (err instanceof ManagementError) {
+      console.error('[api] management API error', err.status, err.message);
+      return errorResponse(c, 502, 'provider_unavailable', 'identity provider request failed');
+    }
     console.error('[api] unhandled error', err);
     return errorResponse(c, 500, 'internal_error', 'internal error');
   });
@@ -76,6 +86,7 @@ export function createApp(config: AppConfig): OpenAPIHono {
       management: config.management,
     }),
   );
+  app.route('/api', accountRoutes(config.db, config.management));
   app.route('/api', clientRoutes(config.db));
   app.route('/api', onboardingRoutes(config.db));
   app.route('/api', planRoutes(config.db));

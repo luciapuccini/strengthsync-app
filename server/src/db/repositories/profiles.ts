@@ -62,3 +62,11 @@ export async function upsertProfile(
   }
   return row;
 }
+
+/**
+ * Remove an athlete's profile. Step four of account deletion — after the plans
+ * that were generated from it, before the athlete row it points at.
+ */
+export async function deleteProfile(db: Db, clientId: string): Promise<void> {
+  await db.delete(clientProfiles).where(eq(clientProfiles.client_id, clientId));
+}

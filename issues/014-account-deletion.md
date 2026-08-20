@@ -105,14 +105,21 @@ verification there is, so it is not optional.
 
 ## Acceptance criteria
 
-- [ ] An authenticated endpoint deletes the provider user first, then the
-      identity row, then cascades weeks, plans, profile and the athlete row
-- [ ] A failed Auth0 deletion deletes nothing locally and leaves a working
-      account
-- [ ] The ordering rationale is written in the module, not in a route handler —
-      including why the identity row goes second rather than last
-- [ ] A destructive control exists in the app behind an explicit confirmation
-      that says the data is not recoverable
+- [x] An authenticated endpoint deletes the provider user first, then the
+      identity row, then cascades weeks, plans, profile and the athlete row —
+      `DELETE /api/account`, mounted from `server/src/routes/account/endpoints.ts`
+- [x] A failed Auth0 deletion deletes nothing locally and leaves a working
+      account — `ManagementError` propagates out of `deleteAccount` before the
+      first local statement, and `app.ts` maps it to a 502 rather than letting it
+      fall out as a 500, so the UI can say "nothing was removed, try again"
+- [x] The ordering rationale is written in the module, not in a route handler —
+      including why the identity row goes second rather than last. The handler in
+      `routes/account/endpoints.ts` is one call and says so
+- [x] A destructive control exists in the app behind an explicit confirmation
+      that says the data is not recoverable — `/account`, reached from the header,
+      with a typed confirmation rather than a modal: the action is irreversible
+      and a modal is dismissed by the same reflex that opened it. It also avoids
+      adding a dialog primitive for the one screen that would need one
 - [ ] Deleting an account, then attempting to sign in with the same credentials,
       fails at the provider
 - [ ] Run once against the real tenant: the Auth0 user is gone and no row for
@@ -120,7 +127,7 @@ verification there is, so it is not optional.
 - [ ] After that run, the athlete's still-live access token is presented to
       `GET /api/me` and answers 401 — **not** 200 with a new empty account,
       which is what a wrong ordering produces and what no other check catches
-- [ ] The partial-failure trade-off is recorded in
+- [x] The partial-failure trade-off is recorded in
       `docs/future_state_after_mvp/todos.md`, not fixed here
 
 ## Blocked by
@@ -133,4 +140,9 @@ verification there is, so it is not optional.
 
 ## STATUS
 
-TODO
+IN PROGRESS — the endpoint, the module, the cascade and the `/account` screen are
+built and the pre-commit gate is green. Outstanding is the HITL run, which is the
+only verification this module has and is therefore not optional: delete a real
+account against the real tenant, confirm the Auth0 user is gone and no row
+survives in any of the five tables, then present that athlete's still-live access
+token to `GET /api/me` and confirm 401 rather than 200 with a new empty account.

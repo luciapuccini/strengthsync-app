@@ -204,3 +204,12 @@ export async function saveNextWeek(
   await db.insert(weeks).values(row);
   return row;
 }
+
+/**
+ * Remove every week an athlete has logged. Step two of the cascade in
+ * `lib/account-deletion.ts`, and first of the training data because a week
+ * references both a plan and an athlete — nothing references a week.
+ */
+export async function deleteWeeks(db: Db, clientId: string): Promise<void> {
+  await db.delete(weeks).where(eq(weeks.client_id, clientId));
+}

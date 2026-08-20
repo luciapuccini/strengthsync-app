@@ -26,5 +26,18 @@ Notes only — not designs. Pointers into existing docs where they already cover
   `day_index` goes back to meaning an ISO weekday and the seven-day window is
   rotated onto it. Cheapest before the first invite batch, since after that it
   also needs a backfill of `weeks.schedule`.
+- **Account deletion can leave rows behind.** `DELETE /api/account` deletes the
+  Auth0 user, then the `client_identities` row, then cascades weeks, plans,
+  profile and the `clients` row — with no transaction spanning Auth0 and D1, and
+  none spanning D1's own statements. A failure anywhere in the cascade leaves
+  training data with no identity pointing at it. Those rows are unreachable by
+  construction (every request arrives as a subject, and that subject maps to
+  nothing), so nothing can read them and nothing grows from them, but App Store
+  Guideline 5.1.1(v) is about the data actually going. The correct version needs
+  a marker write plus a Cron Trigger that retries both halves: a new status, a
+  `scheduled` handler and a purge job. Deliberately not built for twenty
+  athletes — a manual sweep instead. Reasoning in
+  `server/src/lib/account-deletion.ts` and
+  [auth.md](../architecture/auth.md#account-deletion).
 - captcha or any gate to prevent fake usrs?
 

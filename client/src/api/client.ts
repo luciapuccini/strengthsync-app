@@ -97,6 +97,27 @@ async function call<T>(
 }
 
 /**
+ * `call`'s no-content sibling. A 204 carries no body, so `throwOnError`'s
+ * `data !== undefined` check would read a successful response as a failed one.
+ * The error path is otherwise identical, including the 401 handler — an expired
+ * credential has to behave the same here as everywhere else.
+ */
+async function callEmpty(
+  fn: () => Promise<{ error?: unknown; response: Response }>,
+): Promise<void> {
+  let res: { error?: unknown; response: Response };
+  try {
+    res = await fn();
+  } catch {
+    throw new ApiClientError('network', 0, 'network_error', 'could not reach the server');
+  }
+  if (res.response.ok) return;
+  const error = toApiError(res.response.status, res.error);
+  if (error.kind === 'unauthorized') onUnauthorized();
+  throw error;
+}
+
+/**
  * There are no sign-in, sign-up, sign-out or session calls here any more. Auth0
  * owns all four: authorization happens on its hosted page, not against a route
  * of ours. `GET /api/me` below is what replaced the session read, and it is not
@@ -208,6 +229,21 @@ export async function updateDayLog(
     }),
   );
   return res.week;
+}
+
+/**
+ * Delete the signed-in athlete's identity and every row of their training data.
+ *
+ * Irreversible, and the only call in this file that is. The ordering that makes
+ * it safe under partial failure is entirely the server's — see
+ * `server/src/lib/account-deletion.ts` — so there is nothing for the browser to
+ * sequence and nothing for it to retry beyond calling this again.
+ *
+ * No argument: the athlete comes from the bearer token, so this cannot name
+ * anyone else.
+ */
+export async function deleteAccount(): Promise<void> {
+  return callEmpty(() => api.DELETE('/api/account'));
 }
 
 // Re-export the shared openapi-fetch client for callers that need direct access

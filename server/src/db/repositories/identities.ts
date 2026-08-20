@@ -76,3 +76,37 @@ export async function claimSubject(
 export async function deleteUnboundClient(db: Db, clientId: string): Promise<void> {
   await db.delete(clients).where(eq(clients.id, clientId));
 }
+
+/**
+ * The subject an athlete authenticates as, or null if they have no identity row.
+ *
+ * The one read that runs the mapping backwards. Every other caller arrives
+ * holding a subject and wants an athlete; account deletion arrives holding an
+ * athlete — because that is all the guard puts on the context — and has to name
+ * them at the provider.
+ *
+ * That direction is deliberately not exposed to routes. Its only caller is
+ * `deleteAccount` in `lib/account-deletion.ts`, which keeps the subject inside
+ * the module for the length of one Management API call and never returns it.
+ */
+export async function findSubjectByClientId(db: Db, clientId: string): Promise<string | null> {
+  const rows = await db
+    .select({ subject: clientIdentities.subject })
+    .from(clientIdentities)
+    .where(eq(clientIdentities.client_id, clientId))
+    .limit(1);
+  return rows[0]?.subject ?? null;
+}
+
+/**
+ * Unbind an athlete from their provider identity.
+ *
+ * Step two of account deletion, and the step that closes the resurrection
+ * window — see `lib/account-deletion.ts` for why it runs there and not at the
+ * end of the cascade. After this the athlete's still-live access token resolves
+ * to nothing locally, and `resolveClientId` finds no user at the provider to
+ * re-provision from, so it is refused like any stranger's.
+ */
+export async function deleteIdentity(db: Db, clientId: string): Promise<void> {
+  await db.delete(clientIdentities).where(eq(clientIdentities.client_id, clientId));
+}

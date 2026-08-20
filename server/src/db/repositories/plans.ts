@@ -121,3 +121,11 @@ export async function activateGeneratedPlan(
 
   return { plan: toPlan(planRow), first_week: toWeek(weekRow) };
 }
+
+/**
+ * Remove every plan an athlete has. Step three of account deletion, and only
+ * safe after their weeks: `weeks.plan_id` references these rows.
+ */
+export async function deletePlans(db: Db, clientId: string): Promise<void> {
+  await db.delete(plans).where(eq(plans.client_id, clientId));
+}
