@@ -105,7 +105,7 @@ type Plan = {
 };
 
 type PlanDay = {
-  day_index: number; // 1–7
+  day_index: number; // ISO weekday, 1 = Monday … 7 = Sunday
   type: DayType;
   notes: string | null;
   exercises: PlannedExercise[];
@@ -145,7 +145,7 @@ type Week = {
 };
 
 type WeekDay = {
-  day_index: number;
+  day_index: number; // ISO weekday, 1 = Monday … 7 = Sunday
   date: ISODate;
   type: DayType;
   notes: string | null;

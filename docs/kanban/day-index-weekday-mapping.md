@@ -88,29 +88,29 @@ currently assume seven days — for a benefit that lasts one week per athlete.
 
 ## Acceptance criteria
 
-- [ ] `isoWeekday(isoDate)` exists in `server/src/db/dates.ts` and is unit-tested
+- [x] `isoWeekday(isoDate)` exists in `server/src/db/dates.ts` and is unit-tested
       across a full week, including the Sunday wrap
-- [ ] `buildScheduleFromTemplate` dates `day_index` by the rotation offset above,
+- [x] `buildScheduleFromTemplate` dates `day_index` by the rotation offset above,
       and returns `schedule` sorted by date
-- [ ] For a Monday `start` the emitted dates are byte-identical to today's
+- [x] For a Monday `start` the emitted dates are byte-identical to today's
       output — a test pins this, so the change is provably a no-op for Monday
-- [ ] For a mid-week `start`, `day_index N` lands on ISO weekday `N`, and no day
+- [x] For a mid-week `start`, `day_index N` lands on ISO weekday `N`, and no day
       of week 1 is in the past — a frozen-clock test in
       `server/src/db/repositories/plans.test.ts` pins both
-- [ ] An athlete whose `rest_day` is 7 gets the `rest` day on a Sunday, on a
+- [x] An athlete whose `rest_day` is 7 gets the `rest` day on a Sunday, on a
       mid-week activation, end to end from onboarding answers to `weeks.schedule`
-- [ ] Week 2's dates are assigned server-side by the same helper; the model is no
+- [x] Week 2's dates are assigned server-side by the same helper; the model is no
       longer asked to date anything and `strengthsync-workflow.ts:53` is gone
-- [ ] Week 2 uses the same rotation as week 1 — a test covers the second week of
+- [x] Week 2 uses the same rotation as week 1 — a test covers the second week of
       a Wednesday-anchored plan
-- [ ] `buildFirstPlanPrompt` states the `1 = Monday … 7 = Sunday` convention and
+- [x] `buildFirstPlanPrompt` states the `1 = Monday … 7 = Sunday` convention and
       instructs the model to place the rest day at `schedule_preferences.rest_day`
-- [ ] The tracker renders the week in date order with no client change
-- [ ] `docs/architecture/domain_model.md:108` documents the convention; the
+- [x] The tracker renders the week in date order with no client change
+- [x] `docs/architecture/domain_model.md:108` documents the convention; the
       `rest_day` comment in `server/src/domain/onboarding/schema.ts` no longer
       warns that the two numberings differ; the entry is removed from
       `docs/future_state_after_mvp/todos.md`
-- [ ] `pnpm -r typecheck && pnpm -r lint && pnpm -r test` clean; no
+- [x] `pnpm -r typecheck && pnpm -r lint && pnpm -r test` clean; no
       `gen:openapi` diff
 
 ## Blocked by
@@ -128,4 +128,4 @@ for that reason.
 
 ## STATUS
 
-TODO
+DONE

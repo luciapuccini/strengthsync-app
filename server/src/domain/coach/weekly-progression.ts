@@ -12,9 +12,13 @@ export const WeekAnalysisSchema = z.object({
 });
 export type WeekAnalysis = z.infer<typeof WeekAnalysisSchema>;
 
-/** Fresh next-week schedule: seven dated days with empty performance logs. */
+/**
+ * Fresh next-week schedule: seven days with empty performance logs. `date` is
+ * omitted — the server dates each day from `day_index` via `dateForDayIndex`,
+ * not the model.
+ */
 export const NextWeekScheduleSchema = z.object({
-  schedule: z.array(WeekDaySchema).superRefine((days, ctx) => {
+  schedule: z.array(WeekDaySchema.omit({ date: true })).superRefine((days, ctx) => {
     const indexes = days.map((d) => d.day_index).sort((a, b) => a - b);
     const expected = [1, 2, 3, 4, 5, 6, 7];
     if (indexes.length !== 7 || indexes.some((v, i) => v !== expected[i])) {

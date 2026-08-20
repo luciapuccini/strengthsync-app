@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 
 import type { Plan, PlanDay, Week, WeekDay } from '../../domain/model/index.ts';
 
-import { addDays } from '../dates.ts';
+import { dateForDayIndex } from '../dates.ts';
 import type { Db } from '../db.ts';
 import { RepoError } from '../errors.ts';
 import { plans, weeks } from '../schema.ts';
@@ -40,24 +40,26 @@ export async function findExistingActivation(
 
 /** Expand a plan's canonical week template into week 1's dated, empty-log schedule. */
 export function buildScheduleFromTemplate(weekTemplate: PlanDay[], start: string): WeekDay[] {
-  return weekTemplate.map((day) => ({
-    ...day,
-    date: addDays(start, day.day_index - 1),
-    completed: false,
-    completed_at: null,
-    exercises: day.exercises.map((exercise) => ({
-      exercise_key: exercise.exercise_key,
-      name: exercise.name,
-      skipped: false,
-      feedback: null,
-      prescribed: {
-        series: exercise.series,
-        reps: exercise.reps,
-        rest_time_sec: exercise.rest_time_sec,
-        weight_kg: exercise.weight_kg,
-        notes: exercise.notes,
-      },
-      sets: [],
-    })),
-  }));
+  return weekTemplate
+    .map((day) => ({
+      ...day,
+      date: dateForDayIndex(start, day.day_index),
+      completed: false,
+      completed_at: null,
+      exercises: day.exercises.map((exercise) => ({
+        exercise_key: exercise.exercise_key,
+        name: exercise.name,
+        skipped: false,
+        feedback: null,
+        prescribed: {
+          series: exercise.series,
+          reps: exercise.reps,
+          rest_time_sec: exercise.rest_time_sec,
+          weight_kg: exercise.weight_kg,
+          notes: exercise.notes,
+        },
+        sets: [],
+      })),
+    }))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 }

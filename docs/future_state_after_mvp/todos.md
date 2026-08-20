@@ -10,19 +10,6 @@ Notes only — not designs. Pointers into existing docs where they already cover
 - **Auto-trigger week workflow:** e.g. start complete-week when the last day of the week is saved. (See [workflows.md](../architecture/workflows.md).)
 - feedback on initial plan generated 
 - **Onboarding draft state:** progressive reducer + resume after refresh/later. Decide if Zustand helps. (See [onboarding-draft-state.md](./onboarding-draft-state.md).)
-- **`day_index` no longer means a weekday.** Onboarding asks for the "usual rest
-  day" by name and stores it as `schedule_preferences.rest_day` on the ISO
-  convention `1 = Monday` (`server/src/domain/onboarding/schema.ts:82`,
-  `ONBOARDING_WEEKDAYS` in `client/src/lib/onboarding-schema.ts`). Since issue
-  003 anchored week 1 to the activation day, `day_index 1` is that day instead,
-  so an athlete who signs up on a Wednesday and said "I rest on Sundays" gets a
-  rest day on Tuesday — and the offset chains forward through every later week.
-  Accepted for the invited cohort: a rest day on the wrong weekday is a smaller
-  problem than a week whose first days are already in the past. Planned out in
-  [day-index-weekday-mapping.md](../kanban/day-index-weekday-mapping.md) —
-  `day_index` goes back to meaning an ISO weekday and the seven-day window is
-  rotated onto it. Cheapest before the first invite batch, since after that it
-  also needs a backfill of `weeks.schedule`.
 - **Account deletion can leave rows behind.** `DELETE /api/account` deletes the
   Auth0 user, then the `client_identities` row, then cascades weeks, plans,
   profile and the `clients` row — with no transaction spanning Auth0 and D1, and

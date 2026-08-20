@@ -9,7 +9,7 @@ import type {
   WeekStatus,
 } from '../../domain/model/index.ts';
 
-import { addDays, nowIso, todayIso } from '../dates.ts';
+import { addDays, dateForDayIndex, nowIso, todayIso } from '../dates.ts';
 import type { Db } from '../db.ts';
 import { RepoError } from '../errors.ts';
 import { weeks } from '../schema.ts';
@@ -189,6 +189,9 @@ export async function saveNextWeek(
 ): Promise<Week> {
   const now = nowIso();
   const startDate = addDays(previousWeek.end_date, 1);
+  const schedule = nextWeekSchedule.schedule
+    .map((day) => ({ ...day, date: dateForDayIndex(startDate, day.day_index) }))
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   const row: Week = {
     id: crypto.randomUUID(),
     client_id: clientId,
@@ -197,7 +200,7 @@ export async function saveNextWeek(
     start_date: startDate,
     end_date: addDays(startDate, 6),
     status: 'in_flight' as const,
-    schedule: nextWeekSchedule.schedule,
+    schedule,
     created_at: now,
     updated_at: now,
   };
