@@ -42,7 +42,7 @@ document catches them; the type check alone would not.
 ## Authentication and conventions
 
 - `GET /health` is unauthenticated.
-- There are no unauthenticated application routes. `/auth/*` is gone: Auth0 hosts login on its own domain, so there is nothing for this API to mint. `GET /api/me` replaced `GET /auth/session` and is guarded like everything else — a cold page load asks who it is holding a credential for, rather than asking whether it has one.
+- There are no unauthenticated application routes. Auth0 hosts login on its own domain, so there is nothing for this API to mint. `GET /api/me` is guarded like every other one — a cold page load asks who it is holding a credential for, rather than asking whether it has one.
 - `/api/*` requires a valid bearer token, verified by `requireAuth` in `server/src/lib/auth.ts` against the tenant's published key set and declared in the document as the `bearerAuth` scheme. **In every environment.** There is no development exemption — the guard that runs under `wrangler dev` is the one that runs in production.
 - No route accepts an athlete identifier in its path or body. The athlete is read from the verified token, so the only ids a caller can still name are a plan's and a week's — and the repository scopes both to the caller, which is why naming someone else's returns `404` rather than their data. The provider's subject stops at the guard: handlers receive an internal athlete id and never see it.
 - JSON responses use `application/json`.
@@ -71,7 +71,7 @@ Cross-field rules (for example: a skipped exercise carries no performed sets) ar
 
 ## Public API
 
-Sixteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
+Fourteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
 schemas — and is always current by construction, so they are not restated here.
 
 The shape, which the document does not state in one place:
@@ -83,7 +83,7 @@ The shape, which the document does not state in one place:
 | The signed-in athlete | `GET`/`PUT /api/me/profile`, `POST /api/me/onboarding`, `GET /api/me/plans/active`, `GET /api/me/plans/{planId}`, `POST /api/me/plans/generate`, `GET /api/me/weeks`, `GET /api/me/weeks/current`, `POST /api/me/weeks/{weekId}/days/{dayIndex}/save`, `PATCH /api/me/weeks/{weekId}/days/{dayIndex}` |
 | Workflow start | `POST /api/wf/complete-week` |
 
-Plan creation is no longer workflow-only: `POST /api/me/plans/generate` builds a first plan from the
+Plan creation is not workflow-only. `POST /api/me/plans/generate` builds a first plan from the
 caller's profile with one synchronous, structured-output model call and activates it through the same
 atomic command the weekly workflow uses, keyed by a deterministic `first-plan:{clientId}` value instead
 of a workflow instance id. It refuses with `409 plan_already_active` or `409 profile_required` before
@@ -94,17 +94,15 @@ Workflow requests are asynchronous. `POST /api/wf/complete-week` takes the athle
 
 ## Endpoints current state
 
-Two passes have shaped this surface.
-
-**Audited 2026-08-11** against UI callers (`client/src/api/client.ts`, `workflows.ts`) and HTTP-level tests. Three routes had no product consumer and were cut, taking the surface from 15 operations to 12: `GET /api/clients/{clientId}`, `GET /api/clients/{clientId}/plans`, and `GET /api/clients/{clientId}/weeks/{weekId}`. The repository functions behind them were kept, because they still backed client-existence checks, plan activation and `updateDayLog` — that pass reduced HTTP surface, not persistence capability.
-
-**The authentication phase** then replaced the athlete-id routes with session-addressed ones and deleted the originals (`issues/auth/010`–`013`). Ten operations went in the deletion; four session routes and the `/me` set came in. `GET /api/clients` and `POST /api/clients` went with them — listing every athlete, and creating one without registering, are both capabilities the phase exists to remove; sign-up creates athletes now. `app.public.test.ts` pins all thirteen removed paths as no longer routed, the same way it pinned the earlier three.
-
-**The Auth0 migration superseded that phase's four session routes** (`issues/010`–`016`, [auth.md](./auth.md)). This is a supersession and not a correction: the session design was right for what it was built against, and what changed was the target — a native shell runs its web content from a local origin, which makes every API call cross-site and the cookie refused. `/auth/sign-up`, `/auth/sign-in`, `/auth/sign-out` and `/auth/session` were deleted along with the password hashing behind them. `GET /api/me` took the last one's remaining job, which was never authentication: the browser needs the internal athlete id on a cold load to identify the person to product analytics. `DELETE /api/account` is new, and is the one App Store requirement the previous surface could not express at all.
+The standard every route is held to is one product consumer and test coverage.
+A route that loses its last caller is a candidate for removal, not furniture —
+the repository function behind it can stay if something else still needs it,
+because reducing HTTP surface and reducing persistence capability are different
+decisions.
 
 Two consumerless routes are known and deliberately left:
 
-- **`GET /api/me/plans/{planId}`** has no UI caller. The history page resolves the athlete's active plan itself, so nothing asks for a plan by id; `getPlan` in `client/src/api/client.ts` is called only by its own test. Flagged for the same kind of audit that cut the three above, rather than cut here.
+- **`GET /api/me/plans/{planId}`** has no UI caller. The history page resolves the athlete's active plan itself, so nothing asks for a plan by id; `getPlan` in `client/src/api/client.ts` is called only by its own test. Flagged for a consumer audit rather than cut here.
 - **`GET`/`PUT /api/me/profile`** have api-client wrappers and tests but no page: there is no profile screen (only `tracker-page` and `history`). The workflow needs the profile it writes, so the routes stay; the missing frontend is the gap.
 
 `PATCH /api/me/weeks/{weekId}/days/{dayIndex}` is intentionally scoped as "tests/tools" per the workflow docs — not drift, just narrower than the `POST .../save` path.

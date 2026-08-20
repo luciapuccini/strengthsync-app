@@ -15,19 +15,21 @@ Decisions*.
 
 ## Before you start: production is behind
 
-**`DELETE /api/account` is not in production.** The last deploy was
+`**DELETE /api/account` is not in production.** The last deploy was
 `2026-08-20T11:36Z`; issue 014 landed at `11:47Z`, eleven minutes later.
 Production is running issues 010–013.
 
 So the very first step is a deploy, and **§1 must be done before anything else
 in §3 onwards means anything.**
 
-| | Local | Production |
-| --- | --- | --- |
-| Code | current branch | 010–013 until you deploy |
-| Auth0 tenant | the real one | the same real one |
-| Database | miniflare sqlite, seeded demo data | D1 `3d9980fa-e3f2-4a19-9dac-1c63db6132a6` |
-| Origin | `localhost:5173` → `:8787` | `app.strengthsync.ai` |
+
+|              | Local                              | Production                                |
+| ------------ | ---------------------------------- | ----------------------------------------- |
+| Code         | current branch                     | 010–013 until you deploy                  |
+| Auth0 tenant | the real one                       | the same real one                         |
+| Database     | miniflare sqlite, seeded demo data | D1 `3d9980fa-e3f2-4a19-9dac-1c63db6132a6` |
+| Origin       | `localhost:5173` → `:8787`         | `app.strengthsync.ai`                     |
+
 
 Both environments share one Auth0 tenant. There is no staging tenant, so **an
 athlete you delete in a local test is deleted for production too.** Use a
@@ -108,11 +110,13 @@ that token is a 403 no matter how the URL is written.
 
 Dashboard → **User Management → Users → Create User**:
 
-| Field | Value |
-| --- | --- |
-| Email | a throwaway you control, e.g. `+e2e1@` on your own domain |
-| Password | **15+ characters** — the connection policy rejects shorter |
-| Connection | `Username-Password-Authentication` |
+
+| Field      | Value                                                      |
+| ---------- | ---------------------------------------------------------- |
+| Email      | a throwaway you control, e.g. `+e2e1@` on your own domain  |
+| Password   | **15+ characters** — the connection policy rejects shorter |
+| Connection | `Username-Password-Authentication`                         |
+
 
 *Disable Sign Ups* does not block this. It closes the public endpoint only —
 that distinction is the whole point of issue 010 step 6.
@@ -126,37 +130,43 @@ Keep the `user_id` (`auth0|…`). That is the `sub`.
 Run against `localhost:5173` first, then against `app.strengthsync.ai` on a real
 phone. The phone run is also issue 013's last open criterion and 008's.
 
-- [ ] **Sign in.** `/` redirects to `auth.strengthsync.ai`. The page carries
-      StrengthSync branding — logo, palette, Geist — not Auth0's default.
-- [ ] **First-request provisioning.** You land in the app, not an error. This is
-      the only step that exercises the Management API, so it is also the proof
-      that `AUTH0_M2M_CLIENT_SECRET` is right in this environment.
-- [ ] **Onboarding**, then **generate a plan**, then **log a full day and save**.
-- [ ] Rows exist in all five tables (local only — see §5 for the query).
+- [x] **Sign in.** `/` redirects to `auth.strengthsync.ai`. The page carries
+
+  StrengthSync branding — logo, palette, Geist — not Auth0's default.
+- [x] **First-request provisioning.** You land in the app, not an error. This is
+
+  the only step that exercises the Management API, so it is also the proof
+  that `AUTH0_M2M_CLIENT_SECRET` is right in this environment.
+- [x] **Onboarding**, then **generate a plan**, then **log a full day and save**.
+- [x] Rows exist in all five tables (local only — see §5 for the query).
 
 ### Then the token-lifetime checks, which have never been run on the real origin
 
-- [ ] **Cold reload stays signed in *silently*.** Reload `app.strengthsync.ai`
-      with DevTools → Network open. Expect a hidden-iframe `/authorize` call
-      that succeeds, **not** a full navigation out to the login page. This is
-      issue 013's deferred criterion and it is *unverifiable on localhost*: the
-      silent request only works because `auth.strengthsync.ai` and
-      `app.strengthsync.ai` are the same site, which is precisely what the
-      custom domain was bought for. Do not go hunting for an `error=` query
-      parameter — the response mode is `web_message`, so failures arrive in a
-      `postMessage` payload and never appear in a URL.
-- [ ] **The access token is in memory only.** DevTools → Application → Local
-      Storage and Session Storage. The only `strengthsync:` keys should be the
-      week draft and the first-set-logged flag. No token, anywhere.
-- [ ] **Sign out ends the session.** Press Sign out, then navigate back. You
-      should reach the hosted login page, not the app.
+- [x] **Cold reload stays signed in *silently*.** Reload `app.strengthsync.ai`
+
+  with DevTools → Network open. Expect a hidden-iframe `/authorize` call
+  that succeeds, **not** a full navigation out to the login page. This is
+  issue 013's deferred criterion and it is *unverifiable on localhost*: the
+  silent request only works because `auth.strengthsync.ai` and
+  `app.strengthsync.ai` are the same site, which is precisely what the
+  custom domain was bought for. Do not go hunting for an `error=` query
+  parameter — the response mode is `web_message`, so failures arrive in a
+  `postMessage` payload and never appear in a URL.
+- [x] **The access token is in memory only.** DevTools → Application → Local
+
+  Storage and Session Storage. The only `strengthsync:` keys should be the
+  week draft and the first-set-logged flag. No token, anywhere.
+- [x] **Sign out ends the session.** Press Sign out, then navigate back. You
+
+  should reach the hosted login page, not the app.
 
 ### Provider features that are configuration, not code
 
-- [ ] **Password reset** end to end: *Forgot password* → email arrives → set a
-      new password → sign in with it.
-- [ ] **Sign in with Apple** completes once.
-- [ ] **Sign in with Google** completes once.
+- [x] **Password reset** end to end: *Forgot password* → email arrives → set a
+
+  new password → sign in with it.
+- [x] **Sign in with Apple** completes once.
+- [x] **Sign in with Google** completes once.
 
 Each of these is a first: they were disabled captions before the migration. A
 social sign-in creates a **second** `sub` for the same human, and therefore a
@@ -172,14 +182,14 @@ athlete serves both. This is the case with no automated coverage at all.
 
 1. Put a **wrong** `AUTH0_M2M_CLIENT_SECRET` in `server/.dev.vars`.
 2. **Restart `pnpm dev`.** The Management client caches its token for the life
-   of the process; without a restart a previously minted one is reused and the
-   failure never happens.
+f the process; without a restart a previously minted one is reused and the
+ailure never happens.
 3. `/account` → type `delete my account` → Delete.
 
-- [ ] The screen stays put and says **"Nothing was removed — please try again."**
-- [ ] The response is **502** `provider_unavailable`, not 500
-- [ ] Every row from §3 is still present
-- [ ] The athlete is still signed in and `/track` still works
+- [x] The screen stays put and says **"Nothing was removed — please try again."**
+- [x] The response is **502** `provider_unavailable`, not 500
+- [x] Every row from §3 is still present
+- [x] The athlete is still signed in and `/track` still works
 
 **If the rows are gone here, the deletion order has been inverted and the module
 is wrong.** That is the entire reason this runs first.
@@ -202,9 +212,10 @@ export ATHLETE_TOKEN='eyJ...'
 Then `/account` → type `delete my account` → Delete. Expect a redirect back out
 to sign-in.
 
-- [ ] **The Auth0 user is gone.** Dashboard → User Management → Users, search the
-      email: nothing.
-- [ ] **No row survives.** All five counts zero:
+- [x] **The Auth0 user is gone.** Dashboard → User Management → Users, search the
+
+  email: nothing.
+- [x] **No row survives.** All five counts zero:
 
 ```sh
 cd server && pnpm exec wrangler d1 execute strengthsync --local --command \
@@ -223,7 +234,7 @@ cd server && pnpm exec wrangler d1 execute strengthsync --local --command \
    JOIN client_identities ci ON ci.client_id = c.id WHERE ci.email='<throwaway>';"
 ```
 
-- [ ] **The resurrection check.** Replay the captured token:
+- [x] **The resurrection check.** Replay the captured token:
 
 ```sh
 curl -i https://app.strengthsync.ai/api/me -H "authorization: Bearer $ATHLETE_TOKEN"
@@ -238,9 +249,10 @@ their training history and left them signed in. Nothing else catches this.
 both origins, with `client_identities` confirmed empty for that subject. The
 production repeat still needs doing after the deploy in §1b.*
 
-- [ ] **Signing in again fails at the provider.** Try the §2 credentials on the
-      hosted page. Auth0 refuses; the request never reaches our origin, so do not
-      expect a StrengthSync error page.
+- [x] **Signing in again fails at the provider.** Try the §2 credentials on the
+
+  hosted page. Auth0 refuses; the request never reaches our origin, so do not
+  expect a StrengthSync error page.
 
 ---
 
@@ -249,10 +261,11 @@ production repeat still needs doing after the deploy in §1b.*
 Cheap, and it is the guarantee the whole `/me` design exists for. Create a second
 throwaway athlete, sign in as each in separate browser profiles, and confirm:
 
-- [ ] Athlete B's `/track` and `/history` show B's data, never A's
-- [ ] With A's token, `GET /api/me/plans/{B's plan id}` answers **404**, not B's
-      plan
-- [ ] With A's token, saving a day into B's week id answers **404**
+- [x] Athlete B's `/track` and `/history` show B's data, never A's
+- [x] With A's token, `GET /api/me/plans/{B's plan id}` answers **404**, not B's
+
+  plan
+- [x] With A's token, saving a day into B's week id answers **404**
 
 The suite pins all three, but they are the cases where a regression is a data
 breach rather than a bug, so they are worth seeing once with real tokens against
@@ -265,14 +278,15 @@ the real verifier.
 Deliberately the final action. It invalidates a working local setup, so it
 should land after everything above passes and just before real athletes arrive.
 
-- [ ] **Rotate the M2M client secret.** It is committed in
-      `issues/010-auth0-tenant-setup.md` step 10 and has been in git history
-      since `399c40d`, so scrubbing the file is not sufficient. Dashboard →
-      Applications → StrengthSync Management → Settings → Rotate. Then
-      `wrangler secret put AUTH0_M2M_CLIENT_SECRET`, then `server/.dev.vars`,
-      then scrub the file, then untick issue 010's criterion claiming the secret
-      appears in no file.
-- [ ] **Delete four dead Worker secrets.** None is read by any code:
+- [x] **Rotate the M2M client secret.** It is committed in
+
+  `issues/010-auth0-tenant-setup.md` step 10 and has been in git history
+  since `399c40d`, so scrubbing the file is not sufficient. Dashboard →
+  Applications → StrengthSync Management → Settings → Rotate. Then
+  `wrangler secret put AUTH0_M2M_CLIENT_SECRET`, then `server/.dev.vars`,
+  then scrub the file, then untick issue 010's criterion claiming the secret
+  appears in no file.
+- [x] **Delete four dead Worker secrets.** None is read by any code:
 
 ```sh
 cd server
@@ -286,9 +300,10 @@ pnpm exec wrangler secret delete WORKFLOW_SERVICE_SECRET
 ones predate the migration entirely and are unrelated to it — flagged because
 this is the first time anyone has listed what is actually set.
 
-- [ ] **After rotating, re-run §3's sign-in once** on production. Rotation with a
-      stale secret in the Worker breaks provisioning for every new athlete, and
-      the first invite batch is the worst possible place to discover it.
+- [x] **After rotating, re-run §3's sign-in once** on production. Rotation with a
+
+  stale secret in the Worker breaks provisioning for every new athlete, and
+  the first invite batch is the worst possible place to discover it.
 
 ---
 
@@ -297,13 +312,21 @@ this is the first time anyone has listed what is actually set.
 Worth saying plainly, so the result is not over-read.
 
 - **Key rotation at the provider.** `createTokenVerifier` refetches on an unseen
-  `kid`, and that path is covered by unit tests with a stubbed fetch, but no real
-  Auth0 key rotation has ever been observed by this code.
+`kid`, and that path is covered by unit tests with a stubbed fetch, but no real
+Auth0 key rotation has ever been observed by this code.
 - **Refresh-token reuse detection.** Configured at the tenant, never triggered.
 - **Behaviour after the access token actually expires** mid-session, rather than
-  on a reload.
+on a reload.
 - **Concurrent first requests in production.** The race is covered against the
-  in-memory test database (`lib/identity.test.ts`), where it is a real race the
-  unique constraint decides; D1 under load is not the same substrate.
+in-memory test database (`lib/identity.test.ts`), where it is a real race the
+unique constraint decides; D1 under load is not the same substrate.
 - **CORS.** There is none, deliberately — nothing is cross-origin yet. The iOS
-  shell will be the first cross-origin caller and will need it added.
+shell will be the first cross-origin caller and will need it added.
+
+
+
+## Notes with findings during the e2e swipe
+
+1. prod was the dev environment keys usage warning for auth0 modal
+2. sign out show as an intermitiadte flick screen the error "We could not load your account". lets make sure the state machine of the flow is clearly defined somewhere. we can live with this in the MVP, so TODO
+

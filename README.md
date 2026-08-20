@@ -4,16 +4,18 @@ StrengthSync helps a self-coached athlete — or a coach with a small caseload �
 
 ## Tech stack
 
-| Layer     | Choice                                                                             |
-| --------- | ---------------------------------------------------------------------------------- |
-| Monorepo  | pnpm workspaces + Turborepo; TypeScript; Node 22.14                                |
-| UI        | React 19 + Vite + React Router + Zustand + Tailwind (`client`)                    |
-| API       | Hono on Cloudflare Workers; serves the SPA in production (`server`)              |
-| DB        | Cloudflare D1 + Drizzle ORM (`server/db`)                                        |
-| Workflows | Cloudflare Workflows, in-Worker with `server` (`StrengthsyncWorkflow`)           |
-| LLM       | OpenAI via Vercel AI SDK                                                           |
-| Auth      | Client accounts: hashed passwords + a signed session cookie                        |
-| CI        | GitHub Actions; Lefthook pre-commit                                                |
+
+| Layer     | Choice                                                                 |
+| --------- | ---------------------------------------------------------------------- |
+| Monorepo  | pnpm workspaces + Turborepo; TypeScript; Node 22.14                    |
+| UI        | React 19 + Vite + React Router + Zustand + Tailwind (`client`)         |
+| API       | Hono on Cloudflare Workers; serves the SPA in production (`server`)    |
+| DB        | Cloudflare D1 + Drizzle ORM (`server/db`)                              |
+| Workflows | Cloudflare Workflows, in-Worker with `server` (`StrengthsyncWorkflow`) |
+| LLM       | OpenAI via Vercel AI SDK                                               |
+| Auth      | Client accounts: hashed passwords + a signed session cookie            |
+| CI        | GitHub Actions; Lefthook pre-commit                                    |
+
 
 See [docs/architecture/stack.md](docs/architecture/stack.md) for decisions and boundaries.
 
@@ -59,20 +61,12 @@ A Cloudflare Workflow freezes the log, analyzes it against the plan and profile,
 
 Copy the example file and fill in values:
 
-| Copy from                                                | Copy to              | Used by                         |
-| -------------------------------------------------------- | -------------------- | ------------------------------- |
-| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars` | API Worker: `SESSION_JWT_SECRET`, `INVITE_CODE`, `OPENAI_*` |
-| [client/.env.example](client/.env.example) | `client/.env.local` | Client: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` |
 
-`SESSION_JWT_SECRET` signs the session cookie. Any value works locally; rotating
-it invalidates every session already issued. In production it is a Worker secret
-(`wrangler secret put SESSION_JWT_SECRET`), never a committed value.
+| Copy from                                            | Copy to             | Used by                                         |
+| ---------------------------------------------------- | ------------------- | ----------------------------------------------- |
+| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars`  | API Worker: `OPENAI_*`                          |
+| [client/.env.example](client/.env.example)           | `client/.env.local` | Client: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` |
 
-`INVITE_CODE` is the code sign-up accepts — one per invite batch, rotated
-between batches, and stored on each `clients` row so the cohorts stay
-distinguishable (`docs/mvp.md` §2). Also a Worker secret in production
-(`wrangler secret put INVITE_CODE`). Leaving it unset closes registration
-rather than opening it.
 
 `VITE_POSTHOG_KEY` is the PostHog project key for the funnel events in
 `docs/mvp.md` §5 (`client/src/lib/analytics.ts`). Leaving it unset makes
@@ -97,9 +91,11 @@ pnpm turbo dev
 Then either register a new account at `/sign-up`, or sign in as the seeded demo
 athlete, who owns the only plan and history in the repository:
 
+
 | Email               | Password           |
 | ------------------- | ------------------ |
 | `lucia@example.com` | `dev-password-123` |
+
 
 That credential is committed on purpose, in `server/db/seeds/003_demo_credentials.sql`.
 It is safe only because no command in this repository can apply that seed to
@@ -123,11 +119,13 @@ only because nothing in the package manifest can push it to production.
 
 ## Troubleshoot
 
-| Symptom                                     | What to check                                                                                  |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Plan generation / complete week fails       | Missing `OPENAI_API_KEY`; D1 migrations not applied                                            |
-| `GET /health` looks fine but workflows fail | Health only proves the Worker — check `wrangler logs` for workflow-step errors                 |
-| Pre-commit slow or failing                  | Lefthook runs full typecheck / lint / test — fix those locally first                           |
+
+| Symptom                                     | What to check                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------------ |
+| Plan generation / complete week fails       | Missing `OPENAI_API_KEY`; D1 migrations not applied                            |
+| `GET /health` looks fine but workflows fail | Health only proves the Worker — check `wrangler logs` for workflow-step errors |
+| Pre-commit slow or failing                  | Lefthook runs full typecheck / lint / test — fix those locally first           |
+
 
 ---
 
