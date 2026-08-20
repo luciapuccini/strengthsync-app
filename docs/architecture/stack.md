@@ -18,26 +18,19 @@ Committed providers and platform choices for the MVP. This is intentionally a sm
 
 ## Access: Auth0
 
-Superseded. **[auth.md](./auth.md) is the description of record** — the tenant
-objects, the token, the data model, the request path, both clients and account
-deletion. This row exists so the stack table has an entry, not to be a second
-account of the same design that can drift from the first.
+**[auth.md](./auth.md) is the description of record** — the tenant objects, the
+token, the data model, the request path, the web client and account deletion.
+This section exists so the table's first row has somewhere to point, not to be a
+second account of the same design that can drift from the first.
 
-One line of it, because the rest of this document assumes it: athletes
+One paragraph of it, because the rest of this document assumes it: athletes
 authenticate on a hosted page at `auth.strengthsync.ai`, the browser sends a
 short-lived RS256 access token, and `requireAuth` in `server/src/lib/auth.ts`
 verifies it against the tenant's published key set and puts the internal athlete
 id on the request context. That context, not the URL, is what every handler
 reads.
 
-What used to be here described hand-rolled authentication: PBKDF2 over WebCrypto
-at 30,000 iterations, a `client_credentials` table, an HS256 `SameSite=Lax`
-cookie and a `SESSION_JWT_SECRET`. None of it exists — `issues/011-amputate-old-auth.md`
-deleted the lot in one commit and `issues/012-token-verification-and-provisioning.md`
-replaced it. The reasoning is kept in those issues rather than here, because a
-superseded design is history and history belongs where it happened.
-
-Two properties survive the change unaltered, and both are still load-bearing:
+Four properties of that arrangement are load-bearing for the rest of this stack:
 
 - **The guard runs in every environment.** There is deliberately no development
   exemption: a guard that is off while the code is being written is a guard
@@ -45,22 +38,20 @@ Two properties survive the change unaltered, and both are still load-bearing:
 - **No route accepts an athlete identifier.** The athlete comes from the
   verified credential, so the only ids a caller can name are a plan's and a
   week's — and the repository scopes both to the caller. Reading someone else's
-  data is not a request the API can express.
+  data is not a request the API can express. `POST /api/wf/complete-week` is no
+  exception: starting a workflow is an authenticated act like any other, and the
+  instance runs for the athlete in the token.
+- **Static SPA assets are public.** They carry no athlete data. `run_worker_first`
+  in `server/wrangler.jsonc` lists the paths the Worker owns — `/api/*`,
+  `/health`, `/ingest/*` — and everything else is served from `client/dist`.
+- **Password reset, email verification, social sign-in and session revocation
+  belong to the provider.** They are dashboard configuration rather than code
+  here, which is why they appear nowhere else in this stack.
 
-Two more that are new:
-
-- **Static SPA assets stay public**; they contain no athlete data.
-- **`/wf/*` is outside the guard.** `POST /wf/complete-week` starts a workflow
-  instance for any caller that reaches the origin. Known and accepted for the
-  MVP — see [api_contracts.md](./api_contracts.md).
-
-Four things this bought that the previous design listed as absent: password
-reset, email verification, social sign-in (the Apple and Google buttons are real
-now, not disabled captions), and session revocation. They are the provider's
-job, so they left [future_state_after_mvp/todos.md](../future_state_after_mvp/todos.md)
-rather than shipping as work of ours. Roles and an invitation flow remain out of
-scope: public sign-ups are disabled at the connection and the cohort is created
-by hand, which removes the invite code as a concept rather than relocating it.
+Roles and an invitation flow are out of scope. Public sign-ups are disabled at
+the connection and the cohort is created by hand through the Management API, so
+there is no invite code as a concept — every account that exists was created
+deliberately.
 
 ## Cloudflare Workers + Hono
 
