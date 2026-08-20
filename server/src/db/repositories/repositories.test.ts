@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq } from 'drizzle-orm';
 
 import type { PlanDay } from '../../domain/model/index.ts';
@@ -99,25 +99,36 @@ describe('plan + week lifecycle', () => {
     });
   }
 
-  it('activates a plan and creates week 1 from the template', async () => {
-    const { plan, first_week } = await activate();
+  it('activates a plan and creates week 1 from the template, byte-identical to before for a Monday start', async () => {
+    // A Monday. day_index - isoWeekday(start) collapses to day_index - 1 on a
+    // Monday, so this pins the rotation as a no-op for the common case.
+    const monday = '2026-08-24';
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(`${monday}T09:00:00.000Z`));
+    try {
+      const { plan, first_week } = await activate();
 
-    expect(plan.status).toBe('active');
-    expect(plan.activated_at).not.toBeNull();
-    expect(first_week.week_index).toBe(1);
-    expect(first_week.status).toBe('in_flight');
-    expect(first_week.start_date <= first_week.end_date).toBe(true);
-    expect(first_week.schedule).toHaveLength(2);
-    expect(first_week.schedule[0]?.date).toBe(first_week.start_date);
-    expect(first_week.schedule[0]?.exercises[0]).toMatchObject({
-      exercise_key: 'press_banca',
-      skipped: false,
-      feedback: null,
-      sets: [],
-      prescribed: { series: 4, reps: 8, weight_kg: 60 },
-    });
-    expect(await getCurrentWeek(db, clientId)).toMatchObject({ id: first_week.id });
-    expect(await getActivePlan(db, clientId)).toMatchObject({ id: plan.id });
+      expect(plan.status).toBe('active');
+      expect(plan.activated_at).not.toBeNull();
+      expect(first_week.week_index).toBe(1);
+      expect(first_week.status).toBe('in_flight');
+      expect(first_week.start_date).toBe(monday);
+      expect(first_week.start_date <= first_week.end_date).toBe(true);
+      expect(first_week.schedule).toHaveLength(2);
+      expect(first_week.schedule.map((d) => d.date)).toEqual(['2026-08-24', '2026-08-26']);
+      expect(first_week.schedule[0]?.date).toBe(first_week.start_date);
+      expect(first_week.schedule[0]?.exercises[0]).toMatchObject({
+        exercise_key: 'press_banca',
+        skipped: false,
+        feedback: null,
+        sets: [],
+        prescribed: { series: 4, reps: 8, weight_kg: 60 },
+      });
+      expect(await getCurrentWeek(db, clientId)).toMatchObject({ id: first_week.id });
+      expect(await getActivePlan(db, clientId)).toMatchObject({ id: plan.id });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('is idempotent by workflow_id', async () => {
@@ -136,7 +147,7 @@ describe('plan + week lifecycle', () => {
     await completeWeek(db, clientId);
     const activePlan = (await getActivePlan(db, clientId))!;
     const week2 = await saveNextWeek(db, clientId, activePlan, first.first_week, {
-      schedule: first.first_week.schedule,
+      schedule: first.first_week.schedule.map(({ date: _date, ...day }) => day),
     });
     await markAllDaysCompleted(db, clientId, week2.id);
     await completeWeek(db, clientId);

@@ -26,7 +26,6 @@ import {
   WeekAnalysisSchema,
   type WeekAnalysis,
 } from '../domain/coach/index.ts';
-import { addDays } from '../db/index.ts';
 
 type CompleteWeekParams = {
   clientId: string;
@@ -50,7 +49,6 @@ const WEEK_ANALYSIS_SYSTEM = [
 const NEXT_WEEK_SYSTEM = [
   'You are a strength coach generating the next dated training week.',
   'Return a full 7-day schedule with day_index 1–7 exactly once.',
-  'Date day_index 1 as next_week_start_date and each following day sequentially.',
   'Every day must be incomplete: completed=false, completed_at=null.',
   'Every exercise must have skipped=false, feedback=null, and sets=[].',
   'Adjust prescribed series/reps/weight from the completed week and plan template using the analysis and coaching rules.',
@@ -100,14 +98,12 @@ function buildNextWeekPrompt({
   rules,
   completedWeek,
   userProfile,
-  nextWeekStart,
 }: {
   currentPlan: Plan;
   analysis: WeekAnalysis;
   rules: string;
   completedWeek: Week;
   userProfile: ClientProfile;
-  nextWeekStart: string;
 }) {
   return JSON.stringify(
     {
@@ -116,7 +112,6 @@ function buildNextWeekPrompt({
       coaching_rules: rules,
       completed_week: completedWeek,
       profile: userProfile,
-      next_week_start_date: nextWeekStart,
     },
     null,
     2,
@@ -185,8 +180,6 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
       'generate-next-week',
       { retries: { limit: 2, delay: '1 second', backoff: 'linear' } },
       async () => {
-        const nextWeekStart = addDays(completedWeek.end_date, 1);
-
         const nextWeek = await getAgentRuntime({
           apiKey: this.env.OPENAI_API_KEY,
           model: this.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
@@ -198,7 +191,6 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
             rules,
             completedWeek,
             userProfile,
-            nextWeekStart,
           }),
           outSchema: NextWeekScheduleSchema,
         });

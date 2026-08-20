@@ -25,3 +25,20 @@ export function nowIso(): string {
 export function todayIso(): string {
   return nowIso().slice(0, 10);
 }
+
+/** ISO weekday of a date, 1 = Monday … 7 = Sunday, UTC. */
+export function isoWeekday(isoDate: string): number {
+  const [year, month, day] = parseIsoDate(isoDate);
+  const jsDay = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return jsDay === 0 ? 7 : jsDay;
+}
+
+/**
+ * Date a `day_index` (ISO weekday, 1 = Monday … 7 = Sunday) within the
+ * seven-day window starting at `start`, rotating the window so it begins on
+ * `start`'s own weekday instead of always on Monday.
+ */
+export function dateForDayIndex(start: string, dayIndex: number): string {
+  const offset = (dayIndex - isoWeekday(start) + 7) % 7;
+  return addDays(start, offset);
+}
