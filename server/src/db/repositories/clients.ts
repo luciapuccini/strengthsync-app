@@ -8,12 +8,8 @@ import { RepoError } from '../errors.ts';
 import { clients, coaches } from '../schema.ts';
 
 /**
- * The `Client` the API returns, column by column. The projection outlived the
- * secret it was written for — `clients.invite_code` is gone with the invite gate
- * — but it is kept rather than replaced by `select()`, because it pins the
- * response to the domain `Client` shape: a column added to the table later
- * cannot reach the browser without someone naming it here. Identity now lives
- * in its own table for the same reason the password hash did.
+ * The `Client` the API returns, column by column. Identity now lives
+ * in its own table.
  */
 const clientColumns = {
   id: clients.id,
@@ -24,9 +20,6 @@ const clientColumns = {
   updated_at: clients.updated_at,
 };
 
-// There is deliberately no `listClients`: it went with the route that used it
-// in `issues/auth/013`. Reading every client is not something this application
-// does — an athlete sees their own data, addressed by their verified token.
 export async function getClient(db: Db, clientId: string): Promise<Client | null> {
   const rows = await db
     .select(clientColumns)
@@ -37,8 +30,7 @@ export async function getClient(db: Db, clientId: string): Promise<Client | null
 }
 
 /**
- * Create a client under the MVP's single shared coach. The coach row comes
- * from `seeds/000_default_coach.sql` (see docs/in_progress checkpoints).
+ * Create a client under the MVP's single shared coach.
  *
  * There is no eligibility argument left to pass. The cohort is created directly
  * at the identity provider with sign-ups disabled, so every caller that gets

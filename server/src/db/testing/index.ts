@@ -1,3 +1,6 @@
+// These two imports are the only reason server/tsconfig.json sets
+// `"types": ["node"]`. Nothing here reaches the Worker bundle — the module is
+// imported by tests alone — so the node types stay a test-only concession.
 import { readdirSync, readFileSync } from 'node:fs';
 
 import BetterSqlite3 from 'better-sqlite3';

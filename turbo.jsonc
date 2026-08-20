@@ -5,22 +5,22 @@
   "tasks": {
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
-      "outputs": ["dist/**", "*.tsbuildinfo"]
+      "outputs": ["dist/**", "*.tsbuildinfo"],
     },
     "lint": {
-      "outputs": []
+      "outputs": [],
     },
     "test": {
       "dependsOn": ["^typecheck"],
-      "outputs": []
+      "outputs": [],
     },
     "build": {
       "dependsOn": ["^typecheck", "^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
     },
     "@strengthsync/client#build": {
       "dependsOn": ["^typecheck", "^build"],
@@ -29,17 +29,17 @@
       // Turbo infers VITE_* from the framework, but naming it keeps the
       // guarantee visible: leave it out and a cached bundle built before the
       // key existed is still a legal answer for a build that has it.
-      "env": ["VITE_POSTHOG_KEY"]
+      "env": ["VITE_POSTHOG_KEY"],
     },
     "@strengthsync/server#build": {
       "dependsOn": ["^typecheck", "^build", "@strengthsync/client#build"],
-      "outputs": []
+      "outputs": [],
     },
     "deploy": {
       "dependsOn": ["build"],
       "outputs": [],
       "cache": false,
-      "passThroughEnv": ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"]
-    }
-  }
+      "passThroughEnv": ["CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"],
+    },
+  },
 }

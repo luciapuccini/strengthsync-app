@@ -3,6 +3,7 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
+import jsonc from 'eslint-plugin-jsonc';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 // Import-boundary enforcement for the dependency graph
@@ -93,4 +94,23 @@ export default defineConfig([
   // agent code. Declared after the server boundary above so it wins for
   // files under this narrower glob.
   boundary(['server/src/db/**/*.ts'], [], ['**/routes/**', '**/workflows/**', '**/agent/**']),
+  // `.json` is strict RFC 8259 with no exceptions: the `jsonc/json` language
+  // rejects comments and trailing commas at parse time, so this needs no rule
+  // list. A file that wants comments says so in its extension — turbo.jsonc
+  // and server/wrangler.jsonc do. tsconfig.json is the one file that cannot
+  // (tsc resolves that name only), so its reasoning lives next to the code it
+  // describes instead. no-dupe-keys is the one thing neither language catches:
+  // a repeated key is valid syntax that silently drops a value.
+  {
+    files: ['**/*.json'],
+    plugins: { jsonc },
+    language: 'jsonc/json',
+    rules: { 'jsonc/no-dupe-keys': 'error' },
+  },
+  {
+    files: ['**/*.jsonc'],
+    plugins: { jsonc },
+    language: 'jsonc/jsonc',
+    rules: { 'jsonc/no-dupe-keys': 'error' },
+  },
 ]);
