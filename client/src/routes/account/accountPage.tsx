@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 import { deleteAccount } from '@/api/client';
 import { ApiClientError } from '@/api/errors';
+import type { Client } from '@/api/types';
 import { Button } from '@/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shadcn/ui/card';
 import { Input } from '@/shadcn/ui/input';
@@ -19,7 +20,79 @@ import { useAppStore } from '@/store/useAppStore';
 const CONFIRMATION = 'delete my account';
 
 /**
- * Account settings, which for now is one destructive action.
+ * The unit control, as two buttons rather than a segmented control: there is no
+ * tabs, toggle-group, radio-group or switch primitive in `shadcn/ui`, and one
+ * setting on one screen is not a reason to add one. The same two buttons are
+ * what onboarding will show at its first step.
+ */
+const UNIT_OPTIONS = [
+  { value: 'imperial', label: 'Pounds (lb)' },
+  { value: 'metric', label: 'Kilograms (kg)' },
+] as const;
+
+/**
+ * The unit setting. Its own component rather than more of `AccountPage`,
+ * because it owns state that has nothing to do with deleting an account, and
+ * because it is the control `issues/005-metric-onboarding.md` reuses.
+ *
+ * Nothing flips until the write comes back, so a failure leaves the buttons
+ * showing what the server actually holds and the message is the whole of the
+ * recovery — the athlete taps again.
+ */
+function UnitsCard(): JSX.Element {
+  const client = useAppStore((state) => state.sessionClient);
+  const setUnitPreference = useAppStore((state) => state.setUnitPreference);
+
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onPick(preference: Client['unit_preference']): Promise<void> {
+    if (!client || preference === client.unit_preference || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await setUnitPreference(preference);
+    } catch {
+      setError('We could not save that just now. Your units are unchanged — please try again.');
+    }
+    setSaving(false);
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Units</CardTitle>
+        <CardDescription>
+          How weights are shown to you. It changes nothing about what is recorded.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex gap-2">
+          {UNIT_OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              type="button"
+              variant={client?.unit_preference === option.value ? 'default' : 'outline'}
+              aria-pressed={client?.unit_preference === option.value}
+              disabled={!client || saving}
+              onClick={() => void onPick(option.value)}
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Account settings: the unit preference, and one destructive action.
  *
  * A route rather than a control in the header: App Store Guideline 5.1.1(v)
  * requires deletion to be reachable from inside the app, not to be one click
@@ -74,6 +147,8 @@ export function AccountPage(): JSX.Element {
           {client && <CardDescription>Signed in as {client.display_name}</CardDescription>}
         </CardHeader>
       </Card>
+
+      <UnitsCard />
 
       <Card className="border-destructive/40">
         <CardHeader>

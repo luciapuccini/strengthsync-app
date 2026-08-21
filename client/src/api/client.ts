@@ -8,6 +8,7 @@ import type {
   OnboardingAnswers,
   Plan,
   SaveDayLog,
+  UpdateClient,
   UpdateClientProfile,
   UpdateDayLog,
   Week,
@@ -143,6 +144,18 @@ async function callEmpty(
  */
 export async function getMe(): Promise<Client> {
   const res = await call(() => api.GET('/api/me'));
+  return res.client;
+}
+
+/**
+ * The one writer of the unit preference, shared by the Account toggle and the
+ * onboarding toggle. It answers with the whole client, so the caller replaces
+ * the one it holds rather than refetching it.
+ */
+export async function updateUnitPreference(
+  preference: UpdateClient['unit_preference'],
+): Promise<Client> {
+  const res = await call(() => api.PATCH('/api/me', { body: { unit_preference: preference } }));
   return res.client;
 }
 

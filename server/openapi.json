@@ -85,6 +85,13 @@
               "archived"
             ]
           },
+          "unit_preference": {
+            "type": "string",
+            "enum": [
+              "imperial",
+              "metric"
+            ]
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -99,8 +106,24 @@
           "coach_id",
           "display_name",
           "status",
+          "unit_preference",
           "created_at",
           "updated_at"
+        ]
+      },
+      "UpdateClient": {
+        "type": "object",
+        "properties": {
+          "unit_preference": {
+            "type": "string",
+            "enum": [
+              "imperial",
+              "metric"
+            ]
+          }
+        },
+        "required": [
+          "unit_preference"
         ]
       },
       "ClientProfileResponse": {
@@ -1030,6 +1053,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClientResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update the signed-in client's settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClient"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }

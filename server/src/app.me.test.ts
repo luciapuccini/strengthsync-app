@@ -67,6 +67,7 @@ beforeEach(async () => {
 describe('the guard', () => {
   const guardedPaths: Array<[string, string]> = [
     ['GET', '/api/me'],
+    ['PATCH', '/api/me'],
     ['GET', '/api/me/profile'],
     ['PUT', '/api/me/profile'],
     ['POST', '/api/me/onboarding'],
@@ -138,23 +139,67 @@ describe('GET /api/me', () => {
     const response = await app.request('/api/me', { headers: ana.headers });
 
     expect(response.status).toBe(200);
+    // Imperial without anyone asking for it: the column defaults, and the
+    // overwhelming majority of athletes never touch the setting.
     expect(await body(response)).toMatchObject({
-      client: { id: ana.id, display_name: 'Ana', status: 'active' },
+      client: { id: ana.id, display_name: 'Ana', status: 'active', unit_preference: 'imperial' },
     });
+  });
+});
+
+describe('PATCH /api/me', () => {
+  it('persists the preference and answers with the updated client', async () => {
+    const response = await app.request('/api/me', {
+      method: 'PATCH',
+      headers: ana.jsonHeaders,
+      body: JSON.stringify({ unit_preference: 'metric' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(await body(response)).toMatchObject({
+      client: { id: ana.id, unit_preference: 'metric' },
+    });
+
+    // The assertion that makes this about persistence rather than echo: a
+    // separate request, reading the row back.
+    const reread = await app.request('/api/me', { headers: ana.headers });
+    expect(await body(reread)).toMatchObject({ client: { unit_preference: 'metric' } });
+  });
+
+  it('answers 400 for a unit outside the two-member enum', async () => {
+    const response = await app.request('/api/me', {
+      method: 'PATCH',
+      headers: ana.jsonHeaders,
+      body: JSON.stringify({ unit_preference: 'stones' }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(await body(response)).toMatchObject({ error: { code: 'invalid_input' } });
+  });
+
+  it('leaves the other athlete alone', async () => {
+    await app.request('/api/me', {
+      method: 'PATCH',
+      headers: ana.jsonHeaders,
+      body: JSON.stringify({ unit_preference: 'metric' }),
+    });
+
+    const response = await app.request('/api/me', { headers: bruno.headers });
+    expect(await body(response)).toMatchObject({ client: { unit_preference: 'imperial' } });
   });
 });
 
 describe('the athlete/identity invariant', () => {
   it('will not let an athlete be deleted out from under their identity', async () => {
-    // Four handlers answer 404 `client_not_found` when `getClient` returns null,
+    // Five handlers answer 404 `client_not_found` when the athlete is missing,
     // and that branch is now unreachable rather than merely untested: the
     // foreign key from `client_identities.client_id` makes the state it
     // describes impossible to construct. A token that resolves at all resolves
     // to an athlete that exists.
     //
-    // The branch stays in those handlers because `getClient` returns
-    // `Client | null` and the alternative is a non-null assertion — a null check
-    // is the honest way to spend it. What is pinned here is the constraint that
+    // The branch stays in those handlers because `getClient` and
+    // `updateUnitPreference` return `Client | null` and the alternative is a
+    // non-null assertion — a null check is the honest way to spend it. What is pinned here is the constraint that
     // makes it dead, so that a migration relaxing the foreign key fails loudly
     // here instead of quietly widening what a token can reach.
     //

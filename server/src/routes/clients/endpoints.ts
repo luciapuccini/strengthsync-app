@@ -1,6 +1,12 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 
-import { findProfile, getClient, upsertProfile, type Db } from '../../db/index.ts';
+import {
+  findProfile,
+  getClient,
+  updateUnitPreference,
+  upsertProfile,
+  type Db,
+} from '../../db/index.ts';
 
 import type { AuthVariables } from '../../lib/auth.ts';
 import { defaultHook } from '../../lib/validation-error.ts';
@@ -10,6 +16,7 @@ import {
   ClientProfileResponseSchema,
   ClientResponseSchema,
   UpdateClientProfileSchema,
+  UpdateClientSchema,
 } from './schemas.ts';
 
 const getMeRoute = createRoute({
@@ -18,6 +25,19 @@ const getMeRoute = createRoute({
   summary: 'Get the signed-in client',
   responses: {
     200: json('The signed-in client', ClientResponseSchema),
+    401: unauthorized,
+    404: notFound,
+  },
+});
+
+const patchMeRoute = createRoute({
+  method: 'patch',
+  path: '/me',
+  summary: "Update the signed-in client's settings",
+  request: { body: { content: { 'application/json': { schema: UpdateClientSchema } } } },
+  responses: {
+    200: json('The updated client', ClientResponseSchema),
+    400: invalidInput,
     401: unauthorized,
     404: notFound,
   },
@@ -75,6 +95,23 @@ export function clientRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables }> 
    */
   app.openapi(getMeRoute, async (c) => {
     const client = await getClient(db, c.get('clientId'));
+    // A token outlives the row it names, so a deleted athlete can still present
+    // a valid one.
+    if (!client) {
+      return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404);
+    }
+    return c.json({ client }, 200);
+  });
+
+  /**
+   * The one writer of `unit_preference`, shared by the Account toggle and the
+   * onboarding toggle so the two cannot drift apart. It answers with the whole
+   * client rather than the field, so the session store can adopt the response
+   * directly instead of refetching.
+   */
+  app.openapi(patchMeRoute, async (c) => {
+    const { unit_preference } = c.req.valid('json');
+    const client = await updateUnitPreference(db, c.get('clientId'), unit_preference);
     // A token outlives the row it names, so a deleted athlete can still present
     // a valid one.
     if (!client) {

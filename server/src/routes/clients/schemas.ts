@@ -4,6 +4,7 @@ import {
   ClientProfileSchema,
   ClientProfileWriteSchema,
   ClientSchema,
+  UnitPreferenceSchema,
 } from '../../domain/model/index.ts';
 
 /**
@@ -24,6 +25,13 @@ import {
  * refinement — it silently drops one. None of these have any; the day-log
  * schemas in `routes/weeks/schemas.ts` do, and are built differently.
  */
+
+// The whole of what a client is allowed to change about itself. A partial
+// update in name, a single field in practice — an out-of-enum unit is rejected
+// by this schema rather than by the handler.
+export const UpdateClientSchema = z
+  .object({ unit_preference: z.enum(UnitPreferenceSchema.options) })
+  .openapi('UpdateClient');
 
 export const UpdateClientProfileSchema = z
   .object(ClientProfileWriteSchema.shape)

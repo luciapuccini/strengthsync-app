@@ -71,7 +71,7 @@ Cross-field rules (for example: a skipped exercise carries no performed sets) ar
 
 ## Public API
 
-Fourteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
+Fifteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
 schemas — and is always current by construction, so they are not restated here.
 
 The shape, which the document does not state in one place:
@@ -79,7 +79,7 @@ The shape, which the document does not state in one place:
 | Area | Operations |
 | --- | --- |
 | Liveness | `GET /health` |
-| The signed-in athlete's account | `GET /api/me`, `DELETE /api/account` |
+| The signed-in athlete's account | `GET`/`PATCH /api/me`, `DELETE /api/account` |
 | The signed-in athlete | `GET`/`PUT /api/me/profile`, `POST /api/me/onboarding`, `GET /api/me/plans/active`, `GET /api/me/plans/{planId}`, `POST /api/me/plans/generate`, `GET /api/me/weeks`, `GET /api/me/weeks/current`, `POST /api/me/weeks/{weekId}/days/{dayIndex}/save`, `PATCH /api/me/weeks/{weekId}/days/{dayIndex}` |
 | Workflow start | `POST /api/wf/complete-week` |
 

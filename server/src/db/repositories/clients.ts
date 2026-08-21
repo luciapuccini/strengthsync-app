@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 
-import type { Client } from '../../domain/model/index.ts';
+import type { Client, UnitPreference } from '../../domain/model/index.ts';
 
 import { nowIso } from '../dates.ts';
 import type { Db } from '../db.ts';
@@ -20,6 +20,7 @@ const clientColumns = {
   coach_id: clients.coach_id,
   display_name: clients.display_name,
   status: clients.status,
+  unit_preference: clients.unit_preference,
   created_at: clients.created_at,
   updated_at: clients.updated_at,
 };
@@ -59,11 +60,32 @@ export async function createClient(db: Db, input: Pick<Client, 'display_name'>):
     coach_id: coach.id,
     display_name: input.display_name,
     status: 'active',
+    unit_preference: 'imperial',
     created_at: now,
     updated_at: now,
   };
   await db.insert(clients).values(client);
   return client;
+}
+
+/**
+ * The only writer of `unit_preference`, deliberately narrow rather than a
+ * general-purpose `updateClient`: the Account toggle and the onboarding toggle
+ * are the same control calling the same path, so this column cannot be written
+ * two different ways. Returns null when the row is gone — a token outlives the
+ * row it names.
+ */
+export async function updateUnitPreference(
+  db: Db,
+  clientId: string,
+  preference: UnitPreference,
+): Promise<Client | null> {
+  const rows = await db
+    .update(clients)
+    .set({ unit_preference: preference, updated_at: nowIso() })
+    .where(eq(clients.id, clientId))
+    .returning(clientColumns);
+  return rows[0] ?? null;
 }
 
 /**

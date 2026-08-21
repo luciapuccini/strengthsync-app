@@ -22,6 +22,7 @@ type ClientStatus = "active" | "archived";
 type PlanStatus = "draft" | "active" | "archived";
 type WeekStatus = "in_flight" | "completed" | "abandoned";
 type ExerciseFeedback = "easy" | "hard" | "heavy" | "light";
+type UnitPreference = "imperial" | "metric";
 ```
 
 ---
@@ -46,6 +47,7 @@ type Client = {
   coach_id: Uuid; // FK → Coach
   display_name: string;
   status: ClientStatus;
+  unit_preference: UnitPreference;
   created_at: ISODateTime;
   updated_at: ISODateTime;
 };
@@ -79,8 +81,8 @@ inches — and names its unit in the field. That holds for storage, for the API,
 and for what the coaching prompts read; kilograms and centimetres exist only as
 something the client renders for an athlete who has asked for it. Which
 athletes those are lives in `clients.unit_preference` (`'imperial' | 'metric'`,
-defaulting to `'imperial'`) — a column today, not yet part of the `Client` type
-or the API. The suffix is load-bearing rather than decorative: these values pass
+defaulting to `'imperial'`), which travels with the `Client` on every read and
+is written by `PATCH /api/me` — the only writer of that column. The suffix is load-bearing rather than decorative: these values pass
 through free-form JSON columns that nothing type-checks and into prompts the
 model reads literally, so the unit has to travel with the value.
 

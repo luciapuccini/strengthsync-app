@@ -73,6 +73,7 @@ export const ClientSchema = z.object({
   coach_id: UuidSchema,
   display_name: z.string().min(1),
   status: ClientStatusSchema,
+  unit_preference: UnitPreferenceSchema,
   ...timestampFields,
 });
 export type Client = z.infer<typeof ClientSchema>;

@@ -31,17 +31,17 @@ See "The preference" in the parent PRD.
 
 ## Acceptance criteria
 
-- [ ] The client domain schema carries the preference as a two-member enum of imperial and metric, defaulting to imperial
-- [ ] The session bootstrap that fetches the signed-in client returns the preference
-- [ ] A partial-update endpoint on the signed-in client resource writes the preference and returns the updated client
-- [ ] A value outside the two-member enum is rejected by the endpoint
-- [ ] The session store adopts the updated client from the endpoint's response, without a refetch
-- [ ] The Account page has an imperial/metric control that calls that endpoint
-- [ ] The setting survives a reload
-- [ ] A route-level test covers the endpoint per "Testing Decisions": the preference persists and the updated client is returned, and an out-of-enum value is rejected
-- [ ] The API-contract doc describes the new endpoint
-- [ ] The generated API contract is regenerated and the client-side mirrors match it
-- [ ] The pre-commit gate passes: typecheck, lint and the full test suite
+- [x] The client domain schema carries the preference as a two-member enum of imperial and metric, defaulting to imperial
+- [x] The session bootstrap that fetches the signed-in client returns the preference
+- [x] A partial-update endpoint on the signed-in client resource writes the preference and returns the updated client
+- [x] A value outside the two-member enum is rejected by the endpoint
+- [x] The session store adopts the updated client from the endpoint's response, without a refetch
+- [x] The Account page has an imperial/metric control that calls that endpoint
+- [x] The setting survives a reload
+- [x] A route-level test covers the endpoint per "Testing Decisions": the preference persists and the updated client is returned, and an out-of-enum value is rejected
+- [x] The API-contract doc describes the new endpoint
+- [x] The generated API contract is regenerated and the client-side mirrors match it
+- [x] The pre-commit gate passes: typecheck, lint and the full test suite
 
 ## Blocked by
 
@@ -57,4 +57,4 @@ See "The preference" in the parent PRD.
 
 ## STATUS
 
-TODO
+DONE
