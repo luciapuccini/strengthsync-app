@@ -34,6 +34,13 @@ goals, not loads to be built from plates.
 
 See "The five-pound grid" and "Prompt changes" in the parent PRD.
 
+**Eval coverage is deliberately not part of this issue.** The parent PRD asks for it,
+but `docs/architecture/evals.md` is titled "LLM evaluation (future plan)" and there is
+no runner, no Braintrust dependency and no eval cases in the repo; standing one up is
+its own piece of infrastructure. The prompt changes ship eval-uncovered and that gap is
+recorded for `issues/006-final-sweep.md`. The snap transform — the part that actually
+guarantees loadable numbers — is unit-tested regardless.
+
 ## Acceptance criteria
 
 - [ ] The coaching-rules document advances a lift by five pounds
@@ -44,7 +51,9 @@ See "The five-pound grid" and "Prompt changes" in the parent PRD.
 - [ ] Body weight and target weight pass through unsnapped
 - [ ] Athlete-typed strength benchmarks snap to the nearest five on submit
 - [ ] Tests cover the transform per "Testing Decisions": off-grid corrected, on-grid untouched, null preserved, body and target weight left alone
-- [ ] The prompt changes have eval coverage, per the existing evals documentation
+- [ ] All three prompt sites are covered, not just the first-plan prompt: plan turnover
+      and next-week generation build their systems inline in the workflows and were
+      missed by issue 001's rename sweep because they never named the old field
 - [ ] The pre-commit gate passes: typecheck, lint and the full test suite
 
 ## Blocked by
