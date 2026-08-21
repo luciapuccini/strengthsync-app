@@ -4,6 +4,7 @@ import {
   cmToInches,
   feetInchesToInches,
   formatWeight,
+  inchesToCm,
   inchesToFeetInches,
   toCanonicalWeight,
   toDisplayWeight,
@@ -45,6 +46,14 @@ describe('cmToInches', () => {
   it('converts to one decimal', () => {
     expect(cmToInches(178)).toBe(70.1);
     expect(cmToInches(177)).toBe(69.7);
+  });
+});
+
+describe('inchesToCm', () => {
+  it('round-trips a typed height back to the whole centimetre it came from', () => {
+    for (let cm = 120; cm <= 220; cm += 1) {
+      expect(inchesToCm(cmToInches(cm))).toBe(cm);
+    }
   });
 });
 

@@ -54,6 +54,16 @@ export function cmToInches(cm: number): number {
   return Math.round(cm * INCHES_PER_CM * 10) / 10;
 }
 
+/**
+ * The inverse, so stepping back through the questionnaire re-shows the height
+ * that was typed. Whole centimetres: `cmToInches` keeps one decimal, which is
+ * within 0.05 in — 0.13 cm — of the original, so the round trip lands back on
+ * the same whole number the athlete entered.
+ */
+export function inchesToCm(totalInches: number): number {
+  return Math.round(totalInches / INCHES_PER_CM);
+}
+
 /** The suffix that goes after a converted load. */
 export function unitLabel(unit: UnitPreference): string {
   return unit === 'imperial' ? 'lb' : 'kg';

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { toCanonicalWeight, toDisplayWeight, type UnitPreference } from '@/utils/units';
+
 /**
  * UI-local schemas for the onboarding questionnaire, one per wizard step.
  *
@@ -41,6 +43,33 @@ export function optionalNumber(value: FormDataEntryValue | null): number | undef
   if (value === null || value === '') return undefined;
   const parsed = Number(value);
   return Number.isNaN(parsed) ? undefined : parsed;
+}
+
+/**
+ * A typed weight in canonical pounds, whichever units the athlete answered in.
+ *
+ * Convert first, then parse: the bounds below stay in pounds and keep meaning
+ * the same thing for both kinds of athlete, and no step does the arithmetic
+ * itself.
+ */
+export function optionalCanonicalWeight(
+  value: FormDataEntryValue | null,
+  unit: UnitPreference,
+): number | undefined {
+  const entered = optionalNumber(value);
+  return entered === undefined ? undefined : toCanonicalWeight(entered, unit);
+}
+
+/**
+ * The inverse, for a field's default: a stored weight back in the athlete's
+ * units, so stepping back through the wizard re-shows the number they typed
+ * rather than silently changing their answer.
+ */
+export function displayedWeight(
+  pounds: number | undefined,
+  unit: UnitPreference,
+): number | undefined {
+  return pounds === undefined ? undefined : toDisplayWeight(pounds, unit);
 }
 
 export function optionalText(value: FormDataEntryValue | null): string | undefined {

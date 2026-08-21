@@ -61,4 +61,4 @@ See "Onboarding" and "The preference" in the parent PRD.
 
 ## STATUS
 
-TODO
+DONE

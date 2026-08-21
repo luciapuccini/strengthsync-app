@@ -4,12 +4,14 @@ import type { JSX } from 'react';
 import {
   TrainingStepSchema,
   fieldErrors,
+  optionalCanonicalWeight,
   optionalNumber,
   type OnboardingExperience,
   type StepFieldErrors,
   type TrainingStepAnswers,
 } from '@/lib/onboarding-schema';
 import { Button } from '@/shadcn/ui/button';
+import type { UnitPreference } from '@/utils/units';
 
 import { ExperienceField } from './experienceField';
 import { LiftFields } from './liftFields';
@@ -17,24 +19,35 @@ import { ScheduleFields } from './scheduleFields';
 
 type Props = {
   defaults: Partial<TrainingStepAnswers>;
+  unit: UnitPreference;
   onBack: () => void;
   onNext: (answers: TrainingStepAnswers) => void;
 };
 
 type Experience = OnboardingExperience | '';
 
-/** A beginner is never asked for a working weight, whatever a hidden field holds. */
+/**
+ * A beginner is never asked for a working weight, whatever a hidden field holds.
+ *
+ * Loads are converted before they are parsed, so the 1000 lb bound stays in
+ * pounds. The five-pound snap is not applied here: `issues/002` made it a
+ * transform on the server's onboarding schema, which this payload passes
+ * through, and adding a second one would be a rounding rule with two homes.
+ */
 function validate(
   form: FormData,
   experience: Experience,
+  unit: UnitPreference,
 ): { errors: StepFieldErrors } | { data: TrainingStepAnswers } {
   const beginner = experience === 'beginner';
+  const lift = (name: string): number | undefined =>
+    beginner ? undefined : optionalCanonicalWeight(form.get(name), unit);
   const result = TrainingStepSchema.safeParse({
     experience: form.get('experience'),
-    squat_lb: beginner ? undefined : optionalNumber(form.get('squat_lb')),
-    bench_press_lb: beginner ? undefined : optionalNumber(form.get('bench_press_lb')),
-    deadlift_lb: beginner ? undefined : optionalNumber(form.get('deadlift_lb')),
-    overhead_press_lb: beginner ? undefined : optionalNumber(form.get('overhead_press_lb')),
+    squat_lb: lift('squat_lb'),
+    bench_press_lb: lift('bench_press_lb'),
+    deadlift_lb: lift('deadlift_lb'),
+    overhead_press_lb: lift('overhead_press_lb'),
     days_per_week: optionalNumber(form.get('days_per_week')),
     rest_day: optionalNumber(form.get('rest_day')),
   });
@@ -42,12 +55,12 @@ function validate(
 }
 
 /** The wizard's third step: how the client trains today. */
-export function TrainingStep({ defaults, onBack, onNext }: Props): JSX.Element {
+export function TrainingStep({ defaults, unit, onBack, onNext }: Props): JSX.Element {
   const [experience, setExperience] = useState<Experience>(defaults.experience ?? '');
 
   const [errors, formAction] = useActionState<StepFieldErrors | null, FormData>(
     (_previous, form) => {
-      const result = validate(form, experience);
+      const result = validate(form, experience, unit);
       if ('errors' in result) return result.errors;
       onNext(result.data);
       return null;
@@ -65,7 +78,12 @@ export function TrainingStep({ defaults, onBack, onNext }: Props): JSX.Element {
         onChange={setExperience}
       />
 
-      <LiftFields experience={experience} priorAnswers={defaults} errors={errors ?? {}} />
+      <LiftFields
+        experience={experience}
+        priorAnswers={defaults}
+        unit={unit}
+        errors={errors ?? {}}
+      />
 
       <ScheduleFields priorAnswers={defaults} errors={errors ?? {}} />
 

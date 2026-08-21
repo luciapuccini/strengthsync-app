@@ -5,6 +5,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { deleteAccount } from '@/api/client';
 import { ApiClientError } from '@/api/errors';
 import type { Client } from '@/api/types';
+import { UnitToggle } from '@/components/unit-toggle/unitToggle';
 import { Button } from '@/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shadcn/ui/card';
 import { Input } from '@/shadcn/ui/input';
@@ -20,20 +21,9 @@ import { useAppStore } from '@/store/useAppStore';
 const CONFIRMATION = 'delete my account';
 
 /**
- * The unit control, as two buttons rather than a segmented control: there is no
- * tabs, toggle-group, radio-group or switch primitive in `shadcn/ui`, and one
- * setting on one screen is not a reason to add one. The same two buttons are
- * what onboarding will show at its first step.
- */
-const UNIT_OPTIONS = [
-  { value: 'imperial', label: 'Pounds (lb)' },
-  { value: 'metric', label: 'Kilograms (kg)' },
-] as const;
-
-/**
  * The unit setting. Its own component rather than more of `AccountPage`,
- * because it owns state that has nothing to do with deleting an account, and
- * because it is the control `issues/005-metric-onboarding.md` reuses.
+ * because it owns state that has nothing to do with deleting an account. The
+ * buttons themselves are `UnitToggle`, shared with onboarding's first step.
  *
  * Nothing flips until the write comes back, so a failure leaves the buttons
  * showing what the server actually holds and the message is the whole of the
@@ -67,20 +57,11 @@ function UnitsCard(): JSX.Element {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <div className="flex gap-2">
-          {UNIT_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              type="button"
-              variant={client?.unit_preference === option.value ? 'default' : 'outline'}
-              aria-pressed={client?.unit_preference === option.value}
-              disabled={!client || saving}
-              onClick={() => void onPick(option.value)}
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
+        <UnitToggle
+          value={client?.unit_preference}
+          disabled={!client || saving}
+          onChange={(preference) => void onPick(preference)}
+        />
         {error && (
           <p role="alert" className="text-sm text-destructive">
             {error}
