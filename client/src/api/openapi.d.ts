@@ -837,7 +837,7 @@ export interface components {
             snapshot_date: string;
             sex: string | null;
             age: number | null;
-            height_cm: number | null;
+            height_in: number | null;
             goals: {
                 [key: string]: unknown;
             };
@@ -865,7 +865,7 @@ export interface components {
             snapshot_date: string;
             sex: string | null;
             age: number | null;
-            height_cm: number | null;
+            height_in: number | null;
             goals: {
                 [key: string]: unknown;
             };
@@ -890,21 +890,21 @@ export interface components {
             /** @enum {string} */
             sex: "male" | "female" | "other";
             age: number;
-            height_cm: number;
-            weight_kg: number;
+            height_in: number;
+            weight_lb: number;
             body_fat_percent?: number;
             /** @enum {string} */
             goal: "lose_fat" | "build_muscle" | "get_stronger";
             /** Format: date */
             target_date?: string;
-            target_weight_kg?: number;
+            target_weight_lb?: number;
             note?: string;
             /** @enum {string} */
             experience: "beginner" | "intermediate" | "advanced";
-            squat_kg?: number;
-            bench_press_kg?: number;
-            deadlift_kg?: number;
-            overhead_press_kg?: number;
+            squat_lb?: number;
+            bench_press_lb?: number;
+            deadlift_lb?: number;
+            overhead_press_lb?: number;
             days_per_week: number;
             rest_day: number;
             activities?: {
@@ -954,7 +954,7 @@ export interface components {
             series: number;
             reps: number;
             rest_time_sec: number;
-            weight_kg: number | null;
+            weight_lb: number | null;
             notes: string | null;
         };
         GeneratePlanResponse: {
@@ -1003,14 +1003,14 @@ export interface components {
                 series: number;
                 reps: number;
                 rest_time_sec: number;
-                weight_kg: number | null;
+                weight_lb: number | null;
                 notes: string | null;
             };
             sets: components["schemas"]["PerformedSet"][];
         };
         PerformedSet: {
             performed_reps: number;
-            performed_weight_kg: number | null;
+            performed_weight_lb: number | null;
         };
         WeekResponse: {
             week: components["schemas"]["Week"];

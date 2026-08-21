@@ -33,8 +33,8 @@ describe('toWeekHistory', () => {
 
   it('groups by week and day with first-set scalars', () => {
     const week = withSets(makeWeek(), 1, 'bench_press', [
-      { performed_reps: 8, performed_weight_kg: 30 },
-      { performed_reps: 7, performed_weight_kg: 30 },
+      { performed_reps: 8, performed_weight_lb: 30 },
+      { performed_reps: 7, performed_weight_lb: 30 },
     ]);
 
     expect(toWeekHistory([week], 6)).toEqual([
@@ -84,41 +84,41 @@ describe('toWeekHistory', () => {
 describe('toWeekHistory diffs', () => {
   it('diffs weight and reps against the previous week index', () => {
     const prev = withSets({ ...makeWeek(), week_index: 3 }, 1, 'bench_press', [
-      { performed_reps: 10, performed_weight_kg: 29 },
+      { performed_reps: 10, performed_weight_lb: 29 },
     ]);
     const curr = withSets({ ...makeWeek(), week_index: 4 }, 1, 'bench_press', [
-      { performed_reps: 8, performed_weight_kg: 30 },
+      { performed_reps: 8, performed_weight_lb: 30 },
     ]);
 
     const history = toWeekHistory([curr, prev], 6);
     expect(history.find((w) => w.week_index === 4)!.days[0]!.exercises[0]!.diff).toBe(
-      '1kg ↑ · 2 rep/ser ↓',
+      '1 lb ↑ · 2 rep/ser ↓',
     );
   });
 
   it('shows weight-only or reps-only diffs', () => {
     const prev = withSets({ ...makeWeek(), week_index: 3 }, 1, 'bench_press', [
-      { performed_reps: 8, performed_weight_kg: 30 },
+      { performed_reps: 8, performed_weight_lb: 30 },
     ]);
     const weightUp = withSets({ ...makeWeek(), week_index: 4 }, 1, 'bench_press', [
-      { performed_reps: 8, performed_weight_kg: 31 },
+      { performed_reps: 8, performed_weight_lb: 31 },
     ]);
-    expect(toWeekHistory([prev, weightUp], 6)[1]!.days[0]!.exercises[0]!.diff).toBe('1kg ↑');
+    expect(toWeekHistory([prev, weightUp], 6)[1]!.days[0]!.exercises[0]!.diff).toBe('1 lb ↑');
 
     const repsDown = withSets({ ...makeWeek(), week_index: 4 }, 1, 'bench_press', [
-      { performed_reps: 6, performed_weight_kg: 30 },
+      { performed_reps: 6, performed_weight_lb: 30 },
     ]);
     expect(toWeekHistory([prev, repsDown], 6)[1]!.days[0]!.exercises[0]!.diff).toBe('2 rep/ser ↓');
   });
 
   it('leaves diff empty when there is no previous week or no change', () => {
     const alone = withSets({ ...makeWeek(), week_index: 1 }, 1, 'bench_press', [
-      { performed_reps: 8, performed_weight_kg: 30 },
+      { performed_reps: 8, performed_weight_lb: 30 },
     ]);
     expect(toWeekHistory([alone], 6)[0]!.days[0]!.exercises[0]!.diff).toBe('');
 
     const same = withSets({ ...makeWeek(), week_index: 2 }, 1, 'bench_press', [
-      { performed_reps: 8, performed_weight_kg: 30 },
+      { performed_reps: 8, performed_weight_lb: 30 },
     ]);
     expect(toWeekHistory([alone, same], 6)[1]!.days[0]!.exercises[0]!.diff).toBe('');
   });

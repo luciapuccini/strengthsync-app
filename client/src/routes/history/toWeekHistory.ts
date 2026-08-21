@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { DAY_TYPES } from '@/lib/day-types';
 import type { Week } from '@/api/types';
+import { formatWeight } from '@/utils/units';
 
 export const HistoryExerciseSchema = z.object({
   exercise_key: z.string().min(1),
@@ -36,7 +37,7 @@ type Scalar = { series: number | null; reps: number | null; weight: number | nul
 function scalars(sets: Week['schedule'][number]['exercises'][number]['sets']): Scalar {
   if (sets.length === 0) return { series: null, reps: null, weight: null };
   const first = sets[0]!;
-  return { series: sets.length, reps: first.performed_reps, weight: first.performed_weight_kg };
+  return { series: sets.length, reps: first.performed_reps, weight: first.performed_weight_lb };
 }
 
 function formatDiff(curr: Scalar, prev: Scalar | null): string {
@@ -44,7 +45,7 @@ function formatDiff(curr: Scalar, prev: Scalar | null): string {
   const parts: string[] = [];
   if (curr.weight != null && prev.weight != null && curr.weight !== prev.weight) {
     const delta = curr.weight - prev.weight;
-    parts.push(`${Math.abs(delta)}kg ${delta > 0 ? '↑' : '↓'}`);
+    parts.push(`${formatWeight(Math.abs(delta))} ${delta > 0 ? '↑' : '↓'}`);
   }
   if (curr.reps != null && prev.reps != null && curr.reps !== prev.reps) {
     const delta = curr.reps - prev.reps;

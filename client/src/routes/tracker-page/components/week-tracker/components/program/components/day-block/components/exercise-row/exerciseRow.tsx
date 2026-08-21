@@ -6,6 +6,7 @@ import { FeedbackControls } from './components/feedback-controls/feedbackControl
 import { SetControls } from './components/set-controls/setControls';
 import { cn } from '@/shadcn/lib/utils';
 import { isExerciseComplete, remainingSets } from '@/reducers/utils/weekUtils';
+import { formatWeight } from '@/utils/units';
 
 type ExerciseRowProps = {
   day: WeekDay;
@@ -19,7 +20,7 @@ export function ExerciseRow({ day, exercise }: ExerciseRowProps): JSX.Element {
   const remaining = remainingSets(exercise);
   const complete = isExerciseComplete(exercise);
   const weightLabel =
-    exercise.prescribed.weight_kg === null ? null : `${exercise.prescribed.weight_kg} kg`;
+    exercise.prescribed.weight_lb === null ? null : formatWeight(exercise.prescribed.weight_lb);
 
   return (
     <div className={cn('flex flex-col gap-3 py-2', complete && 'text-muted-foreground')}>

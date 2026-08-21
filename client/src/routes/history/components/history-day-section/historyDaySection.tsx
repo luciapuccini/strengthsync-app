@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 
 import type { HistoryDay } from '@/routes/history/toWeekHistory';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shadcn/ui/table';
+import { formatWeight } from '@/utils/units';
 
 type HistoryDaySectionProps = {
   day: HistoryDay;
@@ -39,7 +40,7 @@ export function HistoryDaySection({ day, sn }: HistoryDaySectionProps): JSX.Elem
             <TableCell>{exercise.name}</TableCell>
             <TableCell>{exercise.series ?? ''}</TableCell>
             <TableCell>{exercise.reps ?? ''}</TableCell>
-            <TableCell>{exercise.weight == null ? '' : `${exercise.weight}kg`}</TableCell>
+            <TableCell>{exercise.weight == null ? '' : formatWeight(exercise.weight)}</TableCell>
             <TableCell>{exercise.diff}</TableCell>
           </TableRow>
         ))}

@@ -52,8 +52,8 @@ export function optionalText(value: FormDataEntryValue | null): string | undefin
 export const PersonalStepSchema = z.object({
   sex: z.enum(ONBOARDING_SEXES),
   age: z.number().int().min(13).max(100),
-  height_cm: z.number().positive().max(250),
-  weight_kg: z.number().positive().max(400),
+  height_in: z.number().positive().max(100),
+  weight_lb: z.number().positive().max(800),
   body_fat_percent: z.number().min(3).max(60).optional(),
 });
 export type PersonalStepAnswers = z.infer<typeof PersonalStepSchema>;
@@ -61,19 +61,19 @@ export type PersonalStepAnswers = z.infer<typeof PersonalStepSchema>;
 export const GoalStepSchema = z.object({
   goal: z.enum(ONBOARDING_GOALS),
   target_date: z.string().date().optional(),
-  target_weight_kg: z.number().positive().max(400).optional(),
+  target_weight_lb: z.number().positive().max(800).optional(),
   note: z.string().min(1).max(500).optional(),
 });
 export type GoalStepAnswers = z.infer<typeof GoalStepSchema>;
 
-const liftWeightSchema = z.number().positive().max(500);
+const liftWeightSchema = z.number().positive().max(1000);
 
 export const TrainingStepSchema = z.object({
   experience: z.enum(ONBOARDING_EXPERIENCE_LEVELS),
-  squat_kg: liftWeightSchema.optional(),
-  bench_press_kg: liftWeightSchema.optional(),
-  deadlift_kg: liftWeightSchema.optional(),
-  overhead_press_kg: liftWeightSchema.optional(),
+  squat_lb: liftWeightSchema.optional(),
+  bench_press_lb: liftWeightSchema.optional(),
+  deadlift_lb: liftWeightSchema.optional(),
+  overhead_press_lb: liftWeightSchema.optional(),
   days_per_week: z.number().int().min(1).max(7),
   rest_day: z.number().int().min(1).max(7),
 });

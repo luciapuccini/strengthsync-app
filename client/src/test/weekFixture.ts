@@ -30,7 +30,7 @@ export function makeWeek(): Week {
               series: 2,
               reps: 8,
               rest_time_sec: 90,
-              weight_kg: 30,
+              weight_lb: 65,
               notes: null,
             },
             sets: [],

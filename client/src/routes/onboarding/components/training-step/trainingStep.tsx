@@ -31,10 +31,10 @@ function validate(
   const beginner = experience === 'beginner';
   const result = TrainingStepSchema.safeParse({
     experience: form.get('experience'),
-    squat_kg: beginner ? undefined : optionalNumber(form.get('squat_kg')),
-    bench_press_kg: beginner ? undefined : optionalNumber(form.get('bench_press_kg')),
-    deadlift_kg: beginner ? undefined : optionalNumber(form.get('deadlift_kg')),
-    overhead_press_kg: beginner ? undefined : optionalNumber(form.get('overhead_press_kg')),
+    squat_lb: beginner ? undefined : optionalNumber(form.get('squat_lb')),
+    bench_press_lb: beginner ? undefined : optionalNumber(form.get('bench_press_lb')),
+    deadlift_lb: beginner ? undefined : optionalNumber(form.get('deadlift_lb')),
+    overhead_press_lb: beginner ? undefined : optionalNumber(form.get('overhead_press_lb')),
     days_per_week: optionalNumber(form.get('days_per_week')),
     rest_day: optionalNumber(form.get('rest_day')),
   });

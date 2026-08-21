@@ -8,7 +8,7 @@ describe('toSaveDayLog', () => {
   it('maps editable exercise fields without a completed flag', () => {
     const day = makeWeek().schedule[0]!;
     day.exercises[0]!.feedback = 'easy';
-    day.exercises[0]!.sets = [{ performed_reps: 8, performed_weight_kg: 30 }];
+    day.exercises[0]!.sets = [{ performed_reps: 8, performed_weight_lb: 30 }];
 
     expect(toSaveDayLog(day)).toEqual({
       exercises: [
@@ -16,7 +16,7 @@ describe('toSaveDayLog', () => {
           exercise_key: 'bench_press',
           skipped: false,
           feedback: 'easy',
-          sets: [{ performed_reps: 8, performed_weight_kg: 30 }],
+          sets: [{ performed_reps: 8, performed_weight_lb: 30 }],
         },
       ],
     });
@@ -25,7 +25,7 @@ describe('toSaveDayLog', () => {
   it('always removes sets from a skipped exercise', () => {
     const day = makeWeek().schedule[0]!;
     day.exercises[0]!.skipped = true;
-    day.exercises[0]!.sets = [{ performed_reps: 8, performed_weight_kg: 30 }];
+    day.exercises[0]!.sets = [{ performed_reps: 8, performed_weight_lb: 30 }];
     expect(toSaveDayLog(day).exercises[0]!.sets).toEqual([]);
   });
 });

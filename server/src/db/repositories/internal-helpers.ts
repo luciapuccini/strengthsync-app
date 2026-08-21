@@ -54,7 +54,7 @@ export function buildScheduleFromTemplate(weekTemplate: PlanDay[], start: string
         series: exercise.series,
         reps: exercise.reps,
         rest_time_sec: exercise.rest_time_sec,
-        weight_kg: exercise.weight_kg,
+        weight_lb: exercise.weight_lb,
         notes: exercise.notes,
       },
       sets: [],

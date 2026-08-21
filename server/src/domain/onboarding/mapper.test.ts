@@ -6,8 +6,8 @@ import type { OnboardingAnswers } from './schema.ts';
 const beginnerAnswers: OnboardingAnswers = {
   sex: 'female',
   age: 34,
-  height_cm: 165,
-  weight_kg: 62,
+  height_in: 65,
+  weight_lb: 137,
   goal: 'build_muscle',
   experience: 'beginner',
   days_per_week: 4,
@@ -20,18 +20,18 @@ describe('mapAnswersToProfileWrite', () => {
       ...beginnerAnswers,
       body_fat_percent: 22,
       target_date: '2026-12-01',
-      target_weight_kg: 58,
+      target_weight_lb: 128,
       note: 'wedding in December',
     });
 
     expect(write.sex).toBe('female');
     expect(write.age).toBe(34);
-    expect(write.height_cm).toBe(165);
-    expect(write.body_composition).toEqual({ weight_kg: 62, body_fat_percent: 22 });
+    expect(write.height_in).toBe(65);
+    expect(write.body_composition).toEqual({ weight_lb: 137, body_fat_percent: 22 });
     expect(write.goals).toEqual({
       goal: 'build_muscle',
       target_date: '2026-12-01',
-      target_weight_kg: 58,
+      target_weight_lb: 128,
       note: 'wedding in December',
     });
     expect(write.schedule_preferences).toEqual({ days_per_week: 4, rest_day: 7 });
@@ -47,14 +47,14 @@ describe('mapAnswersToProfileWrite', () => {
     const write = mapAnswersToProfileWrite({
       ...beginnerAnswers,
       experience: 'advanced',
-      squat_kg: 100,
-      deadlift_kg: 140,
-      // bench_press_kg and overhead_press_kg skipped: those lifts are not trained.
+      squat_lb: 225,
+      deadlift_lb: 315,
+      // bench_press_lb and overhead_press_lb skipped: those lifts are not trained.
     });
 
     expect(write.strength_loads).toEqual({
       experience: 'advanced',
-      lifts: { squat: 100, deadlift: 140 },
+      lifts: { squat_lb: 225, deadlift_lb: 315 },
     });
   });
 
@@ -62,7 +62,7 @@ describe('mapAnswersToProfileWrite', () => {
     const write = mapAnswersToProfileWrite(beginnerAnswers);
 
     expect(write.goals).toEqual({ goal: 'build_muscle' });
-    expect(write.body_composition).toEqual({ weight_kg: 62 });
+    expect(write.body_composition).toEqual({ weight_lb: 137 });
     expect(write.nutrition).toBeNull();
     expect(write.activities).toBeNull();
     expect(write.notes).toBeNull();

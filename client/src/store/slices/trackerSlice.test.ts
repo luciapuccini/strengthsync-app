@@ -171,8 +171,8 @@ describe('trackerSlice API orchestration', () => {
         {
           ...week.schedule[0]!.exercises[0]!,
           sets: [
-            { performed_reps: 8, performed_weight_kg: 30 },
-            { performed_reps: 8, performed_weight_kg: 30 },
+            { performed_reps: 8, performed_weight_lb: 30 },
+            { performed_reps: 8, performed_weight_lb: 30 },
           ],
         },
       ],

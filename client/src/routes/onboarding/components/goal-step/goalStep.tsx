@@ -27,7 +27,7 @@ function validate(form: FormData): { errors: StepFieldErrors } | { data: GoalSte
   const result = GoalStepSchema.safeParse({
     goal: form.get('goal'),
     target_date: optionalText(form.get('target_date')),
-    target_weight_kg: optionalNumber(form.get('target_weight_kg')),
+    target_weight_lb: optionalNumber(form.get('target_weight_lb')),
     note: optionalText(form.get('note')),
   });
   return result.success ? { data: result.data } : { errors: fieldErrors(result.error) };
@@ -82,15 +82,15 @@ export function GoalStep({ defaults, onBack, onNext }: Props): JSX.Element {
 
       <OnboardingField
         id="onboarding-target-weight"
-        label="Target weight, kg (optional)"
-        error={errors?.target_weight_kg}
+        label="Target weight, lb (optional)"
+        error={errors?.target_weight_lb}
       >
         <Input
           id="onboarding-target-weight"
-          name="target_weight_kg"
+          name="target_weight_lb"
           type="number"
           inputMode="decimal"
-          defaultValue={defaults.target_weight_kg}
+          defaultValue={defaults.target_weight_lb}
         />
       </OnboardingField>
 

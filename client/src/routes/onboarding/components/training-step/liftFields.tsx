@@ -35,15 +35,15 @@ export function LiftFields({ experience, priorAnswers, errors }: Props): JSX.Ele
         <OnboardingField
           key={lift}
           id={`onboarding-${lift}`}
-          label={`${LIFT_LABELS[lift]} (kg, optional — skip if you don't train it)`}
-          error={errors[`${lift}_kg`]}
+          label={`${LIFT_LABELS[lift]} (lb, optional — skip if you don't train it)`}
+          error={errors[`${lift}_lb`]}
         >
           <Input
             id={`onboarding-${lift}`}
-            name={`${lift}_kg`}
+            name={`${lift}_lb`}
             type="number"
             inputMode="decimal"
-            defaultValue={priorAnswers[`${lift}_kg` as keyof OnboardingDraft] as number | undefined}
+            defaultValue={priorAnswers[`${lift}_lb` as keyof OnboardingDraft] as number | undefined}
           />
         </OnboardingField>
       ))}

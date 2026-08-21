@@ -32,7 +32,7 @@ const weekTemplate: PlanDay[] = [
         series: 4,
         reps: 8,
         rest_time_sec: 120,
-        weight_kg: 60,
+        weight_lb: 60,
         notes: null,
       },
     ],
@@ -44,10 +44,10 @@ const profileInput = {
   snapshot_date: '2026-07-01',
   sex: 'female',
   age: 34,
-  height_cm: 165,
+  height_in: 65,
   goals: { primary: 'strength' },
-  body_composition: { weight_kg: 62 },
-  strength_loads: { press_banca: 60 },
+  body_composition: { weight_lb: 62 },
+  strength_loads: { press_banca_lb: 135 },
   nutrition: { calories: 2100 },
   activities: null,
   schedule_preferences: { days_per_week: 4 },
@@ -87,7 +87,7 @@ describe('profiles', () => {
     expect(updated.id).toBe(created.id);
     expect(updated.age).toBe(35);
     expect(updated.notes).toBe('updated');
-    expect(updated.strength_loads).toEqual({ press_banca: 60 });
+    expect(updated.strength_loads).toEqual({ press_banca_lb: 135 });
   });
 });
 
@@ -114,7 +114,7 @@ describe('plan + week lifecycle', () => {
       skipped: false,
       feedback: null,
       sets: [],
-      prescribed: { series: 4, reps: 8, weight_kg: 60 },
+      prescribed: { series: 4, reps: 8, weight_lb: 60 },
     });
     expect(await getCurrentWeek(db, clientId)).toMatchObject({ id: first_week.id });
     expect(await getActivePlan(db, clientId)).toMatchObject({ id: plan.id });
@@ -218,10 +218,10 @@ describe('day logs', () => {
           skipped: false,
           feedback: 'hard',
           sets: [
-            { performed_reps: 8, performed_weight_kg: 60 },
-            { performed_reps: 8, performed_weight_kg: 60 },
-            { performed_reps: 7, performed_weight_kg: 60 },
-            { performed_reps: 7, performed_weight_kg: 60 },
+            { performed_reps: 8, performed_weight_lb: 60 },
+            { performed_reps: 8, performed_weight_lb: 60 },
+            { performed_reps: 7, performed_weight_lb: 60 },
+            { performed_reps: 7, performed_weight_lb: 60 },
           ],
         },
       ],
@@ -287,10 +287,10 @@ describe('saveDay', () => {
           skipped: false,
           feedback: 'hard',
           sets: [
-            { performed_reps: 8, performed_weight_kg: 60 },
-            { performed_reps: 8, performed_weight_kg: 60 },
-            { performed_reps: 7, performed_weight_kg: 60 },
-            { performed_reps: 7, performed_weight_kg: 60 },
+            { performed_reps: 8, performed_weight_lb: 60 },
+            { performed_reps: 8, performed_weight_lb: 60 },
+            { performed_reps: 7, performed_weight_lb: 60 },
+            { performed_reps: 7, performed_weight_lb: 60 },
           ],
         },
       ],
