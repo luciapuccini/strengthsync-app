@@ -5,12 +5,16 @@ import { completedWeeksResource } from '@/api/historyResource';
 import { HistoryDaySection } from '@/routes/history/components/history-day-section/historyDaySection';
 import { toWeekHistory } from '@/routes/history/toWeekHistory';
 import { Button } from '@/shadcn/ui/button';
+import { useUnitPreference } from '@/store/useUnitPreference';
 import { formatIsoDate } from '@/utils/formatIsoDate';
 
 export function HistoryPage(): JSX.Element {
   // No parameters: the resource resolves the signed-in client's active plan.
   const { weeks, plan } = use(completedWeeksResource());
-  const history = toWeekHistory(weeks, plan?.total_weeks ?? 0);
+  // `toWeekHistory` is pure and cannot read the store itself, so the preference
+  // is read here and passed in — the week-over-week deltas depend on it.
+  const unit = useUnitPreference();
+  const history = toWeekHistory(weeks, plan?.total_weeks ?? 0, unit);
   const [page, setPage] = useState(() => Math.max(0, history.length - 1));
 
   // No active plan and no completed weeks read the same on this screen: there
@@ -55,7 +59,7 @@ export function HistoryPage(): JSX.Element {
       </div>
 
       {week.days.map((day) => (
-        <HistoryDaySection key={day.day_index} day={day} sn={sn} />
+        <HistoryDaySection key={day.day_index} day={day} sn={sn} unit={unit} />
       ))}
     </div>
   );

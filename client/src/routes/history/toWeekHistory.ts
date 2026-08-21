@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 import { DAY_TYPES } from '@/lib/day-types';
 import type { Week } from '@/api/types';
-import { formatWeight } from '@/utils/units';
+import type { UnitPreference } from '@/utils/units';
+import { toDisplayWeight, unitLabel } from '@/utils/units';
 
 export const HistoryExerciseSchema = z.object({
   exercise_key: z.string().min(1),
@@ -33,19 +34,38 @@ export type HistoryWeek = z.infer<typeof HistoryWeekSchema>;
 
 type Scalar = { series: number | null; reps: number | null; weight: number | null };
 
-/** warning: first-set scalar only; upgrade if per-set or modal display is needed. */
+/**
+ * warning: first-set scalar only; upgrade if per-set or modal display is needed.
+ *
+ * `weight` stays canonical pounds. Converting here would hand
+ * `historyDaySection` an already-converted number to convert again, and every
+ * kilogram on the screen would be out by a factor of 2.2.
+ */
 function scalars(sets: Week['schedule'][number]['exercises'][number]['sets']): Scalar {
   if (sets.length === 0) return { series: null, reps: null, weight: null };
   const first = sets[0]!;
   return { series: sets.length, reps: first.performed_reps, weight: first.performed_weight_lb };
 }
 
-function formatDiff(curr: Scalar, prev: Scalar | null): string {
+/**
+ * The delta is the difference between the two numbers on screen, not the
+ * canonical difference converted afterwards.
+ *
+ * Both weights are converted first, then subtracted. A 135 → 140 lb progression
+ * therefore reads `3 kg ↑` for a metric athlete, matching the 61 and 64 in the
+ * rows above it; converting a canonical 5 lb delta would print `2 kg ↑` beside a
+ * visible three-unit change, which reads as a bug. The equality check moves with
+ * it: two loads that differ in pounds but round to the same kilogram show no
+ * diff at all rather than a zero.
+ */
+function formatDiff(curr: Scalar, prev: Scalar | null, unit: UnitPreference): string {
   if (prev === null) return '';
   const parts: string[] = [];
-  if (curr.weight != null && prev.weight != null && curr.weight !== prev.weight) {
-    const delta = curr.weight - prev.weight;
-    parts.push(`${formatWeight(Math.abs(delta))} ${delta > 0 ? '↑' : '↓'}`);
+  if (curr.weight != null && prev.weight != null) {
+    const delta = toDisplayWeight(curr.weight, unit) - toDisplayWeight(prev.weight, unit);
+    if (delta !== 0) {
+      parts.push(`${Math.abs(delta)} ${unitLabel(unit)} ${delta > 0 ? '↑' : '↓'}`);
+    }
   }
   if (curr.reps != null && prev.reps != null && curr.reps !== prev.reps) {
     const delta = curr.reps - prev.reps;
@@ -65,7 +85,11 @@ function exerciseLookup(week: Week | undefined): Map<string, Scalar> {
   return map;
 }
 
-export function toWeekHistory(weeks: Week[], totalWeeks: number): HistoryWeek[] {
+export function toWeekHistory(
+  weeks: Week[],
+  totalWeeks: number,
+  unit: UnitPreference,
+): HistoryWeek[] {
   const sorted = [...weeks].sort((a, b) => a.week_index - b.week_index);
   const byIndex = new Map(sorted.map((week) => [week.week_index, week]));
 
@@ -85,6 +109,7 @@ export function toWeekHistory(weeks: Week[], totalWeeks: number): HistoryWeek[] 
             diff: formatDiff(
               performed,
               prevLookup.get(`${day.day_index}:${exercise.exercise_key}`) ?? null,
+              unit,
             ),
           });
         }),
