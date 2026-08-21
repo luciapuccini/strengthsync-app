@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { LoadPoundsSchema } from '../weight-grid.ts';
+
 /**
  * Core domain entities and value types, as Zod schemas.
  * Source of truth: docs/architecture/domain_model.md.
@@ -144,7 +146,7 @@ export const PlannedExerciseSchema = z.object({
   series: z.number().int().positive(),
   reps: z.number().int().positive(),
   rest_time_sec: z.number().int().nonnegative(),
-  weight_lb: z.number().nonnegative().nullable(),
+  weight_lb: LoadPoundsSchema,
   notes: z.string().nullable(),
 });
 export type PlannedExercise = z.infer<typeof PlannedExerciseSchema>;
@@ -172,7 +174,7 @@ export type Plan = z.infer<typeof PlanSchema>;
 
 export const PerformedSetSchema = z.object({
   performed_reps: z.number().int().nonnegative(),
-  performed_weight_lb: z.number().nonnegative().nullable(),
+  performed_weight_lb: LoadPoundsSchema,
 });
 export type PerformedSet = z.infer<typeof PerformedSetSchema>;
 
@@ -188,7 +190,7 @@ export const ExerciseLogSchema = z.object({
     series: z.number().int().positive(),
     reps: z.number().int().positive(),
     rest_time_sec: z.number().int().nonnegative(),
-    weight_lb: z.number().nonnegative().nullable(),
+    weight_lb: LoadPoundsSchema,
     notes: z.string().nullable(),
   }),
   /** One entry per performed set; can be empty before training. */

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { ISODateSchema } from '../model/index.ts';
+import { snapLoad } from '../weight-grid.ts';
 
 /**
  * The onboarding questionnaire's answer schema.
@@ -35,7 +36,13 @@ export const ONBOARDING_MAIN_LIFTS = [
 ] as const;
 export type OnboardingMainLift = (typeof ONBOARDING_MAIN_LIFTS)[number];
 
-const liftWeightSchema = z.number().positive().max(1000);
+/**
+ * A benchmark load the athlete types in. Snapped to the five-pound grid on
+ * submit, because it becomes a prescribed load downstream — unlike body weight
+ * and target weight below, which are a measurement and a goal and stay exactly
+ * as typed.
+ */
+const liftWeightSchema = z.number().positive().max(1000).transform(snapLoad);
 
 export const ONBOARDING_DAILY_ACTIVITY_LEVELS = [
   'sedentary',

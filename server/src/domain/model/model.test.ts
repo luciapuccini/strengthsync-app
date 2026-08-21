@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import { ClientProfileSchema, PlanSchema, WeekSchema, type PlanDay, type WeekDay } from './index';
+import {
+  ClientProfileSchema,
+  ExerciseLogSchema,
+  type ExerciseLog,
+  PerformedSetSchema,
+  PlannedExerciseSchema,
+  WeekSchema,
+  PlanSchema,
+  type PlanDay,
+  type WeekDay,
+} from './index';
 
 const planDay: PlanDay = {
   day_index: 1,
@@ -19,6 +29,21 @@ const planDay: PlanDay = {
   ],
 };
 
+const benchLog: ExerciseLog = {
+  exercise_key: 'press_banca',
+  name: 'Bench press',
+  skipped: false,
+  feedback: null,
+  prescribed: {
+    series: 4,
+    reps: 8,
+    rest_time_sec: 120,
+    weight_lb: 60,
+    notes: null,
+  },
+  sets: [],
+};
+
 const weekDay: WeekDay = {
   day_index: 1,
   date: '2026-07-20',
@@ -26,22 +51,7 @@ const weekDay: WeekDay = {
   notes: null,
   completed: false,
   completed_at: null,
-  exercises: [
-    {
-      exercise_key: 'press_banca',
-      name: 'Bench press',
-      skipped: false,
-      feedback: null,
-      prescribed: {
-        series: 4,
-        reps: 8,
-        rest_time_sec: 120,
-        weight_lb: 60,
-        notes: null,
-      },
-      sets: [],
-    },
-  ],
+  exercises: [benchLog],
 };
 
 describe('PlanSchema', () => {
@@ -110,7 +120,7 @@ describe('WeekSchema', () => {
       schedule: [
         {
           ...weekDay,
-          exercises: [{ ...weekDay.exercises[0], feedback: 'meh' }],
+          exercises: [{ ...benchLog, feedback: 'meh' }],
         },
       ],
       created_at: '2026-07-20T08:00:00.000Z',
@@ -181,5 +191,59 @@ describe('ClientProfileSchema', () => {
     };
 
     expect(ClientProfileSchema.parse(profile)).toEqual(profile);
+  });
+});
+
+describe('the five-pound grid', () => {
+  const prescribedAt = (weight_lb: number | null): ExerciseLog => ({
+    ...benchLog,
+    prescribed: { ...benchLog.prescribed, weight_lb },
+  });
+
+  it('corrects an off-grid prescribed load to the nearest five', () => {
+    expect(ExerciseLogSchema.parse(prescribedAt(137)).prescribed.weight_lb).toBe(135);
+    expect(ExerciseLogSchema.parse(prescribedAt(138)).prescribed.weight_lb).toBe(140);
+  });
+
+  it('leaves an already-gridded load untouched', () => {
+    expect(ExerciseLogSchema.parse(prescribedAt(135)).prescribed.weight_lb).toBe(135);
+  });
+
+  it('keeps a null load null', () => {
+    expect(ExerciseLogSchema.parse(prescribedAt(null)).prescribed.weight_lb).toBeNull();
+  });
+
+  it('snaps a performed load', () => {
+    expect(PerformedSetSchema.parse({ performed_reps: 8, performed_weight_lb: 132 })).toEqual({
+      performed_reps: 8,
+      performed_weight_lb: 130,
+    });
+  });
+
+  it('never rejects an off-grid load', () => {
+    const result = PlannedExerciseSchema.safeParse({
+      ...planDay.exercises[0],
+      weight_lb: 137.5,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.weight_lb).toBe(140);
+  });
+
+  it('reaches loads nested inside a stored week', () => {
+    const week = WeekSchema.parse({
+      id: '2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e',
+      client_id: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
+      plan_id: '0f5c8b4a-2d3e-4f5a-8b9c-1d2e3f4a5b6c',
+      week_index: 1,
+      start_date: '2026-07-20',
+      end_date: '2026-07-26',
+      status: 'in_flight',
+      schedule: [{ ...weekDay, exercises: [prescribedAt(137)] }],
+      created_at: '2026-07-20T08:00:00.000Z',
+      updated_at: '2026-07-20T08:00:00.000Z',
+    });
+
+    expect(week.schedule[0]?.exercises[0]?.prescribed.weight_lb).toBe(135);
   });
 });

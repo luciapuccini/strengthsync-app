@@ -8,7 +8,7 @@ export const COACHING_RULES = `## Fitness coach rules for weight training progre
 1. clients need to be pushed weekly. This could mean:
    - if last week some weights dropped below the baseline of the plan, the target is to get back there.
    - if all excersises were accomplished correctly with series x reps as planned, then we want to push the client to have in Compound lifts excersises 2 more reps before changing weights.
-   - if all excersises were accomplished correctly with series x reps as planned AND the previous week was already pushing the extra reps, then is time to increase this excersise weight. +1kg
+   - if all excersises were accomplished correctly with series x reps as planned AND the previous week was already pushing the extra reps, then is time to increase this excersise weight. +5 lb
 
 2. Nutrition context matters. A client that is not eating enough calories and protien cannot be pushed.
 
