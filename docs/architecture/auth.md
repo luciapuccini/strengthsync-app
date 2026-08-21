@@ -267,10 +267,13 @@ adjacent statements.
 Accepted trade-off: rows can outlive a deletion request, which is what 5.1.1(v)
 is about. They are unreachable — every request arrives as a subject, and that
 subject maps to nothing — so nothing reads them and nothing grows from them. At
-the MVP's scale that is a manual cleanup rather than a system. The correct
-version under partial failure is a marker write plus a Cron Trigger that retries
-both halves; it needs a new status, a `scheduled` handler and a purge job, and is
-not worth building for twenty athletes.
+the MVP's scale that is a manual cleanup rather than a system, and
+[deleting-an-athlete.md](../operations/deleting-an-athlete.md) is the runbook for
+it — including the case this section does not cover, where the operator deletes
+the user in the Auth0 dashboard and D1 is never told. The correct version under
+partial failure is a marker write plus a Cron Trigger that retries both halves;
+it needs a new status, a `scheduled` handler and a purge job, and is not worth
+building for twenty athletes.
 
 ## The iOS client
 

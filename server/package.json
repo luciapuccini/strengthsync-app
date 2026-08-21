@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "gen:openapi": "node --experimental-strip-types scripts/gen-openapi.ts",
+    "purge:client": "node --experimental-strip-types scripts/purge-client.ts",
     "build": "wrangler deploy --dry-run",
     "deploy": "pnpm run db:migrate:remote && wrangler deploy",
     "db:generate": "drizzle-kit generate --config db/drizzle.config.ts",

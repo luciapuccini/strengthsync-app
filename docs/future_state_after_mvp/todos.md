@@ -33,9 +33,11 @@ Notes only — not designs. Pointers into existing docs where they already cover
   Guideline 5.1.1(v) is about the data actually going. The correct version needs
   a marker write plus a Cron Trigger that retries both halves: a new status, a
   `scheduled` handler and a purge job. Deliberately not built for twenty
-  athletes — a manual sweep instead. Reasoning in
+  athletes — a manual sweep instead, run on demand with
+  `pnpm --filter @strengthsync/server purge:client`. Reasoning in
   `server/src/lib/account-deletion.ts` and
-  [auth.md](../architecture/auth.md#account-deletion).
+  [auth.md](../architecture/auth.md#account-deletion); the runbook is
+  [deleting-an-athlete.md](../operations/deleting-an-athlete.md).
 
 - **A real transactional email provider.** Auth0's built-in sender is
   rate-limited and sends from `no-reply@auth0user.net`, which is not
