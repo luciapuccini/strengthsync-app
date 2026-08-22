@@ -31,6 +31,7 @@ const client: Client = {
   coach_id: UUID,
   display_name: 'Lucia',
   status: 'active',
+  unit_preference: 'imperial',
   created_at: NOW,
   updated_at: NOW,
 };
@@ -171,8 +172,8 @@ describe('trackerSlice API orchestration', () => {
         {
           ...week.schedule[0]!.exercises[0]!,
           sets: [
-            { performed_reps: 8, performed_weight_kg: 30 },
-            { performed_reps: 8, performed_weight_kg: 30 },
+            { performed_reps: 8, performed_weight_lb: 30 },
+            { performed_reps: 8, performed_weight_lb: 30 },
           ],
         },
       ],

@@ -26,6 +26,7 @@ const client: Client = {
   coach_id: UUID,
   display_name: 'Ana',
   status: 'active',
+  unit_preference: 'imperial',
   created_at: NOW,
   updated_at: NOW,
 };

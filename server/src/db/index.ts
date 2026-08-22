@@ -8,7 +8,12 @@ export { RepoError, type RepoErrorKind } from './errors.ts';
 export * as schema from './schema.ts';
 export { addDays, todayIso } from './dates.ts';
 
-export { createClient, deleteClient, getClient } from './repositories/clients.ts';
+export {
+  createClient,
+  deleteClient,
+  getClient,
+  updateUnitPreference,
+} from './repositories/clients.ts';
 export {
   claimSubject,
   deleteIdentity,

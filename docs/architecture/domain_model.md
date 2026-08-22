@@ -22,6 +22,7 @@ type ClientStatus = "active" | "archived";
 type PlanStatus = "draft" | "active" | "archived";
 type WeekStatus = "in_flight" | "completed" | "abandoned";
 type ExerciseFeedback = "easy" | "hard" | "heavy" | "light";
+type UnitPreference = "imperial" | "metric";
 ```
 
 ---
@@ -46,6 +47,7 @@ type Client = {
   coach_id: Uuid; // FK → Coach
   display_name: string;
   status: ClientStatus;
+  unit_preference: UnitPreference;
   created_at: ISODateTime;
   updated_at: ISODateTime;
 };
@@ -62,7 +64,7 @@ type ClientProfile = {
   snapshot_date: ISODate;
   sex: string | null;
   age: number | null;
-  height_cm: number | null;
+  height_in: number | null;
   goals: Record<string, unknown>;
   body_composition: Record<string, unknown>;
   strength_loads: Record<string, unknown>;
@@ -73,6 +75,23 @@ type ClientProfile = {
   updated_at: ISODateTime;
 };
 ```
+
+**Invariant:** every measurement in this model is imperial — pounds and
+inches — and names its unit in the field. That holds for storage, for the API,
+and for what the coaching prompts read; kilograms and centimetres exist only as
+something the client renders for an athlete who has asked for it. Which
+athletes those are lives in `clients.unit_preference` (`'imperial' | 'metric'`,
+defaulting to `'imperial'`), which travels with the `Client` on every read and
+is written by `PATCH /api/me` — the only writer of that column. The suffix is load-bearing rather than decorative: these values pass
+through free-form JSON columns that nothing type-checks and into prompts the
+model reads literally, so the unit has to travel with the value.
+
+`goals`, `body_composition` and `strength_loads` carry weights inside their
+free-form JSON and so follow the same rule in their *keys*: onboarding writes
+`{ target_weight_lb }`, `{ weight_lb, body_fat_percent? }`, and
+`{ experience, lifts: { squat_lb?, bench_press_lb?, deadlift_lb?,
+overhead_press_lb? } }` respectively. A bare `squat` key would leave the model
+inferring a unit from context.
 
 `activities` is whatever the client does outside lifting — swimming, cycling, a
 pilates class. Free-form like its siblings, but the convention is
@@ -118,7 +137,7 @@ type PlannedExercise = {
   series: number;
   reps: number;
   rest_time_sec: number;
-  weight_kg: number | null;
+  weight_lb: number | null;
   notes: string | null;
 };
 ```
@@ -166,13 +185,13 @@ type ExerciseLog = {
     series: number;
     reps: number;
     rest_time_sec: number;
-    weight_kg: number | null;
+    weight_lb: number | null;
     notes: string | null;
   };
   /** One entry per performed set; can be empty before training. */
   sets: Array<{
     performed_reps: number;
-    performed_weight_kg: number | null;
+    performed_weight_lb: number | null;
   }>;
 };
 ```

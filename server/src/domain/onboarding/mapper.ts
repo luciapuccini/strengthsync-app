@@ -6,8 +6,8 @@ function mapGoals(answers: OnboardingAnswers) {
   return {
     goal: answers.goal,
     ...(answers.target_date !== undefined ? { target_date: answers.target_date } : {}),
-    ...(answers.target_weight_kg !== undefined
-      ? { target_weight_kg: answers.target_weight_kg }
+    ...(answers.target_weight_lb !== undefined
+      ? { target_weight_lb: answers.target_weight_lb }
       : {}),
     ...(answers.note !== undefined ? { note: answers.note } : {}),
   };
@@ -17,11 +17,11 @@ function mapStrengthLoads(answers: OnboardingAnswers) {
   return {
     experience: answers.experience,
     lifts: {
-      ...(answers.squat_kg !== undefined ? { squat: answers.squat_kg } : {}),
-      ...(answers.bench_press_kg !== undefined ? { bench_press: answers.bench_press_kg } : {}),
-      ...(answers.deadlift_kg !== undefined ? { deadlift: answers.deadlift_kg } : {}),
-      ...(answers.overhead_press_kg !== undefined
-        ? { overhead_press: answers.overhead_press_kg }
+      ...(answers.squat_lb !== undefined ? { squat_lb: answers.squat_lb } : {}),
+      ...(answers.bench_press_lb !== undefined ? { bench_press_lb: answers.bench_press_lb } : {}),
+      ...(answers.deadlift_lb !== undefined ? { deadlift_lb: answers.deadlift_lb } : {}),
+      ...(answers.overhead_press_lb !== undefined
+        ? { overhead_press_lb: answers.overhead_press_lb }
         : {}),
     },
   };
@@ -71,10 +71,10 @@ export function mapAnswersToProfileWrite(
   return {
     sex: answers.sex,
     age: answers.age,
-    height_cm: answers.height_cm,
+    height_in: answers.height_in,
     goals: mapGoals(answers),
     body_composition: {
-      weight_kg: answers.weight_kg,
+      weight_lb: answers.weight_lb,
       ...(answers.body_fat_percent !== undefined
         ? { body_fat_percent: answers.body_fat_percent }
         : {}),

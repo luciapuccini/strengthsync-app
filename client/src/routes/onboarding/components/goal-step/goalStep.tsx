@@ -4,8 +4,9 @@ import type { JSX } from 'react';
 import {
   ONBOARDING_GOALS,
   GoalStepSchema,
+  displayedWeight,
   fieldErrors,
-  optionalNumber,
+  optionalCanonicalWeight,
   optionalText,
   type GoalStepAnswers,
   type StepFieldErrors,
@@ -13,31 +14,40 @@ import {
 import { Button } from '@/shadcn/ui/button';
 import { Input } from '@/shadcn/ui/input';
 import { Textarea } from '@/shadcn/ui/textarea';
+import { unitLabel, type UnitPreference } from '@/utils/units';
 
 import { OnboardingField } from '../onboarding-field/onboardingField';
 import { OnboardingSelect } from '../onboarding-select/onboardingSelect';
 
 type Props = {
   defaults: Partial<GoalStepAnswers>;
+  unit: UnitPreference;
   onBack: () => void;
   onNext: (answers: GoalStepAnswers) => void;
 };
 
-function validate(form: FormData): { errors: StepFieldErrors } | { data: GoalStepAnswers } {
+/**
+ * Converted before it is parsed, so the 800 lb bound stays in pounds. A target
+ * is a goal rather than a load, so nothing here snaps it to the five-pound grid.
+ */
+function validate(
+  form: FormData,
+  unit: UnitPreference,
+): { errors: StepFieldErrors } | { data: GoalStepAnswers } {
   const result = GoalStepSchema.safeParse({
     goal: form.get('goal'),
     target_date: optionalText(form.get('target_date')),
-    target_weight_kg: optionalNumber(form.get('target_weight_kg')),
+    target_weight_lb: optionalCanonicalWeight(form.get('target_weight_lb'), unit),
     note: optionalText(form.get('note')),
   });
   return result.success ? { data: result.data } : { errors: fieldErrors(result.error) };
 }
 
 /** What the client wants: one primary goal, and optionally a target and a note. */
-export function GoalStep({ defaults, onBack, onNext }: Props): JSX.Element {
+export function GoalStep({ defaults, unit, onBack, onNext }: Props): JSX.Element {
   const [errors, formAction] = useActionState<StepFieldErrors | null, FormData>(
     (_previous, form) => {
-      const result = validate(form);
+      const result = validate(form, unit);
       if ('errors' in result) return result.errors;
       onNext(result.data);
       return null;
@@ -82,15 +92,15 @@ export function GoalStep({ defaults, onBack, onNext }: Props): JSX.Element {
 
       <OnboardingField
         id="onboarding-target-weight"
-        label="Target weight, kg (optional)"
-        error={errors?.target_weight_kg}
+        label={`Target weight, ${unitLabel(unit)} (optional)`}
+        error={errors?.target_weight_lb}
       >
         <Input
           id="onboarding-target-weight"
-          name="target_weight_kg"
+          name="target_weight_lb"
           type="number"
           inputMode="decimal"
-          defaultValue={defaults.target_weight_kg}
+          defaultValue={displayedWeight(defaults.target_weight_lb, unit)}
         />
       </OnboardingField>
 

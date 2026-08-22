@@ -3,6 +3,7 @@ import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-or
 
 import {
   CLIENT_STATUSES,
+  UNIT_PREFERENCES,
   PLAN_STATUSES,
   WEEK_STATUSES,
   type JsonValue,
@@ -37,6 +38,14 @@ export const clients = sqliteTable(
       .references(() => coaches.id),
     display_name: text('display_name').notNull(),
     status: text('status', { enum: CLIENT_STATUSES }).notNull(),
+    /**
+     * Which units this athlete reads the app in. Storage is always imperial —
+     * this only decides what the client renders. Defaults to imperial because
+     * that is the overwhelming majority; see docs/architecture/domain_model.md.
+     */
+    unit_preference: text('unit_preference', { enum: UNIT_PREFERENCES })
+      .notNull()
+      .default('imperial'),
     created_at: text('created_at').notNull(),
     updated_at: text('updated_at').notNull(),
   },
@@ -90,7 +99,7 @@ export const clientProfiles = sqliteTable('client_profiles', {
   snapshot_date: text('snapshot_date').notNull(),
   sex: text('sex'),
   age: integer('age'),
-  height_cm: real('height_cm'),
+  height_in: real('height_in'),
   goals: jsonRecord().notNull(),
   body_composition: jsonRecord().notNull(),
   strength_loads: jsonRecord().notNull(),

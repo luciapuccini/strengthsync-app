@@ -40,29 +40,29 @@ const initialState: SubmitState = { phase: 'form', errors: {} };
 
 type OptionalGoalFields = Pick<
   OnboardingAnswers,
-  'body_fat_percent' | 'target_date' | 'target_weight_kg' | 'note'
+  'body_fat_percent' | 'target_date' | 'target_weight_lb' | 'note'
 >;
 function optionalGoalFields(fields: OptionalGoalFields) {
-  const { body_fat_percent, target_date, target_weight_kg, note } = fields;
+  const { body_fat_percent, target_date, target_weight_lb, note } = fields;
   return {
     ...(body_fat_percent !== undefined ? { body_fat_percent } : {}),
     ...(target_date !== undefined ? { target_date } : {}),
-    ...(target_weight_kg !== undefined ? { target_weight_kg } : {}),
+    ...(target_weight_lb !== undefined ? { target_weight_lb } : {}),
     ...(note !== undefined ? { note } : {}),
   };
 }
 
 type OptionalTrainingFields = Pick<
   OnboardingAnswers,
-  'squat_kg' | 'bench_press_kg' | 'deadlift_kg' | 'overhead_press_kg'
+  'squat_lb' | 'bench_press_lb' | 'deadlift_lb' | 'overhead_press_lb'
 >;
 function optionalTrainingFields(fields: OptionalTrainingFields) {
-  const { squat_kg, bench_press_kg, deadlift_kg, overhead_press_kg } = fields;
+  const { squat_lb, bench_press_lb, deadlift_lb, overhead_press_lb } = fields;
   return {
-    ...(squat_kg !== undefined ? { squat_kg } : {}),
-    ...(bench_press_kg !== undefined ? { bench_press_kg } : {}),
-    ...(deadlift_kg !== undefined ? { deadlift_kg } : {}),
-    ...(overhead_press_kg !== undefined ? { overhead_press_kg } : {}),
+    ...(squat_lb !== undefined ? { squat_lb } : {}),
+    ...(bench_press_lb !== undefined ? { bench_press_lb } : {}),
+    ...(deadlift_lb !== undefined ? { deadlift_lb } : {}),
+    ...(overhead_press_lb !== undefined ? { overhead_press_lb } : {}),
   };
 }
 
@@ -99,12 +99,12 @@ function toWirePayload(answers: OnboardingAnswers) {
   const {
     body_fat_percent,
     target_date,
-    target_weight_kg,
+    target_weight_lb,
     note,
-    squat_kg,
-    bench_press_kg,
-    deadlift_kg,
-    overhead_press_kg,
+    squat_lb,
+    bench_press_lb,
+    deadlift_lb,
+    overhead_press_lb,
     activities,
     daily_activity_level,
     eating_phase,
@@ -114,8 +114,8 @@ function toWirePayload(answers: OnboardingAnswers) {
   } = answers;
   return {
     ...required,
-    ...optionalGoalFields({ body_fat_percent, target_date, target_weight_kg, note }),
-    ...optionalTrainingFields({ squat_kg, bench_press_kg, deadlift_kg, overhead_press_kg }),
+    ...optionalGoalFields({ body_fat_percent, target_date, target_weight_lb, note }),
+    ...optionalTrainingFields({ squat_lb, bench_press_lb, deadlift_lb, overhead_press_lb }),
     ...optionalLifeFields({
       activities,
       daily_activity_level,

@@ -34,7 +34,7 @@ export function toggleSet(
             ...exercise.sets,
             {
               performed_reps: exercise.prescribed.reps,
-              performed_weight_kg: exercise.prescribed.weight_kg,
+              performed_weight_lb: exercise.prescribed.weight_lb,
             },
           ],
         };

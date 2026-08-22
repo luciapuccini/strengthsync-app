@@ -109,6 +109,10 @@ export async function generatePlan(
           'Produce a canonical week_template for days 1–7 with exercise_key, series, reps, rest, and optional weight.',
           'Follow the coaching rules. Prefer progressive overload on compound lifts.',
           'week_template must include every day_index from 1 to 7 exactly once.',
+          'Every weight in the input and in your output is in pounds, and every height is in inches.',
+          'Weights belong in the weight_lb field and nowhere else: never write a weight into notes',
+          'or any other prose. Say "add load" rather than naming a figure, so a sentence can never',
+          'contradict the prescription shown beside it.',
         ].join(' '),
         prompt: JSON.stringify(
           {

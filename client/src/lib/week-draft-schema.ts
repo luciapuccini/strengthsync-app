@@ -20,7 +20,7 @@ const ExerciseFeedbackSchema = z.enum(['easy', 'hard', 'heavy', 'light']);
 
 const PerformedSetSchema = z.object({
   performed_reps: z.number().int().nonnegative(),
-  performed_weight_kg: z.number().nonnegative().nullable(),
+  performed_weight_lb: z.number().nonnegative().nullable(),
 });
 
 const ExerciseLogSchema = z.object({
@@ -32,7 +32,7 @@ const ExerciseLogSchema = z.object({
     series: z.number().int().positive(),
     reps: z.number().int().positive(),
     rest_time_sec: z.number().int().nonnegative(),
-    weight_kg: z.number().nonnegative().nullable(),
+    weight_lb: z.number().nonnegative().nullable(),
     notes: z.string().nullable(),
   }),
   sets: z.array(PerformedSetSchema),

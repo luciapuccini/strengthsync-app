@@ -114,7 +114,7 @@ export const weekTemplate: PlanDay[] = [
         series: 4,
         reps: 8,
         rest_time_sec: 120,
-        weight_kg: 60,
+        weight_lb: 135,
         notes: null,
       },
     ],

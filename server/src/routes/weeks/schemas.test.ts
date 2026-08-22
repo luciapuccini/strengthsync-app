@@ -12,7 +12,7 @@ const skippedWithSets = {
   exercise_key: 'press_banca',
   skipped: true,
   feedback: null,
-  sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
+  sets: [{ performed_reps: 8, performed_weight_lb: 60 }],
 };
 
 describe('UpdateDayLogSchema', () => {
@@ -25,8 +25,8 @@ describe('UpdateDayLogSchema', () => {
           skipped: false,
           feedback: 'hard',
           sets: [
-            { performed_reps: 8, performed_weight_kg: 60 },
-            { performed_reps: 7, performed_weight_kg: 60 },
+            { performed_reps: 8, performed_weight_lb: 60 },
+            { performed_reps: 7, performed_weight_lb: 60 },
           ],
         },
       ],
@@ -61,7 +61,7 @@ describe('SaveDayLogSchema', () => {
         exercise_key: 'press_banca',
         skipped: false,
         feedback: 'hard' as const,
-        sets: [{ performed_reps: 8, performed_weight_kg: 60 }],
+        sets: [{ performed_reps: 8, performed_weight_lb: 60 }],
       },
     ];
 

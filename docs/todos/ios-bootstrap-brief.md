@@ -53,69 +53,68 @@ shippable alone, and the web launch never waits on store review.
 
 ## Facts established — re-verify before relying on any of them
 
-- **`server.hostname` is a trap.** It looks like the fix for the cross-origin
-  problem. It is not: Capacitor's scheme handler then intercepts `/api/*` from
-  the local bundle.
+- `**server.hostname` is a trap.** It looks like the fix for the cross-origin
+problem. It is not: Capacitor's scheme handler then intercepts `/api/*` from
+the local bundle.
 - **The Worker has no CORS at all today**, because `wrangler.jsonc` serves the
-  SPA and the API from one origin. The shell would be the first cross-origin
-  caller in the system's history.
+SPA and the API from one origin. The shell would be the first cross-origin
+caller in the system's history.
 - **Capacitor's maintenance status.** A search result during the session claimed
-  Capacitor was being abandoned by Ionic. It was traced to a competing plugin
-  vendor. Ionic sunset its *commercial* products; Capacitor is MIT and
-  OutSystems has increased headcount on it. Re-check, but do not accept the
-  abandonment claim without a primary source.
+Capacitor was being abandoned by Ionic. It was traced to a competing plugin
+vendor. Ionic sunset its *commercial* products; Capacitor is MIT and
+OutSystems has increased headcount on it. Re-check, but do not accept the
+abandonment claim without a primary source.
 - **Auth0 on Capacitor is second-class.** The token cache must be backed by the
-  platform keychain — this requires supplying a cache implementation, not
-  setting a flag — and the iframe silent-auth fallback must be explicitly
-  disabled, because mobile web views block third-party cookies. Every auth
-  vendor evaluated treats Capacitor this way while shipping first-class Expo
-  and React Native SDKs.
+platform keychain — this requires supplying a cache implementation, not
+setting a flag — and the iframe silent-auth fallback must be explicitly
+disabled, because mobile web views block third-party cookies. Every auth
+vendor evaluated treats Capacitor this way while shipping first-class Expo
+and React Native SDKs.
 - **App Review Guideline numbers were cited from memory** and should be checked
-  against the current published guidelines: 5.1.1(v) in-app account deletion,
-  4.8 Sign in with Apple, 4.2 minimum functionality, 5.1.3 HealthKit privacy.
+against the current published guidelines: 5.1.1(v) in-app account deletion,
+4.8 Sign in with Apple, 4.2 minimum functionality, 5.1.3 HealthKit privacy.
 - **5.1.1(v) is closed.** `issues/014-account-deletion.md` shipped the in-app
-  deletion the guideline requires — `DELETE /api/account` behind a typed
-  confirmation on `/account` — and was verified against the real tenant on
-  2026-08-20. It is the **only** store requirement the auth work closes; 4.8,
-  4.2 and 5.1.3 are all still open, and none of them is an identity problem.
+deletion the guideline requires — `DELETE /api/account` behind a typed
+confirmation on `/account` — and was verified against the real tenant on
+2026-08-20. It is the **only** store requirement the auth work closes; 4.8,
+4.2 and 5.1.3 are all still open, and none of them is an identity problem.
 
 ## Open — the session's decision tree
 
 1. **HealthKit scope.** Which metrics are read, and — the question that actually
-   matters — do they feed the LLM progression or are they only displayed? This
-   decides whether the app has a native reason to exist, which is what Guideline
-   4.2 turns on. Resolve this first; several answers below depend on it.
+ matters — do they feed the LLM progression or are they only displayed? This
+ decides whether the app has a native reason to exist, which is what Guideline
+ 4.2 turns on. Resolve this first; several answers below depend on it.
 2. **4.2 minimum functionality, and the worst case.** The question asked in the
-   original session and never fully closed: if review judges the app to be a
-   repackaged website, what actually happens — rejection with a resubmission
-   path, or something that jeopardises the developer account? Answer this
-   concretely, not reassuringly.
+ original session and never fully closed: if review judges the app to be a
+ repackaged website, what actually happens — rejection with a resubmission
+ path, or something that jeopardises the developer account? Answer this
+ concretely, not reassuringly.
 3. **Apple Developer Program.** Enrolment as an individual or an organisation,
-   what each requires, cost, and how long it takes. This is a lead-time item and
-   may need starting before anything else here.
+ what each requires, cost, and how long it takes. This is a lead-time item and
+ may need starting before anything else here.
 4. **Privacy nutrition labels and the 5.1.3 disclosures.** What must be declared
-   given the answer to (1), and where the health-data disclosure lives in the
-   app.
+ given the answer to (1), and where the health-data disclosure lives in the
+ app.
 5. **Age rating**, and whether fitness and body-composition content changes it.
 6. **Package layout.** Where the Capacitor package sits in the monorepo, how it
-   enters the turbo pipeline, and whether CI builds it.
+ enters the turbo pipeline, and whether CI builds it.
 7. **Build and release.** Signing, TestFlight against a real submission, and how
-   the shell's version relates to the web app's.
+ the shell's version relates to the web app's.
 8. **What `client/dist` the shell carries.** Does a build pin a snapshot, or
-   does the shell track web deploys? This decides whether shipping a web fix
-   requires a store review.
+ does the shell track web deploys? This decides whether shipping a web fix
+ requires a store review.
 
 ## The original three questions
 
-From the deleted `ios.md`, with what the brainstorming settled.
-
 1. *Is React Native enough for HealthKit, or do we need a Swift module?* Moot as
-   posed, since React Native was rejected. Under Capacitor, HealthKit is reached
-   through a plugin that is Swift on the native side and JavaScript on the web
-   side. If no published plugin covers the metrics chosen in open question (1),
-   writing a small Swift plugin is the supported path, not a workaround.
+ posed, since React Native was rejected. Under Capacitor, HealthKit is reached
+ through a plugin that is Swift on the native side and JavaScript on the web
+ side. If no published plugin covers the metrics chosen in open question (1),
+ writing a small Swift plugin is the supported path, not a workaround.
 2. *How easy is it to copy the web app into a React Native app?* It is not a
-   copy — it is a rewrite of roughly 60% of `client/src`. That answer is what
-   decided the shell.
+ copy — it is a rewrite of roughly 60% of `client/src`. That answer is what
+ decided the shell.
 3. *Are we compliant, and what does a real launch need?* Open. This is the
-   subject of the session.
+ subject of the session.
+

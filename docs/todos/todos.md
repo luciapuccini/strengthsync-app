@@ -3,8 +3,15 @@
 Raw notes during the week. Processed items move to [../kanban](../kanban) and get
 deleted from here.
 
-- badges text are too loong, either limit llm geneartion note text or this is not a badge in the UI 
-- complete week process could be automated, not a button. ex on last day saved
-- history only compares weeks in a plan, new plan resets history view. This should always compare all data available, so per week or day type or per exceersice [TBD] bigger feature.
-- Why do we need to set up a custom email provider with Auth0? 1. verification emails now are batched and queuqed -&gt; slow invite to app. + setting a follow up email after verification steps (either STMP provider or enterprise account). Out of scope for MVP but sooner than later
+*Empty — everything captured up to 2026-08-22 has been processed. See
+[../kanban](../kanban).*
+
+
+
+- AUTH cmd+r should not open the authorized modal every time , happens in local but we eed to check in prod to be sure
+- Someday quallity control: eslint-plugin-react isn't installed, but its react/no-multi-comp
+
+    rule would enforce this mechanically instead of relying on an agent reading a document. That's a new
+
+    dependency against a strict pnpm catalog
 

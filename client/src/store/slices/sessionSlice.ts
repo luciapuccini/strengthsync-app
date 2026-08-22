@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 
 import type { Client } from '@/api/types';
 
-import { getMe } from '@/api/client';
+import { getMe, updateUnitPreference } from '@/api/client';
 import { identifyClient } from '@/lib/analytics';
 
 import type { AppStore } from '../useAppStore';
@@ -35,6 +35,7 @@ export type SessionSlice = {
   sessionClient: Client | null;
   resolveSession: (provider: ProviderSession) => Promise<void>;
   markSignedIn: (client: Client) => void;
+  setUnitPreference: (preference: Client['unit_preference']) => Promise<void>;
   signOutSession: () => void;
 };
 
@@ -85,6 +86,21 @@ export const createSessionSlice: StateCreator<
   markSignedIn: (client) => {
     identifyClient(client.id);
     set({ sessionStatus: 'signed-in', sessionClient: client }, false, 'markSignedIn');
+  },
+
+  /**
+   * Writes the preference and adopts the client the endpoint answers with — no
+   * refetch, because that response *is* the new client.
+   *
+   * Deliberately not routed through `markSignedIn`: that identifies the athlete
+   * to PostHog, which is right once per session and wrong on every toggle. It
+   * also does not catch — the caller is the control that has to tell the athlete
+   * the write failed, and swallowing the error here would leave it showing a
+   * value the server never stored.
+   */
+  setUnitPreference: async (preference) => {
+    const client = await updateUnitPreference(preference);
+    set({ sessionClient: client }, false, 'setUnitPreference');
   },
 
   // Local state only. Ending the session at Auth0 is `signOutButton`'s job, and

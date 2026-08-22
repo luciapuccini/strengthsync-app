@@ -45,6 +45,8 @@ const WEEK_ANALYSIS_SYSTEM = [
   'Days with completed:false mean the athlete did not finish those sessions and missed targets;',
   'reflect reduced adherence in next-week guidance. Do not invent missing performance data.',
   'Do not prescribe the next schedule yet.',
+  'Never write a weight into your analysis: say "the athlete is ready for more load" rather than',
+  'naming a figure, so your prose can never contradict the prescription the app renders.',
 ].join(' ');
 
 const NEXT_WEEK_SYSTEM = [
@@ -55,6 +57,10 @@ const NEXT_WEEK_SYSTEM = [
   'Every exercise must have skipped=false, feedback=null, and sets=[].',
   'Adjust prescribed series/reps/weight from the completed week and plan template using the analysis and coaching rules.',
   'Prefer progressive overload on compound lifts when the analysis supports it.',
+  'Every weight in the input and in your output is in pounds, and every height is in inches.',
+  'Weights belong in the weight_lb field and nowhere else: never write a weight into notes',
+  'or any other prose. Say "add load" rather than naming a figure, so a sentence can never',
+  'contradict the prescription shown beside it.',
 ].join(' ');
 
 async function handleLoadContext(

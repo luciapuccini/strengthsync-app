@@ -85,6 +85,13 @@
               "archived"
             ]
           },
+          "unit_preference": {
+            "type": "string",
+            "enum": [
+              "imperial",
+              "metric"
+            ]
+          },
           "created_at": {
             "type": "string",
             "format": "date-time"
@@ -99,8 +106,24 @@
           "coach_id",
           "display_name",
           "status",
+          "unit_preference",
           "created_at",
           "updated_at"
+        ]
+      },
+      "UpdateClient": {
+        "type": "object",
+        "properties": {
+          "unit_preference": {
+            "type": "string",
+            "enum": [
+              "imperial",
+              "metric"
+            ]
+          }
+        },
+        "required": [
+          "unit_preference"
         ]
       },
       "ClientProfileResponse": {
@@ -142,7 +165,7 @@
             ],
             "exclusiveMinimum": 0
           },
-          "height_cm": {
+          "height_in": {
             "type": [
               "number",
               "null"
@@ -199,7 +222,7 @@
           "snapshot_date",
           "sex",
           "age",
-          "height_cm",
+          "height_in",
           "goals",
           "body_composition",
           "strength_loads",
@@ -230,7 +253,7 @@
             ],
             "exclusiveMinimum": 0
           },
-          "height_cm": {
+          "height_in": {
             "type": [
               "number",
               "null"
@@ -281,7 +304,7 @@
           "snapshot_date",
           "sex",
           "age",
-          "height_cm",
+          "height_in",
           "goals",
           "body_composition",
           "strength_loads",
@@ -307,15 +330,15 @@
             "minimum": 13,
             "maximum": 100
           },
-          "height_cm": {
+          "height_in": {
             "type": "number",
             "exclusiveMinimum": 0,
-            "maximum": 250
+            "maximum": 100
           },
-          "weight_kg": {
+          "weight_lb": {
             "type": "number",
             "exclusiveMinimum": 0,
-            "maximum": 400
+            "maximum": 800
           },
           "body_fat_percent": {
             "type": "number",
@@ -334,10 +357,10 @@
             "type": "string",
             "format": "date"
           },
-          "target_weight_kg": {
+          "target_weight_lb": {
             "type": "number",
             "exclusiveMinimum": 0,
-            "maximum": 400
+            "maximum": 800
           },
           "note": {
             "type": "string",
@@ -352,25 +375,25 @@
               "advanced"
             ]
           },
-          "squat_kg": {
+          "squat_lb": {
             "type": "number",
             "exclusiveMinimum": 0,
-            "maximum": 500
+            "maximum": 1000
           },
-          "bench_press_kg": {
+          "bench_press_lb": {
             "type": "number",
             "exclusiveMinimum": 0,
-            "maximum": 500
+            "maximum": 1000
           },
-          "deadlift_kg": {
+          "deadlift_lb": {
             "type": "number",
             "exclusiveMinimum": 0,
-            "maximum": 500
+            "maximum": 1000
           },
-          "overhead_press_kg": {
+          "overhead_press_lb": {
             "type": "number",
             "exclusiveMinimum": 0,
-            "maximum": 500
+            "maximum": 1000
           },
           "days_per_week": {
             "type": "integer",
@@ -441,8 +464,8 @@
         "required": [
           "sex",
           "age",
-          "height_cm",
-          "weight_kg",
+          "height_in",
+          "weight_lb",
           "goal",
           "experience",
           "days_per_week",
@@ -593,7 +616,7 @@
             "type": "integer",
             "minimum": 0
           },
-          "weight_kg": {
+          "weight_lb": {
             "type": [
               "number",
               "null"
@@ -613,7 +636,7 @@
           "series",
           "reps",
           "rest_time_sec",
-          "weight_kg",
+          "weight_lb",
           "notes"
         ]
       },
@@ -788,7 +811,7 @@
                 "type": "integer",
                 "minimum": 0
               },
-              "weight_kg": {
+              "weight_lb": {
                 "type": [
                   "number",
                   "null"
@@ -806,7 +829,7 @@
               "series",
               "reps",
               "rest_time_sec",
-              "weight_kg",
+              "weight_lb",
               "notes"
             ]
           },
@@ -833,7 +856,7 @@
             "type": "integer",
             "minimum": 0
           },
-          "performed_weight_kg": {
+          "performed_weight_lb": {
             "type": [
               "number",
               "null"
@@ -843,7 +866,7 @@
         },
         "required": [
           "performed_reps",
-          "performed_weight_kg"
+          "performed_weight_lb"
         ]
       },
       "WeekResponse": {
@@ -1030,6 +1053,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClientResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update the signed-in client's settings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClient"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
                 }
               }
             }

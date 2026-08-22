@@ -29,7 +29,7 @@ INSERT OR IGNORE INTO client_profiles (
   snapshot_date,
   sex,
   age,
-  height_cm,
+  height_in,
   goals,
   body_composition,
   strength_loads,
@@ -45,10 +45,10 @@ SELECT
   '2026-05-10',
   'female',
   30,
-  165,
-  '{"target_date":"2026-11","target_weight_kg":58.5,"target_body_fat_percent":21,"body_fat_floor_percent":20,"fat_to_lose_kg":-4.7,"muscle_to_gain_kg":2.5,"midpoint_review":"2026-08"}',
-  '{"current_may_2026":{"weight_kg":60.65,"body_fat_percent":28,"bmr_kcal":null,"tdee_kcal":1835},"baseline_feb_2026":{"weight_kg":63,"body_fat_percent":33,"bmr_kcal":1387,"tdee_kcal":1907},"first_block_changes":{"fat_lost_kg":-3.8,"muscle_gained_kg":1.5,"weight_change_kg":-2.35,"body_fat_change_percentage_points":-5}}',
-  '{"upper_body":{"bench_press":"27.5 kg","lat_pulldown":"30 kg","seated_cable_row":"27.5 kg","45_degree_row":"28 kg","barbell_shoulder_press":"17 kg","biceps_curl":"12 kg","band_assisted_pull_ups":"4 x 6","push_ups":"4 x 8","inverted_rows":"3 x 8","overhead_triceps_extension":"3 x 12","face_pull":"7.5 kg"},"lower_body":{"squat":"42.5 kg","deadlift":"42.5 kg","sumo_deadlift":"50 kg","hip_thrust":"40 kg / 4 x 10","lunges":"15 kg bag","leg_curl":"27.5 kg","leg_extension":"27.5 kg","back_extension":"10 kg"}}',
+  65,
+  '{"target_date":"2026-11","target_weight_lb":129,"target_body_fat_percent":21,"body_fat_floor_percent":20,"fat_to_lose_lb":-10.4,"muscle_to_gain_lb":5.5,"midpoint_review":"2026-08"}',
+  '{"current_may_2026":{"weight_lb":133.7,"body_fat_percent":28,"bmr_kcal":null,"tdee_kcal":1835},"baseline_feb_2026":{"weight_lb":138.9,"body_fat_percent":33,"bmr_kcal":1387,"tdee_kcal":1907},"first_block_changes":{"fat_lost_lb":-8.4,"muscle_gained_lb":3.3,"weight_change_lb":-5.2,"body_fat_change_percentage_points":-5}}',
+  '{"experience":"intermediate","lifts":{"bench_press_lb":60,"lat_pulldown_lb":65,"seated_cable_row_lb":60,"45_degree_row_lb":60,"barbell_shoulder_press_lb":35,"biceps_curl_lb":25,"band_assisted_pull_ups_lb":null,"push_ups_lb":null,"inverted_rows_lb":null,"overhead_triceps_extension_lb":null,"face_pull_lb":15,"squat_lb":95,"deadlift_lb":95,"sumo_deadlift_lb":110,"hip_thrust_lb":90,"lunges_lb":35,"leg_curl_lb":60,"leg_extension_lb":60,"back_extension_lb":20}}',
   '{"daily_targets":{"kcal":1750,"protein_g":130,"carbs_g":175,"fat_g":58,"minimum_fiber_g":25},"approach":"clean whole foods","primary_grocery_store":"Mercadona","meal_schedule":{"breakfast":"09:00","lunch":"12:30","training":"14:00-15:00","post_workout":"16:30","dinner":"20:00"},"cheat_meals_per_week":2,"cheat_meal_examples":["burger and fries","pizza"],"supplements":{"whey_protein":"post-workout","creatine_g_per_day":5,"vitamin_d":true,"magnesium_bisglycinate":"added in week 4 for cramps","training_electrolytes":"salt and lemon in water"}}',
   '{"items":[{"name":"swimming","sessions_per_week":2,"days":["wednesday","friday"],"note":"Session types: Wednesday pyramid, Friday endurance 2000 m. Benchmarks achieved: distance per stroke above 2.2 m, SWOLF at or below 53, endurance 2000 m, best pace per 100 m 2:46 on 2026-05-03. Targets: SWOLF 53 or lower consistently, average pace per 100 m toward 2:45, average endurance heart rate 125 bpm or lower."}]}',
   '{"job_activity_level":"very sedentary with long sitting hours","training_days_per_week":6,"rest_day":"Sunday","weekly_schedule":{"monday":"Upper body - Day 1","tuesday":"Legs - Day 2","wednesday":"Swimming - Pyramid","thursday":"Upper body - Day 3","friday":"Swimming - Endurance","saturday":"Legs - Day 4","sunday":"Rest"}}',
@@ -77,40 +77,40 @@ SELECT
   6,
   '[
     {"day_index":1,"type":"upper_body","notes":null,"exercises":[
-      {"exercise_key":"flat_bench_press","name":"Flat Bench Press","series":4,"reps":10,"rest_time_sec":90,"weight_kg":25,"notes":null},
-      {"exercise_key":"lat_pulldown","name":"Lat Pulldown","series":4,"reps":12,"rest_time_sec":90,"weight_kg":30,"notes":null},
-      {"exercise_key":"seated_cable_row","name":"Seated Cable Row","series":3,"reps":12,"rest_time_sec":90,"weight_kg":25,"notes":null},
-      {"exercise_key":"barbell_shoulder_press","name":"Barbell Shoulder Press","series":3,"reps":10,"rest_time_sec":90,"weight_kg":15,"notes":null},
-      {"exercise_key":"biceps_curl","name":"Biceps Curl","series":3,"reps":12,"rest_time_sec":90,"weight_kg":6,"notes":null},
-      {"exercise_key":"cable_triceps_extension","name":"Cable Triceps Extension","series":3,"reps":12,"rest_time_sec":90,"weight_kg":7.5,"notes":null},
-      {"exercise_key":"push_ups","name":"Push-Ups","series":3,"reps":8,"rest_time_sec":90,"weight_kg":null,"notes":null}
+      {"exercise_key":"flat_bench_press","name":"Flat Bench Press","series":4,"reps":10,"rest_time_sec":90,"weight_lb":55,"notes":null},
+      {"exercise_key":"lat_pulldown","name":"Lat Pulldown","series":4,"reps":12,"rest_time_sec":90,"weight_lb":65,"notes":null},
+      {"exercise_key":"seated_cable_row","name":"Seated Cable Row","series":3,"reps":12,"rest_time_sec":90,"weight_lb":55,"notes":null},
+      {"exercise_key":"barbell_shoulder_press","name":"Barbell Shoulder Press","series":3,"reps":10,"rest_time_sec":90,"weight_lb":35,"notes":null},
+      {"exercise_key":"biceps_curl","name":"Biceps Curl","series":3,"reps":12,"rest_time_sec":90,"weight_lb":15,"notes":null},
+      {"exercise_key":"cable_triceps_extension","name":"Cable Triceps Extension","series":3,"reps":12,"rest_time_sec":90,"weight_lb":15,"notes":null},
+      {"exercise_key":"push_ups","name":"Push-Ups","series":3,"reps":8,"rest_time_sec":90,"weight_lb":null,"notes":null}
     ]},
     {"day_index":2,"type":"leg_day","notes":null,"exercises":[
-      {"exercise_key":"front_squat","name":"Front Squat","series":3,"reps":10,"rest_time_sec":90,"weight_kg":30,"notes":null},
-      {"exercise_key":"deadlift","name":"Deadlift","series":4,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},
-      {"exercise_key":"lunges","name":"Lunges","series":4,"reps":15,"rest_time_sec":90,"weight_kg":20,"notes":null},
-      {"exercise_key":"back_extension","name":"Back Extension","series":3,"reps":12,"rest_time_sec":90,"weight_kg":12,"notes":null},
-      {"exercise_key":"leg_extension","name":"Leg Extension","series":3,"reps":12,"rest_time_sec":90,"weight_kg":28,"notes":null},
-      {"exercise_key":"leg_curl","name":"Leg Curl","series":3,"reps":12,"rest_time_sec":90,"weight_kg":28,"notes":null}
+      {"exercise_key":"front_squat","name":"Front Squat","series":3,"reps":10,"rest_time_sec":90,"weight_lb":65,"notes":null},
+      {"exercise_key":"deadlift","name":"Deadlift","series":4,"reps":10,"rest_time_sec":90,"weight_lb":100,"notes":null},
+      {"exercise_key":"lunges","name":"Lunges","series":4,"reps":15,"rest_time_sec":90,"weight_lb":45,"notes":null},
+      {"exercise_key":"back_extension","name":"Back Extension","series":3,"reps":12,"rest_time_sec":90,"weight_lb":25,"notes":null},
+      {"exercise_key":"leg_extension","name":"Leg Extension","series":3,"reps":12,"rest_time_sec":90,"weight_lb":60,"notes":null},
+      {"exercise_key":"leg_curl","name":"Leg Curl","series":3,"reps":12,"rest_time_sec":90,"weight_lb":60,"notes":null}
     ]},
     {"day_index":3,"type":"activity","notes":"Technique swim and pyramid: 50 m / 100 m / 150 m / 300 m / 150 m / 100 m / 50 m.","exercises":[]},
     {"day_index":4,"type":"upper_body","notes":null,"exercises":[
-      {"exercise_key":"pull_ups","name":"Pull-Ups","series":4,"reps":6,"rest_time_sec":90,"weight_kg":null,"notes":"Use a resistance band."},
-      {"exercise_key":"45_degree_row","name":"45-Degree Row","series":4,"reps":10,"rest_time_sec":90,"weight_kg":28,"notes":null},
-      {"exercise_key":"lateral_raise","name":"Lateral Raise","series":3,"reps":8,"rest_time_sec":90,"weight_kg":6,"notes":null},
-      {"exercise_key":"inverted_row","name":"Inverted Row","series":3,"reps":8,"rest_time_sec":90,"weight_kg":null,"notes":null},
-      {"exercise_key":"overhead_triceps_extension","name":"Overhead Triceps Extension","series":3,"reps":12,"rest_time_sec":90,"weight_kg":7.5,"notes":null},
-      {"exercise_key":"face_pull","name":"Face Pull","series":3,"reps":12,"rest_time_sec":90,"weight_kg":7.5,"notes":null}
+      {"exercise_key":"pull_ups","name":"Pull-Ups","series":4,"reps":6,"rest_time_sec":90,"weight_lb":null,"notes":"Use a resistance band."},
+      {"exercise_key":"45_degree_row","name":"45-Degree Row","series":4,"reps":10,"rest_time_sec":90,"weight_lb":60,"notes":null},
+      {"exercise_key":"lateral_raise","name":"Lateral Raise","series":3,"reps":8,"rest_time_sec":90,"weight_lb":15,"notes":null},
+      {"exercise_key":"inverted_row","name":"Inverted Row","series":3,"reps":8,"rest_time_sec":90,"weight_lb":null,"notes":null},
+      {"exercise_key":"overhead_triceps_extension","name":"Overhead Triceps Extension","series":3,"reps":12,"rest_time_sec":90,"weight_lb":15,"notes":null},
+      {"exercise_key":"face_pull","name":"Face Pull","series":3,"reps":12,"rest_time_sec":90,"weight_lb":15,"notes":null}
     ]},
     {"day_index":5,"type":"activity","notes":"Endurance swim: 2000 m.","exercises":[]},
     {"day_index":6,"type":"leg_day","notes":null,"exercises":[
-      {"exercise_key":"squat","name":"Squat","series":4,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},
-      {"exercise_key":"deadlift","name":"Deadlift","series":4,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},
-      {"exercise_key":"sumo_deadlift","name":"Sumo Deadlift","series":3,"reps":10,"rest_time_sec":90,"weight_kg":50,"notes":null},
-      {"exercise_key":"hip_thrust","name":"Hip Thrust","series":3,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},
-      {"exercise_key":"glute_kickback","name":"Glute Kickback","series":3,"reps":10,"rest_time_sec":90,"weight_kg":10,"notes":null},
-      {"exercise_key":"step_up","name":"Step-Up","series":3,"reps":8,"rest_time_sec":90,"weight_kg":null,"notes":null},
-      {"exercise_key":"leg_extension","name":"Leg Extension","series":3,"reps":12,"rest_time_sec":90,"weight_kg":28,"notes":null}
+      {"exercise_key":"squat","name":"Squat","series":4,"reps":10,"rest_time_sec":90,"weight_lb":100,"notes":null},
+      {"exercise_key":"deadlift","name":"Deadlift","series":4,"reps":10,"rest_time_sec":90,"weight_lb":100,"notes":null},
+      {"exercise_key":"sumo_deadlift","name":"Sumo Deadlift","series":3,"reps":10,"rest_time_sec":90,"weight_lb":110,"notes":null},
+      {"exercise_key":"hip_thrust","name":"Hip Thrust","series":3,"reps":10,"rest_time_sec":90,"weight_lb":100,"notes":null},
+      {"exercise_key":"glute_kickback","name":"Glute Kickback","series":3,"reps":10,"rest_time_sec":90,"weight_lb":20,"notes":null},
+      {"exercise_key":"step_up","name":"Step-Up","series":3,"reps":8,"rest_time_sec":90,"weight_lb":null,"notes":null},
+      {"exercise_key":"leg_extension","name":"Leg Extension","series":3,"reps":12,"rest_time_sec":90,"weight_lb":60,"notes":null}
     ]},
     {"day_index":7,"type":"rest","notes":"Active recovery: aim for 10,000 steps and gentle mobility.","exercises":[]}
   ]',
@@ -144,40 +144,40 @@ SELECT
   'in_flight',
   json_set('[
     {"day_index":1,"date":"2026-07-20","type":"upper_body","notes":null,"completed":true,"completed_at":"2026-07-20T16:00:00.000Z","exercises":[
-      {"exercise_key":"flat_bench_press","name":"Flat Bench Press","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_kg":28,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":28},{"performed_reps":12,"performed_weight_kg":28},{"performed_reps":12,"performed_weight_kg":28},{"performed_reps":12,"performed_weight_kg":28}]},
-      {"exercise_key":"lat_pulldown","name":"Lat Pulldown","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_kg":30,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30}]},
-      {"exercise_key":"seated_cable_row","name":"Seated Cable Row","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":26,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":26},{"performed_reps":12,"performed_weight_kg":26},{"performed_reps":12,"performed_weight_kg":26}]},
-      {"exercise_key":"barbell_shoulder_press","name":"Barbell Shoulder Press","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_kg":20,"notes":null},"sets":[{"performed_reps":8,"performed_weight_kg":20},{"performed_reps":8,"performed_weight_kg":20},{"performed_reps":8,"performed_weight_kg":20}]},
-      {"exercise_key":"biceps_curl","name":"Biceps Curl","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":6,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":6},{"performed_reps":12,"performed_weight_kg":6},{"performed_reps":12,"performed_weight_kg":6}]},
-      {"exercise_key":"cable_triceps_extension","name":"Cable Triceps Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":8.5,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":8.5},{"performed_reps":12,"performed_weight_kg":8.5},{"performed_reps":12,"performed_weight_kg":8.5}]},
-      {"exercise_key":"push_ups","name":"Push-Ups","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":8,"rest_time_sec":90,"weight_kg":null,"notes":null},"sets":[{"performed_reps":8,"performed_weight_kg":null},{"performed_reps":8,"performed_weight_kg":null},{"performed_reps":8,"performed_weight_kg":null}]}
+      {"exercise_key":"flat_bench_press","name":"Flat Bench Press","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_lb":60,"notes":null},"sets":[{"performed_reps":12,"performed_weight_lb":60},{"performed_reps":12,"performed_weight_lb":60},{"performed_reps":12,"performed_weight_lb":60},{"performed_reps":12,"performed_weight_lb":60}]},
+      {"exercise_key":"lat_pulldown","name":"Lat Pulldown","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_lb":65,"notes":null},"sets":[{"performed_reps":12,"performed_weight_lb":65},{"performed_reps":12,"performed_weight_lb":65},{"performed_reps":12,"performed_weight_lb":65},{"performed_reps":12,"performed_weight_lb":65}]},
+      {"exercise_key":"seated_cable_row","name":"Seated Cable Row","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":55,"notes":null},"sets":[{"performed_reps":12,"performed_weight_lb":55},{"performed_reps":12,"performed_weight_lb":55},{"performed_reps":12,"performed_weight_lb":55}]},
+      {"exercise_key":"barbell_shoulder_press","name":"Barbell Shoulder Press","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_lb":45,"notes":null},"sets":[{"performed_reps":8,"performed_weight_lb":45},{"performed_reps":8,"performed_weight_lb":45},{"performed_reps":8,"performed_weight_lb":45}]},
+      {"exercise_key":"biceps_curl","name":"Biceps Curl","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":15,"notes":null},"sets":[{"performed_reps":12,"performed_weight_lb":15},{"performed_reps":12,"performed_weight_lb":15},{"performed_reps":12,"performed_weight_lb":15}]},
+      {"exercise_key":"cable_triceps_extension","name":"Cable Triceps Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":20,"notes":null},"sets":[{"performed_reps":12,"performed_weight_lb":20},{"performed_reps":12,"performed_weight_lb":20},{"performed_reps":12,"performed_weight_lb":20}]},
+      {"exercise_key":"push_ups","name":"Push-Ups","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":8,"rest_time_sec":90,"weight_lb":null,"notes":null},"sets":[{"performed_reps":8,"performed_weight_lb":null},{"performed_reps":8,"performed_weight_lb":null},{"performed_reps":8,"performed_weight_lb":null}]}
     ]},
     {"day_index":2,"date":"2026-07-21","type":"leg_day","notes":"Extra cardio: 20-minute walk.","completed":true,"completed_at":"2026-07-21T16:00:00.000Z","exercises":[
-      {"exercise_key":"front_squat","name":"Front Squat","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_kg":30,"notes":null},"sets":[{"performed_reps":10,"performed_weight_kg":30},{"performed_reps":10,"performed_weight_kg":30},{"performed_reps":10,"performed_weight_kg":30}]},
-      {"exercise_key":"deadlift","name":"Deadlift","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},"sets":[{"performed_reps":10,"performed_weight_kg":45},{"performed_reps":10,"performed_weight_kg":45},{"performed_reps":10,"performed_weight_kg":45},{"performed_reps":10,"performed_weight_kg":45}]},
-      {"exercise_key":"lunges","name":"Lunges","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":15,"rest_time_sec":90,"weight_kg":20,"notes":null},"sets":[{"performed_reps":15,"performed_weight_kg":20},{"performed_reps":15,"performed_weight_kg":20},{"performed_reps":15,"performed_weight_kg":20},{"performed_reps":15,"performed_weight_kg":20}]},
-      {"exercise_key":"back_extension","name":"Back Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":12,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":12},{"performed_reps":12,"performed_weight_kg":12},{"performed_reps":12,"performed_weight_kg":12}]},
-      {"exercise_key":"leg_extension","name":"Leg Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":30,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30}]},
-      {"exercise_key":"leg_curl","name":"Leg Curl","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":30,"notes":null},"sets":[{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30},{"performed_reps":12,"performed_weight_kg":30}]}
+      {"exercise_key":"front_squat","name":"Front Squat","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_lb":65,"notes":null},"sets":[{"performed_reps":10,"performed_weight_lb":65},{"performed_reps":10,"performed_weight_lb":65},{"performed_reps":10,"performed_weight_lb":65}]},
+      {"exercise_key":"deadlift","name":"Deadlift","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":10,"rest_time_sec":90,"weight_lb":100,"notes":null},"sets":[{"performed_reps":10,"performed_weight_lb":100},{"performed_reps":10,"performed_weight_lb":100},{"performed_reps":10,"performed_weight_lb":100},{"performed_reps":10,"performed_weight_lb":100}]},
+      {"exercise_key":"lunges","name":"Lunges","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":15,"rest_time_sec":90,"weight_lb":45,"notes":null},"sets":[{"performed_reps":15,"performed_weight_lb":45},{"performed_reps":15,"performed_weight_lb":45},{"performed_reps":15,"performed_weight_lb":45},{"performed_reps":15,"performed_weight_lb":45}]},
+      {"exercise_key":"back_extension","name":"Back Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":25,"notes":null},"sets":[{"performed_reps":12,"performed_weight_lb":25},{"performed_reps":12,"performed_weight_lb":25},{"performed_reps":12,"performed_weight_lb":25}]},
+      {"exercise_key":"leg_extension","name":"Leg Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":65,"notes":null},"sets":[{"performed_reps":12,"performed_weight_lb":65},{"performed_reps":12,"performed_weight_lb":65},{"performed_reps":12,"performed_weight_lb":65}]},
+      {"exercise_key":"leg_curl","name":"Leg Curl","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":65,"notes":null},"sets":[{"performed_reps":12,"performed_weight_lb":65},{"performed_reps":12,"performed_weight_lb":65},{"performed_reps":12,"performed_weight_lb":65}]}
     ]},
     {"day_index":3,"date":"2026-07-22","type":"activity","notes":"Technique swim and pyramid: 50 m / 100 m / 150 m / 300 m / 150 m / 100 m / 50 m.","completed":false,"completed_at":null,"exercises":[]},
     {"day_index":4,"date":"2026-07-23","type":"upper_body","notes":"Extra cardio: 20 minutes on the stairs.","completed":false,"completed_at":null,"exercises":[
-      {"exercise_key":"pull_ups","name":"Pull-Ups","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":6,"rest_time_sec":90,"weight_kg":null,"notes":"Use a resistance band."},"sets":[]},
-      {"exercise_key":"45_degree_row","name":"45-Degree Row","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":10,"rest_time_sec":90,"weight_kg":26,"notes":null},"sets":[]},
-      {"exercise_key":"lateral_raise","name":"Lateral Raise","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":8,"rest_time_sec":90,"weight_kg":5,"notes":null},"sets":[]},
-      {"exercise_key":"inverted_row","name":"Inverted Row","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":8,"rest_time_sec":90,"weight_kg":null,"notes":null},"sets":[]},
-      {"exercise_key":"overhead_triceps_extension","name":"Overhead Triceps Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":8.5,"notes":null},"sets":[]},
-      {"exercise_key":"face_pull","name":"Face Pull","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":8.5,"notes":null},"sets":[]}
+      {"exercise_key":"pull_ups","name":"Pull-Ups","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":6,"rest_time_sec":90,"weight_lb":null,"notes":"Use a resistance band."},"sets":[]},
+      {"exercise_key":"45_degree_row","name":"45-Degree Row","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":10,"rest_time_sec":90,"weight_lb":55,"notes":null},"sets":[]},
+      {"exercise_key":"lateral_raise","name":"Lateral Raise","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":8,"rest_time_sec":90,"weight_lb":10,"notes":null},"sets":[]},
+      {"exercise_key":"inverted_row","name":"Inverted Row","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":8,"rest_time_sec":90,"weight_lb":null,"notes":null},"sets":[]},
+      {"exercise_key":"overhead_triceps_extension","name":"Overhead Triceps Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":20,"notes":null},"sets":[]},
+      {"exercise_key":"face_pull","name":"Face Pull","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":20,"notes":null},"sets":[]}
     ]},
     {"day_index":5,"date":"2026-07-24","type":"activity","notes":"Endurance swim: 2000 m.","completed":false,"completed_at":null,"exercises":[]},
     {"day_index":6,"date":"2026-07-25","type":"leg_day","notes":null,"completed":false,"completed_at":null,"exercises":[
-      {"exercise_key":"squat","name":"Squat","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_kg":46,"notes":null},"sets":[]},
-      {"exercise_key":"deadlift","name":"Deadlift","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":10,"rest_time_sec":90,"weight_kg":45,"notes":null},"sets":[]},
-      {"exercise_key":"sumo_deadlift","name":"Sumo Deadlift","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_kg":51,"notes":null},"sets":[]},
-      {"exercise_key":"hip_thrust","name":"Hip Thrust","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_kg":46,"notes":null},"sets":[]},
-      {"exercise_key":"glute_kickback","name":"Glute Kickback","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_kg":11,"notes":null},"sets":[]},
-      {"exercise_key":"step_up","name":"Step-Up","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":8,"rest_time_sec":90,"weight_kg":null,"notes":null},"sets":[]},
-      {"exercise_key":"leg_extension","name":"Leg Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_kg":29,"notes":null},"sets":[]}
+      {"exercise_key":"squat","name":"Squat","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":12,"rest_time_sec":90,"weight_lb":100,"notes":null},"sets":[]},
+      {"exercise_key":"deadlift","name":"Deadlift","skipped":false,"feedback":null,"prescribed":{"series":4,"reps":10,"rest_time_sec":90,"weight_lb":100,"notes":null},"sets":[]},
+      {"exercise_key":"sumo_deadlift","name":"Sumo Deadlift","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_lb":110,"notes":null},"sets":[]},
+      {"exercise_key":"hip_thrust","name":"Hip Thrust","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_lb":100,"notes":null},"sets":[]},
+      {"exercise_key":"glute_kickback","name":"Glute Kickback","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":10,"rest_time_sec":90,"weight_lb":25,"notes":null},"sets":[]},
+      {"exercise_key":"step_up","name":"Step-Up","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":8,"rest_time_sec":90,"weight_lb":null,"notes":null},"sets":[]},
+      {"exercise_key":"leg_extension","name":"Leg Extension","skipped":false,"feedback":null,"prescribed":{"series":3,"reps":12,"rest_time_sec":90,"weight_lb":65,"notes":null},"sets":[]}
     ]},
     {"day_index":7,"date":"2026-07-26","type":"rest","notes":"Active recovery: aim for 10,000 steps and gentle mobility. Add an easy walk, yoga, or a gentle Pilates class if you feel like it.","completed":false,"completed_at":null,"exercises":[]}
   ]',

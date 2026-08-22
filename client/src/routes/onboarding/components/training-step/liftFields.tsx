@@ -2,11 +2,13 @@ import type { JSX } from 'react';
 
 import {
   ONBOARDING_MAIN_LIFTS,
+  displayedWeight,
   type OnboardingDraft,
   type OnboardingExperience,
   type StepFieldErrors,
 } from '@/lib/onboarding-schema';
 import { Input } from '@/shadcn/ui/input';
+import { unitLabel, type UnitPreference } from '@/utils/units';
 
 import { OnboardingField } from '../onboarding-field/onboardingField';
 
@@ -20,6 +22,7 @@ const LIFT_LABELS: Record<(typeof ONBOARDING_MAIN_LIFTS)[number], string> = {
 type Props = {
   experience: OnboardingExperience | '';
   priorAnswers: OnboardingDraft;
+  unit: UnitPreference;
   errors: StepFieldErrors;
 };
 
@@ -28,22 +31,25 @@ type Props = {
  * beginner's typed values must survive switching the experience answer back
  * and forth, which an unmount-on-hide would lose.
  */
-export function LiftFields({ experience, priorAnswers, errors }: Props): JSX.Element {
+export function LiftFields({ experience, priorAnswers, unit, errors }: Props): JSX.Element {
   return (
     <div className={experience === 'beginner' ? 'hidden' : 'flex flex-col gap-4'}>
       {ONBOARDING_MAIN_LIFTS.map((lift) => (
         <OnboardingField
           key={lift}
           id={`onboarding-${lift}`}
-          label={`${LIFT_LABELS[lift]} (kg, optional — skip if you don't train it)`}
-          error={errors[`${lift}_kg`]}
+          label={`${LIFT_LABELS[lift]} (${unitLabel(unit)}, optional — skip if you don't train it)`}
+          error={errors[`${lift}_lb`]}
         >
           <Input
             id={`onboarding-${lift}`}
-            name={`${lift}_kg`}
+            name={`${lift}_lb`}
             type="number"
             inputMode="decimal"
-            defaultValue={priorAnswers[`${lift}_kg` as keyof OnboardingDraft] as number | undefined}
+            defaultValue={displayedWeight(
+              priorAnswers[`${lift}_lb` as keyof OnboardingDraft] as number | undefined,
+              unit,
+            )}
           />
         </OnboardingField>
       ))}

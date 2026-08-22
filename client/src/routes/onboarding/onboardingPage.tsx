@@ -3,7 +3,10 @@ import type { JSX } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 
 import { activePlanResource } from '@/api/activePlanResource';
+import { UnitToggle } from '@/components/unit-toggle/unitToggle';
 import { trackOnboardingStepCompleted } from '@/lib/analytics';
+import { useAppStore } from '@/store/useAppStore';
+import type { UnitPreference } from '@/utils/units';
 
 import { GoalStep } from './components/goal-step/goalStep';
 import { LifeStep } from './components/life-step/lifeStep';
@@ -24,8 +27,21 @@ import { ONBOARDING_STEPS, initialOnboardingState, onboardingReducer } from './o
 export function OnboardingPage(): JSX.Element {
   const activePlan = use(activePlanResource());
   const [state, dispatch] = useReducer(onboardingReducer, initialOnboardingState);
+  const setUnitPreference = useAppStore((store) => store.setUnitPreference);
   const navigate = useNavigate();
   const stepNumber = ONBOARDING_STEPS.indexOf(state.step) + 1;
+
+  /**
+   * The wizard switches units first and persists second, and swallows a failed
+   * write on purpose: the answers submit as canonical imperial whatever the
+   * stored preference says, so a failure costs nothing but the display setting,
+   * which the Account page can fix. Interrupting the questionnaire with an
+   * error about it would cost more.
+   */
+  function pickUnit(unit: UnitPreference): void {
+    dispatch({ type: 'set-unit', unit });
+    void setUnitPreference(unit).catch(() => {});
+  }
 
   if (activePlan !== null) {
     return <Navigate to="/track" replace />;
@@ -36,18 +52,28 @@ export function OnboardingPage(): JSX.Element {
       <OnboardingProgress current={stepNumber} total={ONBOARDING_STEPS.length} />
 
       {state.step === 'personal' && (
-        <PersonalStep
-          defaults={state.answers}
-          onNext={(answers) => {
-            trackOnboardingStepCompleted('personal');
-            dispatch({ type: 'advance', answers });
-          }}
-        />
+        <>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted-foreground">
+              Answer in the units you think in. You will not be asked again.
+            </p>
+            <UnitToggle value={state.unit} onChange={pickUnit} />
+          </div>
+          <PersonalStep
+            defaults={state.answers}
+            unit={state.unit}
+            onNext={(answers) => {
+              trackOnboardingStepCompleted('personal');
+              dispatch({ type: 'advance', answers });
+            }}
+          />
+        </>
       )}
 
       {state.step === 'goal' && (
         <GoalStep
           defaults={state.answers}
+          unit={state.unit}
           onBack={() => dispatch({ type: 'back' })}
           onNext={(answers) => {
             trackOnboardingStepCompleted('goal');
@@ -59,6 +85,7 @@ export function OnboardingPage(): JSX.Element {
       {state.step === 'training' && (
         <TrainingStep
           defaults={state.answers}
+          unit={state.unit}
           onBack={() => dispatch({ type: 'back' })}
           onNext={(answers) => {
             trackOnboardingStepCompleted('training');

@@ -18,7 +18,7 @@ describe('weekReducer', () => {
 
     const oneSet = toggleSet(week, 1, 'bench_press', 0);
     const exercise = oneSet.schedule[0]!.exercises[0]!;
-    expect(exercise.sets).toEqual([{ performed_reps: 8, performed_weight_kg: 30 }]);
+    expect(exercise.sets).toEqual([{ performed_reps: 8, performed_weight_lb: 65 }]);
     expect(performedCount(exercise)).toBe(1);
     expect(remainingSets(exercise)).toBe(1);
 

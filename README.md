@@ -97,9 +97,7 @@ athlete, who owns the only plan and history in the repository:
 | `lucia@example.com` | `dev-password-123` |
 
 
-That credential is committed on purpose, in `server/db/seeds/003_demo_credentials.sql`.
-It is safe only because no command in this repository can apply that seed to
-production — see below.
+
 
 ### Seeding production
 

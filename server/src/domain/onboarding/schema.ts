@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { ISODateSchema } from '../model/index.ts';
+import { snapLoad } from '../weight-grid.ts';
 
 /**
  * The onboarding questionnaire's answer schema.
@@ -35,7 +36,13 @@ export const ONBOARDING_MAIN_LIFTS = [
 ] as const;
 export type OnboardingMainLift = (typeof ONBOARDING_MAIN_LIFTS)[number];
 
-const liftWeightSchema = z.number().positive().max(500);
+/**
+ * A benchmark load the athlete types in. Snapped to the five-pound grid on
+ * submit, because it becomes a prescribed load downstream — unlike body weight
+ * and target weight below, which are a measurement and a goal and stay exactly
+ * as typed.
+ */
+const liftWeightSchema = z.number().positive().max(1000).transform(snapLoad);
 
 export const ONBOARDING_DAILY_ACTIVITY_LEVELS = [
   'sedentary',
@@ -66,18 +73,18 @@ export type OnboardingActivity = z.infer<typeof OnboardingActivitySchema>;
 export const OnboardingAnswersSchema = z.object({
   sex: OnboardingSexSchema,
   age: z.number().int().min(13).max(100),
-  height_cm: z.number().positive().max(250),
-  weight_kg: z.number().positive().max(400),
+  height_in: z.number().positive().max(100),
+  weight_lb: z.number().positive().max(800),
   body_fat_percent: z.number().min(3).max(60).optional(),
   goal: OnboardingGoalSchema,
   target_date: ISODateSchema.optional(),
-  target_weight_kg: z.number().positive().max(400).optional(),
+  target_weight_lb: z.number().positive().max(800).optional(),
   note: z.string().min(1).max(500).optional(),
   experience: OnboardingExperienceSchema,
-  squat_kg: liftWeightSchema.optional(),
-  bench_press_kg: liftWeightSchema.optional(),
-  deadlift_kg: liftWeightSchema.optional(),
-  overhead_press_kg: liftWeightSchema.optional(),
+  squat_lb: liftWeightSchema.optional(),
+  bench_press_lb: liftWeightSchema.optional(),
+  deadlift_lb: liftWeightSchema.optional(),
+  overhead_press_lb: liftWeightSchema.optional(),
   days_per_week: z.number().int().min(1).max(7),
   // Weekday the athlete picked, 1 = Monday, 7 = Sunday. This is *not*
   // `PlanDay.day_index`, which counts from the day the plan was activated —

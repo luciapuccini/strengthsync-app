@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 import { deleteAccount } from '@/api/client';
 import { ApiClientError } from '@/api/errors';
+import { UnitsCard } from '@/routes/account/components/units-card/unitsCard';
 import { Button } from '@/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shadcn/ui/card';
 import { Input } from '@/shadcn/ui/input';
@@ -19,7 +20,7 @@ import { useAppStore } from '@/store/useAppStore';
 const CONFIRMATION = 'delete my account';
 
 /**
- * Account settings, which for now is one destructive action.
+ * Account settings: the unit preference, and one destructive action.
  *
  * A route rather than a control in the header: App Store Guideline 5.1.1(v)
  * requires deletion to be reachable from inside the app, not to be one click
@@ -74,6 +75,8 @@ export function AccountPage(): JSX.Element {
           {client && <CardDescription>Signed in as {client.display_name}</CardDescription>}
         </CardHeader>
       </Card>
+
+      <UnitsCard />
 
       <Card className="border-destructive/40">
         <CardHeader>
