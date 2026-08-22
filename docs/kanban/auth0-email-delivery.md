@@ -1,4 +1,4 @@
-# Auth0's built-in email sender is too slow to invite anyone with
+# Auth0's built-in email sender is NO WORKING
 
 Two of your notes are the same subject and are merged here: the question of *why*
 a custom email provider is needed, and the incident that answered it. On
