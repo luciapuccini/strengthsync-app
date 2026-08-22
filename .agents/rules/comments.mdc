@@ -1,0 +1,56 @@
+---
+description: Where explanation belongs — docs first, comments as a last resort
+globs: *.ts,*.tsx,*.js,*.jsx
+alwaysApply: true
+---
+
+# Comments
+
+## The rule
+
+**`/docs` is where decisions are explained. Code is not.**
+
+A reader who wants to know *why* the canonical unit is pounds, why the snap
+sits on the domain schemas, or why identity lives in its own table should find
+that in `docs/architecture/`. If the explanation is not there, put it there —
+do not narrate it above the function instead.
+
+Prose comments are not free. They duplicate a decision into a second place that
+no test covers and no reviewer diffs, so they rot silently and then actively
+mislead. A wrong comment is worse than no comment.
+
+## What is acceptable
+
+- **A one-line pointer**: `/** See docs/architecture/domain_model.md. */`
+  This is the preferred form when context is genuinely needed.
+- **Short inline traces inside logic functions** — a bullet or a clause marking
+  a non-obvious step, an ordering constraint, or a constant a reader cannot
+  derive. Keep them to the line they explain.
+- **A genuine surprise**: a workaround for an upstream bug, a constant that
+  looks wrong until you know why, a deliberate no-op. Say the surprising thing
+  and stop.
+
+## What is not
+
+- **Multi-paragraph block comments explaining a design decision.** That is a
+  doc. Move it.
+- **Any prose comment in a React component file.** Components describe
+  themselves through their props and their markup. If a component needs
+  explaining, it is doing too much or its name is wrong. A one-line doc pointer
+  is the most a `.tsx` file should carry.
+- **Restating the code**: `// set loading to true` above `setLoading(true)`.
+- **Narrating what you considered and rejected.** That belongs in the commit
+  message or the PRD, where it is dated and attributed.
+
+## Rewriting an existing comment
+
+If you are editing code whose comment is a wall of prose, do not extend it.
+Either move the substance into the relevant `docs/architecture/` file and leave
+a pointer, or delete it if the docs already say it. Leave the file better than
+the pattern that produced it.
+
+## Commit messages and PRDs are different
+
+This rule constrains **comments in source files**. Commit messages, PRDs, issue
+files and `/docs` should carry as much reasoning as the decision deserves —
+that is exactly where it belongs, and being terse there is its own failure.

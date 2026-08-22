@@ -27,12 +27,9 @@ type Props = {
 type Experience = OnboardingExperience | '';
 
 /**
- * A beginner is never asked for a working weight, whatever a hidden field holds.
- *
- * Loads are converted before they are parsed, so the 1000 lb bound stays in
- * pounds. The five-pound snap is not applied here: `issues/002` made it a
- * transform on the server's onboarding schema, which this payload passes
- * through, and adding a second one would be a rounding rule with two homes.
+ * - A beginner is never asked for a working weight, whatever a hidden field holds.
+ * - Loads convert before they parse, so the 1000 lb bound stays in pounds.
+ * - No five-pound snap here; the server's onboarding schema owns it.
  */
 function validate(
   form: FormData,

@@ -4,8 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 import { deleteAccount } from '@/api/client';
 import { ApiClientError } from '@/api/errors';
-import type { Client } from '@/api/types';
-import { UnitToggle } from '@/components/unit-toggle/unitToggle';
+import { UnitsCard } from '@/routes/account/components/units-card/unitsCard';
 import { Button } from '@/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shadcn/ui/card';
 import { Input } from '@/shadcn/ui/input';
@@ -19,58 +18,6 @@ import { useAppStore } from '@/store/useAppStore';
  * primitive for the one screen in the app that needs one.
  */
 const CONFIRMATION = 'delete my account';
-
-/**
- * The unit setting. Its own component rather than more of `AccountPage`,
- * because it owns state that has nothing to do with deleting an account. The
- * buttons themselves are `UnitToggle`, shared with onboarding's first step.
- *
- * Nothing flips until the write comes back, so a failure leaves the buttons
- * showing what the server actually holds and the message is the whole of the
- * recovery — the athlete taps again.
- */
-function UnitsCard(): JSX.Element {
-  const client = useAppStore((state) => state.sessionClient);
-  const setUnitPreference = useAppStore((state) => state.setUnitPreference);
-
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onPick(preference: Client['unit_preference']): Promise<void> {
-    if (!client || preference === client.unit_preference || saving) return;
-    setSaving(true);
-    setError(null);
-    try {
-      await setUnitPreference(preference);
-    } catch {
-      setError('We could not save that just now. Your units are unchanged — please try again.');
-    }
-    setSaving(false);
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Units</CardTitle>
-        <CardDescription>
-          How weights are shown to you. It changes nothing about what is recorded.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <UnitToggle
-          value={client?.unit_preference}
-          disabled={!client || saving}
-          onChange={(preference) => void onPick(preference)}
-        />
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 /**
  * Account settings: the unit preference, and one destructive action.

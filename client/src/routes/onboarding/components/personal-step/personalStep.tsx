@@ -15,7 +15,7 @@ import { Button } from '@/shadcn/ui/button';
 import { Input } from '@/shadcn/ui/input';
 import { cmToInches, feetInchesToInches, unitLabel, type UnitPreference } from '@/utils/units';
 
-import { HeightField } from './heightField';
+import { HeightField } from './components/height-field/heightField';
 import { OnboardingField } from '../onboarding-field/onboardingField';
 import { OnboardingSelect } from '../onboarding-select/onboardingSelect';
 

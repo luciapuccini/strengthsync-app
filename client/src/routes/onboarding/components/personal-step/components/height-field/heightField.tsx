@@ -1,9 +1,11 @@
 import type { JSX } from 'react';
 
 import { Input } from '@/shadcn/ui/input';
-import { inchesToCm, inchesToFeetInches, type UnitPreference } from '@/utils/units';
+import { inchesToFeetInches, type UnitPreference } from '@/utils/units';
 
-import { OnboardingField } from '../onboarding-field/onboardingField';
+import { OnboardingField } from '@/routes/onboarding/components/onboarding-field/onboardingField';
+
+import { CentimetreHeight } from './components/centimetre-height/centimetreHeight';
 
 type Props = {
   /** A previously answered height, in canonical inches, if the athlete stepped back. */
@@ -13,30 +15,8 @@ type Props = {
 };
 
 /**
- * One centimetre input, for a metric athlete. Kept in this file rather than its
- * own because the two shapes are alternatives for the same answer and the
- * step's `validate` reads whichever of them was rendered.
- */
-function CentimetreHeight({ defaultInches, error }: Omit<Props, 'unit'>): JSX.Element {
-  return (
-    <OnboardingField id="onboarding-height-cm" label="Height (cm)" error={error}>
-      <Input
-        id="onboarding-height-cm"
-        name="height_cm"
-        type="number"
-        inputMode="numeric"
-        defaultValue={defaultInches === undefined ? undefined : inchesToCm(defaultInches)}
-        required
-      />
-    </OnboardingField>
-  );
-}
-
-/**
- * Two inputs for one stored value, or one under metric. Either shape is
- * recombined into inches by the step's `validate`, so the schema and any error
- * it reports stay keyed to the single `height_in` field rather than to a half
- * of an input pair that only one kind of athlete sees.
+ * Either shape is recombined into `height_in` by the step's `validate`, so the
+ * schema and its error stay keyed to one field. See docs/architecture/domain_model.md.
  */
 export function HeightField({ defaultInches, unit, error }: Props): JSX.Element {
   if (unit === 'metric') {

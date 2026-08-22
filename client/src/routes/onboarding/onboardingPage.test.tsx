@@ -80,9 +80,8 @@ describe('OnboardingPage', () => {
   });
 });
 
-// The round trip `issues/005-metric-onboarding.md` exists to protect: what a
-// metric athlete types has to come back unchanged, even though what is stored
-// between the two is pounds and inches.
+// What a metric athlete types has to come back unchanged, even though what is
+// stored between the two is pounds and inches.
 describe('OnboardingPage in metric', () => {
   it('re-shows the centimetres and kilograms that were typed after stepping back', async () => {
     activePlanResource.mockReturnValue(Promise.resolve(null));
