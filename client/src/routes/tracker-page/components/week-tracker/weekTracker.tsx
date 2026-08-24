@@ -7,11 +7,6 @@ import { useAppStore } from '@/store/useAppStore';
 
 export function WeekTracker(): JSX.Element {
   const week = useAppStore((s) => s.week)!;
-
-  // Only on the last day of the week, so the athlete is never invited to end a
-  // week they are still training. Completing early would date the next week
-  // from this one's `end_date` anyway, leaving them with no in-flight week
-  // until that date arrives.
   const isOver = todayIso() >= week.end_date;
 
   return (

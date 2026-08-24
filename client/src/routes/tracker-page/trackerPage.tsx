@@ -1,17 +1,15 @@
-import { use, useReducer, useState } from 'react';
+import { use, useState } from 'react';
 import type { JSX } from 'react';
 import { Link } from 'react-router-dom';
 
 import { BetweenWeeks } from '@/routes/tracker-page/components/between-weeks/betweenWeeks';
 import { WeekTracker } from '@/routes/tracker-page/components/week-tracker/weekTracker';
-import { currentWeekResource, invalidateCurrentWeek } from '@/api/weekResource';
+import { currentWeekResource } from '@/api/weekResource';
 import type { TrackerData } from '@/api/weekResource';
 import { Button } from '@/shadcn/ui/button';
 import { useAppStore } from '@/store/useAppStore';
 
 export function TrackerPage(): JSX.Element {
-  // No athlete id: the resource asks the session whose tracker this is. The
-  // one still in the URL is ignored until the route drops it.
   const data = use(currentWeekResource());
 
   // Hydrate the store synchronously during render (React's "adjust state
@@ -26,19 +24,6 @@ export function TrackerPage(): JSX.Element {
   const plan = useAppStore((s) => s.plan);
   const week = useAppStore((s) => s.week);
 
-  // Dropping the cached promise is not enough on its own — the resource is only
-  // re-read when this component renders again, so the discarded counter is what
-  // forces that render.
-  const [, rerender] = useReducer((n: number) => n + 1, 0);
-  function checkAgain(): void {
-    invalidateCurrentWeek();
-    rerender();
-  }
-
-  // What a newly registered athlete lands on, thirty seconds after signing up
-  // — and also what catches anyone who abandoned the questionnaire halfway or
-  // registered before onboarding existed. The invitation back in, not a dead
-  // end: nothing is wrong, there is simply no plan on the account yet.
   if (plan === null && week === null) {
     return (
       <div className="rounded-xl border border-border bg-card p-6">
@@ -55,7 +40,7 @@ export function TrackerPage(): JSX.Element {
   }
 
   if (week === null) {
-    return <BetweenWeeks onCheckAgain={checkAgain} />;
+    return <BetweenWeeks />;
   }
 
   return <WeekTracker />;
