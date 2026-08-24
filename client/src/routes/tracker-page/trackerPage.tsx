@@ -1,9 +1,10 @@
-import { use, useState } from 'react';
+import { use, useReducer, useState } from 'react';
 import type { JSX } from 'react';
 import { Link } from 'react-router-dom';
 
+import { BetweenWeeks } from '@/routes/tracker-page/components/between-weeks/betweenWeeks';
 import { WeekTracker } from '@/routes/tracker-page/components/week-tracker/weekTracker';
-import { currentWeekResource } from '@/api/weekResource';
+import { currentWeekResource, invalidateCurrentWeek } from '@/api/weekResource';
 import type { TrackerData } from '@/api/weekResource';
 import { Button } from '@/shadcn/ui/button';
 import { useAppStore } from '@/store/useAppStore';
@@ -22,13 +23,23 @@ export function TrackerPage(): JSX.Element {
     setHydratedFrom(data);
     useAppStore.getState().hydrateTracker(data);
   }
+  const plan = useAppStore((s) => s.plan);
   const week = useAppStore((s) => s.week);
+
+  // Dropping the cached promise is not enough on its own — the resource is only
+  // re-read when this component renders again, so the discarded counter is what
+  // forces that render.
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
+  function checkAgain(): void {
+    invalidateCurrentWeek();
+    rerender();
+  }
 
   // What a newly registered athlete lands on, thirty seconds after signing up
   // — and also what catches anyone who abandoned the questionnaire halfway or
   // registered before onboarding existed. The invitation back in, not a dead
   // end: nothing is wrong, there is simply no plan on the account yet.
-  if (week === null) {
+  if (plan === null && week === null) {
     return (
       <div className="rounded-xl border border-border bg-card p-6">
         <h1 className="text-xl font-semibold">You&apos;re all set up</h1>
@@ -41,6 +52,10 @@ export function TrackerPage(): JSX.Element {
         </Button>
       </div>
     );
+  }
+
+  if (week === null) {
+    return <BetweenWeeks onCheckAgain={checkAgain} />;
   }
 
   return <WeekTracker />;

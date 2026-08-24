@@ -11,18 +11,21 @@ export function CompleteWeekButton(): JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
 
   async function completeWeek(): Promise<void> {
-    // setIsRunning(true);
+    setIsRunning(true);
     try {
-      const { instanceId, details } = await startWeeklyProgression();
+      await startWeeklyProgression();
       trackWeekCompleted();
-      console.log('started', instanceId, details);
-      toast.success('Week complete triggered');
+      toast.success('Building next week…');
+      // Deliberately left running on success. The POST returns as soon as the
+      // workflow instance is created, but the workflow itself takes another
+      // thirty to sixty seconds of model calls, and the endpoint creates its
+      // instance without an explicit id — so re-enabling here would let a
+      // second press start a second turnover on the same week.
     } catch (error) {
+      setIsRunning(false);
       toast.error('Could not complete the week', {
         description: error instanceof Error ? error.message : 'Unknown error',
       });
-    } finally {
-      setIsRunning(false);
     }
   }
 
