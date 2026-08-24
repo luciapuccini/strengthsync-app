@@ -3,6 +3,50 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+  iOS standalone (home-screen) safe-area utilities. `env(safe-area-inset-*)`
+  resolves to 0 in an ordinary browser tab, so the `max()`/`calc()` pairs
+  below collapse back to the plain spacing value there and only add space
+  when the app is installed and running under a notch / home indicator.
+  Left and right are computed separately since a landscape notch sits on
+  only one side.
+*/
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pl-safe-3 {
+  padding-left: max(0.75rem, calc(env(safe-area-inset-left) + 0.75rem));
+}
+
+@utility pr-safe-3 {
+  padding-right: max(0.75rem, calc(env(safe-area-inset-right) + 0.75rem));
+}
+
+@utility pl-safe-4 {
+  padding-left: max(1rem, calc(env(safe-area-inset-left) + 1rem));
+}
+
+@utility pr-safe-4 {
+  padding-right: max(1rem, calc(env(safe-area-inset-right) + 1rem));
+}
+
+@utility pl-safe-6 {
+  padding-left: max(1.5rem, calc(env(safe-area-inset-left) + 1.5rem));
+}
+
+@utility pr-safe-6 {
+  padding-right: max(1.5rem, calc(env(safe-area-inset-right) + 1.5rem));
+}
+
+@utility pb-safe-5 {
+  padding-bottom: max(1.25rem, calc(env(safe-area-inset-bottom) + 1.25rem));
+}
+
+@utility pb-safe-6 {
+  padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1.5rem));
+}
+
 :root {
   /*
     Brand palette — the ONLY hand-picked colors. Everything else derives
