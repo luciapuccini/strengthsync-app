@@ -14,4 +14,5 @@ deleted from here.
     rule would enforce this mechanically instead of relying on an agent reading a document. That's a new
 
     dependency against a strict pnpm catalog
+- [bug] empty db-&gt; run migrations and seed &gt; user not associated to client identitiy table &gt; issue #1 seed is incconsistet for auth
 
