@@ -77,17 +77,25 @@ export default function App(): JSX.Element {
         <Route path="/sign-in" element={<SignInRoute />} />
 
         <Route element={<RequireAuth />}>
+          {/* Outside `AppLayout` on purpose, and not an oversight to be tidied
+              away later: the tab bar is permanent top-level structure, and it
+              must not appear and disappear underneath the athlete. Onboarding
+              is a linear task with a completion state, so it is presented over
+              the app rather than inside it — the web equivalent of the
+              full-screen modal iOS gives a setup wizard. Its own chrome, and
+              its one way out, live in `OnboardingLayout`. */}
+          <Route
+            path="/onboarding"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
+                  <OnboardingPage />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
+
           <Route element={<AppLayout />}>
-            <Route
-              path="/onboarding"
-              element={
-                <ErrorBoundary>
-                  <Suspense fallback={<Spinner className="mx-auto mt-12 size-6" />}>
-                    <OnboardingPage />
-                  </Suspense>
-                </ErrorBoundary>
-              }
-            />
             <Route
               path="/track"
               element={
