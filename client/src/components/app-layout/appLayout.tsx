@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 
-import { SignOutButton } from '@/components/sign-out-button/signOutButton';
 import { TabBar } from '@/components/tab-bar/tabBar';
 import { Toaster } from '@/shadcn/ui/sonner';
 
@@ -30,7 +29,6 @@ export function AppLayout(): JSX.Element {
             <Link to="/account" className="text-sm text-muted-foreground hover:text-foreground">
               Account
             </Link>
-            <SignOutButton />
           </nav>
         </div>
       </header>

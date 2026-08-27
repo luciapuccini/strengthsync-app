@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 import { deleteAccount } from '@/api/client';
 import { ApiClientError } from '@/api/errors';
+import { SignOutButton } from '@/components/sign-out-button/signOutButton';
 import { UnitsCard } from '@/routes/account/components/units-card/unitsCard';
 import { Button } from '@/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shadcn/ui/card';
@@ -77,6 +78,18 @@ export function AccountPage(): JSX.Element {
       </Card>
 
       <UnitsCard />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sign out</CardTitle>
+          <CardDescription>
+            Ends this session here and at Auth0, so the next visit asks you to sign in again.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SignOutButton />
+        </CardContent>
+      </Card>
 
       <Card className="border-destructive/40">
         <CardHeader>
