@@ -15,4 +15,5 @@ deleted from here.
 
     dependency against a strict pnpm catalog
 - [bug] empty db-&gt; run migrations and seed &gt; user not associated to client identitiy table &gt; issue #1 seed is incconsistet for auth
+- [bug] navigation bar for mobile is too long already, we need a mobile first aproach
 

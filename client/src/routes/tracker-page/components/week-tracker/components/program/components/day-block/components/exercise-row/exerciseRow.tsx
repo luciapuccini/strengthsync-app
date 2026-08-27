@@ -35,11 +35,6 @@ export function ExerciseRow({ day, exercise }: ExerciseRowProps): JSX.Element {
         <div className="min-w-0 flex-1">
           <div className={cn('text-base font-semibold md:text-lg', complete && 'line-through')}>
             {exercise.name}
-            {exercise.prescribed.notes !== null && (
-              <span className="ml-2 rounded-full bg-primary/15 px-1.5 py-0.5 align-middle text-[10px] font-bold tracking-wide text-primary uppercase no-underline">
-                {exercise.prescribed.notes}
-              </span>
-            )}
           </div>
           <div className="mt-0.5 text-sm font-medium text-muted-foreground">
             {exercise.prescribed.series}×{exercise.prescribed.reps} ·{' '}
