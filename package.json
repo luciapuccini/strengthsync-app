@@ -18,7 +18,7 @@
     "lint:affected": "turbo run lint --affected",
     "test:affected": "turbo run test --affected",
     "build:affected": "turbo run build --affected",
-    "deploy:affected": "turbo run deploy --affected",
+    "deploy:server": "turbo run deploy --filter=@strengthsync/server",
     "gen:openapi": "pnpm --filter @strengthsync/server gen:openapi && openapi-typescript server/openapi.json -o client/src/api/openapi.d.ts",
     "prepare": "lefthook install || echo 'lefthook: skipped (not a git repository yet)'"
   },

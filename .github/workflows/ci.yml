@@ -43,10 +43,19 @@ jobs:
         env:
           TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
 
-  # Deploys only what `--affected` says changed since the previous commit on
-  # main. server's `build`/`deploy` turbo tasks pull in client's build as
-  # a hard dependency (see turbo.json), so the Worker's static assets are
-  # never stale even on an api-only change.
+  # Deploys the Worker on every push to main, unconditionally.
+  #
+  # Deliberately not `--affected`. There is exactly one deploy unit in this
+  # repo -- the Worker -- and it serves the client bundle from inside itself,
+  # so a client-only commit still has to redeploy the server. Only
+  # @strengthsync/server has a `deploy` script, and nothing pulls it into
+  # scope when client changes: the turbo.json dependency runs the other way
+  # (server#build dependsOn client#build). So `--affected` scoped a
+  # client-only commit to @strengthsync/client, found no `deploy` task there,
+  # and exited green having shipped nothing.
+  #
+  # `deploy` dependsOn `build` (see turbo.json), which for server pulls in
+  # client's build, so the Worker's static assets are never stale either way.
   deploy:
     needs: verify
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -56,32 +65,21 @@ jobs:
       group: deploy-production
       cancel-in-progress: false
     steps:
+      # No fetch-depth here: this job no longer diffs against a base ref.
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Resolve turbo affected base
-        id: turbo-base
-        run: .github/workflows/resolve-turbo-base.sh
-        env:
-          BEFORE_SHA: ${{ github.event.before }}
       # VITE_* are inlined into the client bundle by `vite build`, so the key
       # has to be here, in the environment of the build itself. Setting it as a
       # Worker secret does nothing: that is a runtime value the browser never
-      # sees, and it cannot change a bundle that is already built.
-      - run: pnpm build:affected
+      # sees, and it cannot change a bundle that is already built. The build
+      # runs as part of this step, as a dependency of the deploy task.
+      - run: pnpm deploy:server
         env:
-          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
           VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - run: pnpm deploy:affected
-        env:
-          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
