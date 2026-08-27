@@ -27,10 +27,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BEFORE_SHA: ${{ github.event.before }}
-      # The committed contract artifacts are generated from the route
-      # definitions, so regenerating them here must be a no-op. A stale
-      # openapi.d.ts is worse than a missing one: the client typechecks green
-      # against shapes the server no longer returns.
+
+      #A stale openapi.d.ts is worse than a missing one
       - run: pnpm gen:openapi
       - run: git diff --exit-code -- server/openapi.json client/src/api/openapi.d.ts
       - run: pnpm typecheck:affected
@@ -42,20 +40,6 @@ jobs:
       - run: pnpm test:affected
         env:
           TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
-
-  # Deploys the Worker on every push to main, unconditionally.
-  #
-  # Deliberately not `--affected`. There is exactly one deploy unit in this
-  # repo -- the Worker -- and it serves the client bundle from inside itself,
-  # so a client-only commit still has to redeploy the server. Only
-  # @strengthsync/server has a `deploy` script, and nothing pulls it into
-  # scope when client changes: the turbo.json dependency runs the other way
-  # (server#build dependsOn client#build). So `--affected` scoped a
-  # client-only commit to @strengthsync/client, found no `deploy` task there,
-  # and exited green having shipped nothing.
-  #
-  # `deploy` dependsOn `build` (see turbo.json), which for server pulls in
-  # client's build, so the Worker's static assets are never stale either way.
   deploy:
     needs: verify
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -65,7 +49,6 @@ jobs:
       group: deploy-production
       cancel-in-progress: false
     steps:
-      # No fetch-depth here: this job no longer diffs against a base ref.
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -73,11 +56,6 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # VITE_* are inlined into the client bundle by `vite build`, so the key
-      # has to be here, in the environment of the build itself. Setting it as a
-      # Worker secret does nothing: that is a runtime value the browser never
-      # sees, and it cannot change a bundle that is already built. The build
-      # runs as part of this step, as a dependency of the deploy task.
       - run: pnpm deploy:server
         env:
           VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
