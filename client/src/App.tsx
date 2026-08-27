@@ -18,22 +18,6 @@ import { TrackerPage } from '@/routes/tracker-page/trackerPage';
 import { Spinner } from '@/shadcn/ui/spinner';
 import { useAppStore } from '@/store/useAppStore';
 
-/**
- * The seam between the SDK and the rest of the app. Everything Auth0-aware in
- * the signed-in half of this codebase is these two effects: one hands the API
- * client a way to get a token, the other keeps the store's session status in
- * step with the provider's.
- *
- * Registration comes first, and not by accident — the effects run in the order
- * they are declared, and `resolveSession` calls `GET /api/me`, which needs the
- * token that the first effect is what supplies.
- *
- * The ref guard replaces the old mount-once guard and does the same job for a
- * value that now changes: StrictMode mounts effects twice in development, and
- * React can re-run an effect whenever the SDK re-renders. Keying on the flags
- * themselves means the athlete is read once per actual transition rather than
- * once per render.
- */
 function useProviderSession(): void {
   const { isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0();
   const resolveSession = useAppStore((state) => state.resolveSession);
@@ -69,21 +53,15 @@ export default function App(): JSX.Element {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
 
-        {/* Not a screen: /sign-in renders nothing an athlete reads, it starts
-            the redirect to the hosted page. It exists because `RequireAuth` and
-            `RootRedirect` send a signed-out visitor to a path, and this is the
-            one place that path is turned into an authorize request. There is no
-            /sign-up — registration is disabled at the connection. */}
+        {/* Not a screen: /sign-in renders nothing, it starts
+            the redirect to the hosted page. */}
         <Route path="/sign-in" element={<SignInRoute />} />
 
         <Route element={<RequireAuth />}>
-          {/* Outside `AppLayout` on purpose, and not an oversight to be tidied
-              away later: the tab bar is permanent top-level structure, and it
-              must not appear and disappear underneath the athlete. Onboarding
+          {/* Outside `AppLayout` on purpose,Onboarding
               is a linear task with a completion state, so it is presented over
-              the app rather than inside it — the web equivalent of the
-              full-screen modal iOS gives a setup wizard. Its own chrome, and
-              its one way out, live in `OnboardingLayout`. */}
+              the app rather than inside it 
+               */}
           <Route
             path="/onboarding"
             element={
