@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 
 import { SignOutButton } from '@/components/sign-out-button/signOutButton';
+import { TabBar } from '@/components/tab-bar/tabBar';
 import { Toaster } from '@/shadcn/ui/sonner';
 
 export function AppLayout(): JSX.Element {
@@ -26,9 +27,6 @@ export function AppLayout(): JSX.Element {
             </span>
           </Link>
           <nav className="flex items-center gap-3">
-            <Link to="/history" className="text-sm text-muted-foreground hover:text-foreground">
-              History
-            </Link>
             <Link to="/account" className="text-sm text-muted-foreground hover:text-foreground">
               Account
             </Link>
@@ -36,9 +34,10 @@ export function AppLayout(): JSX.Element {
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-3xl flex-1 pt-5 pr-safe-3 pb-safe-5 pl-safe-3 sm:pr-safe-4 sm:pl-safe-4 md:pt-6 md:pr-safe-6 md:pb-safe-6 md:pl-safe-6">
+      <main className="mx-auto w-full max-w-3xl flex-1 pt-5 pr-safe-3 pb-safe-tab-bar pl-safe-3 sm:pr-safe-4 sm:pl-safe-4 md:pt-6 md:pr-safe-6 md:pl-safe-6">
         <Outlet />
       </main>
+      <TabBar />
       <Toaster />
     </div>
   );

@@ -47,6 +47,16 @@
   padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1.5rem));
 }
 
+/*
+  Clearance for the fixed bottom tab bar (components/tab-bar/tabBar.tsx), so
+  the last row of a training day never rests underneath it: the bar's 2.75rem
+  row plus its own `pb-safe-5`, and then the 1.25rem of breathing room the
+  content had before the bar existed.
+*/
+@utility pb-safe-tab-bar {
+  padding-bottom: max(5.25rem, calc(env(safe-area-inset-bottom) + 5.25rem));
+}
+
 :root {
   /*
     Brand palette — the ONLY hand-picked colors. Everything else derives
