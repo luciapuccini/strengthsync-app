@@ -27,10 +27,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BEFORE_SHA: ${{ github.event.before }}
-      # The committed contract artifacts are generated from the route
-      # definitions, so regenerating them here must be a no-op. A stale
-      # openapi.d.ts is worse than a missing one: the client typechecks green
-      # against shapes the server no longer returns.
+
+      #A stale openapi.d.ts is worse than a missing one
       - run: pnpm gen:openapi
       - run: git diff --exit-code -- server/openapi.json client/src/api/openapi.d.ts
       - run: pnpm typecheck:affected
@@ -42,11 +40,6 @@ jobs:
       - run: pnpm test:affected
         env:
           TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
-
-  # Deploys only what `--affected` says changed since the previous commit on
-  # main. server's `build`/`deploy` turbo tasks pull in client's build as
-  # a hard dependency (see turbo.json), so the Worker's static assets are
-  # never stale even on an api-only change.
   deploy:
     needs: verify
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -57,31 +50,14 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Resolve turbo affected base
-        id: turbo-base
-        run: .github/workflows/resolve-turbo-base.sh
+      - run: pnpm deploy:server
         env:
-          BEFORE_SHA: ${{ github.event.before }}
-      # VITE_* are inlined into the client bundle by `vite build`, so the key
-      # has to be here, in the environment of the build itself. Setting it as a
-      # Worker secret does nothing: that is a runtime value the browser never
-      # sees, and it cannot change a bundle that is already built.
-      - run: pnpm build:affected
-        env:
-          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
           VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - run: pnpm deploy:affected
-        env:
-          TURBO_SCM_BASE: ${{ steps.turbo-base.outputs.base }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

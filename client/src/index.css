@@ -47,6 +47,10 @@
   padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1.5rem));
 }
 
+@utility pb-safe-tab-bar {
+  padding-bottom: max(5.25rem, calc(env(safe-area-inset-bottom) + 5.25rem));
+}
+
 :root {
   /*
     Brand palette — the ONLY hand-picked colors. Everything else derives

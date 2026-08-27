@@ -10,7 +10,7 @@ import type { UnitPreference } from '@/utils/units';
 
 import { GoalStep } from './components/goal-step/goalStep';
 import { LifeStep } from './components/life-step/lifeStep';
-import { OnboardingProgress } from './components/onboarding-progress/onboardingProgress';
+import { OnboardingLayout } from './components/onboarding-layout/onboardingLayout';
 import { PersonalStep } from './components/personal-step/personalStep';
 import { TrainingStep } from './components/training-step/trainingStep';
 import { ONBOARDING_STEPS, initialOnboardingState, onboardingReducer } from './onboardingReducer';
@@ -48,9 +48,7 @@ export function OnboardingPage(): JSX.Element {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6">
-      <OnboardingProgress current={stepNumber} total={ONBOARDING_STEPS.length} />
-
+    <OnboardingLayout current={stepNumber} total={ONBOARDING_STEPS.length}>
       {state.step === 'personal' && (
         <>
           <div className="flex flex-col gap-2">
@@ -104,6 +102,6 @@ export function OnboardingPage(): JSX.Element {
           }}
         />
       )}
-    </div>
+    </OnboardingLayout>
   );
 }

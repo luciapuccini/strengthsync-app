@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
-// The app renders on a fixed dark theme (see index.html / index.css); no
-// theme provider is wired for the MVP.
 function Toaster({ ...props }: ToasterProps) {
   return (
     <Sonner
+      position="top-center"
       theme="dark"
       className="toaster group"
       toastOptions={{

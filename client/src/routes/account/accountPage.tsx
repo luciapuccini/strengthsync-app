@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 import { deleteAccount } from '@/api/client';
 import { ApiClientError } from '@/api/errors';
+import { SignOutButton } from '@/components/sign-out-button/signOutButton';
 import { UnitsCard } from '@/routes/account/components/units-card/unitsCard';
 import { Button } from '@/shadcn/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shadcn/ui/card';
@@ -11,22 +12,12 @@ import { Input } from '@/shadcn/ui/input';
 import { Label } from '@/shadcn/ui/label';
 import { useAppStore } from '@/store/useAppStore';
 
-/**
- * The phrase the athlete has to type. A typed confirmation rather than a modal
- * with two buttons, because the action is irreversible and a modal is dismissed
- * by the same reflex that opened it. It also avoids pulling in a dialog
- * primitive for the one screen in the app that needs one.
- */
 const CONFIRMATION = 'delete my account';
 
 /**
- * Account settings: the unit preference, and one destructive action.
- *
- * A route rather than a control in the header: App Store Guideline 5.1.1(v)
+ * Account settings: App Store Guideline 5.1.1(v)
  * requires deletion to be reachable from inside the app, not to be one click
- * from every screen. It is also where the athlete's own details belong as they
- * grow — today `display_name`, which for a newly provisioned athlete is their
- * email address until onboarding overwrites it.
+ * from every screen.
  */
 export function AccountPage(): JSX.Element {
   const { logout } = useAuth0();
@@ -45,10 +36,6 @@ export function AccountPage(): JSX.Element {
     try {
       await deleteAccount();
     } catch (err) {
-      // A failed deletion left the account working and untouched — the server
-      // aborts before it writes anything if the provider refuses — so the
-      // honest thing is to stay on this screen and let them try again, not to
-      // sign them out of an account that still exists.
       setError(
         err instanceof ApiClientError && err.kind === 'server'
           ? 'We could not delete your account just now. Nothing was removed — please try again.'
@@ -57,12 +44,7 @@ export function AccountPage(): JSX.Element {
       setDeleting(false);
       return;
     }
-    // The Auth0 user is gone, so there is no session left to end and no token
-    // left to mint. `logout` is still the right call: it clears the SDK's own
-    // in-memory state and the browser lands back on `/`, which resolves to
-    // sign-in. Local state first, for the same reason as `SignOutButton` — the
-    // redirect is a full navigation and this screen must not sit there showing
-    // a deleted account while it happens.
+
     signOutSession();
     void logout({ logoutParams: { returnTo: window.location.origin } });
   }
@@ -77,6 +59,15 @@ export function AccountPage(): JSX.Element {
       </Card>
 
       <UnitsCard />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Sign out</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SignOutButton />
+        </CardContent>
+      </Card>
 
       <Card className="border-destructive/40">
         <CardHeader>
