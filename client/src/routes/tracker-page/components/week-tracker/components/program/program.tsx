@@ -9,9 +9,6 @@ export function Program(): JSX.Element {
   return (
     <Card>
       <CardContent className="flex flex-col">
-        <div className="flex items-center justify-between border-b border-border/50 py-3">
-          <span className="text-sm font-bold text-foreground/90">Current week</span>
-        </div>
         {week.schedule.map((day, index) => (
           <DayBlock key={day.day_index} day={day} isFirst={index === 0} />
         ))}
