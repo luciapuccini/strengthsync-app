@@ -1,16 +1,36 @@
 import { ThinkingOrb } from 'thinking-orbs';
 import type { JSX } from 'react';
 
+import { DAY_TYPE_LABELS } from '@/lib/day-types';
 import { Button } from '@/shadcn/ui/button';
 
-/** The block's name and length, as soon as the coach has settled on them. */
-export type ComposingHeader = { label: string; totalWeeks: number };
+import type { ComposingDay, ComposingState } from '../../composingReducer';
 
 type Props = {
   status: 'pending' | 'failed';
-  header: ComposingHeader | null;
+  composing: ComposingState;
   onRetry: () => void;
 };
+
+/**
+ * One line per training day: its focus, and for a day that holds lifts, how
+ * many. Rest, activity and cardio days carry no count and read plainly as
+ * what they are.
+ *
+ * Deliberately not the tracker's day rendering: this previews a screen the
+ * athlete reaches a second later, and duplicating exercise-level rendering
+ * here would mean maintaining two of it forever.
+ */
+function DayRow({ day }: { day: ComposingDay }): JSX.Element {
+  return (
+    <li className="text-sm text-muted-foreground">
+      <span className="font-medium text-foreground">Day {day.index}</span> ·{' '}
+      {DAY_TYPE_LABELS[day.type]}
+      {day.exerciseCount > 0 &&
+        ` — ${String(day.exerciseCount)} exercise${day.exerciseCount === 1 ? '' : 's'}`}
+    </li>
+  );
+}
 
 /**
  * The orb is `thinking-orbs` (https://github.com/Jakubantalik/thinking-orbs,
@@ -25,16 +45,18 @@ type Props = {
  * form is not left on screen mid-request. On failure the orb freezes
  * (`paused`) rather than unmounting, and retry re-runs generation only.
  *
- * Presentational: the header is whatever the generation stream has said so
- * far, and nothing it shows is authoritative — the plan the athlete trains
- * from is the one the tracker reads back out of the database a moment later.
+ * Presentational: it draws whatever the reducer has folded out of the stream
+ * so far, and none of it is authoritative — the plan the athlete trains from
+ * is the one the tracker reads back out of the database a moment later.
  */
-export function ComposingScreen({ status, header, onRetry }: Props): JSX.Element {
+export function ComposingScreen({ status, composing, onRetry }: Props): JSX.Element {
+  const inFlight = status === 'pending';
+
   return (
     <div className="flex flex-col items-center gap-6 py-16 text-center">
-      {header && status === 'pending' && (
+      {inFlight && composing.header && (
         <h1 className="text-xl font-semibold">
-          {header.label} · {header.totalWeeks} weeks
+          {composing.header.label} · {composing.header.totalWeeks} weeks
         </h1>
       )}
 
@@ -42,11 +64,20 @@ export function ComposingScreen({ status, header, onRetry }: Props): JSX.Element
         state="composing"
         size={64}
         paused={status === 'failed'}
-        aria-label={status === 'pending' ? 'Composing your plan' : 'Plan generation paused'}
+        aria-label={inFlight ? 'Composing your plan' : 'Plan generation paused'}
       />
 
-      {status === 'pending' ? (
-        <p className="text-lg font-medium">Building your plan…</p>
+      {inFlight ? (
+        <>
+          <p className="text-lg font-medium">Building your plan…</p>
+          {composing.days.length > 0 && (
+            <ul className="flex flex-col gap-2">
+              {composing.days.map((day) => (
+                <DayRow key={day.index} day={day} />
+              ))}
+            </ul>
+          )}
+        </>
       ) : (
         <>
           <p role="alert" className="text-sm text-destructive">

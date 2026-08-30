@@ -673,6 +673,35 @@
               "type": {
                 "type": "string",
                 "enum": [
+                  "day"
+                ]
+              },
+              "day_index": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 7
+              },
+              "day_type": {
+                "$ref": "#/components/schemas/DayType"
+              },
+              "exercise_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "type",
+              "day_index",
+              "day_type",
+              "exercise_count"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
                   "ready"
                 ]
               },

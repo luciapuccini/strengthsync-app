@@ -28,9 +28,14 @@ export const PlanResponseSchema = z.object({ plan: Plan }).openapi('PlanResponse
  * deeply-partial plan, optional at every level, which documents nothing and
  * costs a resend of the whole growing plan on every delta.
  *
- * `meta` borrows the two fields from the generated-plan shape rather than
- * restating them, the same bridging the response schemas above do — the stream
- * describes that object as it is written.
+ * `meta` and `day` borrow their fields from the generated-plan and plan-day
+ * shapes rather than restating them, the same bridging the response schemas
+ * above do — the stream describes that object as it is written.
+ *
+ * `day` carries the count of a day's exercises and no exercise-level detail:
+ * the tracker renders that a moment later from persisted rows, and a second
+ * rendering of it fed by unvalidated stream data is the thing this design is
+ * most careful to avoid.
  *
  * `ready` carries identifiers only. The browser refetches from the database
  * once the plan is saved, so shipping the plan here would create a second
@@ -42,6 +47,13 @@ const PlanStreamMetaEvent = z.object({
   total_weeks: GeneratedPlanInputSchema.shape.total_weeks,
 });
 
+const PlanStreamDayEvent = z.object({
+  type: z.literal('day'),
+  day_index: PlanDaySchema.shape.day_index,
+  day_type: DayTypeSchema,
+  exercise_count: z.number().int().nonnegative(),
+});
+
 const PlanStreamReadyEvent = z.object({
   type: z.literal('ready'),
   plan_id: z.uuid(),
@@ -49,7 +61,7 @@ const PlanStreamReadyEvent = z.object({
 });
 
 export const PlanStreamEventSchema = z
-  .discriminatedUnion('type', [PlanStreamMetaEvent, PlanStreamReadyEvent])
+  .discriminatedUnion('type', [PlanStreamMetaEvent, PlanStreamDayEvent, PlanStreamReadyEvent])
   .openapi('PlanStreamEvent');
 
 export type PlanStreamEvent = z.infer<typeof PlanStreamEventSchema>;

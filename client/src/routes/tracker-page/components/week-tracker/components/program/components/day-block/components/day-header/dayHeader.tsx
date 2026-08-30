@@ -3,18 +3,10 @@ import type { JSX } from 'react';
 
 import type { WeekDay } from '@/api/types';
 
+import { DAY_TYPE_LABELS } from '@/lib/day-types';
 import { Badge } from '@/shadcn/ui/badge';
 import { Button } from '@/shadcn/ui/button';
 import { Spinner } from '@/shadcn/ui/spinner';
-
-const DAY_TYPE_LABELS: Record<WeekDay['type'], string> = {
-  upper_body: 'Upper body',
-  leg_day: 'Leg day',
-  full_body: 'Full body',
-  activity: 'Activity',
-  cardio: 'Cardio',
-  rest: 'Rest',
-};
 
 type DayHeaderProps = {
   day: WeekDay;

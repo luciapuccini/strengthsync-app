@@ -11,3 +11,17 @@ export const DAY_TYPES = [
   'activity',
   'cardio',
 ] as const;
+
+/**
+ * How a day type reads on screen. One map, because the tracker's day header
+ * and the onboarding progress rows both name the same six things and a second
+ * copy would drift.
+ */
+export const DAY_TYPE_LABELS: Record<(typeof DAY_TYPES)[number], string> = {
+  upper_body: 'Upper body',
+  leg_day: 'Leg day',
+  full_body: 'Full body',
+  activity: 'Activity',
+  cardio: 'Cardio',
+  rest: 'Rest',
+};

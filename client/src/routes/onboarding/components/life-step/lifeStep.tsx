@@ -1,4 +1,4 @@
-import { useActionState, useRef, useState } from 'react';
+import { useActionState, useReducer, useRef, useState } from 'react';
 import type { JSX } from 'react';
 
 import { generatePlan, submitOnboarding } from '@/api/client';
@@ -26,7 +26,8 @@ import {
 import { Button } from '@/shadcn/ui/button';
 
 import { ActivitiesField } from './activitiesField';
-import { ComposingScreen, type ComposingHeader } from '../composing-screen/composingScreen';
+import { ComposingScreen } from '../composing-screen/composingScreen';
+import { composingReducer, initialComposingState } from '../../composingReducer';
 import { LifeFields } from './lifeFields';
 
 type Props = {
@@ -190,12 +191,12 @@ async function composePlan(
  * accumulated across every step become the coaching profile and, in the same
  * submit, its first generated plan. `pending` from `useActionState` is still
  * the "in flight" signal the composing screen branches on; what a boolean
- * cannot carry is what the stream has said so far, so the header it announces
- * is held beside it.
+ * cannot carry is the events the stream has produced, so that state lives in
+ * its own hook beside it — deliberately a second piece of state.
  */
 export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Element {
   const [activities, setActivities] = useState<OnboardingActivity[]>(priorAnswers.activities ?? []);
-  const [header, setHeader] = useState<ComposingHeader | null>(null);
+  const [composing, dispatchEvent] = useReducer(composingReducer, initialComposingState);
   const validAnswers = useRef<OnboardingAnswers | null>(null);
   const profileSaved = useRef(false);
 
@@ -212,15 +213,12 @@ export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Elem
 
       if (!validAnswers.current) return { phase: 'failed', errors: {} };
 
-      // A retry starts from nothing: the previous attempt's header described a
+      // A retry starts from nothing: the previous attempt's rows described a
       // candidate that was never saved, and this call produces a different plan.
-      setHeader(null);
+      dispatchEvent({ type: 'restart' });
 
       try {
-        await composePlan(validAnswers.current, profileSaved, (event) => {
-          if (event.type === 'meta')
-            setHeader({ label: event.label, totalWeeks: event.total_weeks });
-        });
+        await composePlan(validAnswers.current, profileSaved, dispatchEvent);
         invalidateCurrentWeek();
         invalidateActivePlan();
         onSubmitted();
@@ -236,7 +234,7 @@ export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Elem
     return (
       <ComposingScreen
         status={pending ? 'pending' : 'failed'}
-        header={header}
+        composing={composing}
         onRetry={() => dispatch({ kind: 'retry' })}
       />
     );

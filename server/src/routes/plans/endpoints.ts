@@ -2,6 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
 import { streamSSE } from 'hono/streaming';
 
 import { streamAgentRuntime } from '../../agent/agent-core.ts';
+import { NOTHING_SETTLED, settleEvents, type PartialPlan } from './day-settling.ts';
 import { buildFirstPlanPrompt, COACHING_RULES } from '../../domain/coach/index.ts';
 import { GeneratedPlanInputSchema } from '../../domain/workflow.ts';
 import {
@@ -126,30 +127,36 @@ export function planRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables; Bind
       outSchema: GeneratedPlanInputSchema,
     });
 
-    // Plumbing only from here: open the stream, emit what the partial output
-    // says, activate, emit `ready`, close. A throw anywhere below ends the
-    // stream without `ready`, which the browser reads as a failure — the
-    // terminal `failed` event that carries a code and a message is a later
-    // slice.
+    // Plumbing only from here: open the stream, ask the settling module what
+    // the latest partial owes the athlete, write it, activate, say `ready`,
+    // close. A throw anywhere below ends the stream without `ready`, which the
+    // browser reads as a failure — the terminal `failed` event that carries a
+    // code and a message is a later slice.
     return streamSSE(c, async (stream) => {
-      const write = (event: PlanStreamEvent): Promise<void> =>
-        stream.writeSSE({ data: JSON.stringify(event) });
+      const write = async (events: PlanStreamEvent[]): Promise<void> => {
+        for (const event of events) await stream.writeSSE({ data: JSON.stringify(event) });
+      };
 
-      // `total_weeks` follows `label` in the generated shape, so by the time
-      // it parses the label is whole rather than a growing prefix. Key order
-      // is load-bearing here: reordering that schema delays the header.
-      let announced = false;
+      // The last partial seen is replayed once with the stream ended, which is
+      // what settles the seventh day. Key order is load-bearing upstream of
+      // this: `label` and `total_weeks` precede the days in the generated
+      // shape, so the header arrives early — reordering that schema would
+      // quietly cost the feature most of its value.
+      let settled = NOTHING_SETTLED;
+      let latest: PartialPlan = {};
       for await (const partial of generation.partialOutputStream) {
-        if (announced || partial.label === undefined || partial.total_weeks === undefined) continue;
-        announced = true;
-        await write({ type: 'meta', label: partial.label, total_weeks: partial.total_weeks });
+        latest = partial;
+        const step = settleEvents(settled, partial, { streamEnded: false });
+        settled = step.state;
+        await write(step.events);
       }
+      await write(settleEvents(settled, latest, { streamEnded: true }).events);
 
       const { plan, first_week } = await activateGeneratedPlan(db, clientId, {
         workflow_id: `first-plan:${clientId}`,
         plan: await generation.output,
       });
-      await write({ type: 'ready', plan_id: plan.id, first_week_id: first_week.id });
+      await write([{ type: 'ready', plan_id: plan.id, first_week_id: first_week.id }]);
     });
   });
 

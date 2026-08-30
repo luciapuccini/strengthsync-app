@@ -1024,6 +1024,12 @@ export interface components {
             total_weeks: number;
         } | {
             /** @enum {string} */
+            type: "day";
+            day_index: number;
+            day_type: components["schemas"]["DayType"];
+            exercise_count: number;
+        } | {
+            /** @enum {string} */
             type: "ready";
             /** Format: uuid */
             plan_id: string;
