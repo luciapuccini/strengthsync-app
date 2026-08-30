@@ -1,4 +1,3 @@
-import { ThinkingOrb } from 'thinking-orbs';
 import type { JSX } from 'react';
 
 import { DAY_TYPE_LABELS } from '@/lib/day-types';
@@ -33,60 +32,51 @@ function DayRow({ day }: { day: ComposingDay }): JSX.Element {
 }
 
 /**
- * The orb is `thinking-orbs` (https://github.com/Jakubantalik/thinking-orbs,
- * live configurator at https://orbs.jakubantalik.com) — a published npm
- * package, not a copy-pasted export. Its only runtime dependency is the
- * `react` peer we already carry: the animation is a plain 2D `<canvas>`, no
- * WebGL, no extra libraries, so this adds no measurable bundle weight for a
- * screen every client sees once per account. Declared through the
- * workspace's single-version catalog like every other shared dependency.
+ * What the athlete watches while their first plan is written. There is no
+ * animation here any more: rows filling in one at a time say more than an orb
+ * could, and the `thinking-orbs` dependency went with it.
  *
- * Replaces the wizard for the whole submit-through-generate request — the
- * form is not left on screen mid-request. On failure the orb freezes
- * (`paused`) rather than unmounting, and retry re-runs generation only.
+ * Replaces the wizard for the whole submit-through-generate request — the form
+ * is not left on screen mid-request — and retry re-runs generation only.
  *
  * Presentational: it draws whatever the reducer has folded out of the stream
  * so far, and none of it is authoritative — the plan the athlete trains from
  * is the one the tracker reads back out of the database a moment later.
  */
 export function ComposingScreen({ status, composing, onRetry }: Props): JSX.Element {
-  const inFlight = status === 'pending';
+  if (status === 'failed') {
+    return (
+      <div className="flex flex-col items-center gap-6 py-16 text-center">
+        <p role="alert" className="text-sm text-destructive">
+          Something went wrong while building your plan. Please try again.
+        </p>
+        <Button type="button" size="xl" onClick={onRetry}>
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-6 py-16 text-center">
-      {inFlight && composing.header && (
-        <h1 className="text-xl font-semibold">
-          {composing.header.label} · {composing.header.totalWeeks} weeks
-        </h1>
+      <h1 className="text-xl font-semibold">
+        {composing.header
+          ? `${composing.header.label} · ${String(composing.header.totalWeeks)} weeks`
+          : 'Building your plan…'}
+      </h1>
+
+      {composing.days.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {composing.days.map((day) => (
+            <DayRow key={day.index} day={day} />
+          ))}
+        </ul>
       )}
 
-      <ThinkingOrb
-        state="composing"
-        size={64}
-        paused={status === 'failed'}
-        aria-label={inFlight ? 'Composing your plan' : 'Plan generation paused'}
-      />
-
-      {inFlight ? (
-        <>
-          <p className="text-lg font-medium">Building your plan…</p>
-          {composing.days.length > 0 && (
-            <ul className="flex flex-col gap-2">
-              {composing.days.map((day) => (
-                <DayRow key={day.index} day={day} />
-              ))}
-            </ul>
-          )}
-        </>
-      ) : (
-        <>
-          <p role="alert" className="text-sm text-destructive">
-            Something went wrong while building your plan. Please try again.
-          </p>
-          <Button type="button" size="xl" onClick={onRetry}>
-            Retry
-          </Button>
-        </>
+      {/* Covers the write and the tracker's refetch, so the pause after the
+          last row does not read as a freeze. */}
+      {composing.phase !== 'generating' && (
+        <p className="text-sm text-muted-foreground">Saving your plan…</p>
       )}
     </div>
   );

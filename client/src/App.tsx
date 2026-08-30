@@ -11,7 +11,6 @@ import { RootRedirect } from '@/components/root-redirect/rootRedirect';
 import { AccountPage } from '@/routes/account/accountPage';
 import { HistoryPage } from '@/routes/history/historyPage';
 import { NotFound } from '@/routes/not-found/notFound';
-import { ComposingScreenPreview } from '@/routes/onboarding/components/composing-screen/composingScreenPreview';
 import { OnboardingPage } from '@/routes/onboarding/onboardingPage';
 import { SignInRoute } from '@/routes/sign-in/signInRoute';
 import { TrackerPage } from '@/routes/tracker-page/trackerPage';
@@ -97,10 +96,6 @@ export default function App(): JSX.Element {
             />
           </Route>
         </Route>
-
-        {import.meta.env.DEV && (
-          <Route path="/dev/composing" element={<ComposingScreenPreview />} />
-        )}
 
         <Route path="*" element={<NotFound />} />
       </Routes>

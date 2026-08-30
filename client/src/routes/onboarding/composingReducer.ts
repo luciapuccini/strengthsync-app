@@ -23,8 +23,16 @@ export type ComposingDay = {
 export type ComposingState = {
   header: { label: string; totalWeeks: number } | null;
   days: ComposingDay[];
-  phase: 'generating' | 'ready';
+  phase: 'generating' | 'saving' | 'ready';
 };
+
+/**
+ * A plan's week template is the seven days the first-plan prompt requires, so
+ * the seventh row is the last one coming and everything after it is the write
+ * and the read back. If a shorter week ever arrived the screen would keep
+ * saying it is building rather than saving — late, not blank.
+ */
+const DAYS_IN_WEEK = 7;
 
 export const initialComposingState: ComposingState = {
   header: null,
@@ -56,8 +64,13 @@ export function composingReducer(state: ComposingState, action: ComposingAction)
         type: action.day_type,
         exerciseCount: action.exercise_count,
       };
-      const days = [...state.days.filter((existing) => existing.index !== day.index), day];
-      return { ...state, days: days.sort((a, b) => a.index - b.index) };
+      const days = [...state.days.filter((existing) => existing.index !== day.index), day].sort(
+        (a, b) => a.index - b.index,
+      );
+      // The phase turns over here rather than in the view: after the last row
+      // there is a real pause while the plan is written and read back, and the
+      // screen has to say which of the two it is doing.
+      return { ...state, days, phase: days.length >= DAYS_IN_WEEK ? 'saving' : state.phase };
     }
 
     case 'ready':

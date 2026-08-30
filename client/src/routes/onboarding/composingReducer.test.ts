@@ -42,6 +42,18 @@ describe('composingReducer', () => {
     expect(state.days.map((day) => day.index)).toEqual([1, 3]);
   });
 
+  it('enters the saving phase once the last day has landed, and not before', () => {
+    const week: ComposingAction[] = [1, 2, 3, 4, 5, 6, 7].map((index) => ({
+      type: 'day',
+      day_index: index,
+      day_type: 'rest',
+      exercise_count: 0,
+    }));
+
+    expect(fold([meta, ...week.slice(0, 6)]).phase).toBe('generating');
+    expect(fold([meta, ...week]).phase).toBe('saving');
+  });
+
   it('enters the ready phase once the plan is saved', () => {
     const state = fold([
       meta,

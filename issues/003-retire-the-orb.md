@@ -25,18 +25,18 @@ justification comment goes with it.
 
 ## Acceptance criteria
 
-- [ ] The composing screen no longer renders the orb, in any phase, including the
+- [x] The composing screen no longer renders the orb, in any phase, including the
       failed state.
-- [ ] The orb's preview component is deleted.
-- [ ] The orb dependency is removed from the client package manifest and from the
+- [x] The orb's preview component is deleted.
+- [x] The orb dependency is removed from the client package manifest and from the
       workspace catalog. Nothing in the workspace still references it.
-- [ ] The lockfile is updated and committed.
-- [ ] A "Saving your plan…" line is shown between the final day row and
+- [x] The lockfile is updated and committed.
+- [x] A "Saving your plan…" line is shown between the final day row and
       navigation, covering the database write and the tracker's refetch.
-- [ ] The saving phase is distinct from the generating phase in the reducer's
+- [x] The saving phase is distinct from the generating phase in the reducer's
       state, not inferred in the view.
-- [ ] The athlete never sees a blank screen between the last row and the tracker.
-- [ ] Typecheck, lint and the full test suite pass, including the catalog's
+- [x] The athlete never sees a blank screen between the last row and the tracker.
+- [x] Typecheck, lint and the full test suite pass, including the catalog's
       single-version policy check.
 
 ## Blocked by
@@ -53,4 +53,4 @@ all.
 
 ## STATUS
 
-NOT STARTED
+DONE
