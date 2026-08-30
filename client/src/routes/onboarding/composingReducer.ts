@@ -23,7 +23,7 @@ export type ComposingDay = {
 export type ComposingState = {
   header: { label: string; totalWeeks: number } | null;
   days: ComposingDay[];
-  phase: 'generating' | 'saving' | 'ready';
+  phase: 'generating' | 'saving' | 'ready' | 'failed';
 };
 
 /**
@@ -43,7 +43,8 @@ export const initialComposingState: ComposingState = {
 /**
  * The stream's own events, plus a restart. A retry re-runs the whole model
  * call and produces a different plan, so the previous attempt leaves nothing
- * behind rather than being amended.
+ * behind rather than being amended — which is also what `failed` does, for
+ * the same reason.
  */
 export type ComposingAction = PlanStreamEvent | { type: 'restart' };
 
@@ -75,5 +76,11 @@ export function composingReducer(state: ComposingState, action: ComposingAction)
 
     case 'ready':
       return { ...state, phase: 'ready' };
+
+    // Cleared, not dimmed and not preserved. Those rows described a candidate
+    // that was never saved, and a retry re-runs the whole call and produces a
+    // different plan — keeping them would assert progress that does not exist.
+    case 'failed':
+      return { ...initialComposingState, phase: 'failed' };
   }
 }

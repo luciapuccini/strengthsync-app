@@ -2,7 +2,7 @@ import { z } from '@hono/zod-openapi';
 
 import { PlanDaySchema, PlanSchema, PlannedExerciseSchema } from '../../domain/model/index.ts';
 import { GeneratedPlanInputSchema } from '../../domain/workflow.ts';
-import { uuidParam } from '../shared.ts';
+import { ApiErrorSchema, uuidParam } from '../shared.ts';
 import { DayTypeSchema } from '../weeks/schemas.ts';
 
 /**
@@ -60,8 +60,18 @@ const PlanStreamReadyEvent = z.object({
   first_week_id: z.uuid(),
 });
 
+const PlanStreamFailedEvent = z.object({
+  type: z.literal('failed'),
+  error: ApiErrorSchema.shape.error,
+});
+
 export const PlanStreamEventSchema = z
-  .discriminatedUnion('type', [PlanStreamMetaEvent, PlanStreamDayEvent, PlanStreamReadyEvent])
+  .discriminatedUnion('type', [
+    PlanStreamMetaEvent,
+    PlanStreamDayEvent,
+    PlanStreamReadyEvent,
+    PlanStreamFailedEvent,
+  ])
   .openapi('PlanStreamEvent');
 
 export type PlanStreamEvent = z.infer<typeof PlanStreamEventSchema>;

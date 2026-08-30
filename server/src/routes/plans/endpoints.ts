@@ -10,6 +10,7 @@ import {
   findPlanById,
   findProfile,
   getActivePlan,
+  RepoError,
   type Db,
 } from '../../db/index.ts';
 
@@ -61,6 +62,26 @@ const postGeneratePlanRoute = createRoute({
     409: conflict,
   },
 });
+
+/**
+ * A post-open failure, as the API's ordinary error envelope.
+ *
+ * A `RepoError` keeps its own code, because it names something the athlete's
+ * data did. Everything else — the model refusing, the completed object failing
+ * its schema parse, the provider being unreachable — is one thing as far as
+ * the browser is concerned: generation did not produce a plan, press retry.
+ * The detail stays in the log, where it is useful and not guessable.
+ */
+function failedEvent(error: unknown): PlanStreamEvent {
+  console.error('[api] first-plan generation failed', error);
+  if (error instanceof RepoError) {
+    return { type: 'failed', error: { code: error.code, message: error.message } };
+  }
+  return {
+    type: 'failed',
+    error: { code: 'plan_generation_failed', message: 'could not generate a plan' },
+  };
+}
 
 /**
  * Plan routes for the signed-in athlete. Generation makes the browser a plan
@@ -129,34 +150,40 @@ export function planRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables; Bind
 
     // Plumbing only from here: open the stream, ask the settling module what
     // the latest partial owes the athlete, write it, activate, say `ready`,
-    // close. A throw anywhere below ends the stream without `ready`, which the
-    // browser reads as a failure — the terminal `failed` event that carries a
-    // code and a message is a later slice.
+    // close. Everything after the stream opens is wrapped, because the status
+    // line is already spent: a model failure, a rejected parse or a refused
+    // write all leave as a terminal `failed` event, never as a status code.
     return streamSSE(c, async (stream) => {
       const write = async (events: PlanStreamEvent[]): Promise<void> => {
         for (const event of events) await stream.writeSSE({ data: JSON.stringify(event) });
       };
 
-      // The last partial seen is replayed once with the stream ended, which is
-      // what settles the seventh day. Key order is load-bearing upstream of
-      // this: `label` and `total_weeks` precede the days in the generated
-      // shape, so the header arrives early — reordering that schema would
-      // quietly cost the feature most of its value.
-      let settled = NOTHING_SETTLED;
-      let latest: PartialPlan = {};
-      for await (const partial of generation.partialOutputStream) {
-        latest = partial;
-        const step = settleEvents(settled, partial, { streamEnded: false });
-        settled = step.state;
-        await write(step.events);
-      }
-      await write(settleEvents(settled, latest, { streamEnded: true }).events);
+      try {
+        // The last partial seen is replayed once with the stream ended, which
+        // is what settles the seventh day. Key order is load-bearing upstream
+        // of this: `label` and `total_weeks` precede the days in the generated
+        // shape, so the header arrives early — reordering that schema would
+        // quietly cost the feature most of its value.
+        let settled = NOTHING_SETTLED;
+        let latest: PartialPlan = {};
+        for await (const partial of generation.partialOutputStream) {
+          latest = partial;
+          const step = settleEvents(settled, partial, { streamEnded: false });
+          settled = step.state;
+          await write(step.events);
+        }
+        await write(settleEvents(settled, latest, { streamEnded: true }).events);
 
-      const { plan, first_week } = await activateGeneratedPlan(db, clientId, {
-        workflow_id: `first-plan:${clientId}`,
-        plan: await generation.output,
-      });
-      await write([{ type: 'ready', plan_id: plan.id, first_week_id: first_week.id }]);
+        // `generation.output` is where a completed object that fails its schema
+        // parse surfaces, so the parse is inside the guard too.
+        const { plan, first_week } = await activateGeneratedPlan(db, clientId, {
+          workflow_id: `first-plan:${clientId}`,
+          plan: await generation.output,
+        });
+        await write([{ type: 'ready', plan_id: plan.id, first_week_id: first_week.id }]);
+      } catch (error) {
+        await write([failedEvent(error)]);
+      }
     });
   });
 

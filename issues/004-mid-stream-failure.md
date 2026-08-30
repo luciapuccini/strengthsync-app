@@ -26,24 +26,24 @@ See the parent PRD's **Failure presentation** section and the first item under
 
 ## Acceptance criteria
 
-- [ ] Any failure after the stream opens is emitted as a terminal `failed` event
+- [x] Any failure after the stream opens is emitted as a terminal `failed` event
       whose payload is the standard API error envelope, then the stream closes.
-- [ ] Failures covered include the model call erroring and the completed object
+- [x] Failures covered include the model call erroring and the completed object
       failing its schema parse.
-- [ ] No post-open failure attempts to set an HTTP status code.
-- [ ] The client converts a `failed` event into the standard typed client error,
+- [x] No post-open failure attempts to set an HTTP status code.
+- [x] The client converts a `failed` event into the standard typed client error,
       carrying its code and message, and throws it into the existing catch.
-- [ ] A stream that ends without either `ready` or `failed` still produces the
+- [x] A stream that ends without either `ready` or `failed` still produces the
       failed state, so an abrupt disconnection is not silently treated as
       success.
-- [ ] The failed screen clears the header and all accumulated day rows.
-- [ ] The failed screen shows an error message and a retry button.
-- [ ] Retry re-runs generation only. The profile write still happens at most once
+- [x] The failed screen clears the header and all accumulated day rows.
+- [x] The failed screen shows an error message and a retry button.
+- [x] Retry re-runs generation only. The profile write still happens at most once
       per visit to the final step.
-- [ ] A successful retry renders a fresh header and fresh rows with no trace of
+- [x] A successful retry renders a fresh header and fresh rows with no trace of
       the previous attempt.
-- [ ] The reducer's handling of the failed event is covered by its test.
-- [ ] Typecheck, lint and the full test suite pass.
+- [x] The reducer's handling of the failed event is covered by its test.
+- [x] Typecheck, lint and the full test suite pass.
 
 ## Blocked by
 
@@ -59,4 +59,4 @@ See the parent PRD's **Failure presentation** section and the first item under
 
 ## STATUS
 
-NOT STARTED
+DONE

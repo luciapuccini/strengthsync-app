@@ -65,6 +65,17 @@ describe('composingReducer', () => {
     expect(state.days).toHaveLength(1);
   });
 
+  it('clears the header and every row when generation fails', () => {
+    const state = fold([
+      meta,
+      { type: 'day', day_index: 1, day_type: 'upper_body', exercise_count: 5 },
+      { type: 'day', day_index: 2, day_type: 'rest', exercise_count: 0 },
+      { type: 'failed', error: { code: 'plan_generation_failed', message: 'no plan' } },
+    ]);
+
+    expect(state).toEqual({ ...initialComposingState, phase: 'failed' });
+  });
+
   it('leaves nothing behind on a restart', () => {
     const state = fold([
       meta,

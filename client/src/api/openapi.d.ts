@@ -1035,6 +1035,13 @@ export interface components {
             plan_id: string;
             /** Format: uuid */
             first_week_id: string;
+        } | {
+            /** @enum {string} */
+            type: "failed";
+            error: {
+                code: string;
+                message: string;
+            };
         };
         WeekResponse: {
             week: components["schemas"]["Week"];

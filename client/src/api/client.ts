@@ -209,8 +209,12 @@ export async function getPlan(planId: string): Promise<Plan> {
  * profile, yielding the server's progress events as they arrive.
  *
  * The guards answer before the stream opens, so a refusal is still an ordinary
- * JSON status code and becomes the same typed error as every other call's. The
- * events themselves carry no plan: `ready` names the ids, and the caller
+ * JSON status code and becomes the same typed error as every other call's. A
+ * failure after that point cannot be a status code, so it arrives as a
+ * terminal `failed` event carrying the same envelope, and becomes the same
+ * typed error here.
+ *
+ * The events themselves carry no plan: `ready` names the ids, and the caller
  * refetches from the database.
  */
 export async function* generatePlan(): AsyncGenerator<PlanStreamEvent> {
@@ -233,7 +237,17 @@ export async function* generatePlan(): AsyncGenerator<PlanStreamEvent> {
     throw error;
   }
 
-  yield* readEventStream<PlanStreamEvent>(response);
+  for await (const event of readEventStream<PlanStreamEvent>(response)) {
+    // Yielded before it is thrown, so the screen can act on the failure — it
+    // clears the half-drawn plan — and the caller still lands in the same
+    // catch every other call's error lands in.
+    yield event;
+    if (event.type === 'failed') {
+      // No status: the response's 200 was spent when the stream opened, and
+      // the network path above already uses 0 for "there is no status here".
+      throw new ApiClientError('server', 0, event.error.code, event.error.message);
+    }
+  }
 }
 
 export async function getCurrentWeek(): Promise<Week | null> {
