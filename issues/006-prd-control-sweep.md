@@ -42,18 +42,20 @@ nothing currently detects.
 
 ## Acceptance criteria
 
-- [ ] Every PRD decision is checked off as landed, or the divergence is named and
+- [x] Every PRD decision is checked off as landed, or the divergence is named and
       explained.
-- [ ] The changed surface is checked against the repo's conventions and import
+- [x] The changed surface is checked against the repo's conventions and import
       boundaries; divergences are listed.
-- [ ] Out-of-scope findings and any bugs noticed are documented and explicitly
+- [x] Out-of-scope findings and any bugs noticed are documented and explicitly
       left unactioned.
-- [ ] `/docs` is confirmed consistent with the shipped behaviour; any newly false
+- [x] `/docs` is confirmed consistent with the shipped behaviour; any newly false
       statement elsewhere in `/docs` is flagged.
 - [ ] The stream is confirmed by hand not to be silently buffered — first event
-      visibly arriving well before the last.
-- [ ] A written summary with recommended next steps is produced and reviewed with
-      the user.
+      visibly arriving well before the last. NOT DONE: needs a running
+      `wrangler dev` with a real OPENAI_API_KEY. See section 5 of
+      `docs/audits/streaming-first-plan-sweep.md`.
+- [x] A written summary with recommended next steps is produced
+      (`docs/audits/streaming-first-plan-sweep.md`) and reviewed with the user.
 
 ## Blocked by
 
@@ -69,4 +71,4 @@ None directly - this is a control pass over all of them.
 
 ## STATUS
 
-NOT STARTED
+DONE — except the by-hand buffering check, which is recorded as an open gap.
