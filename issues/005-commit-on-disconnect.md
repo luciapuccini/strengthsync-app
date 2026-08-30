@@ -24,21 +24,21 @@ about the telemetry line now being written after the response is gone.
 
 ## Acceptance criteria
 
-- [ ] Generation and plan activation run as one promise registered with the
+- [x] Generation and plan activation run as one promise registered with the
       Worker execution context, so the runtime does not tear the work down when
       the client disconnects.
-- [ ] Every stream write is guarded against an aborted stream. A disconnected
+- [x] Every stream write is guarded against an aborted stream. A disconnected
       client produces no write errors and no noisy failure logging.
-- [ ] A disconnect partway through generation still results in a saved, activated
+- [x] A disconnect partway through generation still results in a saved, activated
       plan.
-- [ ] Returning to onboarding after such a disconnect redirects to the tracker,
+- [x] Returning to onboarding after such a disconnect redirects to the tracker,
       via the existing redirect, with no new UI added.
-- [ ] Plan activation keeps its existing deterministic idempotency key, so a
+- [x] Plan activation keeps its existing deterministic idempotency key, so a
       retry that races a still-running background activation cannot produce two
       plans.
-- [ ] The telemetry logger still writes one line per model call when that call
+- [x] The telemetry logger still writes one line per model call when that call
       completes after the response has ended.
-- [ ] Typecheck, lint and the full test suite pass.
+- [x] Typecheck, lint and the full test suite pass.
 
 Note: the disconnect path is listed in the PRD as knowingly uncovered by tests.
 The criteria above describing disconnect behaviour are satisfied by
@@ -56,4 +56,4 @@ deliberate, recorded gap, not an oversight.
 
 ## STATUS
 
-NOT STARTED
+DONE
