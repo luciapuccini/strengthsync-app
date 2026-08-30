@@ -497,7 +497,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Generate and activate the signed-in client's first plan */
+        /**
+         * Generate and activate the signed-in client's first plan
+         * @description Streams the generation as it happens. The guards below answer JSON; once the stream is open the status line is spent and the plan itself is read back from the database, not from the stream.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -507,13 +510,13 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Plan generated and activated */
+                /** @description Generation progress, one JSON event per frame */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["GeneratePlanResponse"];
+                        "text/event-stream": components["schemas"]["PlanStreamEvent"];
                     };
                 };
                 /** @description Missing or invalid credentials */
@@ -1014,9 +1017,21 @@ export interface components {
             weight_lb: number | null;
             notes: string | null;
         };
-        GeneratePlanResponse: {
-            plan: components["schemas"]["Plan"];
-            first_week: components["schemas"]["Week"];
+        PlanStreamEvent: {
+            /** @enum {string} */
+            type: "meta";
+            label: string;
+            total_weeks: number;
+        } | {
+            /** @enum {string} */
+            type: "ready";
+            /** Format: uuid */
+            plan_id: string;
+            /** Format: uuid */
+            first_week_id: string;
+        };
+        WeekResponse: {
+            week: components["schemas"]["Week"];
         };
         Week: {
             /** Format: uuid */
@@ -1068,9 +1083,6 @@ export interface components {
         PerformedSet: {
             performed_reps: number;
             performed_weight_lb: number | null;
-        };
-        WeekResponse: {
-            week: components["schemas"]["Week"];
         };
         WeekListResponse: {
             weeks: components["schemas"]["Week"][];

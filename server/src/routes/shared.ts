@@ -24,6 +24,17 @@ export const json = <S>(description: string, schema: S) => ({
   content: { 'application/json': { schema } },
 });
 
+/**
+ * A Server-Sent Events response: one `data:` frame per event, each an instance
+ * of `schema`. Declared so the document records that the route streams — it
+ * documents the frames, it does not validate them; nothing in the framework
+ * checks what a handler actually writes to a stream.
+ */
+export const eventStream = <S>(description: string, schema: S) => ({
+  description,
+  content: { 'text/event-stream': { schema } },
+});
+
 export const unauthorized = json('Missing or invalid credentials', ApiErrorSchema);
 export const forbidden = json('Understood, but not allowed', ApiErrorSchema);
 export const invalidInput = json('Invalid input', ApiErrorSchema);

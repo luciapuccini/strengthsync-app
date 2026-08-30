@@ -23,7 +23,11 @@ export function ComposingScreenPreview(): JSX.Element {
           Show failed
         </Button>
       </div>
-      <ComposingScreen status={status} onRetry={() => setStatus('pending')} />
+      <ComposingScreen
+        status={status}
+        header={{ label: 'Upper/Lower Strength', totalWeeks: 6 }}
+        onRetry={() => setStatus('pending')}
+      />
     </div>
   );
 }

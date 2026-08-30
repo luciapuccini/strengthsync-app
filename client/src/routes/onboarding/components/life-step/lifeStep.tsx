@@ -2,6 +2,8 @@ import { useActionState, useRef, useState } from 'react';
 import type { JSX } from 'react';
 
 import { generatePlan, submitOnboarding } from '@/api/client';
+import { ApiClientError } from '@/api/errors';
+import type { PlanStreamEvent } from '@/api/types';
 import { invalidateActivePlan } from '@/api/activePlanResource';
 import { invalidateCurrentWeek } from '@/api/weekResource';
 import {
@@ -24,7 +26,7 @@ import {
 import { Button } from '@/shadcn/ui/button';
 
 import { ActivitiesField } from './activitiesField';
-import { ComposingScreen } from '../composing-screen/composingScreen';
+import { ComposingScreen, type ComposingHeader } from '../composing-screen/composingScreen';
 import { LifeFields } from './lifeFields';
 
 type Props = {
@@ -144,10 +146,16 @@ function validateStep(
  * The write, then the one model call: saving the profile only ever happens
  * once per visit to this step (`profileSaved`), so a retry after a
  * generation failure re-runs generation only, per the parent PRD.
+ *
+ * The model call now streams, so this drives the stream to its end rather than
+ * awaiting a body, handing each event to the screen as it arrives. Only
+ * `ready` means the plan was written; a stream that stops before it is a
+ * failure, however tidily it ended.
  */
 async function composePlan(
   answers: OnboardingAnswers,
   profileSaved: { current: boolean },
+  onEvent: (event: PlanStreamEvent) => void,
 ): Promise<void> {
   if (!profileSaved.current) {
     await submitOnboarding(toWirePayload(answers));
@@ -156,7 +164,19 @@ async function composePlan(
   trackPlanGenerationStarted();
   const startedAt = performance.now();
   try {
-    await generatePlan();
+    let saved = false;
+    for await (const event of generatePlan()) {
+      saved ||= event.type === 'ready';
+      onEvent(event);
+    }
+    if (!saved) {
+      throw new ApiClientError(
+        'server',
+        0,
+        'generation_incomplete',
+        'generation ended before the plan was saved',
+      );
+    }
     trackPlanGenerationSucceeded(performance.now() - startedAt);
   } catch (error) {
     trackPlanGenerationFailed(performance.now() - startedAt);
@@ -168,12 +188,14 @@ async function composePlan(
  * The wizard's fourth and final step and its submit: everything around the
  * training that changes what the training should be, then the answers
  * accumulated across every step become the coaching profile and, in the same
- * submit, its first generated plan. `pending` from `useActionState` is the
- * one "in flight" signal — the composing screen consumes it rather than
- * tracking a second one.
+ * submit, its first generated plan. `pending` from `useActionState` is still
+ * the "in flight" signal the composing screen branches on; what a boolean
+ * cannot carry is what the stream has said so far, so the header it announces
+ * is held beside it.
  */
 export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Element {
   const [activities, setActivities] = useState<OnboardingActivity[]>(priorAnswers.activities ?? []);
+  const [header, setHeader] = useState<ComposingHeader | null>(null);
   const validAnswers = useRef<OnboardingAnswers | null>(null);
   const profileSaved = useRef(false);
 
@@ -190,8 +212,15 @@ export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Elem
 
       if (!validAnswers.current) return { phase: 'failed', errors: {} };
 
+      // A retry starts from nothing: the previous attempt's header described a
+      // candidate that was never saved, and this call produces a different plan.
+      setHeader(null);
+
       try {
-        await composePlan(validAnswers.current, profileSaved);
+        await composePlan(validAnswers.current, profileSaved, (event) => {
+          if (event.type === 'meta')
+            setHeader({ label: event.label, totalWeeks: event.total_weeks });
+        });
         invalidateCurrentWeek();
         invalidateActivePlan();
         onSubmitted();
@@ -207,6 +236,7 @@ export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Elem
     return (
       <ComposingScreen
         status={pending ? 'pending' : 'failed'}
+        header={header}
         onRetry={() => dispatch({ kind: 'retry' })}
       />
     );

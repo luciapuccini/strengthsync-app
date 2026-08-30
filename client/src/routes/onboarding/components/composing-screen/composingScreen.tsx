@@ -3,8 +3,12 @@ import type { JSX } from 'react';
 
 import { Button } from '@/shadcn/ui/button';
 
+/** The block's name and length, as soon as the coach has settled on them. */
+export type ComposingHeader = { label: string; totalWeeks: number };
+
 type Props = {
   status: 'pending' | 'failed';
+  header: ComposingHeader | null;
   onRetry: () => void;
 };
 
@@ -20,10 +24,20 @@ type Props = {
  * Replaces the wizard for the whole submit-through-generate request — the
  * form is not left on screen mid-request. On failure the orb freezes
  * (`paused`) rather than unmounting, and retry re-runs generation only.
+ *
+ * Presentational: the header is whatever the generation stream has said so
+ * far, and nothing it shows is authoritative — the plan the athlete trains
+ * from is the one the tracker reads back out of the database a moment later.
  */
-export function ComposingScreen({ status, onRetry }: Props): JSX.Element {
+export function ComposingScreen({ status, header, onRetry }: Props): JSX.Element {
   return (
     <div className="flex flex-col items-center gap-6 py-16 text-center">
+      {header && status === 'pending' && (
+        <h1 className="text-xl font-semibold">
+          {header.label} · {header.totalWeeks} weeks
+        </h1>
+      )}
+
       <ThinkingOrb
         state="composing"
         size={64}

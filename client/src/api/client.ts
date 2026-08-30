@@ -2,11 +2,13 @@ import createOpenApiClient from 'openapi-fetch';
 import type { paths } from './openapi';
 
 import { ApiClientError, toApiError } from './errors';
+import { readEventStream } from './eventStream';
 import type {
   Client,
   ClientProfile,
   OnboardingAnswers,
   Plan,
+  PlanStreamEvent,
   SaveDayLog,
   UpdateClient,
   UpdateClientProfile,
@@ -33,8 +35,13 @@ export function setAccessTokenProvider(provider: () => Promise<string | null>): 
 
 /**
  * The one place a credential is attached. Every call in this file goes through
- * `api`, and `api` goes through here, so there is no route that can be added
- * without one.
+ * here, so there is no route that can be added without one.
+ *
+ * Almost all of them arrive via `api`, the typed client below. The exception is
+ * plan generation, which streams: `openapi-fetch` parses the body, which would
+ * consume the stream before a single event could be read, so that one call
+ * builds its own `Request` and comes straight here. The bearer token path is
+ * the same either way.
  */
 export async function authorizedFetch(request: Request): Promise<Response> {
   const token = await getAccessToken();
@@ -42,8 +49,10 @@ export async function authorizedFetch(request: Request): Promise<Response> {
   return fetch(request);
 }
 
+const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? '';
+
 const api = createOpenApiClient<paths>({
-  baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+  baseUrl: API_BASE_URL,
   fetch: authorizedFetch,
 });
 
@@ -195,9 +204,36 @@ export async function getPlan(planId: string): Promise<Plan> {
   return res.plan;
 }
 
-/** Generates and activates the signed-in client's first plan from their profile. */
-export async function generatePlan(): Promise<{ plan: Plan; first_week: Week }> {
-  return call(() => api.POST('/api/me/plans/generate', {}));
+/**
+ * Generates and activates the signed-in client's first plan from their
+ * profile, yielding the server's progress events as they arrive.
+ *
+ * The guards answer before the stream opens, so a refusal is still an ordinary
+ * JSON status code and becomes the same typed error as every other call's. The
+ * events themselves carry no plan: `ready` names the ids, and the caller
+ * refetches from the database.
+ */
+export async function* generatePlan(): AsyncGenerator<PlanStreamEvent> {
+  const request = new Request(`${API_BASE_URL}/api/me/plans/generate`, {
+    method: 'POST',
+    headers: { Accept: 'text/event-stream' },
+  });
+
+  let response: Response;
+  try {
+    response = await authorizedFetch(request);
+  } catch {
+    throw new ApiClientError('network', 0, 'network_error', 'could not reach the server');
+  }
+
+  if (!response.ok) {
+    const body: unknown = await response.json().catch(() => undefined);
+    const error = toApiError(response.status, body);
+    if (error.kind === 'unauthorized') onUnauthorized();
+    throw error;
+  }
+
+  yield* readEventStream<PlanStreamEvent>(response);
 }
 
 export async function getCurrentWeek(): Promise<Week | null> {

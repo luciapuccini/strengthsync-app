@@ -11,6 +11,7 @@ export type OnboardingAnswers = components['schemas']['OnboardingAnswers'];
 export type PerformedSet = components['schemas']['PerformedSet'];
 export type Plan = components['schemas']['Plan'];
 export type PlanDay = components['schemas']['PlanDay'];
+export type PlanStreamEvent = components['schemas']['PlanStreamEvent'];
 export type PlannedExercise = components['schemas']['PlannedExercise'];
 export type SaveDayLog = components['schemas']['SaveDayLog'];
 export type UpdateClient = components['schemas']['UpdateClient'];

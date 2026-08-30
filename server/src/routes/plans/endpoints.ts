@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi';
+import { streamSSE } from 'hono/streaming';
 
-import { getAgentRuntime } from '../../agent/agent-core.ts';
+import { streamAgentRuntime } from '../../agent/agent-core.ts';
 import { buildFirstPlanPrompt, COACHING_RULES } from '../../domain/coach/index.ts';
 import { GeneratedPlanInputSchema } from '../../domain/workflow.ts';
 import {
@@ -14,9 +15,14 @@ import {
 import type { Env } from '../../env.ts';
 import type { AuthVariables } from '../../lib/auth.ts';
 import { defaultHook } from '../../lib/validation-error.ts';
-import { conflict, invalidInput, json, notFound, unauthorized } from '../shared.ts';
+import { conflict, eventStream, invalidInput, json, notFound, unauthorized } from '../shared.ts';
 
-import { GeneratePlanResponseSchema, PlanIdParamSchema, PlanResponseSchema } from './schemas.ts';
+import {
+  PlanIdParamSchema,
+  PlanResponseSchema,
+  PlanStreamEventSchema,
+  type PlanStreamEvent,
+} from './schemas.ts';
 
 const getMyActivePlanRoute = createRoute({
   method: 'get',
@@ -46,8 +52,10 @@ const postGeneratePlanRoute = createRoute({
   method: 'post',
   path: '/me/plans/generate',
   summary: "Generate and activate the signed-in client's first plan",
+  description:
+    'Streams the generation as it happens. The guards below answer JSON; once the stream is open the status line is spent and the plan itself is read back from the database, not from the stream.',
   responses: {
-    200: json('Plan generated and activated', GeneratePlanResponseSchema),
+    200: eventStream('Generation progress, one JSON event per frame', PlanStreamEventSchema),
     401: unauthorized,
     409: conflict,
   },
@@ -109,7 +117,7 @@ export function planRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables; Bind
     }
 
     const { system, prompt } = buildFirstPlanPrompt(profile, COACHING_RULES);
-    const generated = await getAgentRuntime({
+    const generation = streamAgentRuntime({
       apiKey: c.env.OPENAI_API_KEY,
       model: c.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
       callSite: 'first-plan',
@@ -118,11 +126,31 @@ export function planRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables; Bind
       outSchema: GeneratedPlanInputSchema,
     });
 
-    const { plan, first_week } = await activateGeneratedPlan(db, clientId, {
-      workflow_id: `first-plan:${clientId}`,
-      plan: generated,
+    // Plumbing only from here: open the stream, emit what the partial output
+    // says, activate, emit `ready`, close. A throw anywhere below ends the
+    // stream without `ready`, which the browser reads as a failure — the
+    // terminal `failed` event that carries a code and a message is a later
+    // slice.
+    return streamSSE(c, async (stream) => {
+      const write = (event: PlanStreamEvent): Promise<void> =>
+        stream.writeSSE({ data: JSON.stringify(event) });
+
+      // `total_weeks` follows `label` in the generated shape, so by the time
+      // it parses the label is whole rather than a growing prefix. Key order
+      // is load-bearing here: reordering that schema delays the header.
+      let announced = false;
+      for await (const partial of generation.partialOutputStream) {
+        if (announced || partial.label === undefined || partial.total_weeks === undefined) continue;
+        announced = true;
+        await write({ type: 'meta', label: partial.label, total_weeks: partial.total_weeks });
+      }
+
+      const { plan, first_week } = await activateGeneratedPlan(db, clientId, {
+        workflow_id: `first-plan:${clientId}`,
+        plan: await generation.output,
+      });
+      await write({ type: 'ready', plan_id: plan.id, first_week_id: first_week.id });
     });
-    return c.json({ plan, first_week }, 200);
   });
 
   return app;

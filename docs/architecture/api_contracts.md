@@ -84,10 +84,18 @@ The shape, which the document does not state in one place:
 | Workflow start | `POST /api/wf/complete-week` |
 
 Plan creation is not workflow-only. `POST /api/me/plans/generate` builds a first plan from the
-caller's profile with one synchronous, structured-output model call and activates it through the same
+caller's profile with one structured-output model call and activates it through the same
 atomic command the weekly workflow uses, keyed by a deterministic `first-plan:{clientId}` value instead
 of a workflow instance id. It refuses with `409 plan_already_active` or `409 profile_required` before
 ever reaching the model.
+
+That call streams. The route answers `text/event-stream` and writes one JSON event per frame as the
+model writes the plan, so the browser can show the block's name and length while generation is still
+running. The guards above run before any byte of the stream, so they still answer ordinary JSON with
+their status codes — the route answers two content types depending on outcome, deliberately. Once the
+stream is open the status line is spent. The events are a view of unvalidated, unpersisted partial
+output: the only durable act is still the atomic activation at the end, and the browser reads the plan
+back out of the database rather than from the stream.
 
 Workflow requests are asynchronous. `POST /api/wf/complete-week` takes the athlete from the verified token, like every other `/api/*` route, and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. [TODO]: the UI does not poll workflow status.
 

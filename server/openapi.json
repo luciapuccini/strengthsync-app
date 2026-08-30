@@ -640,19 +640,68 @@
           "notes"
         ]
       },
-      "GeneratePlanResponse": {
+      "PlanStreamEvent": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "meta"
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "total_weeks": {
+                "type": "integer",
+                "minimum": 4,
+                "maximum": 8
+              }
+            },
+            "required": [
+              "type",
+              "label",
+              "total_weeks"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "ready"
+                ]
+              },
+              "plan_id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "first_week_id": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "required": [
+              "type",
+              "plan_id",
+              "first_week_id"
+            ]
+          }
+        ]
+      },
+      "WeekResponse": {
         "type": "object",
         "properties": {
-          "plan": {
-            "$ref": "#/components/schemas/Plan"
-          },
-          "first_week": {
+          "week": {
             "$ref": "#/components/schemas/Week"
           }
         },
         "required": [
-          "plan",
-          "first_week"
+          "week"
         ]
       },
       "Week": {
@@ -867,17 +916,6 @@
         "required": [
           "performed_reps",
           "performed_weight_lb"
-        ]
-      },
-      "WeekResponse": {
-        "type": "object",
-        "properties": {
-          "week": {
-            "$ref": "#/components/schemas/Week"
-          }
-        },
-        "required": [
-          "week"
         ]
       },
       "WeekListResponse": {
@@ -1379,13 +1417,14 @@
     "/api/me/plans/generate": {
       "post": {
         "summary": "Generate and activate the signed-in client's first plan",
+        "description": "Streams the generation as it happens. The guards below answer JSON; once the stream is open the status line is spent and the plan itself is read back from the database, not from the stream.",
         "responses": {
           "200": {
-            "description": "Plan generated and activated",
+            "description": "Generation progress, one JSON event per frame",
             "content": {
-              "application/json": {
+              "text/event-stream": {
                 "schema": {
-                  "$ref": "#/components/schemas/GeneratePlanResponse"
+                  "$ref": "#/components/schemas/PlanStreamEvent"
                 }
               }
             }
