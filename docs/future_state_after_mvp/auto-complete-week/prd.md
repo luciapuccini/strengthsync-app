@@ -265,6 +265,16 @@ early does not get it, because the week ends when it ends.
   only ever helps the manual path — the scheduled run's instance id never reaches
   a browser.
 
+> **Reversed, 2026-08-31.** The status endpoint was built. "Fire and forget" was
+> not a stable state in production: the trigger left the button on `Analyzing…`
+> for ever, because nothing could ever clear it. `GET /api/wf/complete-week/status`
+> now exists and the browser polls it. The cost estimate above was wrong in one
+> place — deriving the instance id from the session and the date removed the path
+> parameter, the owner check and any need to store the id, so the route carries no
+> schema of its own beyond the status enum. The second half of the reasoning still
+> holds: a scheduled run has no browser to report to, so the scheduled path still
+> needs no status surface.
+
 ### Analytics
 
 - The existing "week completed" funnel event stays where it is, on the manual

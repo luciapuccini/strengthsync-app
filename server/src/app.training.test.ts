@@ -289,12 +289,20 @@ describe('day log writes', () => {
 });
 
 describe('the workflow trigger', () => {
-  const workflowEnv = () => {
-    const create = vi.fn(async () => ({
-      id: 'wf-instance-1',
-      status: async () => ({ status: 'running' }),
-    }));
-    return { env: { STRENGTHSYNC_WORKFLOW: { create } }, create };
+  // Both routes derive this, so a second press finds the first run instead of
+  // starting a second one. See docs/architecture/workflows.md.
+  const instanceId = () => `turnover-${ana.id}-${new Date().toISOString().slice(0, 10)}`;
+
+  const workflowEnv = (status: string = 'running', exists = true) => {
+    const create = vi.fn(async ({ id }: { id: string }) => {
+      if (!exists) throw new Error('instance already exists');
+      return { id, status: async () => ({ status }) };
+    });
+    const get = vi.fn(async (id: string) => {
+      if (!exists && id !== instanceId()) throw new Error('instance.not_found');
+      return { id, status: async () => ({ status }) };
+    });
+    return { env: { STRENGTHSYNC_WORKFLOW: { create, get } }, create, get };
   };
 
   it('starts an instance for the authenticated athlete', async () => {
@@ -307,8 +315,55 @@ describe('the workflow trigger', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await body(response)).toMatchObject({ instanceId: 'wf-instance-1' });
-    expect(create).toHaveBeenCalledWith({ params: { clientId: ana.id } });
+    expect(await body(response)).toMatchObject({ instanceId: instanceId(), status: 'running' });
+    expect(create).toHaveBeenCalledWith({ id: instanceId(), params: { clientId: ana.id } });
+  });
+
+  it('reports the run already under way instead of starting a second one', async () => {
+    const { env, get } = workflowEnv('running', false);
+
+    const response = await app.request(
+      '/api/wf/complete-week',
+      { method: 'POST', headers: ana.headers },
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await body(response)).toMatchObject({ instanceId: instanceId(), status: 'running' });
+    expect(get).toHaveBeenCalledWith(instanceId());
+  });
+
+  it.each(['complete', 'errored'])('reports a %s run verbatim', async (status) => {
+    const { env } = workflowEnv(status);
+
+    const response = await app.request(
+      '/api/wf/complete-week/status',
+      { headers: ana.headers },
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(await body(response)).toEqual({ status });
+  });
+
+  it('answers 404 when no turnover ran today', async () => {
+    const env = {
+      STRENGTHSYNC_WORKFLOW: {
+        create: vi.fn(),
+        get: vi.fn(async () => {
+          throw new Error('instance.not_found');
+        }),
+      },
+    };
+
+    const response = await app.request(
+      '/api/wf/complete-week/status',
+      { headers: ana.headers },
+      env,
+    );
+
+    expect(response.status).toBe(404);
+    expect(await body(response)).toMatchObject({ error: { code: 'turnover_not_found' } });
   });
 
   it('starts no workflow without a token', async () => {

@@ -14,12 +14,13 @@ provided by the platform: each `step.do` re-records its output, steps are re-run
 a real failure, and the instance resumes from where it left off after a crash. Product data
 lives in D1; the workflow holds execution state.
 
-The browser starts a workflow asynchronously and never waits for an LLM response. LLM tracing
-is not wired in this pass.
+The browser starts a workflow asynchronously and never waits for an LLM response. It then polls
+the instance until the run ends — see [Reporting the run](#reporting-the-run). LLM tracing is not
+wired in this pass.
 
 ## Trigger
 
-**Trigger:** `POST /wf/complete-week` (`server/src/routes/cf-api.ts`)
+**Trigger:** `POST /wf/complete-week` (`server/src/routes/wf/endpoints.ts`)
 
 **Input**
 
@@ -165,8 +166,55 @@ intermediates are not product records.
 | Profile/history summaries | 2 (1 s delay, linear) | Run independently, in parallel |
 | Plan generation | 2 (1 s delay, linear) | Structured-output validation failures are retryable |
 
-On final failure, the workflow instance is marked failed. Failure details are exposed only
-through Cloudflare Workers Logs; the UI does not poll workflow status.
+On final failure, the workflow instance is marked failed. Its `errored` status reaches the
+browser through the status route below; the failure *details* are still exposed only through
+Cloudflare Workers Logs.
+
+## Reporting the run
+
+The workflow's return value goes to the Workflows runtime, not to the browser, and a durable run
+outlives the request that started it. So the browser needs a second route to learn the run ended.
+
+**The derived instance id.** Both routes build the same id from the session and the date:
+
+```
+turnover-<clientId>-<todayIso()>
+```
+
+Nothing has to be stored and nothing has to be passed back. `GET /wf/complete-week/status` rebuilds
+the id from the verified token, so it takes no path parameter and needs no ownership check — an
+athlete can only ever name their own instance. The id also makes the trigger idempotent: Cloudflare
+refuses a duplicate id, so a second press reports the run already under way instead of starting a
+second set of paid model calls. `POST /wf/complete-week` catches that refusal, reads the existing
+instance and answers `200` with its status.
+
+`warning:` the key is scoped to one UTC day. A run started just before UTC midnight cannot be read
+back after it, and the screen falls back to its idle state. Upgrade path: write the instance id on
+the week row in the `complete-week` step and read it from there.
+
+**The client state machine** (`client/src/routes/tracker-page/components/turnover/useTurnover.ts`):
+
+```
+idle ──press──► running ──complete───► ready    invalidate + rehydrate the tracker
+                  │     ──errored────► failed
+                  │     ──terminated─► failed
+                  │     ──5 minutes──► failed
+                  └─ every other status keeps waiting
+```
+
+The last rule is the important one. An unrecognised status must keep waiting, never read as
+success — the same invariant the plan stream holds when it ends without a terminal event.
+
+On `ready` the hook invalidates the tracker resources and rehydrates the store, so the tracker
+renders the new week with no reload. That edge is what the whole route exists for: before it, the
+`running` state had no exit at all.
+
+On mount the hook reads the status once, so a reload during a run rejoins it rather than offering
+the trigger again.
+
+There is no retry after `failed`. The `complete-week` step has already frozen the week by then, so
+a second run finds no `in_flight` week and throws inside the workflow. The screen reports the
+failure instead of offering an action that cannot work.
 
 ## Deferred behavior
 

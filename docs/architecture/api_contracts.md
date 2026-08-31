@@ -97,7 +97,7 @@ stream is open the status line is spent. The events are a view of unvalidated, u
 output: the only durable act is still the atomic activation at the end, and the browser reads the plan
 back out of the database rather than from the stream.
 
-Workflow requests are asynchronous. `POST /api/wf/complete-week` takes the athlete from the verified token, like every other `/api/*` route, and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. [TODO]: the UI does not poll workflow status.
+Workflow requests are asynchronous. `POST /api/wf/complete-week` takes the athlete from the verified token, like every other `/api/*` route, and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. The instance id is derived — `turnover-<clientId>-<todayIso>` — so `GET /api/wf/complete-week/status` can rebuild it from the session alone and needs no path parameter. The browser polls that route until the run reaches a terminal status, which is how the tracker learns the next week exists. See [workflows.md](workflows.md).
 
 
 ## Endpoints current state

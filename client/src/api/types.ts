@@ -20,3 +20,4 @@ export type UpdateDayLog = components['schemas']['UpdateDayLog'];
 export type Week = components['schemas']['Week'];
 export type WeekDay = components['schemas']['WeekDay'];
 export type WeekStatus = components['schemas']['WeekStatus'];
+export type WorkflowStatus = components['schemas']['WorkflowStatus'];
