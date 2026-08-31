@@ -11,15 +11,6 @@ type Props = {
   onRetry: () => void;
 };
 
-/**
- * One line per training day: its focus, and for a day that holds lifts, how
- * many. Rest, activity and cardio days carry no count and read plainly as
- * what they are.
- *
- * Deliberately not the tracker's day rendering: this previews a screen the
- * athlete reaches a second later, and duplicating exercise-level rendering
- * here would mean maintaining two of it forever.
- */
 function DayRow({ day }: { day: ComposingDay }): JSX.Element {
   return (
     <li className="text-sm text-muted-foreground">
@@ -31,18 +22,6 @@ function DayRow({ day }: { day: ComposingDay }): JSX.Element {
   );
 }
 
-/**
- * What the athlete watches while their first plan is written. There is no
- * animation here any more: rows filling in one at a time say more than an orb
- * could, and the `thinking-orbs` dependency went with it.
- *
- * Replaces the wizard for the whole submit-through-generate request — the form
- * is not left on screen mid-request — and retry re-runs generation only.
- *
- * Presentational: it draws whatever the reducer has folded out of the stream
- * so far, and none of it is authoritative — the plan the athlete trains from
- * is the one the tracker reads back out of the database a moment later.
- */
 export function ComposingScreen({ status, composing, onRetry }: Props): JSX.Element {
   if (status === 'failed') {
     return (
@@ -73,8 +52,6 @@ export function ComposingScreen({ status, composing, onRetry }: Props): JSX.Elem
         </ul>
       )}
 
-      {/* Covers the write and the tracker's refetch, so the pause after the
-          last row does not read as a freeze. */}
       {composing.phase !== 'generating' && (
         <p className="text-sm text-muted-foreground">Saving your plan…</p>
       )}

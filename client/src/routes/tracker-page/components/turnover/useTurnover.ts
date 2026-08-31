@@ -15,10 +15,6 @@ const GIVE_UP_MS = 5 * 60_000;
 const FAILED = 'We could not build next week. Ask your coach to look at it.';
 const SLOW = 'This is taking longer than usual. Come back in a few minutes.';
 
-/**
- * An unrecognised status keeps waiting: reading it as success is the failure
- * mode `9625b77` closed for the plan stream.
- */
 export function turnoverPhase(status: WorkflowStatus): Exclude<TurnoverPhase, 'idle'> {
   if (status === 'complete') return 'ready';
   if (status === 'errored' || status === 'terminated') return 'failed';
@@ -31,12 +27,10 @@ export type Turnover = {
   start: () => Promise<void>;
 };
 
-/** Drives the week turnover. See docs/architecture/workflows.md. */
 export function useTurnover(): Turnover {
   const [phase, setPhase] = useState<TurnoverPhase>('idle');
   const [message, setMessage] = useState<string | null>(null);
 
-  // Rejoin a run that started before a reload.
   useEffect(() => {
     let live = true;
     void getTurnoverStatus()
