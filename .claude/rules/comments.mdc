@@ -1,9 +1,7 @@
 ---
 description: Where explanation belongs — docs first, comments as a last resort
-globs: *.ts,*.tsx,*.js,*.jsx
 alwaysApply: true
 ---
-
 # Comments
 
 ## The rule
