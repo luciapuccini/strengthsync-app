@@ -10,7 +10,7 @@ export function TabBar(): JSX.Element {
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/80 pb-safe-5 backdrop-blur-md"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/80 p-2 backdrop-blur-md"
     >
       <div className="mx-auto flex w-full max-w-3xl pr-safe-3 pl-safe-3">
         {destinations.map(({ path, label, icon: Icon }) => {
