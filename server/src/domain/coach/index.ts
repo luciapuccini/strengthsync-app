@@ -14,6 +14,13 @@ export {
 } from './plan-generation.ts';
 
 export {
+  progressionCeiling,
+  PROGRESSION_MODES,
+  type ProgressionCeiling,
+  type ProgressionMode,
+} from './progression.ts';
+
+export {
   WeekAnalysisSchema,
   NextWeekScheduleSchema,
   type WeekAnalysis,

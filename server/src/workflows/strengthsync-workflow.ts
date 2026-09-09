@@ -24,6 +24,8 @@ import {
 import {
   NextWeekScheduleSchema,
   WeekAnalysisSchema,
+  progressionCeiling,
+  type ProgressionCeiling,
   type WeekAnalysis,
 } from '../domain/coach/index.ts';
 import { addDays } from '../db/index.ts';
@@ -44,6 +46,8 @@ const WEEK_ANALYSIS_SYSTEM = [
   'easy/hard/heavy/light feedback, performed sets versus prescription, and fatigue signals.',
   'Days with completed:false mean the athlete did not finish those sessions and missed targets;',
   'reflect reduced adherence in next-week guidance. Do not invent missing performance data.',
+  'The progression_ceiling caps what the next week may change per exercise: never call for',
+  'more than it allows, and hold when the week does not support even that.',
   'Do not prescribe the next schedule yet.',
   'Never write a weight into your analysis: say "the athlete is ready for more load" rather than',
   'naming a figure, so your prose can never contradict the prescription the app renders.',
@@ -56,7 +60,9 @@ const NEXT_WEEK_SYSTEM = [
   'Every day must be incomplete: completed=false, completed_at=null.',
   'Every exercise must have skipped=false, feedback=null, and sets=[].',
   'Adjust prescribed series/reps/weight from the completed week and plan template using the analysis and coaching rules.',
-  'Prefer progressive overload on compound lifts when the analysis supports it.',
+  'The progression_ceiling caps each exercise: "hold" repeats the prescription, "reps" adds',
+  'reps at an unchanged weight, "weight" allows +5 lb. Push less when the completed week does',
+  'not support the ceiling, never more. Exercises absent from by_exercise take default_mode.',
   'Every weight in the input and in your output is in pounds, and every height is in inches.',
   'Weights belong in the weight_lb field and nowhere else: never write a weight into notes',
   'or any other prose. Say "add load" rather than naming a figure, so a sentence can never',
@@ -83,6 +89,7 @@ function buildCompleteWeekCtx(
   userProfile: ClientProfile,
   completedWeek: Week,
   rules: string,
+  ceiling: ProgressionCeiling,
 ) {
   return "Analyze the user's week and provide a summary for the coach to take action on."
     .concat('\n\n')
@@ -93,6 +100,7 @@ function buildCompleteWeekCtx(
           profile: userProfile,
           active_plan: currentPlan,
           completed_week: completedWeek,
+          progression_ceiling: ceiling,
         },
         null,
         2,
@@ -107,6 +115,7 @@ function buildNextWeekPrompt({
   completedWeek,
   userProfile,
   nextWeekStart,
+  ceiling,
 }: {
   currentPlan: Plan;
   analysis: WeekAnalysis;
@@ -114,6 +123,7 @@ function buildNextWeekPrompt({
   completedWeek: Week;
   userProfile: ClientProfile;
   nextWeekStart: string;
+  ceiling: ProgressionCeiling;
 }) {
   return JSON.stringify(
     {
@@ -123,6 +133,7 @@ function buildNextWeekPrompt({
       completed_week: completedWeek,
       profile: userProfile,
       next_week_start_date: nextWeekStart,
+      progression_ceiling: ceiling,
     },
     null,
     2,
@@ -170,6 +181,9 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
       return { plan_complete: true, plan_id: plan.id, first_week_id: first_week.id };
     }
 
+    const completedWeeks = await loadCompletedWeeks(step, db, clientId, currentPlan);
+    const ceiling = progressionCeiling(completedWeek.week_index + 1, completedWeeks);
+
     const weekAnalysis = await step.do(
       'analyze-week',
       { retries: { limit: 2, delay: '1 second', backoff: 'linear' } },
@@ -179,7 +193,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
           model: this.env.OPENAI_MODEL ?? 'gpt-4.1-mini',
           callSite: 'analyze-week',
           system: WEEK_ANALYSIS_SYSTEM,
-          prompt: buildCompleteWeekCtx(currentPlan, userProfile, completedWeek, rules),
+          prompt: buildCompleteWeekCtx(currentPlan, userProfile, completedWeek, rules, ceiling),
 
           outSchema: WeekAnalysisSchema,
         });
@@ -205,6 +219,7 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
             completedWeek,
             userProfile,
             nextWeekStart,
+            ceiling,
           }),
           outSchema: NextWeekScheduleSchema,
         });

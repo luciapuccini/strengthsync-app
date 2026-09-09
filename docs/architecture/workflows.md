@@ -38,6 +38,7 @@ flowchart LR
   Start[Start]
   Freeze[Complete_Week]
   Context[Load_Context]
+  Ceiling[Progression_Ceiling]
   Analyze[Analyze_Week]
   Check{Last week_of_plan?}
   History[Load_Completed_Weeks]
@@ -49,7 +50,7 @@ flowchart LR
   EndWeekly[Finish next_week_id]
   EndPlan[Finish plan_id + first_week_id]
 
-  Start --> Freeze --> Context --> Analyze --> Check
+  Start --> Freeze --> Context --> Ceiling --> Analyze --> Check
   Check -->|"no"| Gen --> Save --> EndWeekly
   Check -->|"yes"| History --> Summaries --> Plan --> Activate --> EndPlan
 ```
@@ -78,22 +79,53 @@ This is the default branch: the completed week is not the plan's last.
    The coaching rules are current and are carried alongside. This context is reused by the
    plan-turnover branch if the week happens to be the plan's last.
 
-3. **Analyze week**  
+3. **Compute the progression ceiling**  
+   Read the completed weeks of the active plan (`loadCompletedWeeks`) and compute
+   `progressionCeiling` (`server/src/domain/coach/progression.ts`). No LLM call: the
+   ceiling is arithmetic over the stored weeks, so the model never counts weeks itself.
+   See "Progression ceiling" below.
+
+4. **Analyze week**  
    Invoke the LLM with completed-day status, skipped exercises, exercise feedback, performed
    sets versus prescription, the active plan, and coaching rules.  
    The analysis produces actionable guidance for generation only. It is held in workflow
    memory and traced in the agent runtime; it is **not persisted in D1**.
 
-4. **Branch on the plan boundary**  
+5. **Branch on the plan boundary**  
    If `week_index >= total_weeks`, take the plan-turnover branch below. Otherwise continue.
 
-5. **Generate next week**  
-   Call structured generation with the completed week, active plan, analysis, and coaching
-   rules. The output is a full `WeekDay[]` schedule for the next dated week, validated by
+6. **Generate next week**  
+   Call structured generation with the completed week, active plan, analysis, ceiling, and
+   coaching rules. The output is a full `WeekDay[]` schedule for the next dated week, validated by
    `NextWeekScheduleSchema` (seven days, all incomplete, empty logs).
 
-6. **Save next week**  
+7. **Save next week**  
    Persist the validated schedule as the sole next `in_flight` week (`saveNextWeek`).
+
+### Progression ceiling
+
+Progression is staged, not weekly. `progressionCeiling(nextWeekIndex, completedWeeks)`
+returns one mode per `exercise_key` — `hold`, `reps` or `weight` — and both prompts carry it
+as `progression_ceiling`. It is a **ceiling**: the model may push less when the completed
+week does not support it, never more. Weights and rep counts stay the model's call inside
+that cap; only the cap is computed.
+
+Modes, counted from the start of the plan or from the last weight push of that exercise
+(whichever is later — a push restarts the cycle):
+
+| Cycle week | Mode | Meaning |
+| --- | --- | --- |
+| 1–2 | `hold` | The client gets used to the routine. |
+| 3–4 | `reps` | If the week was done as prescribed, add up to 2 reps. Weights unchanged. |
+| 5+ | `reps`, or `weight` after more than 3 consecutive `easy`/`light` weeks for that exercise | `weight` allows +5 lb, and resets reps to the plan baseline. |
+
+A week counts as `easy` for an exercise when it carries at least one feedback and every
+feedback on it is `easy` or `light`; any other rating breaks the run. Weeks that do not
+schedule the exercise leave its run untouched. Getting a load back to the plan baseline is a
+repair, not a push, and is allowed at any ceiling.
+
+The same staging applies across plan boundaries: `week_index` restarts at 1 with each new
+plan, so a new block always opens with two `hold` weeks.
 
 **Result**
 

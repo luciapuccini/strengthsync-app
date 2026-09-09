@@ -107,7 +107,8 @@ export async function generatePlan(
         system: [
           'You are a strength coach generating a multi-week training plan.',
           'Produce a canonical week_template for days 1–7 with exercise_key, series, reps, rest, and optional weight.',
-          'Follow the coaching rules. Prefer progressive overload on compound lifts.',
+          'Follow the coaching rules. The template is the baseline of the new block, set from',
+          'history: do not build weekly progression into it. Weeks 1 and 2 hold that baseline.',
           'week_template must include every day_index from 1 to 7 exactly once.',
           'Every weight in the input and in your output is in pounds, and every height is in inches.',
           'Weights belong in the weight_lb field and nowhere else: never write a weight into notes',
