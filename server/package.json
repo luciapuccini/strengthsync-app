@@ -22,6 +22,7 @@
     "db:seed:coach:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/000_default_coach.sql",
     "db:seed:demo:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/001_demo_seed.sql",
     "db:seed:history:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/002_historical_weeks.sql",
+    "db:seed:identity:local": "wrangler d1 execute strengthsync --local --file ./db/seeds/003_demo_identity.sql",
     "db:migrate:remote": "wrangler d1 migrations apply strengthsync --remote"
   },
   "dependencies": {
