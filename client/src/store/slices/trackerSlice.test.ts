@@ -97,6 +97,26 @@ describe('trackerSlice draft persistence', () => {
     expect(useAppStore.getState().week?.schedule).toEqual(expected.schedule);
   });
 
+  it('trusts the server completed day over a stale draft (multi-device save)', () => {
+    // Web holds a stale draft (day 1 incomplete); phone saved day 1, so the
+    // server week has day 1 completed. Hydrating must show the saved day.
+    const serverV1 = makeWeek();
+    useAppStore.getState().hydrateTracker({ client, plan: null, week: serverV1 });
+    useAppStore.getState().toggleSet(1, 'bench_press', 0);
+    const serverV2 = {
+      ...serverV1,
+      schedule: [
+        { ...serverV1.schedule[0]!, completed: true, completed_at: NOW },
+        serverV1.schedule[1]!,
+      ],
+    };
+    useAppStore.setState({ client: null, plan: null, week: null }, false);
+
+    useAppStore.getState().hydrateTracker({ client, plan: null, week: serverV2 });
+
+    expect(useAppStore.getState().week?.schedule[0]?.completed).toBe(true);
+  });
+
   it('keeps a matching draft after saveDay', async () => {
     const week = makeWeek();
     const expected = applyToggleSkip(week, 1, 'bench_press');
@@ -133,6 +153,37 @@ describe('trackerSlice draft persistence', () => {
 
     expect(useAppStore.getState().week).toEqual(week);
     expect(window.localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+  });
+});
+
+describe('trackerSlice multi-device', () => {
+  it('keeps local edits to incomplete days when another day was saved remotely', () => {
+    const serverV1 = makeWeek();
+    const withLocalDay2Edit = {
+      ...serverV1,
+      schedule: [serverV1.schedule[0]!, { ...serverV1.schedule[1]!, notes: 'local-note' }],
+    };
+    useAppStore.getState().hydrateTracker({ client, plan: null, week: serverV1 });
+    window.localStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        ...serverV1,
+        schedule: [serverV1.schedule[0]!, withLocalDay2Edit.schedule[1]!],
+      }),
+    );
+    const serverV2 = {
+      ...serverV1,
+      schedule: [
+        { ...serverV1.schedule[0]!, completed: true, completed_at: NOW },
+        serverV1.schedule[1]!,
+      ],
+    };
+    useAppStore.setState({ client: null, plan: null, week: null }, false);
+
+    useAppStore.getState().hydrateTracker({ client, plan: null, week: serverV2 });
+
+    expect(useAppStore.getState().week?.schedule[0]?.completed).toBe(true);
+    expect(useAppStore.getState().week?.schedule[1]).toEqual(withLocalDay2Edit.schedule[1]);
   });
 });
 
