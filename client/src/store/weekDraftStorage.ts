@@ -61,7 +61,17 @@ export function reconcileWeekDraft(serverWeek: Week | null, clientId: string | n
     removeWeekDraft(clientId);
     return serverWeek;
   }
-  return { ...serverWeek, schedule: draft.schedule };
+  // Multi-device merge: the server owns completed days (e.g. saved from a
+  // phone), so a stale local draft must never overwrite them. Only incomplete
+  // server days keep local unsaved edits.
+  const draftByIndex = new Map(draft.schedule.map((day) => [day.day_index, day]));
+  return {
+    ...serverWeek,
+    schedule: serverWeek.schedule.map((serverDay) => {
+      if (serverDay.completed) return serverDay;
+      return draftByIndex.get(serverDay.day_index) ?? serverDay;
+    }),
+  };
 }
 
 /**
