@@ -1,29 +1,71 @@
-name: OpenCode PR Review
+name: Codex PR Review
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-permissions:
-  contents: read
-  pull-requests: write
-
 jobs:
   review:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout pull request
+        uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          persist-credentials: false
 
-      - name: Set up OpenCode CLI
-        uses: opencode-ai/setup-opencode@v1
-        with:
-          version: 'latest'
-
-      - name: Run Review Agent
-        run: opencode agent run review --pr-mode
+      - name: Fetch pull request refs
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git fetch --no-tags origin \
+            "$PR_BASE_REF" \
+            "+refs/pull/$PR_NUMBER/head"
+
+      - name: Run Codex review
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ':read-only'
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} in ${{ github.repository }}.
+
+            Review only issues introduced by this pull request. Inspect the diff between:
+            ${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}
+
+            Report only actionable bugs, security issues, performance regressions, or maintainability problems.
+            For each finding, include the exact file path and line number. Be concise and specific.
+            If there are no findings, say so clearly.
+
+            Pull request title and body:
+            ---
+            ${{ github.event.pull_request.title }}
+            ${{ github.event.pull_request.body }}
+
+  post_feedback:
+    runs-on: ubuntu-latest
+    needs: review
+    if: needs.review.outputs.final_message != ''
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Post Codex review
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ needs.review.outputs.final_message }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## Codex review\n\n${process.env.CODEX_FINAL_MESSAGE}`,
+            });
