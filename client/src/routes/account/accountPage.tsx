@@ -52,22 +52,16 @@ export function AccountPage(): JSX.Element {
   return (
     <div className="flex flex-col gap-5">
       <Card>
-        <CardHeader>
-          <CardTitle>Account</CardTitle>
-          {client && <CardDescription>Signed in as {client.display_name}</CardDescription>}
+        <CardHeader className="flex-row items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <CardTitle>Account</CardTitle>
+            {client && <CardDescription>Signed in as {client.display_name}</CardDescription>}
+          </div>
+          <SignOutButton />
         </CardHeader>
       </Card>
 
       <UnitsCard />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Sign out</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SignOutButton />
-        </CardContent>
-      </Card>
 
       <Card className="border-destructive/40">
         <CardHeader>

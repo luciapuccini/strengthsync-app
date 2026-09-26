@@ -1,5 +1,6 @@
 import type { JSX } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { LogOut } from 'lucide-react';
 
 import { Button } from '@/shadcn/ui/button';
 import { useAppStore } from '@/store/useAppStore';
@@ -27,14 +28,14 @@ export function SignOutButton(): JSX.Element {
   return (
     <Button
       type="button"
-      variant="ghost"
+      variant="outline"
       size="sm"
       onClick={() => {
         signOutSession();
         void logout({ logoutParams: { returnTo: window.location.origin } });
       }}
-      className="text-sm text-muted-foreground hover:text-foreground"
     >
+      <LogOut aria-hidden="true" />
       Sign out
     </Button>
   );
