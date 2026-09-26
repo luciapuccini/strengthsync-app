@@ -7,16 +7,7 @@ Refer to main README.md to read about project structure, main convensions, tech 
 Take package.json as source of truth, those are the real commands.
 
 ## Rules
-While working you have to follow our rules defined in .agents/rules.
-
+While working you have to follow our rules defined in .claude/rules.
 
 ## Skills
-Files that can extend your capabilities. in .agents/skills.
-
-*Example metadata for Skill limited to human invocation*
-
----
-name: implement
-description: "Implement a piece of work based on a spec or issue."
-disable-model-invocation: true
---- 
+Files that can extend your capabilities. in .claude/skills.
