@@ -1,6 +1,6 @@
 ---
 name: prd-to-issues
-description: Break a PRD into independently-workable issues and write each as a local markdown file in issues/. Use when the user wants to turn a PRD into a list of concrete tasks.
+description: Break a PRD into independently-workable issues and write each as a local markdown file in docs/issues/. Use when the user wants to turn a PRD into a list of concrete tasks.
 ---
 
 # PRD to Issues
@@ -11,7 +11,7 @@ Break a PRD into independently-grabbable issues using vertical slices (tracer bu
 
 ### 1. Locate the PRD
 
-Ask the user for the PRD file path (e.g. `issues/prd.md`).
+Ask the user for the PRD file path (e.g. `docs/issues/prd.md`).
 
 If the PRD is not already in your context window, read it from the file.
 
@@ -51,9 +51,9 @@ Iterate until the user approves the breakdown.
 
 ### 5. Create the issue files
 
-For each approved slice, write a markdown file in `issues/` using the naming pattern `issues/NNN-short-title.md` (e.g. `issues/001-add-user-auth.md`).
+For each approved slice, write a markdown file in `docs/issues/` using the naming pattern `docs/issues/NNN-short-title.md` (e.g. `docs/issues/001-add-user-auth.md`).
 
-Number issues starting from the next available number (check what files already exist in `issues/`).
+Number issues starting from the next available number (check what files already exist in `docs/issues/`).
 
 Create files in dependency order (blockers first) so you can reference real filenames in the "Blocked by" field.
 
@@ -63,20 +63,17 @@ Do NOT use `gh issue create` or any GitHub CLI commands. Do NOT reference GitHub
 
 After PRD slices issues are clear, add one more to make a final swipe of the PRD implementation to answer these:
 
-  - are we on track with what we planned
-  for?
-  - any notable files or funtions that
-  diverged from our project standards and
-  notations? - are bugs or out of scope
-  side findings documented and not
-  actioned?
+  - are we on track with what we planned for?
+  - any notable files or funtions that diverged from our project standards and notations? - are bugs or out of scope side findings documented and not actioned?
   - was the documentation (/docs) updated consistently with the progress? 
   - suggested next steps?
+  - Did the user validate manually the result in dev environment?
 
 <issue-template>
+
 ## Parent PRD
 
-`issues/prd.md` (or whichever PRD file was used)
+`docs/issues/prd.md` (or whichever PRD file was used)
 
 ## What to build
 
@@ -90,7 +87,7 @@ A concise description of this vertical slice. Describe the end-to-end behavior, 
 
 ## Blocked by
 
-- Blocked by `issues/NNN-title.md` (if any)
+- Blocked by `docs/issues/NNN-title.md` (if any)
 
 Or "None - can start immediately" if no blockers.
 

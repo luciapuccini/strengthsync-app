@@ -1,16 +1,20 @@
 ---
-alwaysApply: true
+paths:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
 ---
 
 # Developer preferences: start simple, scale with evidence
 
-Start at the simplest implementation level that meets the current requirements. Add a more complex pattern only when a real constraint makes the simple option incorrect, unsafe, or hard to maintain.
+Start at the simplest implementation level that meets the current requirements. Add a more complex pattern only when a real constraint makes the simple option incorrect, unsafe, or hard to maintain. The best code is the code never written.
 
 ## Before coding
 
 1. Read the task and trace the current flow from input to output.
 2. Find the existing source of truth, helpers, events, components, and tests.
-3. List the behavior that must remain true.
+3. List the behavior that must remain true.(Tests or TDD help here)
 4. Choose the smallest change that provides that behavior.
 5. Add one focused check for non-trivial logic.
 
@@ -31,7 +35,8 @@ Prefer these options first:
 - Keep tests on public behavior. Do not test internal implementation details.
 - Change the fewest files that can contain the complete behavior.
 
-Example: a browser basket with at most five objects needs a validated local-storage read, a write, a limit check, and a small update event. It does not need cached snapshots, a custom subscriber registry, a provider, or a state library.
+_Example:_
+A browser basket with at most five objects needs a validated local-storage read, a write, a limit check, and a small update event. It does not need cached snapshots, a custom subscriber registry, a provider, or a state library.
 
 ## Do not add complexity by default
 
@@ -73,6 +78,10 @@ If these four points are not clear, keep the simple implementation.
 
 ## Review standard
 
-A simple change is complete when it is correct, safe at trust boundaries, accessible, and covered by the smallest useful test. Fewer lines are good only when behavior stays clear.
+A simple change is complete when it is correct, safe at trust boundaries, accessible, and covered by the smallest useful test. Fewer lines are good only when behavior stays readable, but I prefer verbosity for clarity.
 
 Prefer code that a project contributor can understand from the task, the caller, and one implementation file. Complexity must pay for itself now.
+
+## Communication
+
+ASD-STE100 Simplified Technical English
