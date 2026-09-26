@@ -59,18 +59,16 @@ export function DayHeader({
           <Badge className="border-primary/20 bg-primary/15 text-primary">Done</Badge>
         )}
       </button>
-      {!day.completed && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="ml-auto min-h-11"
-          disabled={isSaving}
-          onClick={onSave}
-        >
-          {isSaving && <Spinner />}
-          {isSaving ? 'Saving…' : 'Save day'}
-        </Button>
-      )}
+      <Button
+        size="sm"
+        variant="outline"
+        className="ml-auto min-h-11"
+        disabled={isSaving}
+        onClick={onSave}
+      >
+        {isSaving && <Spinner />}
+        {isSaving ? 'Saving…' : 'Save day'}
+      </Button>
     </div>
   );
 }
