@@ -9,8 +9,10 @@ import { Spinner } from '@/shadcn/ui/spinner';
 
 export function CompleteWeekButton({
   variant = 'default',
+  size = 'sm',
 }: {
   variant?: 'default' | 'outline';
+  size?: 'sm' | 'xl';
 }): JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
 
@@ -36,8 +38,8 @@ export function CompleteWeekButton({
   return (
     <Button
       variant={variant}
-      size="sm"
-      className="min-h-11 px-3"
+      size={size}
+      className={size === 'sm' ? 'min-h-11 px-3' : undefined}
       disabled={isRunning}
       onClick={completeWeek}
     >
