@@ -7,7 +7,11 @@ import { trackWeekCompleted } from '@/lib/analytics';
 import { Button } from '@/shadcn/ui/button';
 import { Spinner } from '@/shadcn/ui/spinner';
 
-export function CompleteWeekButton(): JSX.Element {
+export function CompleteWeekButton({
+  variant = 'default',
+}: {
+  variant?: 'default' | 'outline';
+}): JSX.Element {
   const [isRunning, setIsRunning] = useState(false);
 
   async function completeWeek(): Promise<void> {
@@ -30,7 +34,13 @@ export function CompleteWeekButton(): JSX.Element {
   }
 
   return (
-    <Button size="sm" className="min-h-11 px-3" disabled={isRunning} onClick={completeWeek}>
+    <Button
+      variant={variant}
+      size="sm"
+      className="min-h-11 px-3"
+      disabled={isRunning}
+      onClick={completeWeek}
+    >
       {isRunning && <Spinner />}
       {isRunning ? 'Analyzing…' : 'Complete week'}
     </Button>
