@@ -2,15 +2,102 @@
 
 Vendor-agnostic, deliberately small production model. It keeps SQL for ownership, lifecycle, and history, but does **not** turn every day, exercise, and set into a database entity.
 
-The plan is a structured document; each concrete week is a structured log. The database has five core records: **Coach → Client → ClientProfile / Plan / Week**.
+The plan is a structured document; each concrete week is a structured log. The database has five core records: **Coach → Client → ClientProfile / Plan / Week**, plus one auth table, `client_identities`, that maps a client to its identity-provider subject.
+
+The diagram matches `server/src/db/schema.ts` and the migrations in `server/db/drizzle/` exactly: one entity per table, one attribute per column, with the SQLite storage type. Timestamps and dates are ISO-8601 `text`. JSON columns are `text` in SQLite and are validated by the Zod schemas in `server/src/domain/model/`.
 
 ```mermaid
 erDiagram
-  Coach ||--o{ Client : coaches
-  Client ||--o| ClientProfile : has
-  Client ||--o{ Plan : has
-  Plan ||--o{ Week : has
+  coaches ||--o{ clients : "coach_id"
+  clients ||--o| client_identities : "client_id"
+  clients ||--o| client_profiles : "client_id"
+  clients ||--o{ plans : "client_id"
+  clients ||--o{ weeks : "client_id"
+  plans ||--o{ weeks : "plan_id"
+
+  coaches {
+    text id PK
+    text display_name "NOT NULL"
+    text auth_subject_id "nullable"
+    text created_at "NOT NULL"
+    text updated_at "NOT NULL"
+  }
+
+  clients {
+    text id PK
+    text coach_id FK "NOT NULL, indexed"
+    text display_name "NOT NULL"
+    text status "NOT NULL: active | archived"
+    text unit_preference "NOT NULL DEFAULT imperial: imperial | metric"
+    text created_at "NOT NULL"
+    text updated_at "NOT NULL"
+  }
+
+  client_identities {
+    text client_id PK, FK
+    text subject UK "NOT NULL"
+    text email "NOT NULL"
+    text created_at "NOT NULL"
+    text updated_at "NOT NULL"
+  }
+
+  client_profiles {
+    text id PK
+    text client_id FK, UK "NOT NULL"
+    text snapshot_date "NOT NULL"
+    text sex "nullable"
+    integer age "nullable"
+    real height_in "nullable"
+    text goals "JSON, NOT NULL"
+    text body_composition "JSON, NOT NULL"
+    text strength_loads "JSON, NOT NULL"
+    text nutrition "JSON, nullable"
+    text activities "JSON, nullable"
+    text schedule_preferences "JSON, nullable"
+    text notes "nullable"
+    text updated_at "NOT NULL"
+  }
+
+  plans {
+    text id PK
+    text client_id FK "NOT NULL, indexed; unique WHERE status = active"
+    text label "NOT NULL"
+    text status "NOT NULL: draft | active | archived"
+    integer total_weeks "NOT NULL"
+    text week_template "JSON PlanDay[], NOT NULL"
+    text rationale "nullable"
+    text activated_at "nullable"
+    text workflow_id "nullable, idempotency key"
+    text created_at "NOT NULL"
+    text updated_at "NOT NULL"
+  }
+
+  weeks {
+    text id PK
+    text client_id FK "NOT NULL; unique WHERE status = in_flight"
+    text plan_id FK "NOT NULL; index (client_id, plan_id)"
+    integer week_index "NOT NULL"
+    text start_date "NOT NULL"
+    text end_date "NOT NULL"
+    text status "NOT NULL: in_flight | completed | abandoned"
+    text schedule "JSON WeekDay[], NOT NULL"
+    text workflow_id "nullable, idempotency key"
+    text created_at "NOT NULL"
+    text updated_at "NOT NULL"
+  }
 ```
+
+| Index | Table | Columns | Kind |
+| --- | --- | --- | --- |
+| `clients_coach_id_idx` | `clients` | `coach_id` | index |
+| `client_identities_subject_unique` | `client_identities` | `subject` | unique |
+| `client_profiles_client_id_unique` | `client_profiles` | `client_id` | unique |
+| `plans_client_id_idx` | `plans` | `client_id` | index |
+| `plans_one_active_per_client` | `plans` | `client_id` `WHERE status = 'active'` | partial unique |
+| `weeks_client_plan_idx` | `weeks` | `client_id, plan_id` | index |
+| `weeks_one_in_flight_per_client` | `weeks` | `client_id` `WHERE status = 'in_flight'` | partial unique |
+
+All foreign keys are `ON UPDATE no action ON DELETE no action`.
 
 ```typescript
 type Uuid = string;
@@ -52,6 +139,22 @@ type Client = {
   updated_at: ISODateTime;
 };
 ```
+
+## ClientIdentity (`client_identities`)
+
+Maps a client to its subject at the identity provider. It is an auth record, not part of the public domain model; there is no Zod schema for it in `server/src/domain/model/`. See [auth.md](./auth.md).
+
+```typescript
+type ClientIdentity = {
+  client_id: Uuid; // PK and FK → Client: one identity per client
+  subject: string; // unique; the identity-provider subject
+  email: string; // cache of the provider email at provisioning time
+  created_at: ISODateTime;
+  updated_at: ISODateTime;
+};
+```
+
+**Invariant:** the unique constraint on `subject` prevents two clients for one person when two first requests arrive at the same time.
 
 ## ClientProfile
 
@@ -142,7 +245,9 @@ type PlannedExercise = {
 };
 ```
 
-**Invariant:** at most one active plan per client. Activating a plan archives the previous active plan; it does not delete it.
+**Invariant:** at most one active plan per client (partial unique index `plans_one_active_per_client`). Activating a plan archives the previous active plan; it does not delete it.
+
+The `plans` table also has a nullable `workflow_id` column. It is the idempotency key for the workflow or request that created the row. It is not part of the `Plan` type above.
 
 ## Week
 
@@ -196,8 +301,10 @@ type ExerciseLog = {
 };
 ```
 
+The `weeks` table also has a nullable `workflow_id` idempotency key, the same as `plans`. It is not part of the `Week` type above.
+
 **Invariants:**
-- At most one `in_flight` week per client.
+- At most one `in_flight` week per client (partial unique index `weeks_one_in_flight_per_client`).
 - A completed week remains immutable except for explicit coach corrections.
 - `schedule` is a snapshot. Subsequent plan edits must not rewrite historical weeks.
 - A skipped exercise has `skipped: true` and normally no performed sets.
@@ -216,7 +323,7 @@ type ExerciseLog = {
 
 ## Why this is still SQL
 
-`Coach`, `Client`, `ClientProfile`, `Plan`, and `Week` are SQL rows with IDs, ownership, timestamps, statuses, and foreign keys. `Plan.week_template` and `Week.schedule` are JSON columns validated by shared Zod schemas.
+`Coach`, `Client`, `ClientIdentity`, `ClientProfile`, `Plan`, and `Week` are SQL rows with IDs, ownership, timestamps, statuses, and foreign keys. `Plan.week_template` and `Week.schedule` are JSON columns validated by shared Zod schemas.
 
 This keeps the important queries simple:
 
