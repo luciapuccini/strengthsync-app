@@ -41,7 +41,7 @@ type Scalar = { series: number | null; reps: number | null; weight: number | nul
  * `historyDaySection` an already-converted number to convert again, and every
  * kilogram on the screen would be out by a factor of 2.2.
  */
-function scalars(sets: Week['schedule'][number]['exercises'][number]['sets']): Scalar {
+export function scalars(sets: Week['schedule'][number]['exercises'][number]['sets']): Scalar {
   if (sets.length === 0) return { series: null, reps: null, weight: null };
   const first = sets[0]!;
   return { series: sets.length, reps: first.performed_reps, weight: first.performed_weight_lb };

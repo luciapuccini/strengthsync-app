@@ -11,3 +11,13 @@ export const DAY_TYPES = [
   'activity',
   'cardio',
 ] as const;
+
+/** Display names for each day type. Used by the tracker day header and the history CSV. */
+export const DAY_TYPE_LABELS: Record<(typeof DAY_TYPES)[number], string> = {
+  upper_body: 'Upper body',
+  leg_day: 'Leg day',
+  full_body: 'Full body',
+  activity: 'Activity',
+  cardio: 'Cardio',
+  rest: 'Rest',
+};
