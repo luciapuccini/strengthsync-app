@@ -135,9 +135,9 @@ the page returns early, so the action never needs a null check after that point.
 
 Done when:
 
-- [ ] The action shows only when there are completed weeks.
-- [ ] A click downloads one file with the correct name.
-- [ ] `pnpm lint`, `pnpm typecheck` and `pnpm test` pass.
+- [x] The action shows only when there are completed weeks.
+- [x] A click downloads one file with the correct name.
+- [x] `pnpm lint`, `pnpm typecheck` and `pnpm test` pass.
 
 ### Step 4: Manual validation and final check (HITL)
 
@@ -147,7 +147,9 @@ Done when:
 - [ ] Open the file in Excel or Numbers and make sure accents and numbers show correctly.
 - [ ] Are we on track with this plan? Write down any change from the decisions above.
 - [ ] Do the new files follow the project rules (`.claude/rules/developer_preferences.md`)?
-- [ ] Are bugs or side findings written down in `docs/` and not fixed in this change?
+- [x] Are bugs or side findings written down in `docs/` and not fixed in this change?
+      The 32px touch target is in `docs/todos/todos.md`. `todayIso()` in
+      `lib/dates.ts` gives the UTC date, so the file name uses its own local date.
 - [ ] Is `README.md` updated? Add one line under the user flows for the history export.
 - [ ] Suggested next steps.
 
@@ -160,9 +162,46 @@ Done when:
 
 ## UX outcome
 
-_To be filled in by step 2._
+Proposed in the step 2 ui-craft pass on 2026-10-01. Approved by the user on 2026-10-01.
+
+**Placement: a plan row above the week header, not in the week header.**
+Previous / Next act on the week on screen. The export acts on the full plan. If
+the export button is next to Previous / Next, it looks like a week action. A
+separate row above the week header gives the action the plan's scope. Also, the
+week header does not wrap (`flex justify-between`), and it already holds the
+title, the date range and two buttons. A third button would make it too narrow on
+a phone.
+
+```
+Strength block · 3 completed weeks      [⤓ Export plan (CSV)]
+Week S3 / S6  15/12/2025 – 21/12/2025       [Previous] [Next]
+...day sections...
+```
+
+- Left: `plan.label` and `· N completed weeks` as muted `text-sm` text. This
+  tells the user that the file holds all completed weeks. Use "week" when N is 1.
+- Right: `<Button variant="outline" size="sm">` with the `Download` icon from
+  lucide on the left of the label, at `size-4`, with `aria-hidden`. A left icon
+  shows the type of action (components.md). Outline matches Previous / Next, so
+  the action stays secondary.
+- Label: "Export plan (CSV)". It says the scope (plan) and the format (CSV).
+- Row: `flex flex-wrap items-center justify-between gap-2`. On a narrow phone,
+  the button goes below the text and does not overflow.
+
+**Accessibility**
+- The accessible name is the visible label. Do not add an `aria-label`.
+- Focus order follows the source order: Export, then Previous, then Next. The
+  page-level action comes before the week controls.
+- No toast and no loading state. The download is instant and local, and the
+  browser shows the download.
+- `size="sm"` is 32px high. This is less than the 44px touch target, but it is
+  the same as Previous / Next. Record this in `docs/` as a side finding. Do not
+  fix it in this change.
+
+**Visibility.** The row shows only when there are completed weeks, after the
+early return. The empty state does not change.
 
 ## STATUS
 
-Step 1 done: `toHistoryCsv` and its tests. `scalars` is exported from
-`toWeekHistory.ts`. `DAY_TYPE_LABELS` is in `lib/day-types.ts`. Next: step 2 (ui-craft).
+Steps 1 to 3 done. The export row is in `historyPage.tsx`, with a page test in
+`historyPage.test.tsx`. Next: step 4 (manual validation, HITL).
