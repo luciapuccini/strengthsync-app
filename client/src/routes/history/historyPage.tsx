@@ -9,7 +9,6 @@ import { toHistoryCsv } from '@/routes/history/toHistoryCsv';
 import { toWeekHistory } from '@/routes/history/toWeekHistory';
 import { Button } from '@/shadcn/ui/button';
 import { useUnitPreference } from '@/store/useUnitPreference';
-import { formatIsoDate } from '@/utils/formatIsoDate';
 
 /** `strengthsync-<plan-label-slug>-<YYYY-MM-DD>.csv`, with today's local date. */
 function csvFileName(plan: Plan): string {
@@ -75,11 +74,8 @@ export function HistoryPage(): JSX.Element {
         </Button>
       </div>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">
-          Week {sn} / S{week.total_weeks}{' '}
-          <span className="text-base font-normal text-muted-foreground">
-            {formatIsoDate(week.start_date)} – {formatIsoDate(week.end_date)}
-          </span>
+        <h1 className="text-xl font-semibold tabular-nums">
+          Week {week.week_index} / {week.total_weeks}
         </h1>
         <div className="flex gap-2">
           <Button

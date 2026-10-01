@@ -198,6 +198,10 @@ Week S3 / S6  15/12/2025 – 21/12/2025       [Previous] [Next]
   the same as Previous / Next. Record this in `docs/` as a side finding. Do not
   fix it in this change.
 
+**Week heading (polish pass, user decision).** The week header shows only
+`Week <n> / <total>`. The date range and the "S" prefix are removed from the
+heading. The table headers keep `S<n> - series`.
+
 **Visibility.** The row shows only when there are completed weeks, after the
 early return. The empty state does not change.
 
