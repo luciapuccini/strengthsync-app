@@ -17,4 +17,3 @@ deleted from here.
 - [bug] empty db-&gt; run migrations and seed &gt; user not associated to client identitiy table &gt; issue #1 seed is incconsistet for auth
 - [bug] navigation bar for mobile is too long already, we need a mobile first aproach
 
-- [a11y] history page buttons use `size="sm"` (32px high), less than the 44px touch target. Applies to Previous / Next and the new "Export plan (CSV)" button. Found in the history CSV export ui-craft pass (docs/issues/history-csv-export.md).

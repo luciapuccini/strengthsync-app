@@ -48,7 +48,7 @@ describe('HistoryPage export', () => {
     await renderHistory();
 
     expect(screen.getByText('No completed weeks.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Export plan (CSV)' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Export CSV' })).toBeNull();
   });
 
   it('downloads the plan as a CSV file named after the plan', async () => {
@@ -63,10 +63,34 @@ describe('HistoryPage export', () => {
     });
     await renderHistory();
 
-    expect(screen.getByText('Strength Block #1 · 1 completed week')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Export plan (CSV)' }));
+    expect(screen.getByText('Strength Block #1')).toBeTruthy();
+    expect(screen.getByText('1 completed week')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Export CSV' }));
 
     expect(createObjectURL).toHaveBeenCalledOnce();
     expect(fileName).toMatch(/^strengthsync-strength-block-1-\d{4}-\d{2}-\d{2}\.csv$/);
+  });
+});
+
+describe('HistoryPage week stepper', () => {
+  it('opens on the latest week and steps back and forward', async () => {
+    const weeks = [
+      { ...makeWeek(), week_index: 1 },
+      { ...makeWeek(), week_index: 2 },
+    ];
+    completedWeeksResource.mockReturnValue(Promise.resolve({ weeks, plan }));
+    await renderHistory();
+
+    const previous = screen.getByRole('button', { name: 'Previous week' });
+    const next = screen.getByRole('button', { name: 'Next week' });
+    expect(screen.getByRole('heading', { name: 'Week 2 of 6' })).toBeTruthy();
+    expect(next.hasAttribute('disabled')).toBe(true);
+
+    fireEvent.click(previous);
+    expect(screen.getByRole('heading', { name: 'Week 1 of 6' })).toBeTruthy();
+    expect(previous.hasAttribute('disabled')).toBe(true);
+
+    fireEvent.click(next);
+    expect(screen.getByRole('heading', { name: 'Week 2 of 6' })).toBeTruthy();
   });
 });

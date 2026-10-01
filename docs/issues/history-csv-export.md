@@ -148,7 +148,7 @@ Done when:
 - [ ] Are we on track with this plan? Write down any change from the decisions above.
 - [ ] Do the new files follow the project rules (`.claude/rules/developer_preferences.md`)?
 - [x] Are bugs or side findings written down in `docs/` and not fixed in this change?
-      The 32px touch target is in `docs/todos/todos.md`. `todayIso()` in
+      The 32px touch target was fixed in the header pass (see "UX outcome"). `todayIso()` in
       `lib/dates.ts` gives the UTC date, so the file name uses its own local date.
 - [ ] Is `README.md` updated? Add one line under the user flows for the history export.
 - [ ] Suggested next steps.
@@ -201,6 +201,26 @@ Week S3 / S6  15/12/2025 – 21/12/2025       [Previous] [Next]
 **Week heading (polish pass, user decision).** The week header shows only
 `Week <n> / <total>`. The date range and the "S" prefix are removed from the
 heading. The table headers keep `S<n> - series`.
+
+**Mobile header pass (2026-10-01, user decision).** This replaces the week
+heading and the touch-target notes above.
+
+```
+Strength Block #1      [⤓ Export CSV]
+4 completed weeks
+
+ [‹]       Week 4 of 6        [›]
+─────────────────────────────────
+```
+
+- One `<header>` with a bottom border holds the plan row and the week stepper.
+- Plan row: the plan label (`font-medium`, truncated) above `N completed weeks`
+  (muted). The export button is 44px high, with the label "Export CSV".
+- Week stepper: 44px ghost icon buttons with `ChevronLeft` / `ChevronRight`,
+  `aria-label` "Previous week" / "Next week". The heading between them is
+  `Week <n> of <total>` (the same words as the onboarding "Step n of total"), with
+  `aria-live="polite"` so a screen reader reads the new week.
+- No progress bar. The user chose the simplest stepper.
 
 **Visibility.** The row shows only when there are completed weeks, after the
 early return. The empty state does not change.
