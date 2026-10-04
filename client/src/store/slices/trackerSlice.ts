@@ -5,7 +5,7 @@ import type { Client, ExerciseFeedback, Plan, Week, WeekDay } from '@/api/types'
 import { saveDayLog } from '@/api/client';
 import { toSaveDayLog } from '@/api/dayLog';
 import type { TrackerData } from '@/api/weekResource';
-import { invalidateCurrentWeek } from '@/api/weekResource';
+import { currentWeekResource, invalidateCurrentWeek } from '@/api/weekResource';
 import { trackDaySaved } from '@/lib/analytics';
 import {
   setFeedback as applySetFeedback,
@@ -43,7 +43,9 @@ export type TrackerSlice = {
   client: Client | null;
   plan: Plan | null;
   week: Week | null;
+  nextWeekStart: string | null;
   hydrateTracker: (data: TrackerData) => void;
+  refreshTracker: () => Promise<void>;
   toggleSet: (dayIndex: number, exerciseKey: string, setIndex: number) => void;
   setFeedback: (dayIndex: number, exerciseKey: string, feedback: ExerciseFeedback | null) => void;
   toggleSkip: (dayIndex: number, exerciseKey: string) => void;
@@ -59,6 +61,7 @@ export const createTrackerSlice: StateCreator<
   client: null,
   plan: null,
   week: null,
+  nextWeekStart: null,
 
   hydrateTracker: (data) =>
     set(
@@ -66,10 +69,16 @@ export const createTrackerSlice: StateCreator<
         client: data.client,
         plan: data.plan,
         week: reconcileWeekDraft(data.week, data.client.id),
+        nextWeekStart: data.nextWeekStart,
       },
       false,
       'hydrateTracker',
     ),
+
+  refreshTracker: async () => {
+    invalidateCurrentWeek();
+    get().hydrateTracker(await currentWeekResource());
+  },
 
   toggleSet: (dayIndex, exerciseKey, setIndex) =>
     patchWeek(set, 'toggleSet', (week) => applyToggleSet(week, dayIndex, exerciseKey, setIndex)),
