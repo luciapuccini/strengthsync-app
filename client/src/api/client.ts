@@ -216,6 +216,15 @@ export async function listCompletedWeeks(planId: string): Promise<Week[]> {
   return res.weeks;
 }
 
+export async function listInFlightWeeks(): Promise<Week[]> {
+  const res = await call(() =>
+    api.GET('/api/me/weeks', {
+      params: { query: { status: 'in_flight' } },
+    }),
+  );
+  return res.weeks;
+}
+
 export async function saveDayLog(
   weekId: string,
   dayIndex: number,

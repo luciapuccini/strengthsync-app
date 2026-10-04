@@ -49,7 +49,7 @@ afterEach(() => {
 describe('trackerSlice', () => {
   it('hydrates client/plan/week from a resolved resource', () => {
     const week = makeWeek();
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
 
     expect(useAppStore.getState().client).toEqual(client);
     expect(useAppStore.getState().week).toEqual(week);
@@ -60,7 +60,7 @@ describe('trackerSlice draft persistence', () => {
   it('persists toggleSkip as the exact pure transition result', () => {
     const week = makeWeek();
     const expected = applyToggleSkip(week, 1, 'bench_press');
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
 
     useAppStore.getState().toggleSkip(1, 'bench_press');
 
@@ -70,7 +70,7 @@ describe('trackerSlice draft persistence', () => {
 
   it('persists toggleSet as the exact pure transition result', () => {
     const week = makeWeek();
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
     const withSet = applyToggleSet(week, 1, 'bench_press', 0);
 
     useAppStore.getState().toggleSet(1, 'bench_press', 0);
@@ -88,11 +88,11 @@ describe('trackerSlice draft persistence', () => {
   it('restores a matching stored draft when server data hydrates again', () => {
     const week = makeWeek();
     const expected = applyToggleSkip(week, 1, 'bench_press');
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
     useAppStore.getState().toggleSkip(1, 'bench_press');
     useAppStore.setState({ client: null, plan: null, week: null }, false);
 
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
 
     expect(useAppStore.getState().week?.schedule).toEqual(expected.schedule);
   });
@@ -104,7 +104,7 @@ describe('trackerSlice draft persistence', () => {
       ...week,
       schedule: week.schedule.map((day) => (day.day_index === 1 ? expected.schedule[0]! : day)),
     };
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
     useAppStore.getState().toggleSkip(1, 'bench_press');
     saveDayLog.mockResolvedValue(savedWeek);
 
@@ -115,11 +115,13 @@ describe('trackerSlice draft persistence', () => {
 
   it('clears the client draft when a different week hydrates', () => {
     const week = makeWeek();
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
     useAppStore.getState().toggleSkip(1, 'bench_press');
     const nextWeek = { ...week, id: NEXT_WEEK_UUID };
 
-    useAppStore.getState().hydrateTracker({ client, plan: null, week: nextWeek });
+    useAppStore
+      .getState()
+      .hydrateTracker({ client, plan: null, week: nextWeek, nextWeekStart: null });
 
     expect(useAppStore.getState().week).toEqual(nextWeek);
     expect(window.localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
@@ -129,7 +131,7 @@ describe('trackerSlice draft persistence', () => {
     const week = makeWeek();
     window.localStorage.setItem(DRAFT_STORAGE_KEY, 'not-json');
 
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
 
     expect(useAppStore.getState().week).toEqual(week);
     expect(window.localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
@@ -139,7 +141,7 @@ describe('trackerSlice draft persistence', () => {
 describe('trackerSlice feedback draft persistence', () => {
   it('persists setFeedback as the exact pure transition result', () => {
     const week = makeWeek();
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
     const withFeedback = applySetFeedback(week, 1, 'bench_press', 'heavy');
 
     useAppStore.getState().setFeedback(1, 'bench_press', 'heavy');
@@ -183,7 +185,7 @@ describe('trackerSlice API orchestration', () => {
       schedule: [{ ...completeDay, completed: false }, week.schedule[1]!],
     };
     const savedWeek = { ...week, schedule: [completeDay, week.schedule[1]!] };
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
     window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(staleDraftWeek));
     saveDayLog.mockResolvedValue(savedWeek);
 
@@ -198,7 +200,7 @@ describe('trackerSlice API orchestration', () => {
       ...week,
       schedule: [{ ...week.schedule[0]!, completed: true }, week.schedule[1]!],
     };
-    useAppStore.getState().hydrateTracker({ client, plan: null, week });
+    useAppStore.getState().hydrateTracker({ client, plan: null, week, nextWeekStart: null });
     saveDayLog.mockResolvedValue(savedWeek);
 
     await useAppStore.getState().saveDay(week.schedule[0]!);

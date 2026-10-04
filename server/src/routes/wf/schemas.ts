@@ -8,3 +8,7 @@ export const CompleteWeekStartedSchema = z
     details: z.looseObject({}),
   })
   .openapi('CompleteWeekStarted');
+
+export const WeeklyProgressionStatusSchema = z
+  .object({ status: z.enum(['running', 'complete', 'failed']) })
+  .openapi('WeeklyProgressionStatus');

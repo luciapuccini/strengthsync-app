@@ -288,15 +288,16 @@ describe('day log writes', () => {
   });
 });
 
-describe('the workflow trigger', () => {
-  const workflowEnv = () => {
-    const create = vi.fn(async () => ({
-      id: 'wf-instance-1',
-      status: async () => ({ status: 'running' }),
-    }));
-    return { env: { STRENGTHSYNC_WORKFLOW: { create } }, create };
-  };
+const workflowEnv = (status = 'running') => {
+  const create = vi.fn(async ({ id }: { id: string }) => ({
+    id,
+    status: async () => ({ status: 'running' }),
+  }));
+  const get = vi.fn(async (id: string) => ({ id, status: async () => ({ status }) }));
+  return { env: { STRENGTHSYNC_WORKFLOW: { create, get } }, create, get };
+};
 
+describe('the workflow trigger', () => {
   it('starts an instance for the authenticated athlete', async () => {
     const { env, create } = workflowEnv();
 
@@ -307,8 +308,9 @@ describe('the workflow trigger', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await body(response)).toMatchObject({ instanceId: 'wf-instance-1' });
-    expect(create).toHaveBeenCalledWith({ params: { clientId: ana.id } });
+    const { instanceId } = await body(response);
+    expect(instanceId).toMatch(new RegExp(`^${ana.id}-[0-9a-f-]{36}$`));
+    expect(create).toHaveBeenCalledWith({ id: instanceId, params: { clientId: ana.id } });
   });
 
   it('starts no workflow without a token', async () => {
@@ -320,5 +322,56 @@ describe('the workflow trigger', () => {
     // The assertion that matters: rejecting late, after the side effect, would
     // still answer 401 and still have started the workflow.
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe('the workflow status', () => {
+  const statusOf = (instanceId: string, env: object, headers: HeadersInit = {}) =>
+    app.request(`/api/wf/complete-week/${instanceId}`, { headers }, env);
+
+  it.each([
+    ['queued', 'running'],
+    ['running', 'running'],
+    ['waiting', 'running'],
+    ['complete', 'complete'],
+    ['errored', 'failed'],
+    ['terminated', 'failed'],
+  ])('reports a %s instance as %s', async (cfStatus, expected) => {
+    const { env, get } = workflowEnv(cfStatus);
+    const instanceId = `${ana.id}-run`;
+
+    const response = await statusOf(instanceId, env, ana.headers);
+
+    expect(response.status).toBe(200);
+    expect(await body(response)).toEqual({ status: expected });
+    expect(get).toHaveBeenCalledWith(instanceId);
+  });
+
+  it("answers 404 for another athlete's instance without looking it up", async () => {
+    const { env, get } = workflowEnv('complete');
+
+    const response = await statusOf(`${bruno.id}-run`, env, ana.headers);
+
+    expect(response.status).toBe(404);
+    expect(await body(response)).toMatchObject({ error: { code: 'workflow_not_found' } });
+    expect(get).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 for an instance Cloudflare does not know', async () => {
+    const { env, get } = workflowEnv('complete');
+    get.mockRejectedValueOnce(new Error('instance.not_found'));
+
+    const response = await statusOf(`${ana.id}-gone`, env, ana.headers);
+
+    expect(response.status).toBe(404);
+  });
+
+  it('answers 401 without a token', async () => {
+    const { env, get } = workflowEnv('complete');
+
+    const response = await statusOf(`${ana.id}-run`, env);
+
+    expect(response.status).toBe(401);
+    expect(get).not.toHaveBeenCalled();
   });
 });
