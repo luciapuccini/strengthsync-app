@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { Client } from '@/api/types';
+import type { Client, Plan } from '@/api/types';
 
 const { currentWeekResource, invalidateCurrentWeek } = vi.hoisted(() => ({
   currentWeekResource: vi.fn(),
@@ -27,6 +27,19 @@ const client: Client = {
   display_name: 'Ana',
   status: 'active',
   unit_preference: 'imperial',
+  created_at: NOW,
+  updated_at: NOW,
+};
+
+const plan: Plan = {
+  id: UUID,
+  client_id: UUID,
+  label: 'Strength block',
+  status: 'active',
+  total_weeks: 8,
+  week_template: [],
+  rationale: null,
+  activated_at: NOW,
   created_at: NOW,
   updated_at: NOW,
 };
@@ -88,5 +101,28 @@ describe('the tracker with no current week', () => {
 
     const link = screen.getByRole('link', { name: /build your plan/i });
     expect(link).toHaveAttribute('href', '/onboarding');
+  });
+});
+
+describe('the tracker after a week was completed and the next one starts later', () => {
+  beforeEach(() => {
+    currentWeekResource.mockReturnValue(
+      Promise.resolve({ client, plan, week: null, nextWeekStart: '2026-10-05' }),
+    );
+  });
+
+  it('says the week is complete and when the next one starts', async () => {
+    await renderTracker();
+
+    expect(screen.getByRole('heading', { name: /week complete/i })).toBeInTheDocument();
+    expect(
+      screen.getByText('Your next week starts on 05/10/2026. Check back then.'),
+    ).toBeInTheDocument();
+  });
+
+  it('offers no way to complete the week again', async () => {
+    await renderTracker();
+
+    expect(screen.getByRole('button', { name: /complete week/i })).toBeDisabled();
   });
 });
