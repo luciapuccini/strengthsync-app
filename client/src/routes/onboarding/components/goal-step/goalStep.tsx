@@ -26,10 +26,6 @@ type Props = {
   onNext: (answers: GoalStepAnswers) => void;
 };
 
-/**
- * Converted before it is parsed, so the 800 lb bound stays in pounds. A target
- * is a goal rather than a load, so nothing here snaps it to the five-pound grid.
- */
 function validate(
   form: FormData,
   unit: UnitPreference,
@@ -43,7 +39,6 @@ function validate(
   return result.success ? { data: result.data } : { errors: fieldErrors(result.error) };
 }
 
-/** What the client wants: one primary goal, and optionally a target and a note. */
 export function GoalStep({ defaults, unit, onBack, onNext }: Props): JSX.Element {
   const [errors, formAction] = useActionState<StepFieldErrors | null, FormData>(
     (_previous, form) => {

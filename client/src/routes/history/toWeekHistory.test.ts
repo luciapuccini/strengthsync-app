@@ -138,10 +138,7 @@ describe('toWeekHistory diffs in metric', () => {
     ]);
 
     const exercise = toWeekHistory([prev, curr], 6, 'metric')[1]!.days[0]!.exercises[0]!;
-    // 135 lb and 140 lb render as 61 and 64, so the delta on screen is 3 — not
-    // the 2 kg a converted canonical 5 lb delta would print.
     expect(exercise.diff).toBe('3 kg ↑');
-    // The row itself still carries canonical pounds; the display site converts.
     expect(exercise.weight).toBe(140);
   });
 

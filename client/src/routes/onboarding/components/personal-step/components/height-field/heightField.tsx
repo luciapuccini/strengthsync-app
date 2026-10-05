@@ -8,16 +8,11 @@ import { OnboardingField } from '@/routes/onboarding/components/onboarding-field
 import { CentimetreHeight } from './components/centimetre-height/centimetreHeight';
 
 type Props = {
-  /** A previously answered height, in canonical inches, if the athlete stepped back. */
   defaultInches: number | undefined;
   unit: UnitPreference;
   error: string | undefined;
 };
 
-/**
- * Either shape is recombined into `height_in` by the step's `validate`, so the
- * schema and its error stay keyed to one field. See docs/architecture/domain_model.md.
- */
 export function HeightField({ defaultInches, unit, error }: Props): JSX.Element {
   if (unit === 'metric') {
     return <CentimetreHeight defaultInches={defaultInches} error={error} />;

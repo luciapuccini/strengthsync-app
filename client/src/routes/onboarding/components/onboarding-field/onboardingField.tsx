@@ -9,7 +9,6 @@ type Props = {
   children: ReactNode;
 };
 
-/** One labelled control plus its own validation error, shared by every step. */
 export function OnboardingField({ id, label, error, children }: Props): JSX.Element {
   return (
     <Field data-invalid={Boolean(error)}>

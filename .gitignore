@@ -6,22 +6,17 @@ coverage/
 .diagnostics/
 .turbo/
 
-# secrets
 .dev.vars
 .dev.vars.old
 .env
 .env.local
 .env.workflows
 
-# cloudflare local state
 .wrangler/
 
-# private notes
 NOTES.md
 docs/audits/*
 
-# os
 .DS_Store
 
-# AI
 .cursor

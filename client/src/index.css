@@ -3,14 +3,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
-  iOS standalone (home-screen) safe-area utilities. `env(safe-area-inset-*)`
-  resolves to 0 in an ordinary browser tab, so the `max()`/`calc()` pairs
-  below collapse back to the plain spacing value there and only add space
-  when the app is installed and running under a notch / home indicator.
-  Left and right are computed separately since a landscape notch sits on
-  only one side.
-*/
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
 }
@@ -52,25 +44,14 @@
 }
 
 :root {
-  /*
-    Brand palette — the ONLY hand-picked colors. Everything else derives
-    from these five via var() / color-mix().
-      black  : deep ash / near-black surface
-      ash    : layered neutral for cards, inputs, borders
-      white  : warm off-white text
-      yellow : vivid primary (CTAs, rings)
-      accent : highlight tint (currently the same yellow, tune here)
-  */
   --brand-black: oklch(0.16 0.004 260);
   --brand-ash: oklch(0.24 0.004 260);
   --brand-white: oklch(0.97 0.005 95);
   --brand-yellow: oklch(0.88 0.19 95);
   --brand-accent: oklch(0.88 0.19 95);
 
-  /* Functional/system color — an error red can't come from the brand five. */
   --brand-danger: oklch(0.62 0.22 25);
 
-  /* Semantic tokens (shadcn) — all derived from the palette above. */
   --background: var(--brand-black);
   --foreground: var(--brand-white);
 

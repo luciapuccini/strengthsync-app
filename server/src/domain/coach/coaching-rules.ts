@@ -1,8 +1,3 @@
-/**
- * The active coaching-rules document. Included in every generation call.
- * See docs/architecture/workflows.md — "Progression ceiling".
- * Rule versioning can be added later; the MVP uses this single document.
- */
 export const COACHING_RULES = `## Fitness coach rules for weight training progress
 
 1. Clients are pushed in stages, not every week. Every weekly request carries a

@@ -9,7 +9,6 @@ import { plans, weeks } from '../schema.ts';
 import { toPlan } from './plans.ts';
 import { toWeek } from './weeks.ts';
 
-/** Idempotency lookup: return the already-activated plan + week 1 for a retried workflow. */
 export async function findExistingActivation(
   db: Db,
   clientId: string,
@@ -38,7 +37,6 @@ export async function findExistingActivation(
   return { plan: toPlan(planRow), first_week: toWeek(weekRow) };
 }
 
-/** Expand a plan's canonical week template into week 1's dated, empty-log schedule. */
 export function buildScheduleFromTemplate(weekTemplate: PlanDay[], start: string): WeekDay[] {
   return weekTemplate.map((day) => ({
     ...day,

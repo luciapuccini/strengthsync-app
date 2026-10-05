@@ -2,15 +2,6 @@ import { z } from 'zod';
 
 import { toCanonicalWeight, toDisplayWeight, type UnitPreference } from '@/utils/units';
 
-/**
- * UI-local schemas for the onboarding questionnaire, one per wizard step.
- *
- * Deliberately NOT the wire contract, same convention as `week-draft-schema.ts`:
- * its job is per-step validation before the wizard advances. The wire shape is
- * enforced by the server and typed on the client via `api/openapi.d.ts`. Fields
- * mirror `server/src/domain/onboarding/schema.ts` — keep the two in step.
- */
-
 export const ONBOARDING_SEXES = ['male', 'female', 'other'] as const;
 export const ONBOARDING_GOALS = ['lose_fat', 'build_muscle', 'get_stronger'] as const;
 export const ONBOARDING_EXPERIENCE_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
@@ -38,20 +29,12 @@ export const ONBOARDING_WEEKDAYS = [
   { day_index: 7, label: 'Sunday' },
 ] as const;
 
-/** `FormData.get` returns `""` for an empty number input, not `null`. */
 export function optionalNumber(value: FormDataEntryValue | null): number | undefined {
   if (value === null || value === '') return undefined;
   const parsed = Number(value);
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
-/**
- * A typed weight in canonical pounds, whichever units the athlete answered in.
- *
- * Convert first, then parse: the bounds below stay in pounds and keep meaning
- * the same thing for both kinds of athlete, and no step does the arithmetic
- * itself.
- */
 export function optionalCanonicalWeight(
   value: FormDataEntryValue | null,
   unit: UnitPreference,
@@ -60,11 +43,6 @@ export function optionalCanonicalWeight(
   return entered === undefined ? undefined : toCanonicalWeight(entered, unit);
 }
 
-/**
- * The inverse, for a field's default: a stored weight back in the athlete's
- * units, so stepping back through the wizard re-shows the number they typed
- * rather than silently changing their answer.
- */
 export function displayedWeight(
   pounds: number | undefined,
   unit: UnitPreference,
@@ -127,12 +105,10 @@ export type LifeStepAnswers = z.infer<typeof LifeStepSchema>;
 export const OnboardingAnswersSchema = PersonalStepSchema.extend(GoalStepSchema.shape)
   .extend(TrainingStepSchema.shape)
   .extend(LifeStepSchema.shape);
-/** The full, validated questionnaire payload — same shape as the wire contract. */
 export type OnboardingAnswers = z.infer<typeof OnboardingAnswersSchema>;
 
 export type OnboardingDraft = Partial<OnboardingAnswers>;
 
-/** Field-level messages keyed by schema field name, for one step's form. */
 export type StepFieldErrors = Record<string, string>;
 
 export function fieldErrors(error: z.ZodError): StepFieldErrors {

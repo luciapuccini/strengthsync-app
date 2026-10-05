@@ -1,13 +1,5 @@
 import type BetterSqlite3 from 'better-sqlite3';
 
-/**
- * Minimal D1Database-compatible adapter over better-sqlite3, for tests.
- * It implements the exact interface drizzle-orm/d1 uses (prepare/bind/
- * run/all/first/raw + batch), with `batch()` wrapped in a better-sqlite3
- * transaction to mirror D1's atomic batch semantics. Node-only: never
- * shipped to the Worker bundle.
- */
-
 type BindValue = string | number | null | Uint8Array;
 
 type D1ResultLike = {
@@ -31,7 +23,6 @@ class FakeD1PreparedStatement {
     return new FakeD1PreparedStatement(this.db, this.query, values);
   }
 
-  /** Execute honoring whether the statement returns rows (used by batch). */
   executeSync(): D1ResultLike {
     const stmt = this.db.prepare(this.query);
     if (stmt.reader) {
@@ -90,7 +81,6 @@ export class FakeD1Database {
     return new FakeD1PreparedStatement(this.db, query);
   }
 
-  /** D1 batch: all statements atomically; a failure rolls back the sequence. */
   async batch(statements: FakeD1PreparedStatement[]): Promise<D1ResultLike[]> {
     const runAll = this.db.transaction((stmts: FakeD1PreparedStatement[]) =>
       stmts.map((stmt) => stmt.executeSync()),

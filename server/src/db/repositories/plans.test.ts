@@ -8,8 +8,6 @@ import { activateGeneratedPlan } from '../repositories/plans';
 import { completeWeek, saveNextWeek } from '../repositories/weeks';
 import { createTestDb, markAllDaysCompleted } from '../testing/index';
 
-// Only the day shape matters here; exercise expansion is covered in
-// repositories.test.ts.
 const weekTemplate: PlanDay[] = [
   { day_index: 1, type: 'upper_body', notes: null, exercises: [] },
   { day_index: 3, type: 'rest', notes: null, exercises: [] },
@@ -25,9 +23,6 @@ beforeEach(async () => {
 });
 
 describe('first week anchoring', () => {
-  // A Wednesday. The clock is frozen because the behaviour under test only
-  // differs from the old Monday-anchored one on six days in seven — a test left
-  // on the real clock would assert nothing every Monday.
   const wednesday = '2026-07-22';
 
   beforeEach(() => {
@@ -51,8 +46,6 @@ describe('first week anchoring', () => {
 
     expect(first_week.start_date).toBe(wednesday);
     expect(first_week.end_date).toBe('2026-07-28');
-    // day_index 1 lands on the start date and the rest follow sequentially, so
-    // no day of week 1 is in the past at activation.
     expect(first_week.schedule.map((d) => d.date)).toEqual(['2026-07-22', '2026-07-24']);
     expect(first_week.schedule.every((d) => d.date >= wednesday)).toBe(true);
   });

@@ -49,7 +49,6 @@ describe('mapAnswersToProfileWrite', () => {
       experience: 'advanced',
       squat_lb: 225,
       deadlift_lb: 315,
-      // bench_press_lb and overhead_press_lb skipped: those lifts are not trained.
     });
 
     expect(write.strength_loads).toEqual({

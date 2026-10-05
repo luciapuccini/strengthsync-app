@@ -14,11 +14,6 @@ import { useAppStore } from '@/store/useAppStore';
 
 const CONFIRMATION = 'delete my account';
 
-/**
- * Account settings: App Store Guideline 5.1.1(v)
- * requires deletion to be reachable from inside the app, not to be one click
- * from every screen.
- */
 export function AccountPage(): JSX.Element {
   const { logout } = useAuth0();
   const client = useAppStore((state) => state.sessionClient);

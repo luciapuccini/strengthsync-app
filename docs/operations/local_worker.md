@@ -15,8 +15,8 @@ The deployed host is `app.strengthsync.ai` — a Workers custom domain, so the w
 
 ## Starting and observing runs
 
-- **Start:** `POST /wf/complete-week` with `{ clientId }` creates a new workflow instance and returns its `instanceId` plus the initial `instance.status()` (see [api_contracts.md](../architecture/api_contracts.md)).
-- **Status:** query a started instance through the Cloudflare Workers Workflow API. Cloudflare Workers Logs (`observability.logs.invocation_logs` in `wrangler.jsonc`) captures per-invocation logs including `console.*` from workflow steps.
+- **Start:** `POST /api/wf/complete-week` creates a new workflow instance for the athlete in the token and returns its `instanceId` plus the initial `instance.status()` (see [api_contracts.md](../architecture/api_contracts.md)).
+- **Status:** `GET /api/wf/complete-week/{instanceId}` answers `running`, `complete` or `failed` for the caller's own instance. For step-level detail, query the instance through the Cloudflare Workers Workflow API. Cloudflare Workers Logs (`observability.logs.invocation_logs` in `wrangler.jsonc`) captures per-invocation logs including `console.*` from workflow steps.
 - **Retries:** per-step retries are defined in the workflow (`step.do` retry config) — see the retry table in [workflows.md](../architecture/workflows.md).
 
 ## Failure behavior and recovery

@@ -4,11 +4,6 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { Spinner } from '@/shadcn/ui/spinner';
 import { useAppStore } from '@/store/useAppStore';
 
-/**
- * Three states, not two: redirecting while the session is still resolving would
- * bounce every signed-in athlete to sign-in on a cold load, before the
- * bootstrap call has had a chance to answer.
- */
 export function RequireAuth(): JSX.Element {
   const status = useAppStore((state) => state.sessionStatus);
 

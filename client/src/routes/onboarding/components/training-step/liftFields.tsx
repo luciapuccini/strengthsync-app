@@ -26,11 +26,6 @@ type Props = {
   errors: StepFieldErrors;
 };
 
-/**
- * Always mounted, hidden via CSS rather than conditionally rendered: a
- * beginner's typed values must survive switching the experience answer back
- * and forth, which an unmount-on-hide would lose.
- */
 export function LiftFields({ experience, priorAnswers, unit, errors }: Props): JSX.Element {
   return (
     <div className={experience === 'beginner' ? 'hidden' : 'flex flex-col gap-4'}>

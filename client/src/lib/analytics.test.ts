@@ -45,8 +45,6 @@ describe('analytics', () => {
     expect(init).toHaveBeenCalledWith(
       'phc_test',
       expect.objectContaining({
-        // Not us.i.posthog.com: captures go through the Worker's proxy, or
-        // content blockers eat them and the funnel silently under-reports.
         api_host: '/ingest',
         autocapture: false,
         capture_pageview: false,

@@ -58,13 +58,6 @@ function mapSchedulePreferences(answers: OnboardingAnswers) {
   };
 }
 
-/**
- * Pure answers-to-profile mapping: the one place that knows which profile
- * column each onboarding answer belongs to. No I/O, no framework.
- *
- * `snapshot_date` is the caller's to set: this function stays free of the
- * clock.
- */
 export function mapAnswersToProfileWrite(
   answers: OnboardingAnswers,
 ): Omit<ClientProfileWrite, 'snapshot_date'> {

@@ -1,11 +1,3 @@
--- Historical weeks 1-3 from sample training notes (SEM Pallof / SEM 3 discarded).
--- Apply after migrations, 000_default_coach.sql, and 001_demo_seed.sql.
---
--- Each week is anchored to `date('now')`, working backward from the same
--- Monday-on-or-before-today that 001_demo_seed.sql's in-flight week starts
--- on, so weeks 1-3 stay the three contiguous Mon-Sun windows immediately
--- before it however much time has passed since these were written.
-
 INSERT OR IGNORE INTO weeks (
   id,
   client_id,

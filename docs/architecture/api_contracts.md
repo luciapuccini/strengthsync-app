@@ -25,6 +25,18 @@ schemas are built from, and is shared with persistence and the workflows.
 
 **Do not edit `server/openapi.json` by hand.** Change the Zod schema and run `pnpm gen:openapi`.
 
+Route schemas are rebuilt from a domain schema's `.shape` with the `z` that `@hono/zod-openapi`
+exports, not named in place. That package adds `.openapi()` by patching `ZodType.prototype`, and Zod 4
+copies prototype methods onto each instance when it is built, so a domain schema built before the
+patch loads never gains the method. Rebuilding from `.shape` drops object-level refinements, so a
+schema with a cross-field rule (the day-log schemas in `routes/weeks/schemas.ts`) is declared field by
+field instead. Leaf schemas are registered as named components even where a route only inlines them,
+because `client/src/api/types.ts` aliases components by name.
+
+The client also keeps UI-local Zod schemas that are not the contract: `client/src/lib/onboarding-schema.ts`
+validates one wizard step before it advances and mirrors `server/src/domain/onboarding/schema.ts` by
+hand, and `client/src/lib/week-draft-schema.ts` only rejects corrupt local drafts.
+
 CI runs `pnpm gen:openapi` and then `git diff --exit-code` against both artifacts. Regenerating
 must be a no-op; if it is not, the committed contract no longer matches the routes and the build
 fails. A route whose schema drifted from the contract cannot merge. The document is a build artifact
@@ -49,6 +61,9 @@ document catches them; the type check alone would not.
 - Invalid input returns `400`; missing records return `404`; an upstream provider failure returns `502`. A missing, malformed, expired, wrong-audience, wrong-issuer or unknown-at-the-provider credential all return one indistinguishable `401`: a caller learns that it needs credentials, not which part of what it sent was wrong.
 - Public route ids are UUIDs, enforced by the route's declared param schema.
 
+Hono rejects a malformed JSON body before any validator runs, with a plain-text body; `app.onError`
+rewraps it as `invalid_input` so every `400` reaches the client in the envelope.
+
 Every error response uses one envelope, built by `errorResponse` in `server/src/lib/errors.ts` and documented as the `ApiError` component by `server/src/routes/shared.ts`:
 
 ```typescript
@@ -71,7 +86,7 @@ Cross-field rules (for example: a skipped exercise carries no performed sets) ar
 
 ## Public API
 
-Fifteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
+Sixteen operations. `server/openapi.json` has the specifics — paths, bodies, responses, component
 schemas — and is always current by construction, so they are not restated here.
 
 The shape, which the document does not state in one place:
@@ -81,7 +96,7 @@ The shape, which the document does not state in one place:
 | Liveness | `GET /health` |
 | The signed-in athlete's account | `GET`/`PATCH /api/me`, `DELETE /api/account` |
 | The signed-in athlete | `GET`/`PUT /api/me/profile`, `POST /api/me/onboarding`, `GET /api/me/plans/active`, `GET /api/me/plans/{planId}`, `POST /api/me/plans/generate`, `GET /api/me/weeks`, `GET /api/me/weeks/current`, `POST /api/me/weeks/{weekId}/days/{dayIndex}/save`, `PATCH /api/me/weeks/{weekId}/days/{dayIndex}` |
-| Workflow start | `POST /api/wf/complete-week` |
+| Workflow | `POST /api/wf/complete-week`, `GET /api/wf/complete-week/{instanceId}` |
 
 Plan creation is not workflow-only. `POST /api/me/plans/generate` builds a first plan from the
 caller's profile with one synchronous, structured-output model call and activates it through the same
@@ -89,7 +104,7 @@ atomic command the weekly workflow uses, keyed by a deterministic `first-plan:{c
 of a workflow instance id. It refuses with `409 plan_already_active` or `409 profile_required` before
 ever reaching the model.
 
-Workflow requests are asynchronous. `POST /api/wf/complete-week` takes the athlete from the verified token, like every other `/api/*` route, and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. [TODO]: the UI does not poll workflow status.
+Workflow requests are asynchronous. `POST /api/wf/complete-week` takes the athlete from the verified token, like every other `/api/*` route, and starts a Cloudflare Workflow instance directly — the workflow runs in-Worker, bound as `STRENGTHSYNC_WORKFLOW`. It returns the instance id immediately and never waits for model output. The instance id is prefixed with the athlete id, so `GET /api/wf/complete-week/{instanceId}` refuses another athlete's id with `404` before it asks Cloudflare, and answers `running`, `complete` or `failed`. The client polls it every two seconds until the run settles.
 
 
 ## Endpoints current state

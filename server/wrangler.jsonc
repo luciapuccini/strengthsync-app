@@ -2,18 +2,12 @@
   "name": "strengthsync-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-21",
-  // custom_domain, not a route pattern: strengthsync.ai is already on Cloudflare
-  // nameservers, so deploy creates the app record and its certificate itself.
-  // The apex is left alone — the marketing site in the other repository serves
-  // it, and a hostname of our own is what keeps the session cookie (host-only,
-  // no domain attribute) from ever reaching it.
   "routes": [
     {
       "pattern": "app.strengthsync.ai",
       "custom_domain": true,
     },
   ],
-  // Without this, console.* from the Worker never reaches Workers Logs.
   "observability": {
     "enabled": true,
     "logs": {
@@ -24,32 +18,13 @@
     "directory": "../client/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    // Anything not listed here is answered from ../client/dist first, and
-    // single-page-application turns a miss into index.html. Every path the
-    // Worker owns has to be on the list or it returns the app shell instead —
-    // invisible locally, where vite proxies to the Worker directly. /ingest/* is
-    // the same trap and worse: posthog-js treats the 200 carrying index.html as
-    // a delivered event, so captures would fail silently. /auth/* left the list
-    // with the routes that used it; Auth0 hosts login on its own domain now.
     "run_worker_first": ["/api/*", "/health", "/ingest/*"],
   },
-  // Auth0 tenant configuration (issues/010-auth0-tenant-setup.md). These are
-  // `vars` and not secrets on purpose: every one of them is public — the issuer
-  // and JWKS URL are served unauthenticated, and the audience and client id
-  // travel in tokens and in the browser. Putting them here makes them
-  // reviewable and versioned; hiding them in `wrangler secret` would only make
-  // a misconfiguration invisible. The M2M *secret* is the one real secret and
-  // is set with `wrangler secret put AUTH0_M2M_CLIENT_SECRET`.
-  //
-  // AUTH0_ISSUER keeps its trailing slash: it is compared to the `iss` claim as
-  // a string, and Auth0 mints it that way.
   "vars": {
     "AUTH0_ISSUER": "https://auth.strengthsync.ai/",
     "AUTH0_JWKS_URI": "https://auth.strengthsync.ai/.well-known/jwks.json",
     "AUTH0_AUDIENCE": "https://api.strengthsync.ai",
     "AUTH0_ISSUER_DOMAIN": "auth.strengthsync.ai",
-    // The tenant domain, not the custom one: the Management API audience is not
-    // customisable, so this is the one place the vendor hostname is unavoidable.
     "AUTH0_TENANT_DOMAIN": "dev-ky58kx02q7r2ukt6.us.auth0.com",
     "AUTH0_M2M_CLIENT_ID": "aURi7aSf2Z1YHTZkUzgQURPHIbo8Xmb0",
   },
@@ -57,10 +32,6 @@
     {
       "binding": "DB",
       "database_name": "strengthsync",
-      // The production database (`wrangler d1 info strengthsync`), migrated on
-      // every deploy by `db:migrate:remote`. Local dev never reads this id — it
-      // keys a miniflare sqlite file off database_name — so nothing local tells
-      // you whether it is right; `wrangler d1 info` does.
       "database_id": "3d9980fa-e3f2-4a19-9dac-1c63db6132a6",
       "migrations_dir": "./db/drizzle",
     },

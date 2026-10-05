@@ -123,15 +123,17 @@ succeeded/failed with latency, first set logged, day saved, week completed.
 `identify(clientId)` on session bootstrap ties the funnel to an athlete.
 
 Autocapture is off because this is a logged-in health app: it would sweep up far
-more about real users than the funnel needs, for no gain over six explicit
+more about real users than the funnel needs, for no gain over seven explicit
 events.
 
 Week completion is instrumented but does not gate the MVP — it is the seven-day
 signal we chose not to depend on.
 
-Open implementation detail: whether to proxy ingestion through the Worker to
-survive ad blockers, the way the marketing site does with its `/ingest` rewrites.
-`run_worker_first` makes it easy, but it is not required for a mobile cohort.
+Captures go through the Worker's `/ingest` proxy so they survive content
+blockers (see [stack.md](./architecture/stack.md#posthog-ingest-proxy)). Because
+`api_host` is our own origin, `ui_host` is set to `https://us.posthog.com`, or
+PostHog would treat the app as self-hosted. "First set logged" fires once per
+athlete, ever, guarded by a `localStorage` flag.
 
 ### 6. Structured LLM logs
 
@@ -142,6 +144,14 @@ the AI SDK today and dropped on the floor, and it is also the cost data.
 All six call sites go through that one function (`plan-turnover.ts` ×3,
 `strengthsync-workflow.ts` ×2, `plans/endpoints.ts` ×1), so this is one change,
 not six. Workers Logs is already enabled with `invocation_logs`.
+
+Implemented in `server/src/agent/telemetry.ts` on the AI SDK's telemetry
+lifecycle, with `call_site` naming the caller. Free-text payloads are capped,
+because Workers Logs drops an oversized event whole; `*_chars` fields keep the
+real sizes. Payloads are stringified, because workerd's console elides deep
+objects. A logging failure never fails the model call. An entry outlives
+`onEnd`, because a structured-output schema rejection reaches `onError` after
+the end event.
 
 This is deliberately *not* the design in [architecture/evals.md](./architecture/evals.md).
 Braintrust stays post-MVP, and no `llm_trace` table is added. For twenty users

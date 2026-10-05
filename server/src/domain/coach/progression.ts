@@ -1,10 +1,5 @@
 import type { ExerciseFeedback, Week } from '../model/index.ts';
 
-/**
- * The staged progression ceiling.
- * See docs/architecture/workflows.md — "Progression ceiling".
- */
-
 export const PROGRESSION_MODES = ['hold', 'reps', 'weight'] as const;
 export type ProgressionMode = (typeof PROGRESSION_MODES)[number];
 
@@ -14,10 +9,8 @@ export type ProgressionCeiling = {
   by_exercise: Record<string, ProgressionMode>;
 };
 
-/** Weeks 1 and 2 of a plan settle the routine; evaluation starts at week 3. */
 const EVALUATION_STARTS_AT_WEEK = 3;
 const WEIGHT_PUSH_STARTS_AT_WEEK = 5;
-/** "more than 3 consecutive weeks" of easy/light feedback. */
 const EASY_WEEKS_BEFORE_WEIGHT = 4;
 
 const EASY_FEEDBACKS: ExerciseFeedback[] = ['easy', 'light'];
@@ -32,7 +25,6 @@ function exercisesOfWeek(week: Week): Map<string, ExerciseWeek> {
       const key = exercise.exercise_key;
       const seen = weights.get(key) ?? null;
       const prescribed = exercise.prescribed.weight_lb;
-      // several days can schedule the same lift: the heaviest prescription is the load
       weights.set(key, prescribed === null ? seen : Math.max(prescribed, seen ?? prescribed));
       feedbacks.set(key, [...(feedbacks.get(key) ?? []), exercise.feedback]);
     }
@@ -58,7 +50,6 @@ function scanExercise(key: string, history: ExerciseHistory) {
     const entry = week.exercises.get(key);
     if (!entry) continue;
     if (entry.weight_lb !== null && lastWeight !== null && entry.weight_lb > lastWeight) {
-      // a weight push restarts the cycle: the run before it no longer counts
       lastPushWeek = week.week_index;
       easyRun = 0;
     }
@@ -74,7 +65,6 @@ function exerciseMode(
   nextWeekIndex: number,
 ): ProgressionMode {
   const { easyRun, lastPushWeek } = scanExercise(key, history);
-  // weeks counted from the last push, or from plan week 1 when there was none
   const cycleWeek = nextWeekIndex - lastPushWeek;
   if (cycleWeek < EVALUATION_STARTS_AT_WEEK) return 'hold';
   if (cycleWeek >= WEIGHT_PUSH_STARTS_AT_WEEK && easyRun >= EASY_WEEKS_BEFORE_WEIGHT) {

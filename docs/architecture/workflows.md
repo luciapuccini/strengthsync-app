@@ -19,9 +19,9 @@ is not wired in this pass.
 
 ## Trigger
 
-**Trigger:** `POST /wf/complete-week` (`server/src/routes/cf-api.ts`)
+**Trigger:** `POST /api/wf/complete-week` (`server/src/routes/wf/endpoints.ts`)
 
-**Input**
+**Input**, set by the route from the verified token; the request has no body:
 
 ```typescript
 type CompleteWeekParams = {
@@ -29,9 +29,10 @@ type CompleteWeekParams = {
 };
 ```
 
-The entrypoint calls the `services/db` repository to freeze the client's current `in_flight`
+The entrypoint calls the repository to freeze the client's current `in_flight`
 week as `completed`, then proceeds. The route returns the new instance id and its initial
-status.
+status. `GET /api/wf/complete-week/{instanceId}` reports the run as `running`, `complete` or
+`failed`, and the client polls it until the run settles.
 
 ```mermaid
 flowchart LR
@@ -62,6 +63,11 @@ flowchart LR
 - LLM calls run through the in-Worker agent runtime (`server/src/agent/agent-core.ts`) with
   no recorder attached in this pass. LLM trace data is not stored in D1.
 - LLM structured output is validated with shared Zod schemas before any write.
+- Optional fields in those schemas are required and nullable, because OpenAI's structured-output
+  JSON Schema rejects optional keys.
+- Shapes passed from the workflow to persistence live in `server/src/domain/workflow.ts`, not in
+  `workflows/`, because `db/repositories/plans.ts` consumes the activation command and the import
+  boundary forbids `db/` from importing `workflows/`.
 - Current coaching rules are included in every generation call. Rule versioning can be added
   later; MVP uses the active rules document.
 - Product data remains in D1. The workflow retains execution state/result.
@@ -197,8 +203,8 @@ intermediates are not product records.
 | Profile/history summaries | 2 (1 s delay, linear) | Run independently, in parallel |
 | Plan generation | 2 (1 s delay, linear) | Structured-output validation failures are retryable |
 
-On final failure, the workflow instance is marked failed. Failure details are exposed only
-through Cloudflare Workers Logs; the UI does not poll workflow status.
+On final failure, the workflow instance is marked failed. The status route reports it
+as `failed`; failure details are exposed only through Cloudflare Workers Logs.
 
 ## Deferred behavior
 

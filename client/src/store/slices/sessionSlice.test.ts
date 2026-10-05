@@ -4,21 +4,11 @@ import type { Client } from '@/api/types';
 
 import { useAppStore } from '../useAppStore';
 
-/**
- * The state machine `RequireAuth` and `RootRedirect` read, and the mapping from
- * the Auth0 SDK's two flags onto it. The mapping lives in the slice precisely so
- * that it can be tested here — a browser, a provider and a redirect are not
- * needed to answer what `isLoading: false, isAuthenticated: true` should mean.
- */
-
 const { getMe, identifyClient } = vi.hoisted(() => ({
   getMe: vi.fn(),
   identifyClient: vi.fn(),
 }));
 
-// Partial mocks, not replacements: the store composes two slices, so a factory
-// that returned only what this file uses would break the moment the *other*
-// slice imported something else from the same module.
 vi.mock('@/api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/client')>()),
   getMe,
@@ -59,10 +49,6 @@ describe('sessionSlice', () => {
   it('stays loading while the provider is still deciding', async () => {
     await useAppStore.getState().resolveSession({ isLoading: true, isAuthenticated: false });
 
-    // The one state that must not leak out early. `isAuthenticated` is false
-    // during the whole of a cold load, including while the SDK is renewing a
-    // perfectly good session, and treating that as signed-out would bounce every
-    // returning athlete to the login page.
     expect(useAppStore.getState().sessionStatus).toBe('loading');
   });
 
@@ -79,15 +65,9 @@ describe('sessionSlice', () => {
     expect(getMe).toHaveBeenCalledTimes(1);
     expect(useAppStore.getState().sessionStatus).toBe('signed-in');
     expect(useAppStore.getState().sessionClient).toEqual(client);
-    // The internal id, not the Auth0 subject: it is what every server-side row
-    // is keyed by, so it is what the funnel has to be keyed by.
     expect(identifyClient).toHaveBeenCalledWith(UUID);
   });
 
-  // Authenticated is not resolved. A token the API will not honour, or an API
-  // that cannot be reached at all, leaves an athlete with no internal id — and
-  // signing them in without one would hand every consumer a null client to
-  // defend against.
   it('does not sign anybody in when the athlete cannot be read', async () => {
     getMe.mockRejectedValue(new Error('unauthorized'));
 

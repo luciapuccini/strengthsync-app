@@ -64,10 +64,6 @@ export function reconcileWeekDraft(serverWeek: Week | null, clientId: string | n
   return { ...serverWeek, schedule: draft.schedule };
 }
 
-/**
- * After a successful day PATCH, keep other days' local draft edits but trust
- * the server for the day we just saved (including derived `completed`).
- */
 export function mergeSavedDayIntoDraft(serverWeek: Week, clientId: string, dayIndex: number): Week {
   const draft = readWeekDraft(clientId);
   const savedDay = serverWeek.schedule.find((day) => day.day_index === dayIndex);

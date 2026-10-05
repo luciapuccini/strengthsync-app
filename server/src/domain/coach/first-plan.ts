@@ -1,11 +1,5 @@
 import type { ClientProfile } from '../model/index.ts';
 
-/**
- * The prompt for a client's very first plan. Unlike plan turnover, there is
- * no completed history to summarize and no previous plan to react to, so the
- * stored profile goes into the prompt as-is — one call, not two.
- */
-
 export type FirstPlanPrompt = { system: string; prompt: string };
 
 export function buildFirstPlanPrompt(profile: ClientProfile, rules: string): FirstPlanPrompt {

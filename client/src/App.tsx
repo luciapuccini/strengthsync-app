@@ -28,10 +28,6 @@ function useProviderSession(): void {
       try {
         return await getAccessTokenSilently();
       } catch {
-        // Every failure here means the same thing — there is no usable
-        // credential — and the request that follows will be answered 401, which
-        // is already handled in one place. Nothing is gained by distinguishing
-        // an expired session from a revoked one.
         return null;
       }
     });
@@ -53,15 +49,9 @@ export default function App(): JSX.Element {
       <Routes>
         <Route path="/" element={<RootRedirect />} />
 
-        {/* Not a screen: /sign-in renders nothing, it starts
-            the redirect to the hosted page. */}
         <Route path="/sign-in" element={<SignInRoute />} />
 
         <Route element={<RequireAuth />}>
-          {/* Outside `AppLayout` on purpose,Onboarding
-              is a linear task with a completion state, so it is presented over
-              the app rather than inside it 
-               */}
           <Route
             path="/onboarding"
             element={

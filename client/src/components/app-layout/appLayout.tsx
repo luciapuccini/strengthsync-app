@@ -7,9 +7,6 @@ import { Toaster } from '@/shadcn/ui/sonner';
 
 export function AppLayout(): JSX.Element {
   return (
-    // `*-safe` utilities (index.css) reserve iOS standalone-mode safe-area
-    // insets and collapse to the plain spacing value in a browser tab, where
-    // env(safe-area-inset-*) is 0.
     <div className="flex min-h-svh flex-col">
       <header className="border-b border-border pt-safe">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-4 py-3 pr-safe-4 pl-safe-4 md:pr-safe-6 md:pl-safe-6">

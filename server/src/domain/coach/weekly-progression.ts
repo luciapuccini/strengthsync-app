@@ -2,17 +2,11 @@ import { z } from 'zod';
 
 import { WeekDaySchema } from '../model/index.ts';
 
-/**
- * LLM output schemas for weekly progression. Prompts are built inline by the
- * Cloudflare Workflow in server/src/workflows.
- */
-
 export const WeekAnalysisSchema = z.object({
   analysis: z.string().min(1),
 });
 export type WeekAnalysis = z.infer<typeof WeekAnalysisSchema>;
 
-/** Fresh next-week schedule: seven dated days with empty performance logs. */
 export const NextWeekScheduleSchema = z.object({
   schedule: z.array(WeekDaySchema).superRefine((days, ctx) => {
     const indexes = days.map((d) => d.day_index).sort((a, b) => a - b);

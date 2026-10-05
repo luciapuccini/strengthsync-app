@@ -156,15 +156,12 @@ describe('plan + week lifecycle', () => {
     expect(plans.find((p) => p.id === first.plan.id)?.status).toBe('archived');
     expect(second.plan.status).toBe('active');
     expect(second.plan.rationale).toBe('more volume');
-    // History is retained: every old week stays queryable.
     expect(await listWeeks(db, clientId, { status: 'completed' })).toHaveLength(2);
   });
 
   it('rolls back the whole activation batch when week 1 violates the in_flight invariant', async () => {
     await activate('wf-activate-first');
 
-    // A second activation while a week is still in_flight must fail atomically:
-    // no new plan row, and the original active plan untouched.
     await expect(activate('wf-activate-second')).rejects.toThrow();
     const plans = await listPlans(db, clientId);
     expect(plans).toHaveLength(1);
@@ -232,7 +229,6 @@ describe('day logs', () => {
     expect(day?.completed_at).not.toBeNull();
     expect(day?.exercises[0]?.feedback).toBe('hard');
     expect(day?.exercises[0]?.sets).toHaveLength(4);
-    // The untouched day keeps its original state.
     expect(updated.schedule.find((d) => d.day_index === 3)?.completed).toBe(false);
   });
 

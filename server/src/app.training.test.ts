@@ -11,18 +11,6 @@ import {
   type TestClient,
 } from './testkit.ts';
 
-/**
- * What the athlete a token names can reach: their plans, their weeks, their day
- * logs, and the workflow that closes a week.
- *
- * The training half of the inventory restored by
- * `issues/012-token-verification-and-provisioning.md`; the identity half is in
- * `app.me.test.ts`. Almost every case here has a second athlete in it, because
- * the interesting assertion is usually the 404 rather than the 200 — this is an
- * API where a caller cannot name anybody but themselves, and that is a property
- * only a second athlete can demonstrate.
- */
-
 const UUID = '00000000-0000-4000-8000-000000000001';
 
 const profileWrite = {
@@ -94,8 +82,6 @@ describe('plans', () => {
   it("answers 404 for another athlete's plan id", async () => {
     const { plan } = await activateGeneratedPlanViaRepository(db, bruno.id, 'wf-bruno');
 
-    // Not 403: the plan is not merely off limits, it does not exist as far as
-    // this caller can tell. A 403 would confirm the id names something real.
     const response = await app.request(`/api/me/plans/${plan.id}`, { headers: ana.headers });
 
     expect(response.status).toBe(404);
@@ -110,8 +96,6 @@ describe('plans', () => {
   });
 
   it('refuses to generate for an athlete with no profile', async () => {
-    // Refused before the model call, so an athlete who has not onboarded cannot
-    // spend the OpenAI budget.
     const response = await app.request('/api/me/plans/generate', {
       method: 'POST',
       headers: ana.headers,
@@ -155,10 +139,6 @@ describe('weeks', () => {
   });
 
   it('answers 404 when the in-flight week has not started yet', async () => {
-    // A week is in_flight from the moment it is created, but `getCurrentWeek`
-    // also asks whether today falls inside it. Without that, an athlete whose
-    // next week has been written ahead of time would be shown days they cannot
-    // yet train and cannot log.
     const { first_week } = await activateGeneratedPlanViaRepository(db, ana.id, 'wf-ana');
     const start = addDays(todayIso(), 7);
     await db
@@ -238,8 +218,6 @@ describe('day log writes', () => {
   });
 
   it("refuses to write into another athlete's week", async () => {
-    // The week id is the caller's only free choice in these paths, and the
-    // repository scopes it to them — so naming someone else's finds nothing.
     const response = await app.request(`/api/me/weeks/${weekId}/days/1/save`, {
       method: 'POST',
       headers: bruno.jsonHeaders,
@@ -262,8 +240,6 @@ describe('day log writes', () => {
   });
 
   it.each(['0', '8', 'monday'])('answers 400 for dayIndex %s', async (dayIndex) => {
-    // Out of range and non-numeric are both `invalid_input` rather than
-    // `invalid_id`: the day index is a value, not an identifier.
     const response = await app.request(`/api/me/weeks/${weekId}/days/${dayIndex}/save`, {
       method: 'POST',
       headers: ana.jsonHeaders,
@@ -275,8 +251,6 @@ describe('day log writes', () => {
   });
 
   it('answers 400 for a skipped exercise that carries sets', async () => {
-    // A cross-field rule with no JSON Schema representation, so it exists only
-    // on the server and only this case proves it runs.
     const response = await app.request(`/api/me/weeks/${weekId}/days/1`, {
       method: 'PATCH',
       headers: ana.jsonHeaders,
@@ -319,8 +293,6 @@ describe('the workflow trigger', () => {
     const response = await app.request('/api/wf/complete-week', { method: 'POST' }, env);
 
     expect(response.status).toBe(401);
-    // The assertion that matters: rejecting late, after the side effect, would
-    // still answer 401 and still have started the workflow.
     expect(create).not.toHaveBeenCalled();
   });
 });

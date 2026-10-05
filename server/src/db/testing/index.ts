@@ -8,12 +8,8 @@ import * as schema from '../schema.ts';
 import { getWeek, updateDayLog } from '../repositories/weeks.ts';
 import { FakeD1Database } from './fake-d1.ts';
 
-// drizzle-orm/d1 is typed against its own minimal D1Database interface;
-// the fake implements it structurally.
 import { drizzle } from 'drizzle-orm/d1';
 
-// drizzle/ and seeds/ live in server/db/, not next to the TypeScript
-// source (server/src/db/) — see server/db/drizzle.config.ts.
 const DB_ARTIFACTS_ROOT = new URL('../../../db/', import.meta.url);
 
 function readSqlDir(relativeDir: string): string[] {
@@ -24,7 +20,6 @@ function readSqlDir(relativeDir: string): string[] {
     .map((name) => readFileSync(new URL(name, dirUrl), 'utf8'));
 }
 
-/** Execute every statement in a drizzle-kit SQL file (splits on breakpoints). */
 function applySqlFile(sqlite: BetterSqlite3.Database, sql: string): void {
   const statements = sql
     .split('--> statement-breakpoint')
@@ -35,7 +30,6 @@ function applySqlFile(sqlite: BetterSqlite3.Database, sql: string): void {
   }
 }
 
-/** In-memory sqlite with the drizzle migrations applied. */
 export function createMigratedSqlite(): BetterSqlite3.Database {
   const sqlite = new BetterSqlite3(':memory:');
   for (const migration of readSqlDir('drizzle')) {
@@ -44,7 +38,6 @@ export function createMigratedSqlite(): BetterSqlite3.Database {
   return sqlite;
 }
 
-/** Apply the seed data (single shared coach for the MVP). */
 export function applySeeds(sqlite: BetterSqlite3.Database): void {
   const baseSeed = readFileSync(new URL('seeds/000_default_coach.sql', DB_ARTIFACTS_ROOT), 'utf8');
   applySqlFile(sqlite, baseSeed);
@@ -56,18 +49,12 @@ function toDb(sqlite: BetterSqlite3.Database): Db {
   }) as unknown as DrizzleD1Database<typeof schema> as Db;
 }
 
-/** A fully migrated + seeded in-memory `Db` backed by the fake D1, for tests. */
 export function createTestDb(): Db {
   const sqlite = createMigratedSqlite();
   applySeeds(sqlite);
   return toDb(sqlite);
 }
 
-/**
- * Every committed seed, not just the coach: the demo athlete, their plan and
- * weeks. Reads the same files a developer applies by hand, so a test over this
- * db is a test of what the repository actually ships.
- */
 export function createDemoSeededDb(): Db {
   const sqlite = createMigratedSqlite();
   for (const seed of readSqlDir('seeds')) {
@@ -76,7 +63,6 @@ export function createDemoSeededDb(): Db {
   return toDb(sqlite);
 }
 
-/** Mark every scheduled day completed so `completeWeek` can freeze the week. */
 export { addDays, todayIso } from '../dates.ts';
 
 export async function markAllDaysCompleted(

@@ -86,6 +86,20 @@ is written by `PATCH /api/me` — the only writer of that column. The suffix is 
 through free-form JSON columns that nothing type-checks and into prompts the
 model reads literally, so the unit has to travel with the value.
 
+**Load grid:** every training load snaps to the nearest five pounds, the
+smallest practical jump on a US plate set (`server/src/domain/weight-grid.ts`).
+The snap is composed onto the load fields of the domain schemas, so model output,
+API writes and stored values all pass through it. An off-grid value is corrected
+and logged, never rejected. Body weight and target weight are a measurement and
+a goal, not loads, and are never snapped.
+
+**Display rounding** lives in `client/src/utils/units.ts`. Kilograms display as
+whole numbers: grid steps are 2.268 kg apart, so no two loads collapse onto one
+number, and 100 kg round-trips through 220 lb exactly. Metric heights convert to
+inches with one decimal, so the round trip lands on the centimetre the athlete
+typed. The history view's week-over-week delta is the difference between the two
+displayed numbers, not a converted pound delta.
+
 `goals`, `body_composition` and `strength_loads` carry weights inside their
 free-form JSON and so follow the same rule in their *keys*: onboarding writes
 `{ target_weight_lb }`, `{ weight_lb, body_fat_percent? }`, and
@@ -98,6 +112,12 @@ pilates class. Free-form like its siblings, but the convention is
 `{ items: [...] }` with each item shaped `{ name, sessions_per_week, days?,
 note? }`. Coaching rules use it to plan around a client's other sport rather
 than stack training on top of it.
+
+The free-form JSON columns validate as an object with string keys and
+unvalidated values, not as a recursive `z.lazy` schema: a recursive schema cannot
+be rendered into OpenAPI without registering a named component in the route
+layer. The static type stays the recursive `JsonValue`, because Cloudflare's
+`Serializable<T>` on `step.do()` rejects `unknown`.
 
 `nutrition` is likewise free-form; onboarding writes `{ eating_phase?,
 protein_target_g? }` when the client answers those questions, though the

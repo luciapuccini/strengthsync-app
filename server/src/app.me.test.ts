@@ -7,21 +7,6 @@ import { clients } from './db/schema.ts';
 import type { ManagementUser } from './lib/management.ts';
 import { createTestHarness, seedClient, type TestClient } from './testkit.ts';
 
-/**
- * Who the API thinks is calling, and what it does the first time it has never
- * heard of them.
- *
- * The identity half of the inventory `issues/011-amputate-old-auth.md` deleted
- * and `issues/012-token-verification-and-provisioning.md` promised back. The
- * training half is in `app.training.test.ts`; they were one file until it
- * outgrew the repository's `max-lines`, and the seam between them is the one the
- * guard already draws — everything here is about the token, everything there is
- * about what the athlete it names can reach.
- *
- * Two athletes exist in every case, because most of what is worth asserting
- * about a per-athlete API is what one of them *cannot* see.
- */
-
 const UUID = '00000000-0000-4000-8000-000000000001';
 
 const onboardingAnswers = {
@@ -90,10 +75,6 @@ describe('the guard', () => {
     });
   });
 
-  // The point of this case is the *sameness*. A caller learns that it needs
-  // credentials and never which part of what it sent was wrong, because the
-  // difference between "expired" and "forged" is information an attacker can
-  // use and a legitimate client has no way to act on.
   const badCredentials: Array<[string, Record<string, string>]> = [
     ['no header at all', {}],
     ['an empty bearer', { Authorization: 'Bearer ' }],
@@ -126,7 +107,6 @@ describe('provisioning on the first request', () => {
     const { client } = (await response.json()) as { client: { id: string; display_name: string } };
     expect(client.display_name).toBe('Nadia');
 
-    // And the second request finds the same athlete rather than making another.
     const again = await app.request('/api/me', {
       headers: { Authorization: `Bearer ${subject}` },
     });
@@ -139,8 +119,6 @@ describe('GET /api/me', () => {
     const response = await app.request('/api/me', { headers: ana.headers });
 
     expect(response.status).toBe(200);
-    // Imperial without anyone asking for it: the column defaults, and the
-    // overwhelming majority of athletes never touch the setting.
     expect(await body(response)).toMatchObject({
       client: { id: ana.id, display_name: 'Ana', status: 'active', unit_preference: 'imperial' },
     });
@@ -160,8 +138,6 @@ describe('PATCH /api/me', () => {
       client: { id: ana.id, unit_preference: 'metric' },
     });
 
-    // The assertion that makes this about persistence rather than echo: a
-    // separate request, reading the row back.
     const reread = await app.request('/api/me', { headers: ana.headers });
     expect(await body(reread)).toMatchObject({ client: { unit_preference: 'metric' } });
   });
@@ -191,22 +167,6 @@ describe('PATCH /api/me', () => {
 
 describe('the athlete/identity invariant', () => {
   it('will not let an athlete be deleted out from under their identity', async () => {
-    // Five handlers answer 404 `client_not_found` when the athlete is missing,
-    // and that branch is now unreachable rather than merely untested: the
-    // foreign key from `client_identities.client_id` makes the state it
-    // describes impossible to construct. A token that resolves at all resolves
-    // to an athlete that exists.
-    //
-    // The branch stays in those handlers because `getClient` and
-    // `updateUnitPreference` return `Client | null` and the alternative is a
-    // non-null assertion — a null check is the honest way to spend it. What is pinned here is the constraint that
-    // makes it dead, so that a migration relaxing the foreign key fails loudly
-    // here instead of quietly widening what a token can reach.
-    //
-    // `issues/014-account-deletion.md` inherits the live version of this
-    // question: it deletes at both ends, and if the local rows go while the
-    // Auth0 user survives, the guard does not reject that athlete — it
-    // provisions them again as somebody new.
     await expect(db.delete(clients).where(eq(clients.id, ana.id))).rejects.toThrow();
     await expect(getClient(db, ana.id)).resolves.not.toBeNull();
   });
@@ -288,9 +248,6 @@ describe('POST /api/me/onboarding', () => {
   });
 
   it('keeps a malformed JSON body inside the error envelope', async () => {
-    // hono rejects this before any validator runs, with a plain-text body, so
-    // app.ts has to catch it or the UI's error handling meets something it
-    // cannot parse.
     const response = await app.request('/api/me/onboarding', {
       method: 'POST',
       headers: ana.jsonHeaders,
@@ -312,9 +269,6 @@ describe('removed endpoints stay unrouted', () => {
     ['GET', `/api/clients/${UUID}`],
   ];
 
-  // `/auth/*` is pinned here for the same reason the others are: a route that
-  // comes back by accident is a route nobody reviewed. These are deleted for
-  // good — Auth0 owns all four now.
   it.each(gone)('%s %s is not routed', async (method, path) => {
     const response = await app.request(path, { method, headers: ana.jsonHeaders });
 

@@ -1,8 +1,3 @@
--- Local-only Auth0 identity for the seeded Lucia demo athlete.
--- The subject was verified in the shared tenant; it is an identifier, not a secret.
--- Keep the password in the team's private password manager and never add it here.
--- Apply after 001_demo_seed.sql. Do not apply this seed to production D1.
-
 INSERT OR IGNORE INTO client_identities (
   client_id,
   subject,

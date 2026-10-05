@@ -3,13 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SignInRoute } from './signInRoute';
 
-/**
- * Two behaviours, and the second one is the reason this component exists in the
- * shape it does: it must start the redirect, and it must refuse to start one
- * when the provider already has a session — otherwise a failure to read the
- * athlete turns into a browser bouncing between two domains with no way out.
- */
-
 const { useAuth0, loginWithRedirect } = vi.hoisted(() => ({
   useAuth0: vi.fn(),
   loginWithRedirect: vi.fn(),
@@ -40,9 +33,6 @@ describe('SignInRoute', () => {
   });
 
   it('waits for the provider rather than redirecting mid-renewal', () => {
-    // A returning athlete is `isLoading: true, isAuthenticated: false` for the
-    // whole of a silent renewal. Redirecting on that would mean an interactive
-    // login on every reload, which is the failure the loading state exists for.
     provider({ isLoading: true, isAuthenticated: false });
 
     render(<SignInRoute />);

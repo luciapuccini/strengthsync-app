@@ -15,7 +15,6 @@ import { RepoError } from '../errors.ts';
 import { weeks } from '../schema.ts';
 import type { NextWeekSchedule } from '../../domain/coach/index.ts';
 
-/** Strip persistence-only columns (workflow_id) from a week row. */
 export function toWeek(row: typeof weeks.$inferSelect): Week {
   const { workflow_id: _workflowId, ...week } = row;
   return week;
@@ -35,8 +34,6 @@ export async function getCurrentWeek(db: Db, clientId: string): Promise<Week | n
   return week;
 }
 
-// warning: every filter field is optional, so an omitted argument silently
-// widens the query to every week for the client instead of erroring.
 export async function listWeeks(
   db: Db,
   clientId: string,
@@ -67,33 +64,25 @@ export async function getWeek(db: Db, clientId: string, weekId: string): Promise
 }
 
 export async function completeWeek(db: Db, clientId: string): Promise<Week> {
-  // find the in_flight week for the client
   const inFlightWeek = await db
     .select()
     .from(weeks)
     .where(and(eq(weeks.client_id, clientId), eq(weeks.status, 'in_flight')))
     .limit(1);
-  // if no in_flight week is found, throw an error
   if (!inFlightWeek[0]) {
     throw new RepoError('not_found', 'week_not_found', `week not found for client ${clientId}`);
   }
-  // found, update to completed
   const completedWeek = await db
     .update(weeks)
     .set({ status: 'completed', updated_at: new Date().toISOString() })
     .where(and(eq(weeks.id, inFlightWeek[0].id), eq(weeks.status, 'in_flight')))
     .returning();
-  // if it doesnt return
   if (!completedWeek[0]) {
     throw new RepoError('not_found', 'week_not_found', `week ${inFlightWeek[0].id} not found`);
   }
 
   return completedWeek[0];
 }
-/**
- * Patch one day of an in_flight week
- * See docs/architecture/api_contracts.md — UpdateDayLog rules.
- */
 export async function updateDayLog(
   db: Db,
   clientId: string,
@@ -139,7 +128,6 @@ export async function updateDayLog(
     completed_at: input.completed ? now : null,
     exercises: day.exercises.map((scheduled) => {
       const log = input.exercises.find((e) => e.exercise_key === scheduled.exercise_key);
-      // Coverage was validated above, so this cannot be undefined.
       if (!log) throw new Error('unreachable: exercise log missing after coverage validation');
       return {
         ...scheduled,
@@ -163,10 +151,6 @@ export async function updateDayLog(
   return toWeek(row);
 }
 
-/**
- * Athlete Save day: persist exercise logs and always mark the day completed.
- * completed is owned by the server — never taken from the client body.
- */
 export async function saveDay(
   db: Db,
   clientId: string,
@@ -205,11 +189,6 @@ export async function saveNextWeek(
   return row;
 }
 
-/**
- * Remove every week an athlete has logged. Step two of the cascade in
- * `lib/account-deletion.ts`, and first of the training data because a week
- * references both a plan and an athlete — nothing references a week.
- */
 export async function deleteWeeks(db: Db, clientId: string): Promise<void> {
   await db.delete(weeks).where(eq(weeks.client_id, clientId));
 }

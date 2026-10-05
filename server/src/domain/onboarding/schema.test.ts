@@ -2,11 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { OnboardingAnswersSchema } from './schema.ts';
 
-/**
- * `weight_lb` is an overloaded name: a load on a planned exercise, a body
- * measurement here. Only loads sit on the five-pound grid, and these cases pin
- * that distinction — the two meanings appear in the same payload.
- */
 describe('OnboardingAnswersSchema', () => {
   const answers = {
     sex: 'female',

@@ -4,10 +4,6 @@ import { Navigate } from 'react-router-dom';
 import { Spinner } from '@/shadcn/ui/spinner';
 import { useAppStore } from '@/store/useAppStore';
 
-/**
- * The root resolves to the tracker, which now needs no identity in its URL —
- * so this only has to know whether anyone is signed in, not who.
- */
 export function RootRedirect(): JSX.Element {
   const status = useAppStore((state) => state.sessionStatus);
 

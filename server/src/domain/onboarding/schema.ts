@@ -3,14 +3,6 @@ import { z } from 'zod';
 import { ISODateSchema } from '../model/index.ts';
 import { snapLoad } from '../weight-grid.ts';
 
-/**
- * The onboarding questionnaire's answer schema.
- *
- * Slices 002, 004 and 005 live here: who the client is, their primary goal,
- * how they train today, and everything around the training that changes what
- * the training should be.
- */
-
 export const ONBOARDING_GOALS = ['lose_fat', 'build_muscle', 'get_stronger'] as const;
 export const OnboardingGoalSchema = z.enum(ONBOARDING_GOALS);
 export type OnboardingGoal = z.infer<typeof OnboardingGoalSchema>;
@@ -23,11 +15,6 @@ export const ONBOARDING_EXPERIENCE_LEVELS = ['beginner', 'intermediate', 'advanc
 export const OnboardingExperienceSchema = z.enum(ONBOARDING_EXPERIENCE_LEVELS);
 export type OnboardingExperience = z.infer<typeof OnboardingExperienceSchema>;
 
-/**
- * The main lifts an experienced client can give a working weight for. A
- * fixed vocabulary rather than free text, so the mapper always knows which
- * `strength_loads` key each answer becomes.
- */
 export const ONBOARDING_MAIN_LIFTS = [
   'squat',
   'bench_press',
@@ -36,12 +23,6 @@ export const ONBOARDING_MAIN_LIFTS = [
 ] as const;
 export type OnboardingMainLift = (typeof ONBOARDING_MAIN_LIFTS)[number];
 
-/**
- * A benchmark load the athlete types in. Snapped to the five-pound grid on
- * submit, because it becomes a prescribed load downstream — unlike body weight
- * and target weight below, which are a measurement and a goal and stay exactly
- * as typed.
- */
 const liftWeightSchema = z.number().positive().max(1000).transform(snapLoad);
 
 export const ONBOARDING_DAILY_ACTIVITY_LEVELS = [
@@ -57,12 +38,6 @@ export const ONBOARDING_EATING_PHASES = ['deficit', 'maintenance', 'surplus'] as
 export const OnboardingEatingPhaseSchema = z.enum(ONBOARDING_EATING_PHASES);
 export type OnboardingEatingPhase = z.infer<typeof OnboardingEatingPhaseSchema>;
 
-/**
- * One declared activity, e.g. two weekly swims. Matches the `activities`
- * profile column's documented `{ items: [...] }` convention (see
- * `domain/model/index.ts`), minus the convention's optional `days`: the
- * client says how often, not which days — the model places the sessions.
- */
 export const OnboardingActivitySchema = z.object({
   name: z.string().min(1).max(100),
   sessions_per_week: z.number().int().min(1).max(7),
@@ -86,9 +61,6 @@ export const OnboardingAnswersSchema = z.object({
   deadlift_lb: liftWeightSchema.optional(),
   overhead_press_lb: liftWeightSchema.optional(),
   days_per_week: z.number().int().min(1).max(7),
-  // Weekday the athlete picked, 1 = Monday, 7 = Sunday. This is *not*
-  // `PlanDay.day_index`, which counts from the day the plan was activated —
-  // see the `day_index` note in `docs/future_state_after_mvp/todos.md`.
   rest_day: z.number().int().min(1).max(7),
   activities: z.array(OnboardingActivitySchema).max(10).optional(),
   daily_activity_level: OnboardingDailyActivityLevelSchema.optional(),

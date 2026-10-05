@@ -10,7 +10,6 @@ import { toWeekHistory } from '@/routes/history/toWeekHistory';
 import { Button } from '@/shadcn/ui/button';
 import { useUnitPreference } from '@/store/useUnitPreference';
 
-/** `strengthsync-<plan-label-slug>-<YYYY-MM-DD>.csv`, with today's local date. */
 function csvFileName(plan: Plan): string {
   const slug = plan.label
     .toLowerCase()
@@ -22,7 +21,6 @@ function csvFileName(plan: Plan): string {
   return `strengthsync-${slug}-${now.getFullYear()}-${month}-${day}.csv`;
 }
 
-/** The browser saves the text as a file: a temporary object URL on a temporary link. */
 function downloadCsv(csv: string, fileName: string): void {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   const link = document.createElement('a');
@@ -33,16 +31,11 @@ function downloadCsv(csv: string, fileName: string): void {
 }
 
 export function HistoryPage(): JSX.Element {
-  // No parameters: the resource resolves the signed-in client's active plan.
   const { weeks, plan } = use(completedWeeksResource());
-  // `toWeekHistory` is pure and cannot read the store itself, so the preference
-  // is read here and passed in — the week-over-week deltas depend on it.
   const unit = useUnitPreference();
   const history = toWeekHistory(weeks, plan?.total_weeks ?? 0, unit);
   const [page, setPage] = useState(() => Math.max(0, history.length - 1));
 
-  // No active plan and no completed weeks read the same on this screen: there
-  // is nothing to page through either way.
   if (history.length === 0) {
     return <p className="text-sm text-muted-foreground">No completed weeks.</p>;
   }
@@ -50,14 +43,11 @@ export function HistoryPage(): JSX.Element {
   const index = Math.min(page, history.length - 1);
   const week = history[index]!;
   const sn = `S${week.week_index}`;
-  // Not null here: without a plan there are no completed weeks, and the page
-  // returned above.
   const activePlan = plan!;
 
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4 border-b pb-4">
-        {/* Plan-level row: the export takes every completed week, not only the week on screen. */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{activePlan.label}</p>
@@ -77,7 +67,6 @@ export function HistoryPage(): JSX.Element {
             Export CSV
           </Button>
         </div>
-        {/* Week stepper: 44px arrows on both sides, so the thumb reaches each one. */}
         <div className="flex items-center justify-between gap-2">
           <Button
             type="button"

@@ -9,7 +9,6 @@ import { plans, weeks } from '../schema.ts';
 import { buildScheduleFromTemplate, findExistingActivation } from './internal-helpers.ts';
 import { toWeek } from './weeks.ts';
 
-/** Strip persistence-only columns (workflow_id) from a plan row. */
 export function toPlan(row: typeof plans.$inferSelect): Plan {
   const { workflow_id: _workflowId, ...plan } = row;
   return plan;
@@ -34,7 +33,6 @@ export async function getActivePlan(db: Db, clientId: string): Promise<Plan | nu
   return row ? toPlan(row) : null;
 }
 
-/** One of a client's plans, by id, or null when they have no such plan. */
 export async function findPlanById(db: Db, clientId: string, planId: string): Promise<Plan | null> {
   const rows = await db
     .select()
@@ -45,16 +43,6 @@ export async function findPlanById(db: Db, clientId: string, planId: string): Pr
   return row ? toPlan(row) : null;
 }
 
-/**
- * The active plan, or a thrown error. For the workflow, which cannot proceed
- * without one and has no way to answer a caller.
- *
- * Named `getPlan` until the route deletion in `issues/auth/013` left the
- * workflow as its only caller: it read the *active* plan while sitting behind
- * `GET /clients/{clientId}/plans/{planId}`, which therefore answered with the
- * active plan whatever id was asked for. Renamed so the name cannot mislead
- * the next caller, and reduced to a wrapper so the query lives in one place.
- */
 export async function getActivePlanOrThrow(db: Db, clientId: string): Promise<Plan> {
   const plan = await getActivePlan(db, clientId);
   if (!plan) {
@@ -63,11 +51,6 @@ export async function getActivePlanOrThrow(db: Db, clientId: string): Promise<Pl
   return plan;
 }
 
-/**
- * Archive the prior active plan, create + activate the generated plan, and
- * create week 1 from its canonical template — atomically via D1 `batch()`.
- * Idempotent by `workflow_id`.
- */
 export async function activateGeneratedPlan(
   db: Db,
   clientId: string,
@@ -77,11 +60,6 @@ export async function activateGeneratedPlan(
   if (existing) return existing;
 
   const now = nowIso();
-  // Week 1 runs from the day the athlete activates, not from the Monday of the
-  // ISO week containing it: anchoring to Monday put days the athlete never
-  // trained and cannot log in the past for the five-in-seven who sign up
-  // mid-week. Week 2 onward chains off `end_date + 1` in `saveNextWeek`, so the
-  // offset holds for that athlete from here on.
   const start = todayIso();
   const planRow = {
     id: crypto.randomUUID(),
@@ -122,10 +100,6 @@ export async function activateGeneratedPlan(
   return { plan: toPlan(planRow), first_week: toWeek(weekRow) };
 }
 
-/**
- * Remove every plan an athlete has. Step three of account deletion, and only
- * safe after their weeks: `weeks.plan_id` references these rows.
- */
 export async function deletePlans(db: Db, clientId: string): Promise<void> {
   await db.delete(plans).where(eq(plans.client_id, clientId));
 }

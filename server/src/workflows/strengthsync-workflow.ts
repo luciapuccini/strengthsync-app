@@ -158,7 +158,6 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
     );
 
     if (completedWeek.week_index >= currentPlan.total_weeks) {
-      // new plan branch
       const completedWeeks = await loadCompletedWeeks(step, db, clientId, currentPlan);
       const [profileSummary, historySummary] = await Promise.all([
         summarizeProfile(step, this.env, userProfile, rules),
@@ -229,7 +228,6 @@ export class StrengthsyncWorkflow extends WorkflowEntrypoint<Env, CompleteWeekPa
     );
 
     const savedWeek = await step.do('save-next-week', async () => {
-      // WIP: a bit too much
       return saveNextWeek(db, clientId, currentPlan, completedWeek, nextWeekSchedule);
     });
     return { plan_complete: false, next_week_id: savedWeek.id };

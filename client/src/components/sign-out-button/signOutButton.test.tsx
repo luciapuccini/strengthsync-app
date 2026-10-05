@@ -7,13 +7,6 @@ import { useAppStore } from '@/store/useAppStore';
 
 import { SignOutButton } from './signOutButton';
 
-/**
- * Leaving has to happen at both ends. Clearing the store alone would leave the
- * Auth0 session intact, and the next visit would be signed straight back in by
- * silent authentication — a sign-out that survives exactly until the next page
- * load is worse than none, because it looks like one.
- */
-
 const { useAuth0, logout } = vi.hoisted(() => ({
   useAuth0: vi.fn(),
   logout: vi.fn(),

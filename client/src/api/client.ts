@@ -14,28 +14,12 @@ import type {
   Week,
 } from './types';
 
-/**
- * The bearer token for every call below, sourced from the Auth0 SDK. Registered
- * from a component the way `setUnauthorizedHandler` is, and for the same reason:
- * the token lives in React context, this module is not a component, and
- * importing the SDK here would put a provider requirement on every test that
- * touches the API client.
- *
- * The default is what an unauthenticated app does — send nothing and let the
- * server answer 401. That is also the honest behaviour before the provider is
- * registered, which is a real window on a cold load.
- */
 let getAccessToken: () => Promise<string | null> = async () => null;
 
 export function setAccessTokenProvider(provider: () => Promise<string | null>): void {
   getAccessToken = provider;
 }
 
-/**
- * The one place a credential is attached. Every call in this file goes through
- * `api`, and `api` goes through here, so there is no route that can be added
- * without one.
- */
 export async function authorizedFetch(request: Request): Promise<Response> {
   const token = await getAccessToken();
   if (token) request.headers.set('Authorization', `Bearer ${token}`);
@@ -47,7 +31,6 @@ const api = createOpenApiClient<paths>({
   fetch: authorizedFetch,
 });
 
-/** Run a read that treats a 404 as an expected "no record yet" (returns null). */
 async function orNull<T>(fn: () => Promise<T>): Promise<T | null> {
   try {
     return await fn();
@@ -57,12 +40,6 @@ async function orNull<T>(fn: () => Promise<T>): Promise<T | null> {
   }
 }
 
-/**
- * Invoked for every unauthorized response, so an expired credential behaves the
- * same no matter which screen was open. It is registered at startup rather than
- * imported, which keeps this module free of a store dependency and its tests
- * independent of the store.
- */
 let onUnauthorized: () => void = () => {};
 
 export function setUnauthorizedHandler(handler: () => void): void {
@@ -74,17 +51,10 @@ function throwOnError<T>(response: { data?: T; error?: unknown; response: Respon
     return response.data;
   }
   const error = toApiError(response.response.status, response.error);
-  // Every 401 lands here. The server answers one indistinguishable rejection for
-  // a missing, malformed, expired or unknown credential, so there is nothing to
-  // branch on and nothing worth branching on: all four mean sign in again.
-  // Signing out an athlete who is already signed out changes nothing, and
-  // exempting any call would mean threading an opt-out through every wrapper for
-  // no gain.
   if (error.kind === 'unauthorized') onUnauthorized();
   throw error;
 }
 
-/** Run an openapi-fetch call, mapping a thrown fetch failure to a network error. */
 async function call<T>(
   fn: () => Promise<{ data?: T; error?: unknown; response: Response }>,
 ): Promise<T> {
@@ -97,12 +67,6 @@ async function call<T>(
   return throwOnError(res);
 }
 
-/**
- * `call`'s no-content sibling. A 204 carries no body, so `throwOnError`'s
- * `data !== undefined` check would read a successful response as a failed one.
- * The error path is otherwise identical, including the 401 handler — an expired
- * credential has to behave the same here as everywhere else.
- */
 async function callEmpty(
   fn: () => Promise<{ error?: unknown; response: Response }>,
 ): Promise<void> {
@@ -118,40 +82,11 @@ async function callEmpty(
   throw error;
 }
 
-/**
- * There are no sign-in, sign-up, sign-out or session calls here any more. Auth0
- * owns all four: authorization happens on its hosted page, not against a route
- * of ours. `GET /api/me` below is what replaced the session read, and it is not
- * a session check — it answers with the athlete, or 401s like everything else.
- *
- * The credential is a bearer token from Auth0, attached by `authorizedFetch`
- * above — one wrapper for every call, rather than a header threaded through
- * each of them.
- *
- * Everything below addresses `/api/me`, which takes the athlete from the
- * verified credential. None of these accepts an athlete id, so the browser
- * cannot ask for anyone else's data — and no caller has to know whose data it is
- * asking for.
- */
-
-/**
- * The signed-in athlete, replacing the deleted `/auth/session`.
- *
- * Not a session check — by the time this answers, the credential has already
- * been accepted or the call has already 401ed. What it is for is the internal
- * athlete id, which the browser needs on a cold load to identify the person to
- * product analytics and to key the local week draft.
- */
 export async function getMe(): Promise<Client> {
   const res = await call(() => api.GET('/api/me'));
   return res.client;
 }
 
-/**
- * The one writer of the unit preference, shared by the Account toggle and the
- * onboarding toggle. It answers with the whole client, so the caller replaces
- * the one it holds rather than refetching it.
- */
 export async function updateUnitPreference(
   preference: UpdateClient['unit_preference'],
 ): Promise<Client> {
@@ -171,7 +106,6 @@ export async function updateProfile(input: UpdateClientProfile): Promise<ClientP
   return res.profile;
 }
 
-/** Turns onboarding answers into the signed-in client's coaching profile. */
 export async function submitOnboarding(input: OnboardingAnswers): Promise<ClientProfile> {
   const res = await call(() => api.POST('/api/me/onboarding', { body: input }));
   return res.profile;
@@ -184,18 +118,11 @@ export async function getActivePlan(): Promise<Plan | null> {
   });
 }
 
-/**
- * No caller since the history screen started resolving the active plan itself.
- * Kept deliberately, with its route: the parent PRD flags the by-id plan read
- * for the same consumerless-route audit that previously cut three others,
- * rather than cutting it inside this phase.
- */
 export async function getPlan(planId: string): Promise<Plan> {
   const res = await call(() => api.GET('/api/me/plans/{planId}', { params: { path: { planId } } }));
   return res.plan;
 }
 
-/** Generates and activates the signed-in client's first plan from their profile. */
 export async function generatePlan(): Promise<{ plan: Plan; first_week: Week }> {
   return call(() => api.POST('/api/me/plans/generate', {}));
 }
@@ -253,21 +180,8 @@ export async function updateDayLog(
   return res.week;
 }
 
-/**
- * Delete the signed-in athlete's identity and every row of their training data.
- *
- * Irreversible, and the only call in this file that is. The ordering that makes
- * it safe under partial failure is entirely the server's — see
- * `server/src/lib/account-deletion.ts` — so there is nothing for the browser to
- * sequence and nothing for it to retry beyond calling this again.
- *
- * No argument: the athlete comes from the bearer token, so this cannot name
- * anyone else.
- */
 export async function deleteAccount(): Promise<void> {
   return callEmpty(() => api.DELETE('/api/account'));
 }
 
-// Re-export the shared openapi-fetch client for callers that need direct access
-// (e.g. the workflow trigger, which uses a different response shape).
 export { api };

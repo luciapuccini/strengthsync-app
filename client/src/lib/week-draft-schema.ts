@@ -2,14 +2,6 @@ import { z } from 'zod';
 
 import { DAY_TYPES } from '@/lib/day-types';
 
-/**
- * UI-local schema for validating week drafts stored in localStorage.
- *
- * This is deliberately NOT the wire contract. Its job is to reject corrupt or
- * garbage drafts and accept drafts the UI itself writes. The wire shape is
- * enforced by the server and typed on the client via `api/openapi.d.ts`.
- */
-
 const UuidSchema = z.string().uuid();
 const ISODateSchema = z.string().date();
 const ISODateTimeSchema = z.string().datetime();
