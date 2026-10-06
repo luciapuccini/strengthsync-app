@@ -61,7 +61,13 @@ function runClaude(task: Task, run: number): RunMetrics {
     duration_ms: number;
     total_cost_usd: number;
     is_error: boolean;
+    result?: string;
   };
+  if (output.is_error || child.status !== 0) {
+    console.error(
+      `[${task.id}#${run}] exit=${child.status} result=${output.result} stderr=${child.stderr}`,
+    );
+  }
   return {
     taskId: task.id,
     run,
