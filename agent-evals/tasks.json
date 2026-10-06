@@ -1,10 +1,107 @@
 [
   {
     "id": "complete-week-flow",
-    "prompt": "Explain how an athlete completing a training week flows through this codebase, from the client action to the server workflow that processes it. List the key files in order."
+    "prompt": "Explain how an athlete completing a training week flows through this codebase: from the client action, through the API route, to the server workflow steps that process it, and how the client learns the result. List the key files in order.",
+    "core_files": [
+      "client/src/routes/tracker-page/components/week-tracker/components/complete-week-button/completeWeekButton.tsx",
+      "client/src/api/workflows.ts",
+      "server/src/routes/wf/endpoints.ts",
+      "server/src/workflows/strengthsync-workflow.ts"
+    ],
+    "optional_files": [
+      "README.md",
+      "docs/architecture/workflows.md",
+      "docs/architecture/api_contracts.md",
+      "docs/operations/local_worker.md",
+      "client/src/api/client.ts",
+      "client/src/routes/tracker-page/trackerPage.tsx",
+      "client/src/routes/tracker-page/components/week-tracker/weekTracker.tsx",
+      "client/src/routes/tracker-page/components/week-tracker/components/week-header/weekHeader.tsx",
+      "client/src/routes/tracker-page/components/between-weeks/betweenWeeks.tsx",
+      "client/src/store/useAppStore.ts",
+      "client/src/store/slices/trackerSlice.ts",
+      "server/src/index.ts",
+      "server/src/app.ts",
+      "server/src/env.ts",
+      "server/wrangler.jsonc",
+      "server/src/routes/wf/schemas.ts",
+      "server/src/workflows/plan-turnover.ts",
+      "server/src/db/index.ts",
+      "server/src/db/repositories/weeks.ts",
+      "server/src/db/repositories/plans.ts",
+      "server/src/agent/agent-core.ts",
+      "server/src/domain/coach/index.ts",
+      "server/src/domain/coach/progression.ts",
+      "server/src/domain/coach/weekly-progression.ts",
+      "server/src/domain/workflow.ts"
+    ],
+    "required_facts": [
+      ["completeWeekButton", "complete-week-button"],
+      ["startWeeklyProgression", "api/workflows.ts"],
+      ["/wf/complete-week", "wf/endpoints.ts", "cfWorkflowRoutes"],
+      ["StrengthsyncWorkflow", "strengthsync-workflow", "STRENGTHSYNC_WORKFLOW"],
+      ["saveNextWeek", "save-next-week"],
+      ["plan-turnover", "activatePlan", "generatePlan"],
+      ["waitForWeeklyProgression", "getWeeklyProgressionStatus", "complete-week/{instanceId}"]
+    ]
   },
   {
     "id": "api-contract",
-    "prompt": "How do the client and the server share the API contract in this repository? Name the files that define it and the command that regenerates it."
+    "prompt": "How do the client and the server share the API contract in this repository? Name the source of truth, the generated files, the client code that consumes them, and the command that regenerates them.",
+    "core_files": ["package.json"],
+    "optional_files": [
+      "README.md",
+      "docs/architecture/api_contracts.md",
+      "docs/architecture/stack.md",
+      "server/package.json",
+      "client/package.json",
+      "server/scripts/gen-openapi.ts",
+      "server/openapi.json",
+      "client/src/api/openapi.d.ts",
+      "client/src/api/client.ts",
+      "client/src/api/types.ts",
+      "client/src/api/workflows.ts",
+      "server/src/app.ts",
+      "server/src/routes/shared.ts",
+      "server/src/routes/weeks/endpoints.ts",
+      "server/src/routes/weeks/schemas.ts",
+      "server/src/domain/model/index.ts",
+      ".github/workflows/ci.yml"
+    ],
+    "required_facts": [
+      ["zod", "createRoute"],
+      ["openapi.json"],
+      ["openapi.d.ts"],
+      ["openapi-fetch", "api/client.ts"],
+      ["gen:openapi"]
+    ]
+  },
+  {
+    "id": "local-setup",
+    "prompt": "How can I get this project up and running locally as a new developer?",
+    "core_files": ["README.md"],
+    "optional_files": [
+      "package.json",
+      "server/package.json",
+      "client/package.json",
+      ".nvmrc",
+      "server/.dev.vars.example",
+      "client/.env.example",
+      "pnpm-workspace.yaml",
+      "turbo.json",
+      "lefthook.yml",
+      "server/wrangler.jsonc",
+      "server/db/seeds/003_demo_identity.sql",
+      "docs/architecture/stack.md",
+      "docs/operations/local_worker.md"
+    ],
+    "required_facts": [
+      ["22.14"],
+      ["pnpm install"],
+      [".dev.vars"],
+      ["db:migrate:local"],
+      ["db:seed:local"],
+      ["turbo dev", "turbo run dev"]
+    ]
   }
 ]
