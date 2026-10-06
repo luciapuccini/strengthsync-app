@@ -1,0 +1,67 @@
+name: repo-agent-benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to benchmark against main
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PR_NUMBER: ${{ inputs.pr_number }}
+      RUNS: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm install -g @anthropic-ai/claude-code
+
+      # Checkouts live outside the workspace so the agent cannot pick up this
+      # harness checkout's CLAUDE.md from a parent directory.
+      - name: Check out main and the PR head
+        run: |
+          git fetch origin main "pull/$PR_NUMBER/head:pr-$PR_NUMBER"
+          git worktree add "$RUNNER_TEMP/baseline" origin/main
+          git worktree add "$RUNNER_TEMP/candidate" "pr-$PR_NUMBER"
+
+      - name: Run baseline
+        run: >
+          node --experimental-strip-types scripts/run-agent-eval.ts
+          --repo "$RUNNER_TEMP/baseline" --label main --runs "$RUNS"
+          --out "$RUNNER_TEMP/results/baseline.json"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+      - name: Run PR
+        run: >
+          node --experimental-strip-types scripts/run-agent-eval.ts
+          --repo "$RUNNER_TEMP/candidate" --label "PR #$PR_NUMBER" --runs "$RUNS"
+          --out "$RUNNER_TEMP/results/candidate.json"
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-benchmark-pr-${{ inputs.pr_number }}
+          path: ${{ runner.temp }}/results/
+
+      - name: Comment on the PR
+        run: |
+          node --experimental-strip-types scripts/compare-results.ts \
+            "$RUNNER_TEMP/results/baseline.json" "$RUNNER_TEMP/results/candidate.json" > comment.md
+          cat comment.md >> "$GITHUB_STEP_SUMMARY"
+          gh pr comment "$PR_NUMBER" --body-file comment.md
+        env:
+          GH_TOKEN: ${{ github.token }}
