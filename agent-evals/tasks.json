@@ -48,17 +48,15 @@
   {
     "id": "api-contract",
     "prompt": "How do the client and the server share the API contract in this repository? Name the source of truth, the generated files, the client code that consumes them, and the command that regenerates them.",
-    "core_files": ["package.json"],
+    "core_files": ["package.json", "server/scripts/gen-openapi.ts", "client/src/api/client.ts"],
     "optional_files": [
       "README.md",
       "docs/architecture/api_contracts.md",
       "docs/architecture/stack.md",
       "server/package.json",
       "client/package.json",
-      "server/scripts/gen-openapi.ts",
       "server/openapi.json",
       "client/src/api/openapi.d.ts",
-      "client/src/api/client.ts",
       "client/src/api/types.ts",
       "client/src/api/workflows.ts",
       "server/src/app.ts",
