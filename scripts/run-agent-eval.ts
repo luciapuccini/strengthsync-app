@@ -1,11 +1,17 @@
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 
-type Task = { id: string; prompt: string };
+import {
+  explorationMetrics,
+  parseTasks,
+  type ExplorationMetrics,
+  type StreamEvent,
+  type Task,
+} from './agent-eval-metrics.ts';
 
-export type RunMetrics = {
+export type RunMetrics = ExplorationMetrics & {
   taskId: string;
   run: number;
   numTurns: number;
@@ -35,7 +41,13 @@ if (!values.repo || !values.label || !values.out) {
 }
 
 const repo = values.repo;
-const tasks = JSON.parse(readFileSync(values.tasks, 'utf8')) as Task[];
+const tasks = parseTasks(JSON.parse(readFileSync(values.tasks, 'utf8')));
+const trajectoryDir = join(
+  dirname(values.out),
+  'trajectories',
+  values.label.replace(/[^\w.-]/g, '_'),
+);
+mkdirSync(trajectoryDir, { recursive: true });
 
 function runClaude(task: Task, run: number): RunMetrics {
   const child = spawnSync(
@@ -46,7 +58,8 @@ function runClaude(task: Task, run: number): RunMetrics {
       '--model',
       values.model,
       '--output-format',
-      'json',
+      'stream-json',
+      '--verbose',
       '--max-turns',
       '40',
       '--allowedTools',
@@ -56,25 +69,45 @@ function runClaude(task: Task, run: number): RunMetrics {
     ],
     { cwd: repo, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
   );
-  const output = JSON.parse(child.stdout) as {
-    num_turns: number;
-    duration_ms: number;
-    total_cost_usd: number;
-    is_error: boolean;
-    result?: string;
-  };
-  if (output.is_error || child.status !== 0) {
+  writeFileSync(join(trajectoryDir, `${task.id}-${run}.jsonl`), child.stdout);
+  const events = child.stdout
+    .split('\n')
+    .filter((line) => line.trim())
+    .map(
+      (line) =>
+        JSON.parse(line) as StreamEvent & {
+          num_turns: number;
+          duration_ms: number;
+          total_cost_usd: number;
+          is_error: boolean;
+        },
+    );
+  const output = events.findLast((event) => event.type === 'result');
+  if (!output || output.is_error || child.status !== 0) {
     console.error(
-      `[${task.id}#${run}] exit=${child.status} result=${output.result} stderr=${child.stderr}`,
+      `[${task.id}#${run}] exit=${child.status} result=${output?.result} stderr=${child.stderr}`,
     );
   }
+  if (!output) {
+    return {
+      taskId: task.id,
+      run,
+      numTurns: 0,
+      durationMs: 0,
+      costUsd: 0,
+      isError: true,
+      ...explorationMetrics(events, repo, task, true),
+    };
+  }
+  const isError = output.is_error || child.status !== 0;
   return {
     taskId: task.id,
     run,
     numTurns: output.num_turns,
     durationMs: output.duration_ms,
     costUsd: output.total_cost_usd,
-    isError: output.is_error || child.status !== 0,
+    isError,
+    ...explorationMetrics(events, repo, task, isError),
   };
 }
 
