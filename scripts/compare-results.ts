@@ -1,11 +1,31 @@
 import { readFileSync } from 'node:fs';
 import type { EvalResult, RunMetrics } from './run-agent-eval.ts';
 
+const ratio = (n: number) => n.toFixed(2);
+
 const METRICS = [
-  { key: 'numTurns', label: 'Turns', format: (n: number) => n.toFixed(1) },
-  { key: 'durationMs', label: 'Duration (s)', format: (n: number) => (n / 1000).toFixed(1) },
-  { key: 'costUsd', label: 'Cost (USD)', format: (n: number) => `$${n.toFixed(3)}` },
-] as const satisfies { key: keyof RunMetrics; label: string; format: (n: number) => string }[];
+  { key: 'hitFileRate', label: 'hit_file_rate', better: 'higher', format: ratio },
+  { key: 'noiseFileRate', label: 'noise_file_rate', better: 'lower', format: ratio },
+  { key: 'contextEfficiency', label: 'Context efficiency', better: 'higher', format: ratio },
+  { key: 'numTurns', label: 'Turns', better: 'lower', format: (n: number) => n.toFixed(1) },
+  {
+    key: 'durationMs',
+    label: 'Duration (s)',
+    better: 'lower',
+    format: (n: number) => (n / 1000).toFixed(1),
+  },
+  {
+    key: 'costUsd',
+    label: 'Cost (USD)',
+    better: 'lower',
+    format: (n: number) => `$${n.toFixed(3)}`,
+  },
+] as const satisfies {
+  key: keyof RunMetrics;
+  label: string;
+  better: 'higher' | 'lower';
+  format: (n: number) => string;
+}[];
 
 const [baselinePath, candidatePath] = process.argv.slice(2);
 if (!baselinePath || !candidatePath) {
@@ -16,33 +36,76 @@ const read = (path: string) => JSON.parse(readFileSync(path, 'utf8')) as EvalRes
 const baseline = read(baselinePath);
 const candidate = read(candidatePath);
 
-function average(result: EvalResult, key: (typeof METRICS)[number]['key']): number {
-  const ok = result.runs.filter((run) => !run.isError);
-  return ok.reduce((sum, run) => sum + run[key], 0) / ok.length;
+function median(values: number[]): number {
+  const sorted = values.toSorted((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
 }
 
-function delta(before: number, after: number): string {
-  const percent = ((after - before) / before) * 100;
-  return `${percent > 0 ? '+' : ''}${percent.toFixed(1)}%`;
+function summary(values: number[], format: (n: number) => string): string {
+  if (values.length === 0) return 'n/a';
+  return `${format(median(values))} (${format(Math.min(...values))}–${format(Math.max(...values))})`;
 }
 
-const errors = (result: EvalResult) => result.runs.filter((run) => run.isError).length;
+const taskRuns = (result: EvalResult, taskId: string) =>
+  result.runs.filter((run) => run.taskId === taskId);
+const successful = (runs: RunMetrics[]) => runs.filter((run) => !run.isError);
 
-const rows = METRICS.map(({ key, label, format }) => {
-  const before = average(baseline, key);
-  const after = average(candidate, key);
-  return `| ${label} | ${format(before)} | ${format(after)} | ${delta(before, after)} |`;
-});
+function passRate(runs: RunMetrics[]): string {
+  return `${runs.filter((run) => run.answerPassed).length}/${runs.length}`;
+}
+
+function firstCoreRead(runs: RunMetrics[]): string {
+  const steps = successful(runs).flatMap((run) =>
+    run.stepsToFirstCoreRead === null ? [] : [run.stepsToFirstCoreRead],
+  );
+  const never = successful(runs).length - steps.length;
+  return `${summary(steps, (n) => n.toFixed(1))}, ${never} never`;
+}
+
+function failures(runs: RunMetrics[]): string {
+  return String(runs.filter((run) => run.isError).length);
+}
+
+function taskTable(taskId: string): string[] {
+  const before = taskRuns(baseline, taskId);
+  const after = taskRuns(candidate, taskId);
+  const row = (label: string, better: string, format: (runs: RunMetrics[]) => string) =>
+    `| ${label} | ${better} | ${format(before)} | ${format(after)} |`;
+  const metricRow = ({ key, label, better, format }: (typeof METRICS)[number]) =>
+    row(label, better, (runs) =>
+      summary(
+        successful(runs).map((run) => run[key]),
+        format,
+      ),
+    );
+  const [hit, noise, context, turns, duration, cost] = METRICS;
+  return [
+    `#### ${taskId}`,
+    '',
+    `| Metric | Better | ${baseline.label} (\`${baseline.sha.slice(0, 7)}\`) | ${candidate.label} (\`${candidate.sha.slice(0, 7)}\`) |`,
+    '| --- | --- | --- | --- |',
+    row('Answer pass rate', 'higher', passRate),
+    metricRow(hit),
+    metricRow(noise),
+    row('Steps to first core read', 'lower', firstCoreRead),
+    metricRow(context),
+    metricRow(turns),
+    metricRow(duration),
+    metricRow(cost),
+    row('Failures', 'lower', failures),
+    '',
+  ];
+}
+
+const taskIds = [...new Set([...baseline.runs, ...candidate.runs].map((run) => run.taskId))];
 
 console.log(
   [
     '### Repo agent benchmark',
     '',
-    `Average over ${baseline.runs.length} runs per side. Lower is better.`,
+    'Per task: median (min–max) over successful runs. Answer pass rate and failures count all runs.',
     '',
-    `| Metric | ${baseline.label} (\`${baseline.sha.slice(0, 7)}\`) | ${candidate.label} (\`${candidate.sha.slice(0, 7)}\`) | Change |`,
-    '| --- | --- | --- | --- |',
-    ...rows,
-    `| Failed runs | ${errors(baseline)} | ${errors(candidate)} | |`,
+    ...taskIds.flatMap(taskTable),
   ].join('\n'),
 );

@@ -3,9 +3,15 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 
-type Task = { id: string; prompt: string };
+import {
+  explorationMetrics,
+  parseTasks,
+  type ExplorationMetrics,
+  type StreamEvent,
+  type Task,
+} from './agent-eval-metrics.ts';
 
-export type RunMetrics = {
+export type RunMetrics = ExplorationMetrics & {
   taskId: string;
   run: number;
   numTurns: number;
@@ -35,7 +41,7 @@ if (!values.repo || !values.label || !values.out) {
 }
 
 const repo = values.repo;
-const tasks = JSON.parse(readFileSync(values.tasks, 'utf8')) as Task[];
+const tasks = parseTasks(JSON.parse(readFileSync(values.tasks, 'utf8')));
 const trajectoryDir = join(
   dirname(values.out),
   'trajectories',
@@ -64,36 +70,44 @@ function runClaude(task: Task, run: number): RunMetrics {
     { cwd: repo, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
   );
   writeFileSync(join(trajectoryDir, `${task.id}-${run}.jsonl`), child.stdout);
-  const output = child.stdout
+  const events = child.stdout
     .split('\n')
     .filter((line) => line.trim())
     .map(
       (line) =>
-        JSON.parse(line) as {
-          type: string;
+        JSON.parse(line) as StreamEvent & {
           num_turns: number;
           duration_ms: number;
           total_cost_usd: number;
           is_error: boolean;
-          result?: string;
         },
-    )
-    .findLast((event) => event.type === 'result');
+    );
+  const output = events.findLast((event) => event.type === 'result');
   if (!output || output.is_error || child.status !== 0) {
     console.error(
       `[${task.id}#${run}] exit=${child.status} result=${output?.result} stderr=${child.stderr}`,
     );
   }
   if (!output) {
-    return { taskId: task.id, run, numTurns: 0, durationMs: 0, costUsd: 0, isError: true };
+    return {
+      taskId: task.id,
+      run,
+      numTurns: 0,
+      durationMs: 0,
+      costUsd: 0,
+      isError: true,
+      ...explorationMetrics(events, repo, task, true),
+    };
   }
+  const isError = output.is_error || child.status !== 0;
   return {
     taskId: task.id,
     run,
     numTurns: output.num_turns,
     durationMs: output.duration_ms,
     costUsd: output.total_cost_usd,
-    isError: output.is_error || child.status !== 0,
+    isError,
+    ...explorationMetrics(events, repo, task, isError),
   };
 }
 
