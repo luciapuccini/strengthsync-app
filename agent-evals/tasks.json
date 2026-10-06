@@ -1,0 +1,10 @@
+[
+  {
+    "id": "complete-week-flow",
+    "prompt": "Explain how an athlete completing a training week flows through this codebase, from the client action to the server workflow that processes it. List the key files in order."
+  },
+  {
+    "id": "api-contract",
+    "prompt": "How do the client and the server share the API contract in this repository? Name the files that define it and the command that regenerates it."
+  }
+]
