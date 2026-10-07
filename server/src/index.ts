@@ -7,19 +7,6 @@ import { createManagementClient } from './lib/management.ts';
 
 export { StrengthsyncWorkflow } from './workflows/strengthsync-workflow.ts';
 
-/**
- * Worker entry: public REST API + Cloudflare workflow trigger.
- * See docs/architecture/api_contracts.md.
- *
- * The only module that reads the environment. Everything below it receives
- * collaborators already built, which is what lets the suite run the whole app
- * with no configuration and no network.
- *
- * Both collaborators are rebuilt per request because a Worker isolate is not
- * guaranteed to outlive one. Their caches — the JWKS key set and the M2M token —
- * therefore help exactly as much as the isolate is reused, which under load is
- * the case that matters and on a cold start is the case that cannot be helped.
- */
 export default {
   fetch(request: Request, env: Env, ctx: ExecutionContext): Response | Promise<Response> {
     const app = createApp({

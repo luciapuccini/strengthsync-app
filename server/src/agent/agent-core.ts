@@ -12,7 +12,6 @@ type AgentConfig<TOutSchema extends z.ZodType> = {
   outSchema: TOutSchema;
 };
 
-// Module scope, so it happens once per isolate rather than once per call.
 registerLlmCallLogger();
 
 export async function getAgentRuntime<TOutSchema extends z.ZodType>(

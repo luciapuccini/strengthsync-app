@@ -79,16 +79,6 @@ const updateMyDayLogRoute = createRoute({
   },
 });
 
-/**
- * Public week read routes + the day log writes.
- *
- * RepoError from the write paths propagates to app.ts's onError, which maps it
- * to the envelope — the local try/catch the imperative version needed is gone.
- *
- * Every route takes the athlete from the verified session — see the note in
- * `routes/clients/endpoints.ts`. The week id in the write paths is the caller's
- * only free choice, and the repository scopes it to them.
- */
 export function weekRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables }> {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook });
 
@@ -105,14 +95,10 @@ export function weekRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables }> {
 
   app.openapi(listMyWeeksRoute, async (c) => {
     const clientId = c.get('clientId');
-    // A token outlives the row it names, so a deleted athlete can still
-    // present a valid one.
     if (!(await getClient(db, clientId))) {
       return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404);
     }
     const { status, planId } = c.req.valid('query');
-    // Built conditionally rather than spread: exactOptionalPropertyTypes means
-    // an explicit `undefined` is not assignable to an optional property.
     const filter: { status?: WeekStatus; planId?: string } = {};
     if (status !== undefined) filter.status = status;
     if (planId !== undefined) filter.planId = planId;

@@ -76,18 +76,10 @@ function errorResponse(status: number, error: unknown) {
 afterEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
-  // Both of these are module state, so they outlive the test that registered
-  // them.
   setUnauthorizedHandler(() => {});
   setAccessTokenProvider(async () => null);
 });
 
-/**
- * The credential, which is the one thing every call above has in common. These
- * exercise `authorizedFetch` directly rather than through `openapi-fetch`, which
- * this file mocks out wholesale — the wrapper is what is under test, not the
- * plumbing that hands it a `Request`.
- */
 describe('the bearer wrapper', () => {
   const sentTo = (fetchMock: ReturnType<typeof vi.fn>): Request =>
     fetchMock.mock.calls[0]?.[0] as Request;
@@ -107,10 +99,6 @@ describe('the bearer wrapper', () => {
     expect(sentTo(fetchMock).headers.get('Authorization')).toBe('Bearer a-token');
   });
 
-  // Not an error, and deliberately not a thrown one: the athlete is signed out,
-  // or the SDK has not registered a provider yet, and the honest thing to do is
-  // send the request without a credential and let the server answer 401 — which
-  // is what signs them out everywhere else in this file.
   it('sends no header when there is no token to send', async () => {
     const fetchMock = stubFetch();
     setAccessTokenProvider(async () => null);
@@ -183,14 +171,6 @@ describe('api client', () => {
   });
 });
 
-// There is no `describe('auth')` block any more. Every case in it addressed a
-// route deleted by `issues/011-amputate-old-auth.md` — sign-up, sign-in,
-// sign-out and the session read — and none is restored here: Auth0's hosted page
-// replaces all four, so there is no API call left to test.
-// `GET /api/me` is the nearest successor and is covered above, but it replaces
-// only what the session read did — report who this is — not what sign-in did.
-// `issues/013-web-app-universal-login.md` adds the bearer-attaching wrapper.
-
 describe('unauthorized handler', () => {
   it('runs on an unauthorized response from any call, and still rejects', async () => {
     const handler = vi.fn();
@@ -210,8 +190,6 @@ describe('unauthorized handler', () => {
       errorResponse(404, { error: { code: 'not_found', message: 'no such thing' } }),
     );
 
-    // `getPlan`, not `getActivePlan`: the latter maps a 404 to null by design,
-    // so it would resolve rather than reject.
     await expect(getPlan(PLAN)).rejects.toBeInstanceOf(ApiClientError);
     expect(handler).not.toHaveBeenCalled();
   });

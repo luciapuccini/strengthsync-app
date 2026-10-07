@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import { validationFailure } from './validation-error.ts';
 
-/** safeParse the schema and hand the resulting error to the mapper. */
 function failureFor(schema: z.ZodType, value: unknown, target: 'param' | 'json' | 'query') {
   const parsed = schema.safeParse(value);
   if (parsed.success) throw new Error('expected the schema to reject this value');

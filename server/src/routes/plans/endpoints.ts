@@ -53,14 +53,6 @@ const postGeneratePlanRoute = createRoute({
   },
 });
 
-/**
- * Plan routes for the signed-in athlete. Generation makes the browser a plan
- * creator too, alongside the weekly workflow — see
- * `docs/architecture/api_contracts.md`.
- *
- * All three take the athlete from the verified session — see the note in
- * `routes/clients/endpoints.ts`.
- */
 export function planRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables; Bindings: Env }> {
   const app = new OpenAPIHono<{ Variables: AuthVariables; Bindings: Env }>({ defaultHook });
 
@@ -72,8 +64,6 @@ export function planRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables; Bind
     return c.json({ plan }, 200);
   });
 
-  // Scoped to the caller, so naming someone else's plan id finds nothing
-  // rather than reading it.
   app.openapi(getMyPlanRoute, async (c) => {
     const { planId } = c.req.valid('param');
     const plan = await findPlanById(db, c.get('clientId'), planId);
@@ -86,13 +76,6 @@ export function planRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables; Bind
     return c.json({ plan }, 200);
   });
 
-  // Guards run before the model call: no profile and an active plan already
-  // existing are both refused without spending a token. A retry that arrives
-  // while the first call is still in flight is what the activation command's
-  // own workflow_id idempotency covers, not this guard — a retry that arrives
-  // after a completed activation finds the new active plan here instead, which
-  // is fine, because the browser that owns the first response has already
-  // moved on.
   app.openapi(postGeneratePlanRoute, async (c) => {
     const clientId = c.get('clientId');
 

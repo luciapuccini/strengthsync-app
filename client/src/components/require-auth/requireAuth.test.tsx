@@ -45,8 +45,6 @@ describe('RequireAuth', () => {
     expect(screen.getByText('private screen')).toBeInTheDocument();
   });
 
-  // The unauthorized handler clears the session; this is the other half of that
-  // contract — the athlete is returned to sign-in from wherever they were.
   it('redirects as soon as a signed-in session is cleared mid-visit', () => {
     renderGuarded('signed-in');
 

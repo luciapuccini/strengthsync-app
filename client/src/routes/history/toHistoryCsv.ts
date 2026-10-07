@@ -8,7 +8,6 @@ import { scalars } from './toWeekHistory';
 
 type Cell = string | number | null;
 
-/** Only strength days have exercises with series, reps and weight to track. */
 const STRENGTH_DAY_TYPES = new Set<Plan['week_template'][number]['type']>([
   'upper_body',
   'leg_day',
@@ -17,11 +16,6 @@ const STRENGTH_DAY_TYPES = new Set<Plan['week_template'][number]['type']>([
 
 const BASE_COLUMN_COUNT = 5;
 
-/**
- * Cells are numbers or plain text. Text that starts with `=`, `+`, `-` or `@`
- * gets a `'` prefix, so a spreadsheet does not run it as a formula: exercise
- * names come from the LLM. Then RFC 4180 quoting applies.
- */
 function toCsvCell(cell: Cell): string {
   if (cell === null) return '';
   if (typeof cell === 'number') return String(cell);
@@ -33,10 +27,6 @@ function displayWeight(pounds: number | null, unit: UnitPreference): number | nu
   return pounds === null ? null : toDisplayWeight(pounds, unit);
 }
 
-/**
- * Exercises done in a week on this day but not in the template, by key, in the
- * order they first show. Their rows go at the end of the day block.
- */
 function extraExercises(weeks: Week[], day: Plan['week_template'][number]): Map<string, string> {
   const templateKeys = new Set(day.exercises.map((exercise) => exercise.exercise_key));
   const extras = new Map<string, string>();
@@ -51,12 +41,6 @@ function extraExercises(weeks: Week[], day: Plan['week_template'][number]): Map<
   return extras;
 }
 
-/**
- * The history of the active plan as one CSV file: rows are the routine (one
- * block per strength day of the template), columns are the completed weeks.
- * Each week has three columns with the first performed set, the same rule as
- * the history view. A skipped or missing exercise gives empty cells.
- */
 export function toHistoryCsv(weeks: Week[], plan: Plan, unit: UnitPreference): string {
   const sorted = [...weeks].sort((a, b) => a.week_index - b.week_index);
   const weight = `weight (${unitLabel(unit)})`;

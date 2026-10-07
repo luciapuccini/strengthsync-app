@@ -2,12 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { SaveDayLogSchema, UpdateDayLogSchema } from './schemas.ts';
 
-/**
- * Relocated from the deleted domain contracts test. The
- * cross-field rule has no JSON Schema representation, so nothing in the
- * generated document proves it survives — only this does.
- */
-
 const skippedWithSets = {
   exercise_key: 'press_banca',
   skipped: true,

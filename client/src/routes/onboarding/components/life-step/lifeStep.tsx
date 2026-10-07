@@ -89,12 +89,6 @@ function optionalLifeFields(fields: OptionalLifeFields) {
   };
 }
 
-/**
- * The wire type has `exactOptionalPropertyTypes` on, so an optional key must
- * be entirely absent rather than present with value `undefined` — which is
- * exactly what zod's inferred optionals produce. Split by step to keep this
- * function's own complexity under the lint ceiling.
- */
 function toWirePayload(answers: OnboardingAnswers) {
   const {
     body_fat_percent,
@@ -140,11 +134,6 @@ function validateStep(
   return result.success ? { data: result.data } : { errors: fieldErrors(result.error) };
 }
 
-/**
- * The write, then the one model call: saving the profile only ever happens
- * once per visit to this step (`profileSaved`), so a retry after a
- * generation failure re-runs generation only, per the parent PRD.
- */
 async function composePlan(
   answers: OnboardingAnswers,
   profileSaved: { current: boolean },
@@ -164,14 +153,6 @@ async function composePlan(
   }
 }
 
-/**
- * The wizard's fourth and final step and its submit: everything around the
- * training that changes what the training should be, then the answers
- * accumulated across every step become the coaching profile and, in the same
- * submit, its first generated plan. `pending` from `useActionState` is the
- * one "in flight" signal — the composing screen consumes it rather than
- * tracking a second one.
- */
 export function LifeStep({ priorAnswers, onBack, onSubmitted }: Props): JSX.Element {
   const [activities, setActivities] = useState<OnboardingActivity[]>(priorAnswers.activities ?? []);
   const validAnswers = useRef<OnboardingAnswers | null>(null);

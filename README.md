@@ -13,7 +13,7 @@ StrengthSync helps a self-coached athlete — or a coach with a small caseload �
 | DB        | Cloudflare D1 + Drizzle ORM (`server/db`)                              |
 | Workflows | Cloudflare Workflows, in-Worker with `server` (`StrengthsyncWorkflow`) |
 | LLM       | OpenAI via Vercel AI SDK                                               |
-| Auth      | Client accounts: hashed passwords + a signed session cookie            |
+| Auth      | Auth0 hosted login; the API verifies a bearer token on `/api/*`        |
 | CI        | GitHub Actions; Lefthook pre-commit                                    |
 
 
@@ -21,13 +21,15 @@ See [docs/architecture/stack.md](docs/architecture/stack.md) for decisions and b
 
 ## Purpose and user flows
 
-### Sign up and sign in
+### Sign in
 
-Register with a name, email and password, and you land on your own tracker.
-Every athlete has their own account, and the API reads whose data to serve from
-the session cookie rather than from the URL — no screen asks you to pick an
-athlete, and no request can name one. Social sign-in is not built: the Apple and
-Google buttons render disabled and say so.
+Sign in on the Auth0 hosted page with email and password, Apple, or Google, and
+you land on your own tracker. Public sign-up is off: the operator creates each
+athlete in Auth0 (see
+[docs/operations/onboard_beta_user.md](docs/operations/onboard_beta_user.md)).
+The API reads whose data to serve from the verified token rather than from the
+URL — no screen asks you to pick an athlete, and no request can name one. See
+[docs/architecture/auth.md](docs/architecture/auth.md).
 
 ### Week tracker
 
@@ -64,13 +66,20 @@ Copy the example file and fill in values:
 
 | Copy from                                            | Copy to             | Used by                                         |
 | ---------------------------------------------------- | ------------------- | ----------------------------------------------- |
-| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars`  | API Worker: `OPENAI_*`                          |
-| [client/.env.example](client/.env.example)           | `client/.env.local` | Client: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST` |
+| [server/.dev.vars.example](server/.dev.vars.example) | `server/.dev.vars`  | API Worker: `OPENAI_*`, `AUTH0_M2M_CLIENT_SECRET` |
+| [client/.env.example](client/.env.example)           | `client/.env.local` | Client: `VITE_POSTHOG_KEY`, `VITE_POSTHOG_HOST`   |
 
+
+`AUTH0_M2M_CLIENT_SECRET` lets the Worker read a new athlete from the Auth0
+Management API the first time they sign in (see
+[docs/architecture/auth.md](docs/architecture/auth.md)).
 
 `VITE_POSTHOG_KEY` is the PostHog project key for the funnel events in
 `docs/mvp.md` §5 (`client/src/lib/analytics.ts`). Leaving it unset makes
-analytics no-op rather than erroring, so it is optional for local dev.
+analytics no-op rather than erroring, so it is optional for local dev. Vite
+inlines it at build time, so production reads it from the `VITE_POSTHOG_KEY`
+GitHub secret in CI, not from a Worker secret. `VITE_POSTHOG_HOST` is optional
+and defaults to `/ingest`, the Worker's PostHog proxy.
 
 ### Getting started
 
@@ -81,9 +90,16 @@ pnpm --filter @strengthsync/server db:migrate:local
 pnpm --filter @strengthsync/server db:seed:local
 ```
 
-`db:seed:local` applies the coach, demo, history and credential seeds in order —
-one command, not four.
+`db:seed:local` applies the coach, demo and history seeds in order. The demo
+weeks are anchored to today, so the in-flight week never expires.
 
+To sign in locally as the seeded demo athlete, who owns the only plan and history
+in the repository, also bind them to their Auth0 user:
+
+```bash
+pnpm --filter @strengthsync/server db:seed:identity:local
+```
+then 
 ```bash
 pnpm turbo dev
 ```
@@ -97,8 +113,6 @@ athlete, who owns the only plan and history in the repository:
 | `lucia@example.com` | `dev-password-123` |
 
 
-
-
 ### Seeding production
 
 There is no `:remote` counterpart to any local seed command — seeding production
@@ -110,10 +124,9 @@ pnpm --filter @strengthsync/server db:migrate:remote
 wrangler d1 execute strengthsync --remote --file ./server/db/seeds/000_default_coach.sql
 ```
 
-Only the coach row belongs in production. The demo, history and credential
-seeds exist to make a freshly migrated local database usable by hand — the
-credential seed in particular commits a real password hash, which is safe
-only because nothing in the package manifest can push it to production.
+Only the coach row belongs in production. The demo, history and identity seeds
+exist to make a freshly migrated local database usable by hand. Never apply
+them to production D1.
 
 ## Troubleshoot
 

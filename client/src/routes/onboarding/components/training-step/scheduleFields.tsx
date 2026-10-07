@@ -15,7 +15,6 @@ type Props = {
   errors: StepFieldErrors;
 };
 
-/** How many days a week the client trains, and which day is their usual rest day. */
 export function ScheduleFields({ priorAnswers, errors }: Props): JSX.Element {
   return (
     <>

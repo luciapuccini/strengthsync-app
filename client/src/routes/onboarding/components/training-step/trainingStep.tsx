@@ -26,11 +26,6 @@ type Props = {
 
 type Experience = OnboardingExperience | '';
 
-/**
- * - A beginner is never asked for a working weight, whatever a hidden field holds.
- * - Loads convert before they parse, so the 1000 lb bound stays in pounds.
- * - No five-pound snap here; the server's onboarding schema owns it.
- */
 function validate(
   form: FormData,
   experience: Experience,
@@ -51,7 +46,6 @@ function validate(
   return result.success ? { data: result.data } : { errors: fieldErrors(result.error) };
 }
 
-/** The wizard's third step: how the client trains today. */
 export function TrainingStep({ defaults, unit, onBack, onNext }: Props): JSX.Element {
   const [experience, setExperience] = useState<Experience>(defaults.experience ?? '');
 

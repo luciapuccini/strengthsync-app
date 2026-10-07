@@ -7,11 +7,6 @@ import { createTestDb } from '../db/testing/index.ts';
 import { resolveClientId } from './identity.ts';
 import type { ManagementClient, ManagementUser } from './management.ts';
 
-/**
- * The three branches of identity resolution, which is the only part of this
- * migration with real branching worth testing.
- */
-
 const SUBJECT = 'auth0|68a1f3c0d2b4e5f6a7b8c9d0';
 
 const user: ManagementUser = {
@@ -43,8 +38,6 @@ describe('resolveClientId', () => {
     const management = found();
 
     await expect(resolveClientId(db, management, SUBJECT)).resolves.toBe(client.id);
-    // The lookup is the whole point of caching the mapping locally: the steady
-    // state must not put a Management API call in front of every request.
     expect(management.getUser).not.toHaveBeenCalled();
   });
 
@@ -64,10 +57,6 @@ describe('resolveClientId', () => {
   });
 
   it('resolves two simultaneous first requests to one athlete', async () => {
-    // Both calls read an empty mapping before either writes to it, which is the
-    // race the unique constraint on `subject` exists to decide. D1 has no
-    // transaction spanning the athlete insert and the identity insert, so this
-    // is the only thing standing between one person and two accounts.
     const [first, second] = await Promise.all([
       resolveClientId(db, found(), SUBJECT),
       resolveClientId(db, found(), SUBJECT),
@@ -82,16 +71,10 @@ describe('resolveClientId', () => {
       resolveClientId(db, found(), SUBJECT),
     ]);
 
-    // The constraint alone would leave the loser's athlete row in place: one
-    // identity, two athletes, and the extra one unreachable by any request
-    // because every request arrives as a subject. It would never surface as an
-    // error — only as a table that quietly grows.
     await expect(countClients(db)).resolves.toBe(1);
   });
 
   it('returns null when the provider has no user for a subject it signed for', async () => {
-    // A token outlives the account it names, so this is what a request from an
-    // athlete deleted mid-session looks like.
     await expect(resolveClientId(db, missing(), SUBJECT)).resolves.toBeNull();
     await expect(countClients(db)).resolves.toBe(0);
   });

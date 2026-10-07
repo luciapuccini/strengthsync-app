@@ -1,7 +1,3 @@
-/**
- * Coaching rules and the LLM output schemas consumed by the Cloudflare Workflow.
- */
-
 export { COACHING_RULES } from './coaching-rules.ts';
 
 export { buildFirstPlanPrompt, type FirstPlanPrompt } from './first-plan.ts';

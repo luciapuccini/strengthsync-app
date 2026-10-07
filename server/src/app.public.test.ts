@@ -2,19 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { createTestApp } from './testkit.ts';
 
-/**
- * The HTTP surface that never knew who was asking: liveness and the analytics
- * proxy.
- *
- * Everything requiring an athlete moved to `app.me.test.ts` when
- * `issues/012-token-verification-and-provisioning.md` restored it against bearer
- * tokens. The guard's blanket rejection lived here for one commit, while the
- * stub in `issues/011-amputate-old-auth.md` was the only guard there was; it now
- * lives with the rest of the guard's cases, where it can say what it is really
- * asserting — that missing, malformed, expired and unknown credentials are one
- * indistinguishable refusal.
- */
-
 describe('health', () => {
   it('GET /health is unauthenticated', async () => {
     const app = createTestApp();
@@ -24,14 +11,7 @@ describe('health', () => {
   });
 });
 
-/**
- * The PostHog proxy (`routes/ingest.ts`). It exists so captures leave the
- * browser same-origin and survive content blockers; these pin the two things
- * that quietly break when they are wrong — where a request lands, and what
- * rides along with it.
- */
 describe('/ingest', () => {
-  /** `forwarded()` is what the proxy sent upstream, and fails if it sent nothing. */
   function stubFetch(): { fetcher: typeof fetch; forwarded: () => Request } {
     const calls: Request[] = [];
     const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -64,8 +44,6 @@ describe('/ingest', () => {
     expect(await upstream.text()).toBe('{"event":"day saved"}');
   });
 
-  // posthog-js loads its optional bundles from a different host than it
-  // captures to, so one rewrite cannot serve both.
   it('forwards /ingest/static to the assets host', async () => {
     const { fetcher, forwarded } = stubFetch();
     const app = createTestApp({ ingestFetch: fetcher });
@@ -75,10 +53,6 @@ describe('/ingest', () => {
     expect(forwarded().url).toBe('https://us-assets.i.posthog.com/static/array.js');
   });
 
-  // Restated for the Authorization header rather than deleted. It used to mint a
-  // real cookie to prove the point; the proxy strips both headers by name and
-  // never looked at the value, so a synthetic token pins the same guarantee, and
-  // it pins it for the transport the API is moving to.
   it('never forwards the caller credentials upstream', async () => {
     const { fetcher, forwarded } = stubFetch();
     const app = createTestApp({ ingestFetch: fetcher });

@@ -12,11 +12,6 @@ type Props = {
 
 const emptyActivity: OnboardingActivity = { name: '', sessions_per_week: 1 };
 
-/**
- * A variable-length list, so each row is a controlled input rather than the
- * uncontrolled `defaultValue` the rest of the wizard uses — there is no fixed
- * set of field names for `useActionState` to read on submit.
- */
 export function ActivitiesField({ activities, onChange }: Props): JSX.Element {
   function updateRow(index: number, patch: Partial<OnboardingActivity>): void {
     onChange(activities.map((row, i) => (i === index ? { ...row, ...patch } : row)));

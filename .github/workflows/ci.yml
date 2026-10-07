@@ -11,8 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # --affected needs real git history to diff against; a shallow
-          # clone makes turbo assume everything changed.
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -28,7 +26,6 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BEFORE_SHA: ${{ github.event.before }}
 
-      #A stale openapi.d.ts is worse than a missing one
       - run: pnpm gen:openapi
       - run: git diff --exit-code -- server/openapi.json client/src/api/openapi.d.ts
       - run: pnpm typecheck:affected

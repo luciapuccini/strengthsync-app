@@ -26,19 +26,11 @@ const postOnboardingRoute = createRoute({
   },
 });
 
-/**
- * The one-time write that turns a questionnaire into a coaching profile. See
- * docs/architecture/api_contracts.md. Composes the mapper and the repository
- * directly, in the same shape as the clients and auth handlers — no
- * use-case layer.
- */
 export function onboardingRoutes(db: Db): OpenAPIHono<{ Variables: AuthVariables }> {
   const app = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook });
 
   app.openapi(postOnboardingRoute, async (c) => {
     const clientId = c.get('clientId');
-    // A token outlives the row it names, so a deleted athlete can still
-    // present a valid one.
     if (!(await getClient(db, clientId))) {
       return c.json({ error: { code: 'client_not_found', message: 'client not found' } }, 404);
     }

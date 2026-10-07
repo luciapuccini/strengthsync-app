@@ -44,6 +44,8 @@ Four properties of that arrangement are load-bearing for the rest of this stack:
 - **Static SPA assets are public.** They carry no athlete data. `run_worker_first`
   in `server/wrangler.jsonc` lists the paths the Worker owns — `/api/*`,
   `/health`, `/ingest/*` — and everything else is served from `client/dist`.
+  A Worker path missing from that list gets the SPA's `index.html` with a `200`.
+  Local dev hides this, because Vite proxies those paths straight to `wrangler dev`.
 - **Password reset, email verification, social sign-in and session revocation
   belong to the provider.** They are dashboard configuration rather than code
   here, which is why they appear nowhere else in this stack.
@@ -58,6 +60,24 @@ deliberately.
 Cloudflare Workers remains the public API, SPA edge layer, streaming chat gateway, and D1 access layer. Hono is the HTTP framework.
 
 The Workers Free plan currently includes 100,000 requests per day and 10 ms CPU per request ([pricing](https://developers.cloudflare.com/workers/platform/pricing/), [limits](https://developers.cloudflare.com/workers/platform/limits/)). That is sufficient for a small private MVP; move to Workers Paid before traffic or API CPU work requires it.
+
+### PostHog ingest proxy
+
+`/ingest/*` (`server/src/routes/ingest.ts`) forwards analytics captures to PostHog, so they leave the
+browser same-origin and survive content blockers. A blocked capture is invisible: it looks like an
+athlete who never reached the step. The upstream hosts are fixed constants, so the route cannot be
+used as an open proxy, and it strips `cookie`, `authorization` and `host` before forwarding. It is a
+plain Hono app rather than an OpenAPI route, so it stays out of the generated contract. If `/ingest/*`
+leaves `run_worker_first`, posthog-js reads the `index.html` response as a delivered event and the
+funnel loses every capture with no error.
+
+### Import boundaries
+
+`eslint.config.js` enforces the dependency graph with `no-restricted-imports`. `client` imports no
+workspace package. `server/src/domain` may not import `db`, `routes`, `workflows` or `agent`, and
+`server/src/db` may not import `routes`, `workflows` or `agent`. The narrower `domain` and `db` entries
+must stay after the general `server` entry, because in flat config the later entry wins for files
+that match both globs.
 
 ## Cloudflare D1
 
@@ -114,6 +134,10 @@ GitHub Actions is the MVP pipeline:
 1. Pull request: install, typecheck, lint, and unit tests.
 2. Main: build and deploy `server` — including the `StrengthsyncWorkflow` entrypoint — and run schema migrations through the API/Worker deployment path.
 3. Workflow orchestration tests are deferred: the Cloudflare Workflow runtime is not exercised in the test suite.
+
+CI checks out full history (`fetch-depth: 0`) and passes an explicit base to `turbo --affected`
+through `.github/workflows/resolve-turbo-base.sh`. Turbo's own base detection fails on
+detached-HEAD checkouts ([vercel/turborepo#12650](https://github.com/vercel/turborepo/issues/12650)).
 
 Production serves from `app.strengthsync.ai`, declared as a Workers custom domain in `server/wrangler.jsonc`; Cloudflare creates the record and its certificate on deploy. The apex belongs to the marketing site in the `strengthsync` repository.
 

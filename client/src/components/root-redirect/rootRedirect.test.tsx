@@ -32,8 +32,6 @@ describe('RootRedirect', () => {
     expect(container.querySelector('svg')).not.toBeNull();
   });
 
-  // The signed-in client is deliberately not read: the tracker URL no longer
-  // carries an id, so the root only has to know that somebody is signed in.
   it('lands a signed-in visitor on the tracker, without needing their id', () => {
     renderRoot('signed-in');
 

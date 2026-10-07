@@ -5,11 +5,6 @@ import { Button } from '@/shadcn/ui/button';
 
 import { ComposingScreen } from './composingScreen';
 
-/**
- * Dev-only route (`/dev/composing`, registered only when `import.meta.env.DEV`)
- * so the orb animation and both screen states can be reviewed without waiting
- * on a real generation request. Never mounted in a production build.
- */
 export function ComposingScreenPreview(): JSX.Element {
   const [status, setStatus] = useState<'pending' | 'failed'>('pending');
 

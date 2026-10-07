@@ -1,11 +1,3 @@
--- Demo data adapted from services/db/seed/data and translated to English.
--- Apply after migrations and 000_default_coach.sql.
---
--- The in-flight week (id ...0013) is anchored to the Monday on-or-before
--- `date('now')` rather than a fixed calendar date, so it never expires; see
--- 002_historical_weeks.sql for the three completed weeks immediately before
--- it and the auth PRD's Further Notes for why.
-
 INSERT OR IGNORE INTO clients (
   id,
   coach_id,

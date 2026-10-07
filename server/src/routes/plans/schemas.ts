@@ -4,14 +4,6 @@ import { PlanDaySchema, PlanSchema, PlannedExerciseSchema } from '../../domain/m
 import { uuidParam } from '../shared.ts';
 import { DayTypeSchema, Week } from '../weeks/schemas.ts';
 
-/**
- * HTTP shapes for the plans area. See `routes/clients/schemas.ts` on rebuilding.
- *
- * `PlannedExercise` and `PlanDay` are registered as components because
- * `client/src/api/types.ts` aliases them by name, not because a route returns
- * them directly.
- */
-
 const PlannedExercise = z.object(PlannedExerciseSchema.shape).openapi('PlannedExercise');
 const PlanDay = z
   .object({ ...PlanDaySchema.shape, type: DayTypeSchema, exercises: z.array(PlannedExercise) })
@@ -21,10 +13,8 @@ const Plan = z.object({ ...PlanSchema.shape, week_template: z.array(PlanDay) }).
 
 export const PlanResponseSchema = z.object({ plan: Plan }).openapi('PlanResponse');
 
-/** A newly generated and activated plan, with its in-flight week one. */
 export const GeneratePlanResponseSchema = z
   .object({ plan: Plan, first_week: Week })
   .openapi('GeneratePlanResponse');
 
-/** The plan id alone: the athlete comes from the session, never from the path. */
 export const PlanIdParamSchema = z.object({ planId: uuidParam('planId') });

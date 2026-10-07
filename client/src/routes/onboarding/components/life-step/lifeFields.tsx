@@ -17,7 +17,6 @@ type Props = {
   errors: StepFieldErrors;
 };
 
-/** How active the client's day is outside training, how they eat, and any injury. */
 export function LifeFields({ defaults, errors }: Props): JSX.Element {
   return (
     <>

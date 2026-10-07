@@ -34,30 +34,12 @@ export type HistoryWeek = z.infer<typeof HistoryWeekSchema>;
 
 type Scalar = { series: number | null; reps: number | null; weight: number | null };
 
-/**
- * warning: first-set scalar only; upgrade if per-set or modal display is needed.
- *
- * `weight` stays canonical pounds. Converting here would hand
- * `historyDaySection` an already-converted number to convert again, and every
- * kilogram on the screen would be out by a factor of 2.2.
- */
 export function scalars(sets: Week['schedule'][number]['exercises'][number]['sets']): Scalar {
   if (sets.length === 0) return { series: null, reps: null, weight: null };
   const first = sets[0]!;
   return { series: sets.length, reps: first.performed_reps, weight: first.performed_weight_lb };
 }
 
-/**
- * The delta is the difference between the two numbers on screen, not the
- * canonical difference converted afterwards.
- *
- * Both weights are converted first, then subtracted. A 135 → 140 lb progression
- * therefore reads `3 kg ↑` for a metric athlete, matching the 61 and 64 in the
- * rows above it; converting a canonical 5 lb delta would print `2 kg ↑` beside a
- * visible three-unit change, which reads as a bug. The equality check moves with
- * it: two loads that differ in pounds but round to the same kilogram show no
- * diff at all rather than a zero.
- */
 function formatDiff(curr: Scalar, prev: Scalar | null, unit: UnitPreference): string {
   if (prev === null) return '';
   const parts: string[] = [];

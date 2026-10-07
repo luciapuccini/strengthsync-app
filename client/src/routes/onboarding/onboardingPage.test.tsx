@@ -13,9 +13,6 @@ vi.mock('@/api/activePlanResource', () => ({
   invalidateActivePlan: vi.fn(),
 }));
 
-// Only the preference write is stubbed; everything else the wizard reaches for
-// stays real, so a step that starts calling something new fails loudly here
-// rather than silently resolving to a mock.
 vi.mock('@/api/client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/client')>()),
   updateUnitPreference,
@@ -42,7 +39,6 @@ function type(label: string, value: string): void {
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }
 
-/** The whole of step one, answered in centimetres and kilograms. */
 async function answerPersonalStepInMetric(): Promise<void> {
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: 'Kilograms (kg)' }));
@@ -61,8 +57,6 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// The destructive path this slice closes in the browser as well as in the
-// handler: `issues/007-entry-points-and-guards.md`.
 describe('OnboardingPage', () => {
   it('redirects to the tracker without rendering the questionnaire when a plan is already active', async () => {
     activePlanResource.mockReturnValue(Promise.resolve({ id: 'plan-1', status: 'active' }));
@@ -80,8 +74,6 @@ describe('OnboardingPage', () => {
   });
 });
 
-// What a metric athlete types has to come back unchanged, even though what is
-// stored between the two is pounds and inches.
 describe('OnboardingPage in metric', () => {
   it('re-shows the centimetres and kilograms that were typed after stepping back', async () => {
     activePlanResource.mockReturnValue(Promise.resolve(null));
@@ -119,8 +111,6 @@ describe('OnboardingPage in metric', () => {
     });
     expect(screen.getByRole('heading', { name: /anything else/i })).toBeInTheDocument();
 
-    // 100 kg is 220 lb, and 220 lb reads back as the 100 kg that was typed:
-    // the five-pound snap the server applies to it is invisible.
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     });

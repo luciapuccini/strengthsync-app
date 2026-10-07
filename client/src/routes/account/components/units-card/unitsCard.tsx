@@ -6,7 +6,6 @@ import { UnitToggle } from '@/components/unit-toggle/unitToggle';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shadcn/ui/card';
 import { useAppStore } from '@/store/useAppStore';
 
-/** See docs/architecture/domain_model.md for what the preference does and does not affect. */
 export function UnitsCard(): JSX.Element {
   const client = useAppStore((state) => state.sessionClient);
   const setUnitPreference = useAppStore((state) => state.setUnitPreference);

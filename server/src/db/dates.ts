@@ -1,9 +1,3 @@
-/**
- * UTC date helpers for ISO dates (`YYYY-MM-DD`). A training week is a rolling
- * seven-day window anchored to the day the athlete's plan was activated, not a
- * Monday–Sunday calendar week.
- */
-
 function parseIsoDate(isoDate: string): [number, number, number] {
   const parts = isoDate.split('-').map(Number);
   if (parts.length !== 3 || parts.some((p) => !Number.isFinite(p))) {

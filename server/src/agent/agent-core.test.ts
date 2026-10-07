@@ -2,11 +2,6 @@ import { MockLanguageModelV4 } from 'ai/test';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { z } from 'zod';
 
-/**
- * The mock stands in for the provider, not for `generateText`: the telemetry
- * lifecycle that produces the log lines runs inside `generateText`, so mocking
- * that away would test nothing.
- */
 const { languageModel } = vi.hoisted(() => ({
   languageModel: { current: undefined as MockLanguageModelV4 | undefined },
 }));
@@ -19,7 +14,6 @@ const { getAgentRuntime } = await import('./agent-core.ts');
 
 const OutSchema = z.object({ summary: z.string() });
 
-/** Provider-shaped usage; the SDK flattens it before it reaches telemetry. */
 const usage = {
   inputTokens: { total: 11, noCache: 11, cacheRead: 0, cacheWrite: 0 },
   outputTokens: { total: 7, text: 7, reasoning: 0 },
@@ -115,7 +109,6 @@ describe('llm_call logging', () => {
       status: 'ok',
       provider: 'openai',
       model: 'gpt-4.1-mini',
-      // The cost data, the reason this exists.
       usage: expect.objectContaining({ inputTokens: 11, outputTokens: 7 }),
       finish_reason: 'stop',
       response_id: 'resp_abc',
@@ -155,7 +148,6 @@ describe('llm_call logging', () => {
       status: 'error',
       error: { message: expect.stringContaining('upstream 503') },
     });
-    // A failure still names the prompt that caused it.
     expect(JSON.stringify(line.prompt)).toContain('completed_week');
   });
 
@@ -175,8 +167,6 @@ describe('llm_call logging', () => {
 
     await expect(getAgentRuntime(config())).rejects.toThrow();
 
-    // The provider call itself succeeded, so it is logged; the schema rejection
-    // happens after the SDK's end event and is logged as its own failure.
     const lines = loggedLines();
     expect(lines.map((line) => line.status)).toEqual(['ok', 'error']);
     expect(lines[1]).toMatchObject({ call_site: 'analyze-week', call_id: lines[0]?.call_id });
@@ -190,7 +180,6 @@ describe('llm_call logging', () => {
     const line = onlyLine();
     expect(line.prompt_chars).toBeGreaterThan(40_000);
     expect(String(line.prompt)).toHaveLength(16_000);
-    // The fields that make the line worth keeping outlive the truncation.
     expect(line).toMatchObject({
       status: 'ok',
       model: 'gpt-4.1-mini',

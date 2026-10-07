@@ -150,13 +150,24 @@ the constraint still prevents two identities; what it does not prevent is
 invisible orphans accumulating.
 
 The suite covers this path with stub verifiers and a fake D1, which is what keeps
-it offline and fast. Four things are deliberately outside it — key-set fetching,
-the issuer and audience assertions, the Management client's token acquisition,
-and the account deletion ordering — because a test would either fake the
-configuration or pin the behaviour without preserving the reason.
+it offline and fast. Three things are deliberately outside it — key-set fetching,
+the issuer and audience assertions, and the account deletion ordering — because
+a test would either fake the configuration or pin the behaviour without
+preserving the reason.
 [auth0-e2e-verification.md](../todos/auth0-e2e-verification.md) is the coverage
-for those four, and a wrong issuer, audience or JWKS URL is the first thing to
+for those three, and a wrong issuer, audience or JWKS URL is the first thing to
 check when a token that should work does not.
+
+The Management client (`server/src/lib/management.ts`) is covered against a
+stubbed `fetch`. It uses two hostnames that must not be swapped. The token mint
+and every Management API call go to the custom domain, because Auth0 refuses a
+token at a host that did not issue it, with a bare `401`. The tenant domain
+(`AUTH0_TENANT_DOMAIN`) is only the audience, because the Management API
+audience cannot be customised. The M2M token is refreshed 60 seconds before it
+expires, and concurrent requests on a cold Worker share one mint instead of each
+spending the tenant's rate limit. `server/src/index.ts` rebuilds the verifier and
+this client per request, so the JWKS and M2M caches help only while the isolate
+is reused.
 
 ## Web client
 
@@ -246,6 +257,11 @@ athlete still has a working account and the request is retryable, so `app.ts`
 maps `ManagementError` to `provider_unavailable` rather than letting it fall out
 as an internal error. The `/account` screen says so — "Nothing was removed" — and
 stays put rather than signing anyone out of an account that still exists.
+
+Retrying is safe. If the identity row is already gone, an earlier attempt
+deleted the Auth0 user and died before the cascade, so the retry skips Auth0 and
+finishes the cascade. `deleteUser` treats an Auth0 `404` as success for the same
+reason, and a request that finds nothing left to delete answers success.
 
 That order is chosen for its failure mode, and the failure it is chosen against
 is resurrection rather than data loss. Provisioning is unconditional, so if the

@@ -2,22 +2,6 @@ import { z } from 'zod';
 
 import { LoadPoundsSchema } from '../weight-grid.ts';
 
-/**
- * Core domain entities and value types, as Zod schemas.
- * Source of truth: docs/architecture/domain_model.md.
- *
- * The five SQL records are Coach → Client → ClientProfile / Plan / Week.
- * `Plan.week_template` and `Week.schedule` are JSON columns validated by
- * these schemas at every API/persistence boundary.
- *
- * Every measurement here is imperial — pounds and inches — and says so in its
- * field name. That is the canonical unit for storage, transport and prompts
- * alike; kilograms exist only as something the client renders. The suffix is
- * load-bearing rather than decorative: these values end up inside free-form
- * JSON blobs that nothing type-checks and inside prompts the model reads
- * literally, so the unit has to travel with the value.
- */
-
 export const UuidSchema = z.uuid();
 export const ISODateSchema = z.iso.date();
 export const ISODateTimeSchema = z.iso.datetime();
@@ -38,7 +22,6 @@ export const CLIENT_STATUSES = ['active', 'archived'] as const;
 export const PLAN_STATUSES = ['draft', 'active', 'archived'] as const;
 export const WEEK_STATUSES = ['in_flight', 'completed', 'abandoned'] as const;
 export const EXERCISE_FEEDBACKS = ['easy', 'hard', 'heavy', 'light'] as const;
-/** Which units an athlete reads in. Storage is imperial either way. */
 export const UNIT_PREFERENCES = ['imperial', 'metric'] as const;
 
 export const DayTypeSchema = z.enum(DAY_TYPES);
@@ -85,22 +68,6 @@ export interface JsonObject {
 export interface JsonArray extends Array<JsonValue> {}
 export type JsonValue = string | number | boolean | null | JsonArray | JsonObject;
 
-/**
- * Free-form JSON columns: an object with string keys, values unvalidated.
- *
- * The runtime schema is deliberately NOT a recursive `z.lazy` union. That
- * version described the value shape precisely, but a recursive schema cannot be
- * rendered into OpenAPI without registering a named component to break the
- * cycle — the generator otherwise overflows the stack — which would force this
- * schema to be built in the route layer. The precision bought nothing: these
- * columns hold coach notes and measurements that no code reads structurally.
- *
- * The static type stays `JsonValue` because a recursive *type* costs nothing
- * and Cloudflare's `Serializable<T>` constraint on `step.do()` rejects
- * `unknown`. The cast is the seam between the two: values are trusted to be
- * JSON because the only writers are JSON request bodies and the JSON columns
- * themselves. Tighten this if something starts depending on their contents.
- */
 const jsonRecord = z.record(z.string(), z.unknown()) as unknown as z.ZodType<
   Record<string, JsonValue>
 >;
@@ -116,15 +83,6 @@ export const ClientProfileSchema = z.object({
   body_composition: jsonRecord,
   strength_loads: jsonRecord,
   nutrition: jsonRecord.nullable(),
-  /**
-   * Whatever the client does outside lifting — swimming, cycling, a pilates
-   * class. Free-form like its siblings, but the convention is `{ items: [...] }`
-   * with each item shaped `{ name, sessions_per_week, days?, note? }`: a
-   * declared activity's name, how often, which days (optional), and free text
-   * (optional). Coaching rules use this to plan around a client's other sport
-   * rather than stack training on top of it. Keep new writers on this shape
-   * rather than inventing a second one.
-   */
   activities: jsonRecord.nullable(),
   schedule_preferences: jsonRecord.nullable(),
   notes: z.string().nullable(),
@@ -132,7 +90,6 @@ export const ClientProfileSchema = z.object({
 });
 export type ClientProfile = z.infer<typeof ClientProfileSchema>;
 
-/** Editable subset of a profile: everything the caller owns. */
 export const ClientProfileWriteSchema = ClientProfileSchema.omit({
   id: true,
   client_id: true,
@@ -141,7 +98,6 @@ export const ClientProfileWriteSchema = ClientProfileSchema.omit({
 export type ClientProfileWrite = z.infer<typeof ClientProfileWriteSchema>;
 
 export const PlannedExerciseSchema = z.object({
-  /** Stable history key, e.g. `press_banca`. */
   exercise_key: z.string().min(1),
   name: z.string().min(1),
   series: z.number().int().positive(),
@@ -180,12 +136,9 @@ export const PerformedSetSchema = z.object({
 export type PerformedSet = z.infer<typeof PerformedSetSchema>;
 
 export const ExerciseLogSchema = z.object({
-  /** Matches the plan exercise unless the week intentionally changes it. */
   exercise_key: z.string().min(1),
   name: z.string().min(1),
-  /** The athlete did not perform this exercise this week. */
   skipped: z.boolean(),
-  /** Controlled athlete feedback; not free-form coaching notes. */
   feedback: ExerciseFeedbackSchema.nullable(),
   prescribed: z.object({
     series: z.number().int().positive(),
@@ -194,7 +147,6 @@ export const ExerciseLogSchema = z.object({
     weight_lb: LoadPoundsSchema,
     notes: z.string().nullable(),
   }),
-  /** One entry per performed set; can be empty before training. */
   sets: z.array(PerformedSetSchema),
 });
 export type ExerciseLog = z.infer<typeof ExerciseLogSchema>;
@@ -210,10 +162,6 @@ export const WeekDaySchema = z.object({
 });
 export type WeekDay = z.infer<typeof WeekDaySchema>;
 
-/**
- * One exercise as written by the athlete. Narrower than `ExerciseLog`: the
- * name and prescription come from the stored week, not from the writer.
- */
 export const DayExerciseLogSchema = z.object({
   exercise_key: z.string().min(1),
   skipped: z.boolean(),
@@ -222,17 +170,11 @@ export const DayExerciseLogSchema = z.object({
 });
 export type DayExerciseLog = z.infer<typeof DayExerciseLogSchema>;
 
-/**
- * Write shape for one day of a week's schedule. The cross-field rule that a
- * skipped exercise carries no sets is enforced at the API boundary, in
- * `routes/weeks/schemas.ts`.
- */
 export const DayLogPatchSchema = z.object({
   completed: z.boolean(),
   exercises: z.array(DayExerciseLogSchema),
 });
 export type DayLogPatch = z.infer<typeof DayLogPatchSchema>;
-/** Athlete save: the server decides `completed`. */
 export type DayLogSave = Pick<DayLogPatch, 'exercises'>;
 
 export const WeekSchema = z.object({
@@ -243,7 +185,6 @@ export const WeekSchema = z.object({
   start_date: ISODateSchema,
   end_date: ISODateSchema,
   status: WeekStatusSchema,
-  /** Snapshot of the planned work for this week, including AI adjustments. */
   schedule: z.array(WeekDaySchema),
   ...timestampFields,
 });

@@ -25,12 +25,6 @@ type Props = {
   onNext: (answers: PersonalStepAnswers) => void;
 };
 
-/**
- * Height is asked for as a feet-and-inches pair or as centimetres, but stored
- * as one number either way, so whichever shape was rendered is reduced to
- * inches here and the schema — and any error it reports — stays keyed to the
- * single `height_in` field beneath it.
- */
 function heightInches(form: FormData, unit: UnitPreference): number | undefined {
   if (unit === 'metric') {
     const cm = optionalNumber(form.get('height_cm'));
@@ -42,7 +36,6 @@ function heightInches(form: FormData, unit: UnitPreference): number | undefined 
   return feetInchesToInches(feet ?? 0, inches ?? 0);
 }
 
-/** Converted before it is parsed, so the schema's bounds stay in pounds and inches. */
 function validate(
   form: FormData,
   unit: UnitPreference,
@@ -57,7 +50,6 @@ function validate(
   return result.success ? { data: result.data } : { errors: fieldErrors(result.error) };
 }
 
-/** Who the client is: sex, age, height, current weight, and optional body fat. */
 export function PersonalStep({ defaults, unit, onNext }: Props): JSX.Element {
   const [errors, formAction] = useActionState<StepFieldErrors | null, FormData>(
     (_previous, form) => {
@@ -104,14 +96,6 @@ export function PersonalStep({ defaults, unit, onNext }: Props): JSX.Element {
         label={`Current weight (${unitLabel(unit)})`}
         error={errors?.weight_lb}
       >
-        {/*
-          Keyed on the unit so switching it remounts the input and re-applies
-          the converted default. Without that, an uncontrolled input keeps
-          whatever was already typed and the next submit reads it as the other
-          unit — 160 lb quietly becoming 160 kg. Clearing the field is visible;
-          misreading it is not. The height inputs change shape on the same
-          switch, so they already behave this way.
-        */}
         <Input
           key={unit}
           id="onboarding-weight"

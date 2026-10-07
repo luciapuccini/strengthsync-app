@@ -2,7 +2,6 @@ import type { JSX } from 'react';
 
 import { cn } from '@/shadcn/lib/utils';
 
-/** A native `<select>` styled to match `Input`, since the design system has no Select yet. */
 export function OnboardingSelect({
   className,
   children,

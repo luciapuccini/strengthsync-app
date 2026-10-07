@@ -6,7 +6,6 @@ import { nowIso, todayIso } from '../dates.ts';
 import type { Db } from '../db.ts';
 import { clientProfiles } from '../schema.ts';
 
-/** A client's profile, or null when they have none. What the routes use. */
 export async function findProfile(db: Db, clientId: string): Promise<ClientProfile | null> {
   const rows = await db
     .select()
@@ -16,12 +15,6 @@ export async function findProfile(db: Db, clientId: string): Promise<ClientProfi
   return rows[0] ?? null;
 }
 
-/**
- * A client's profile, or a thrown error. Workflow-only: it cannot build a plan
- * without one and has no caller to answer with a 404. No route uses this — one
- * did, and answered 500 where it declared 404, until `issues/auth/013` deleted
- * it.
- */
 export async function getProfile(db: Db, clientId: string): Promise<ClientProfile> {
   const rows = await db
     .select()
@@ -34,7 +27,6 @@ export async function getProfile(db: Db, clientId: string): Promise<ClientProfil
   return rows[0];
 }
 
-/** One current profile per client: insert or update on the client_id unique key. */
 export async function upsertProfile(
   db: Db,
   clientId: string,
@@ -63,10 +55,6 @@ export async function upsertProfile(
   return row;
 }
 
-/**
- * Remove an athlete's profile. Step four of account deletion — after the plans
- * that were generated from it, before the athlete row it points at.
- */
 export async function deleteProfile(db: Db, clientId: string): Promise<void> {
   await db.delete(clientProfiles).where(eq(clientProfiles.client_id, clientId));
 }

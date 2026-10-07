@@ -31,7 +31,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** Awaiting an async `act` lets the suspended `use` resolve and the page commit. */
 async function renderHistory(): Promise<void> {
   await act(async () => {
     render(
